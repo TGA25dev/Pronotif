@@ -1,0 +1,7 @@
+pronotepy
+datetime
+python-dotenv
+discord
+asyncio
+pytz
+aiohttp
