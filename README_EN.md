@@ -13,10 +13,10 @@ Notifies you on your phone 5 minutes before each class.
 
 ## Contents <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Clipboard.png" alt="Clipboard" width="25" height="25" />
 
-- [Instalation](https://github.com/TGA25dev/Dev-Arabot?tab=readme-ov-file#adding-the-bot-)
-- [Features](https://github.com/TGA25dev/Dev-Arabot?tab=readme-ov-file#features-)
-- [Screenshots](https://github.com/TGA25dev/Dev-Arabot?tab=readme-ov-file#screenshots-)
-- [License](https://github.com/TGA25dev/Dev-Arabot?tab=readme-ov-file#license-)
+- [Features](https://github.com/TGA25dev/Pronote-Class-Notifier/blob/main/README_EN.md#features--)
+- [Instalation](https://github.com/TGA25dev/Pronote-Class-Notifier/blob/main/README_EN.md#instalation-)
+- [Screenshots](https://github.com/TGA25dev/Pronote-Class-Notifier/blob/main/README_EN.md#screenshots-)
+- [License](https://github.com/TGA25dev/Pronote-Class-Notifier/blob/main/README_EN.md#license-)
 
 ## Features  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Glowing%20Star.png" alt="Glowing Star" width="25" height="25" />
 

@@ -10,18 +10,18 @@ Vous notifie sur votre téléphone 5 minutes avant chaque cours.
 [![Licence](https://img.shields.io/github/license/Ileriayo/markdown-badges?style=for-the-badge)](./LICENSE)
 ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
 
-[**English**](README_EN.md) | [LICENSE](LICENSE)
+[**English**](README_EN.md) | [LICENCE](LICENSE)
 
 ## Table des matieres <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Clipboard.png" alt="Clipboard" width="25" height="25" />
 
-- [Installation](https://github.com/TGA25dev/Dev-Arabot?tab=readme-ov-file#adding-the-bot-)
-- [Fonctionalités](https://github.com/TGA25dev/Dev-Arabot?tab=readme-ov-file#features-)
-- [Screenshots](https://github.com/TGA25dev/Dev-Arabot?tab=readme-ov-file#screenshots-)
-- [License](https://github.com/TGA25dev/Dev-Arabot?tab=readme-ov-file#license-)
+- [Fonctionalités](https://github.com/TGA25dev/Pronote-Class-Notifier#fonctionalités--)
+- [Installation](https://github.com/TGA25dev/Pronote-Class-Notifier#installation-)
+- [Screenshots](https://github.com/TGA25dev/Pronote-Class-Notifier#screenshots-)
+- [License](https://github.com/TGA25dev/Pronote-Class-Notifier#licence-)
 
 ## Fonctionalités  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Glowing%20Star.png" alt="Glowing Star" width="25" height="25" />
 
-* Envoi une notification sur votre téléphone 5 minute avant chaque cours avec 
+* Envoi une notification sur votre téléphone 5 minute avant chaque cours avec :
   - la salle
   - le nom de l'enseignant
   - la matière
