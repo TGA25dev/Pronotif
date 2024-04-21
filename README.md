@@ -1,8 +1,8 @@
 > [!WARNING]
->**Projet incomplet**
+>**Projet incomplet !**
 >
 >Pronote Class Notifier est encore **en cours de développement**.
->*Les fichiers principaux seront ajoutés prochainement...*
+>\n*Les fichiers principaux seront ajoutés prochainement...*
 
 ![logo à finir](logo.png)
 
