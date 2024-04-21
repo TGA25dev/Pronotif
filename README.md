@@ -1,3 +1,8 @@
+> [!WARNING]
+>**Projet incomplet**
+>
+>Pronote Class Notifier est encore **en cours de développement**.
+>*Les fichiers principaux seront ajoutés prochainement...*
 
 ![logo à finir](logo.png)
 
@@ -17,7 +22,7 @@ Vous notifie sur votre téléphone 5 minutes avant chaque cours.
 - [Fonctionalités](https://github.com/TGA25dev/Pronote-Class-Notifier#fonctionalités--)
 - [Installation](https://github.com/TGA25dev/Pronote-Class-Notifier#installation-)
 - [Screenshots](https://github.com/TGA25dev/Pronote-Class-Notifier#screenshots-)
-- [License](https://github.com/TGA25dev/Pronote-Class-Notifier#licence-)
+- [Licence](https://github.com/TGA25dev/Pronote-Class-Notifier#licence-)
 
 ## Fonctionalités  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Glowing%20Star.png" alt="Glowing Star" width="25" height="25" />
 
