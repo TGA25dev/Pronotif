@@ -1,8 +1,10 @@
-> [!WARNING]
+> [!IMPORTANT]
 >**Projet incomplet !**
->
 >Pronote Class Notifier est encore **en cours de développement**.
-><br>*Les fichiers principaux seront ajoutés prochainement...*
+><br>*La documentation sera ajoutée très prochainement...*
+><br>
+>La connexion à Pronote à l'aide d'un ENT n'est pas encore possible et arrivera dans une prochaine version !
+
 
 ![logo à finir](logo.png)
 
@@ -10,7 +12,6 @@
 # Pronote Class Notifier <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Books.png" alt="Books" width="25" height="25" />
 
 Vous notifie sur votre téléphone 5 minutes avant chaque cours.
-
 
 [![Licence](https://img.shields.io/github/license/Ileriayo/markdown-badges?style=for-the-badge)](./LICENSE)
 ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
@@ -26,6 +27,8 @@ Vous notifie sur votre téléphone 5 minutes avant chaque cours.
 
 ## Fonctionalités  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Glowing%20Star.png" alt="Glowing Star" width="25" height="25" />
 
+
+
 * Envoi une notification sur votre téléphone 5 minute avant chaque cours avec :
   - la salle
   - le nom de l'enseignant
@@ -34,7 +37,6 @@ Vous notifie sur votre téléphone 5 minutes avant chaque cours.
 
 
 * Vous informe à l'heure du dejeuner du menu du jour
-
 
 #### Ce projet utilise l'api Pronote de [bain3](https://github.com/bain3/pronotepy) ainsi que [ntfy](https://ntfy.sh/) pour l'envoi des notifications.
 
