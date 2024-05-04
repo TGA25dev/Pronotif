@@ -1,9 +1,8 @@
 > [!IMPORTANT]
->**Projet incomplet !**
+>**Projet incomplet !** <br>
 >Pronote Class Notifier est encore **en cours de développement**.
-><br>*La documentation sera ajoutée très prochainement...*
-><br>
->La connexion à Pronote à l'aide d'un ENT n'est pas encore possible et arrivera dans une prochaine version !
+><br>*La documentation sera ajoutée très prochainement...* <br><br>
+>**La connexion à Pronote à l'aide d'un ENT n'est pas encore possible et arrivera dans une prochaine version !**
 
 
 ![logo à finir](logo.png)
