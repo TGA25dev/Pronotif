@@ -37,8 +37,9 @@ Notifies you on your phone 5 minutes before each class.
     
 ## Screenshots <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Camera%20with%20Flash.png" alt="Camera with Flash" width="25" height="25" />
 
-![Screenshot to add](.png)
+[![pronote-notif1.png](https://i.postimg.cc/ryPRpXkS/pronote-notif1.png)](https://postimg.cc/Cdbxv2d1)
 
+[![pronote-notif4.png](https://i.postimg.cc/4ymK1wz7/pronote-notif4.png)](https://postimg.cc/D43yvrpn)
 
 ## License <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Page%20with%20Curl.png" alt="Page with Curl" width="25" height="25" />
 
