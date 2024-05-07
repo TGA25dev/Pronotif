@@ -30,7 +30,6 @@ Vous notifie sur votre téléphone 5 minutes avant chaque cours.
 
 * Envoi une notification sur votre téléphone 5 minute avant chaque cours avec :
   - la salle
-  - le nom de l'enseignant
   - la matière
   - et plus encore !
 

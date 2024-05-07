@@ -22,7 +22,6 @@ Notifies you on your phone 5 minutes before each class.
 
 - Notifies you 5 minutes before the start of every class with :
   - the classroom
-  - the teacher's name
   - the subject
   - and more !
 
