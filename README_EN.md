@@ -27,6 +27,7 @@ Notifies you on your phone 5 minutes before each class.
 
 
 - Notifies you at lunchtime of day's menu
+- Customizables emojis
 
 #### This project uses the Pronote api from [bain3](https://github.com/bain3/pronotepy) and also [ntfy](https://ntfy.sh/) to send the notifications.
 

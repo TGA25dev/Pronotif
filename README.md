@@ -35,6 +35,7 @@ Vous notifie sur votre téléphone 5 minutes avant chaque cours.
 
 
 * Vous informe à l'heure du dejeuner du menu du jour
+* Des emojis personalisables
 
 #### Ce projet utilise l'api Pronote de [bain3](https://github.com/bain3/pronotepy) ainsi que [ntfy](https://ntfy.sh/) pour l'envoi des notifications.
 
