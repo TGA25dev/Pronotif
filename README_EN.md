@@ -8,6 +8,7 @@ Notifies you on your phone 5 minutes before each class.
 
 [![Licence](https://img.shields.io/github/license/Ileriayo/markdown-badges?style=for-the-badge)](./LICENSE)
 ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+[![wakatime](https://wakatime.com/badge/github/TGA25dev/Pronote-Class-Notifier.svg?style=for-the-badge)](https://wakatime.com/badge/github/TGA25dev/Pronote-Class-Notifier)
 
 [**Français**](README.md) | [LICENSE](LICENSE)
 
