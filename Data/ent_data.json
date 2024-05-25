@@ -1,5 +1,5 @@
 {
   "ent77": {"variable_name": "ent77", "region": "Ile-de-France", "departement":  ["077"], "type": "COLLEGE"},
-  "ent_idf": {"variable_name": "ile_de_france", "region": "Ile-de-France", "departement":  ["077", "095"], "type": "LYCEE"}
+  "ent_idf": {"variable_name": "ile_de_france", "region": "Ile-de-France", "departement":  ["075", "077", "078", "091", "092", "093", "094"], "type": "LYCEE"}
 
 }
