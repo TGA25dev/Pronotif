@@ -60,7 +60,7 @@ Vous notifie sur votre téléphone 5 minutes avant chaque cours.
     - [ ] Base de données utilisateurs
     - [ ] Récapitulatif de la semaine *(moyenne générale, nouvelles notes)*
 <br>
-<br>
+
   - **Contenu des notifications (cours)**
     - [x] Nom de la salle
     - [ ] Nom de matière plus clair
