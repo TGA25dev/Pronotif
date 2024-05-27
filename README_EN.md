@@ -34,6 +34,28 @@ Notifies you on your phone 5 minutes before each class.
 ## Instalation <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Hammer%20and%20Wrench.png" alt="Hammer and Wrench" width="25" height="25" />
 
 `Steps will be available soon... ⏳`
+
+## Roadmap <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Light%20Bulb.png" alt="Light Bulb" width="25" height="25" />
+
+- **Setup Assistant**
+  - [x] Connection via Pronote 
+  - [ ] Connection via an ENT
+  - [ ] Connection with a QR code
+  - [ ] Emojis customization
+  - [ ] Logging system
+ 
+- **Notification System** 
+  - **Global**
+    - [ ] Cloud hosting
+    - [ ] User database
+    - [ ] Weekly summary *(overall average, new grades)*
+<br>
+
+  - **Notification Content (courses)**
+    - [x] Room name
+    - [ ] Clearer subject name
+    - [ ] Agreement between subject name and determiner
+    - [ ] Improvement of random emoji system
     
 ## Screenshots <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Camera%20with%20Flash.png" alt="Camera with Flash" width="25" height="25" />
 
