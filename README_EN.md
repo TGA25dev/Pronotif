@@ -49,7 +49,6 @@ Notifies you on your phone 5 minutes before each class.
     - [ ] Cloud hosting
     - [ ] User database
     - [ ] Weekly summary *(overall average, new grades)*
-<br>
 
   - **Notification Content (courses)**
     - [x] Room name

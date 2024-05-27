@@ -59,7 +59,6 @@ Vous notifie sur votre téléphone 5 minutes avant chaque cours.
     - [ ] Hébérgement cloud
     - [ ] Base de données utilisateurs
     - [ ] Récapitulatif de la semaine *(moyenne générale, nouvelles notes)*
-<br>
 
   - **Contenu des notifications (cours)**
     - [x] Nom de la salle
