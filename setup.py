@@ -19,6 +19,7 @@ from win11toast import notify
 import shutil
 import subprocess
 import winsound
+import datetime
 
 # Create a ConfigParser object
 config = configparser.ConfigParser()
@@ -263,7 +264,6 @@ def config_steps():
   with open(config_file_path, 'w', encoding='utf-8') as configfile:
     config.write(configfile)
 
-
   #right_text_label = ctk.CTkLabel(root, text="Vous pouvez désormais personaliser Pronote Class Notifier (certains parametres son obligatoires)")  # Adjust width as needed
   #right_text_label.place(relx=0.75, rely=0.4, anchor="center")
 
@@ -307,30 +307,39 @@ def config_steps():
   ntfy_topic_name_button.place(relx=0.5, rely=0.75, anchor="center")
 
   #TAB 2 LUNCH TIMES
+         
+  if not menus:
+    config_tab_step2_text = ctk.CTkLabel(master=tabview.tab("2. Repas"), text="Votre établissement ne semble pas avoir défini\nle menu de la cantine dans Pronote...\n\nPassez cette étape.")
+    config_tab_step2_text.place(relx=0.5, rely=0.5, anchor="center")
 
-  config_tab_step2_text = ctk.CTkLabel(master=tabview.tab("2. Repas"), text="Déplacez le curseur bleu pour définir vos horaires\nde déjeuner.")
-  config_tab_step2_text.place(relx=0.5, rely=0.15, anchor="center")
+    globals()['config_tab2_approved'] = True
+    check_all_steps_completed() 
 
-  # Create labels and Scale widgets for each day
-  days = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"]
-  labels = {}
-  scales = {}
-  lunch_times = {}
-  global current_day_index
-  current_day_index = 0  # Initialize current_day_index here
+  else:  
 
-  def time_to_minutes(time):
+   config_tab_step2_text = ctk.CTkLabel(master=tabview.tab("2. Repas"), text="Déplacez le curseur bleu pour définir vos horaires\nde déjeuner.")
+   config_tab_step2_text.place(relx=0.5, rely=0.15, anchor="center")
+
+   # Create labels and Scale widgets for each day
+   days = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"]
+   labels = {}
+   scales = {}
+   lunch_times = {}
+   global current_day_index
+   current_day_index = 0  # Initialize current_day_index here
+
+   def time_to_minutes(time):
         """Convert time in HH:MM format to minutes since 00:00."""
         hours, minutes = map(int, time.split(":"))
         return hours * 60 + minutes
 
-  def minutes_to_time(minutes):
+   def minutes_to_time(minutes):
         """Convert minutes since 00:00 to time in HH:MM format."""
         hours = minutes // 60
         minutes = minutes % 60
         return f"{hours:02d}:{minutes:02d}"
 
-  def submit_lunch_time():
+   def submit_lunch_time():
         global current_day_index
         global day
         day = days[current_day_index]
@@ -382,35 +391,33 @@ def config_steps():
             globals()['config_tab2_approved'] = True
             check_all_steps_completed() 
 
+            # Define the time range for lunch times (e.g., from 10:30 to 14:30 in 5-minute intervals)
+            start_time = time_to_minutes("10:30")
+            end_time = time_to_minutes("14:30")
+            increment = 5  # 5 minutes increment          
 
+            for day in days:
+            
+             label = ctk.CTkLabel(master=tabview.tab("2. Repas"), text=f"{day} 12h30 (par défaut)")
+             labels[day] = label
 
-  # Define the time range for lunch times (e.g., from 10:30 to 14:30 in 5-minute intervals)
-  start_time = time_to_minutes("10:30")
-  end_time = time_to_minutes("14:30")
-  increment = 5  # 5 minutes increment          
+             scale = ctk.CTkSlider(master=tabview.tab("2. Repas"), from_=start_time, to=end_time, number_of_steps=(end_time - start_time) // increment)
+             scales[day] = scale
 
-  for day in days:
-        global label
-        label = ctk.CTkLabel(master=tabview.tab("2. Repas"), text=f"{day} 12h30 (par défaut)")
-        labels[day] = label
+             # Add a label to show the selected time
+             def update_label(value, scale=scale, label=label, day=day):
+              time = minutes_to_time(int(float(value)))
+              label.configure(text=f"{day}: {time}h")
 
-        scale = ctk.CTkSlider(master=tabview.tab("2. Repas"), from_=start_time, to=end_time, number_of_steps=(end_time - start_time) // increment)
-        scales[day] = scale
+             scale.configure(command=lambda value, scale=scale, label=label, day=day: update_label(value, scale, label, day))
 
-        # Add a label to show the selected time
-        def update_label(value, scale=scale, label=label, day=day):
-            time = minutes_to_time(int(float(value)))
-            label.configure(text=f"{day}: {time}h")
+             # Show the Scale for the first day only
+             labels[days[current_day_index]].place(relx=0.35, rely=0.3)
+             scales[days[current_day_index]].place(relx=0.5, rely=0.5, anchor="center")
 
-        scale.configure(command=lambda value, scale=scale, label=label, day=day: update_label(value, scale, label, day))
-
-  # Show the Scale for the first day only
-  labels[days[current_day_index]].place(relx=0.35, rely=0.3)
-  scales[days[current_day_index]].place(relx=0.5, rely=0.5, anchor="center")
-
-  # Create the submit button
-  submit_button = ctk.CTkButton(master=tabview.tab("2. Repas"), text="Enregistrer", command=submit_lunch_time)
-  submit_button.place(relx=0.5, rely=0.8, anchor="center")
+             # Create the submit button
+             submit_button = ctk.CTkButton(master=tabview.tab("2. Repas"), text="Enregistrer", command=submit_lunch_time)
+             submit_button.place(relx=0.5, rely=0.8, anchor="center")
 
   #TAB 3 EMOJIS
 
@@ -479,7 +486,7 @@ def config_steps():
           set_config_file_advanced()
     else:
         
-        selected_timezone = "Europe/France"
+        selected_timezone = "Europe/Paris"
         print("Default timezone has been selected !")
         set_config_file_advanced()
 
@@ -541,13 +548,15 @@ def save_credentials():
 
        # Write the changes back to the INI file
        with open(config_file_path, 'w', encoding='utf-8') as configfile:
-        config.write(configfile)      
-
-
+        config.write(configfile)
            
        if client.logged_in:
         box = CTkMessagebox(title="Succès !", message="Connexion effectuée !", icon=ok_icon_path, option_1="Parfait", master=root, width=300, height=10, corner_radius=20,sound=True)
         box.info._text_label.configure(wraplength=450)
+
+        today = datetime.date.today()
+        global menus
+        menus = client.menus(date_from=today)   
 
         global nom_utilisateur
         global student_class_name
