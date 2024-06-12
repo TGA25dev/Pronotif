@@ -1,7 +1,7 @@
 > [!IMPORTANT]
 >**Projet incomplet !** <br>
->Pronote Class Notifier est encore **en cours de développement**.
->**Pour le moment la connexion ENT est resérvée aux établissements d'île de France !**
+>Pronote Class Notifier est encore **en cours de développement**.<br><br>
+>**Pour le moment la connexion ENT est resérvée aux établissements situés en Île-de-France !**
 
 
 ![logo à finir](logo.png)
