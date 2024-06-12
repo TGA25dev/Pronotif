@@ -1,8 +1,7 @@
 > [!IMPORTANT]
 >**Projet incomplet !** <br>
 >Pronote Class Notifier est encore **en cours de développement**.
-><br>*La documentation sera ajoutée très prochainement...* <br><br>
->**La connexion à Pronote à l'aide d'un ENT n'est pas encore possible et arrivera dans une prochaine version !**
+>**Pour le moment la connexion ENT est resérvée aux établissements d'île de France !**
 
 
 ![logo à finir](logo.png)
@@ -49,7 +48,7 @@ Vous notifie sur votre téléphone 5 minutes avant chaque cours.
 
 - **Assistant de configuration**
   - [x] Connexion via Pronote
-  - [ ] Connexion via un ENT
+  - [x] Connexion via un ENT
   - [ ] Connexion avec un qr code
   - [ ] Personalisation des emojis
   - [ ] Systeme de logs

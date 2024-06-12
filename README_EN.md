@@ -39,7 +39,7 @@ Notifies you on your phone 5 minutes before each class.
 
 - **Setup Assistant**
   - [x] Connection via Pronote 
-  - [ ] Connection via an ENT
+  - [x] Connection via an ENT
   - [ ] Connection with a QR code
   - [ ] Emojis customization
   - [ ] Logging system
