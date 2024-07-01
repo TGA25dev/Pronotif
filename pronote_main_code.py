@@ -16,7 +16,7 @@ config = configparser.ConfigParser(comment_prefixes=";")
 config.optionxform = str
 
 try:
-    with open("dev_config.ini", encoding='utf-8') as f:
+    with open("Data/config.ini", encoding='utf-8') as f:
         config.read_file(f)
     print("Config file has been succesfully loaded !")
 except Exception as e:
@@ -25,13 +25,13 @@ except Exception as e:
     print("Closing program...")
     sys.exit(1)
 
-dotenv.load_dotenv("Token/Templates/pronote_password.env")
+dotenv.load_dotenv("Token/pronote_password.env")
 secured_password = os.getenv("Password")
 
-dotenv.load_dotenv("Token/Templates/pronote_user.env")
+dotenv.load_dotenv("Token/pronote_user.env")
 secured_username = os.getenv("User")
 
-dotenv.load_dotenv("Token/Templates/pronote_bot_token.env")
+dotenv.load_dotenv("Token/pronote_bot_token.env")
 token = os.getenv("Token")
 
 
@@ -61,7 +61,7 @@ async def on_ready():
     print(f"Logged in as {bot.user.name} ({bot.user.id})")
     print('------')
     print("Waiting 60s")
-    await asyncio.sleep(60)
+    #await asyncio.sleep(60)
     asyncio.create_task(pronote_main_checks_loop())
 
 
@@ -140,8 +140,8 @@ async def pronote_main_checks_loop():
             global class_check_print_flag
             
             today = datetime.date.today()
-            #other_day = today + datetime.timedelta(days=3)
-            lesson_checker = client.lessons(date_from=today) #CHANGE TO FAKE OR REAL !!
+            other_day = today + datetime.timedelta(days=3)
+            lesson_checker = client.lessons(date_from=other_day) #CHANGE TO FAKE OR REAL !!
 
             if not lesson_checker:
                 if not class_check_print_flag:
@@ -163,7 +163,7 @@ async def pronote_main_checks_loop():
                     start_time = lesson_checks.start.time()
 
                     five_minutes_before_start = datetime.datetime.combine(today, start_time) - datetime.timedelta(minutes=5)
-                    five_minutes_before_start = five_minutes_before_start.strftime("%H:%M") #Useless if testing with fake time
+                    #five_minutes_before_start = five_minutes_before_start.strftime("%H:%M") #Useless if testing with fake time
                     
                     if current_time == five_minutes_before_start:                        
                     #if fake_current_time.time() ==  five_minutes_before_start.time():
@@ -196,11 +196,25 @@ async def pronote_main_checks_loop():
                          emojis = emojis_str.split(', ')  # Split the emoji string into a list
                          subject_emojis[subject] = emojis
 
+                        async def send_class_canceled_message_via_ntfy(message): 
 
+                         topic = topic_name 
+                         url = f"https://ntfy.sh/{topic}"
+                         headers = {"Priority": "5", "Title": "Cours annulé !", "Tags": f"date"}
+
+                         async with aiohttp.ClientSession() as session:
+                          async with session.post(url, data=message.encode('utf-8'), headers=headers) as response:
+                           if response.status == 200:
+                            print("The canceled class information message has been successfully sent !")
+
+                            return response.status
+                           else:
+                            print(f"A problem as occured while trying to send the class message : {response.status}")
+                            client.refresh() 
+
+                         
                         if canceled:
-                            pass
-                            print(f"Class {lower_cap_subject_name} at {class_start_time}, was canceled !\nNot sending any message...")
-                            client.refresh()
+                            send_class_canceled_message_via_ntfy(f"Le cours de {lower_cap_subject_name} initialement prévu à {class_start_time} est annulé !")
 
                         elif not canceled:
 
@@ -208,7 +222,7 @@ async def pronote_main_checks_loop():
                              random_subject_emojis = random.choice(subject_emojis[lower_cap_subject_name])
                             else:
                              print(f"No emojis found for subject: {lower_cap_subject_name}")
-                             random_subject_emojis = "" 
+                             random_subject_emojis = ""
                             
                             class_time_message = f"Le cours de {lower_cap_subject_name} se fera en salle {room_name} et commencera à {class_start_time}. {random_subject_emojis}"
                             print(class_time_message)
@@ -219,8 +233,6 @@ async def pronote_main_checks_loop():
                                
 
         async def send_class_info_notification_via_ntfy(message):
-            
-
             subject_emojis = {
                 "ANGLAIS LV1": ["earth_africa", "books", "pencil2", "gb", "mortar_board", " us"],
                 "ANGLAIS LV SECTION": ["earth_africa", "books", "pencil2", "gb", "mortar_board", " us"],
@@ -233,7 +245,9 @@ async def pronote_main_checks_loop():
                 "SC.NUMERIQ.TECHNOL.": ["computer", "wrench", "rocket", "robot", "globe_with_meridians "],
                 "SCIENCES VIE & TERRE": ["seedling", "microscope", "dna", "ocean", "microbe", "earth_africa"],
                 "PHYSIQUE-CHIMIE": ["atom_symbol", "test_tube", "alembic", "fire", "bulb", "straight_ruler"],
-                "ENS. MORAL & CIVIQUE": ["handshake", "speech_balloon", "balance_scale", "ballot_box", "brain"]
+                "ENS. MORAL & CIVIQUE": ["handshake", "speech_balloon", "balance_scale", "ballot_box", "brain"],
+                "CANTINE": ["plate_with_cutlery", "fork_and_knife", "sandwich", "cup_with_straw", "cookie"],
+                "ART PLASTIQUE": ["art", "paintbrush", "framed_picture", "scissors", "jigsaw"],
             }
 
             # Select emojis based on subject
@@ -242,41 +256,50 @@ async def pronote_main_checks_loop():
 
             emojis = []
            
-            if "anglais" in all_low_cap_subject_name:
+            if any(word in all_low_cap_subject_name for word in ["anglais", "amc"]):
              emojis = subject_emojis.get("ANGLAIS LV1", [])
 
-            elif "eco" in all_low_cap_subject_name or "sociale" in subject:
+            elif any(word in all_low_cap_subject_name for word in ["eco", "sociale", "économie", "economie"]):
              emojis = subject_emojis.get("SC. ECONO.& SOCIALES", [])
 
-            elif "mathematiques" in all_low_cap_subject_name:
+            elif any(word in all_low_cap_subject_name for word in ["math", "mathématiques", "mathematiques"]):
              emojis = subject_emojis.get("MATHEMATIQUES", [])
 
-            elif "sport" in all_low_cap_subject_name:
+            elif any(word in all_low_cap_subject_name for word in ["sport", "sportive", "eps"]):
              emojis = subject_emojis.get("ED.PHYSIQUE & SPORT.", [])
 
-            elif "histoire" in all_low_cap_subject_name:
+            elif any(word in all_low_cap_subject_name for word in ["histoire", "géo", "geo", "géographie"]):
              emojis = subject_emojis.get("HISTOIRE-GEOGRAPHIE", [])
 
-            elif "allemand" in all_low_cap_subject_name:
+            elif any(word in all_low_cap_subject_name for word in ["allemand"]):
              emojis = subject_emojis.get("ALLEMAND LV2", [])
 
-            elif any(word in all_low_cap_subject_name for word in ["informatique", "numerique", "numérique", "techno"]):
+            elif any(word in all_low_cap_subject_name for word in ["informatique", "numerique", "numérique", "techno", "nsi"]):
              emojis = subject_emojis.get("SC.NUMERIQ.TECHNOL.", [])
 
-            elif "terre" in all_low_cap_subject_name:
+            elif any(word in all_low_cap_subject_name for word in ["svt", "terre", "biologie"]):
              emojis = subject_emojis.get("SCIENCES VIE & TERRE", [])
 
-            elif any(word in all_low_cap_subject_name for word in ["physique", "chimie"]):
+            elif any(word in all_low_cap_subject_name for word in ["physique", "chimie", "sciences", "scientifique"]):
              emojis = subject_emojis.get("PHYSIQUE-CHIMIE", [])
 
-            elif any(word in all_low_cap_subject_name for word in ["moral", "civique"]):
+            elif any(word in all_low_cap_subject_name for word in ["moral", "civique", "emc"]):
              emojis = subject_emojis.get("ENS. MORAL & CIVIQUE", [])
 
+            elif any(word in all_low_cap_subject_name for word in ["art", "plastique"]):
+             emojis = subject_emojis.get("ART PLASTIQUE", []) 
+
+            elif any(word in all_low_cap_subject_name for word in ["cantine", "repas", "diner", "dejeuner"]):
+             emojis = subject_emojis.get("CANTINE", [])
+
+            elif any(word in all_low_cap_subject_name for word in ["français", "francais", "philo", "humanisme"]):
+             emojis = subject_emojis.get("FRANCAIS", [])
+
+            if emojis:
+               class_tags_random_emojis = random.choice(emojis)
             else:
-              emojis = []
-
-            class_tags_random_emojis = random.choice(emojis)
-
+              emojis = [""]
+              print(f"No tag emojis found for subject : {all_low_cap_subject_name}")
                 
             topic = topic_name 
             url = f"https://ntfy.sh/{topic}"
@@ -310,10 +333,10 @@ async def pronote_main_checks_loop():
 
         async def menu_food_check():
          today = datetime.date.today()
-         #other_day = today + datetime.timedelta(days=3)
+         other_day = today + datetime.timedelta(days=1)
          global menus
          try:
-          menus = client.menus(date_from=today)
+          menus = client.menus(date_from=other_day)
          except Exception as e:
           print(f"Error fetching menus: {e}")
           return
@@ -339,8 +362,7 @@ async def pronote_main_checks_loop():
             
             for menu in menus:
              if menu.is_lunch:
-              print(f"Menu pour le {menu.date}:")
-
+              print(f"Menu pour le {menu.date} :")
               for menu_first_meal in menu.first_meal:
                 pass
               
@@ -362,7 +384,8 @@ async def pronote_main_checks_loop():
               else:
                 await send_food_menu_notification_via_ntfy(f"Au menu: {menu_first_meal.name}, {menu_main_meal.name}, {menu_side_meal.name} et {menu_dessert.name} en dessert.\nBon appétit ! 😁")
                 print(f"C'est l'heure de manger !\nAu menu: {menu_first_meal.name}, {menu_main_meal.name}, {menu_side_meal.name} et {menu_dessert.name} en dessert.\nBon appétit ! 😁")
-
+              
+               
         while run_main_loop is True:
          await lesson_check()
          await menu_food_check()
