@@ -11,6 +11,10 @@ import aiohttp
 import configparser
 import time
 import sys
+import traceback
+from loguru import logger
+import notifiers
+from notifiers.logging import NotificationHandler
 
 config = configparser.ConfigParser(comment_prefixes=";")
 config.optionxform = str
@@ -18,33 +22,40 @@ config.optionxform = str
 try:
     with open("Data/config.ini", encoding='utf-8') as f:
         config.read_file(f)
-    print("Config file has been succesfully loaded !")
+    logger.info("Config file has been succesfully loaded !")
 except Exception as e:
-    print(f"An error has occurred while trying to open the config file: {e}")
+    logger.critical(f"An error has occurred while trying to open the config file: {e}\n\nClosing program...")
     time.sleep(2)
-    print("Closing program...")
     sys.exit(1)
-
-dotenv.load_dotenv("Token/pronote_password.env")
-secured_password = os.getenv("Password")
 
 dotenv.load_dotenv("Token/pronote_user.env")
 secured_username = os.getenv("User")
+logger.debug("Pronote username has been loaded.")
+
+dotenv.load_dotenv("Token/pronote_password.env")
+secured_password = os.getenv("Password")
+logger.debug("Pronote password has been loaded.")
 
 dotenv.load_dotenv("Token/pronote_bot_token.env")
 token = os.getenv("Token")
+logger.debug("Pronote Bot token has been loaded.")
 
 
 login_page_link = config['Global'].get('login_page_link')
+logger.debug(f"login_page_link is: {login_page_link} !")
+
 topic_name = config['Global'].get('topic_name')
+logger.debug(f"topic_name is: {topic_name} !")
 
 lunch_times = {day.lower(): map(int, time.split(':')) for day, time in config['LunchTimes'].items()}
+logger.debug(f"lunch_times loaded !")
 
 bot_prefix = config['Advanced'].get('bot_prefix')
+logger.debug(f"bot_prefix is: {bot_prefix} !")
 
 timezone_str = config['Advanced'].get('timezone')
 timezone = pytz.timezone(timezone_str)
-
+logger.debug(f"timezone is: {timezone}")
 
 
 bot = commands.Bot(command_prefix={bot_prefix}, intents=discord.Intents.all())
@@ -55,13 +66,67 @@ printed_message = False
 class_check_print_flag = False
 menu_check_print_flag = False
 
+# Define the parameters for the Gmail notifier
+params = {
+    "username": "letga25@gmail.com",
+    "password": "tkeb ckuy jgot twqy",
+    "to": "letga25@gmail.com",
+    "subject": "🔔 Pronote Class Notifier | New log received ! 🔔",
+    "html": True
+}
+
+# Initialize the Gmail notifier
+notifier = notifiers.get_notifier("gmail")
+
+# Custom notification handler to include HTML message
+class HTMLNotificationHandler(NotificationHandler):
+    def emit(self, record):
+        try:
+            log_entry = self.format(record)
+            if record.levelname == "CRITICAL":
+                message = f"<h2>🚨 Critical Error Alert !</h2><p><i>{log_entry}</i></p>"
+            elif record.levelname == "ERROR":
+                message = f"<h2>❌ Error Alert !</h2><p><i>{log_entry}</i></p>"
+            elif record.levelname == "WARNING":
+                message = f"<h2>⚠️ Warning Alert !</h2><p><i>{log_entry}</i></p>"
+            elif record.levelname == "INFO":
+                message = f"<h2>ℹ️ Info Alert !</h2><p><i>{log_entry}</i></p>"
+            elif record.levelname == "DEBUG":
+                message = f"<h2>🐛 Debug Alert !</h2><p><i>{log_entry}</i></p>"
+            else:
+                message = f"<p>{log_entry}</p>"
+
+            self.provider.notify(
+                message=message,
+                **self.defaults
+            )
+        except Exception:
+            self.handleError(record)
+
+# Set up a notification handler to be alerted on each error message
+handler = HTMLNotificationHandler("gmail", defaults=params)
+
+# Adding custom colors and format to the logger
+logger.remove()  # Remove any existing handlers
+logger.add(sys.stdout, level="DEBUG")  # Log to console
+logger.add("notif_system_logs.log", level="DEBUG", rotation="500 MB")  # Log to file with rotation
+logger.add(handler, level="INFO")  # Log to email for INFO level and above
+
+# Global exception handler
+def handle_exception(exc_type, exc_value, exc_traceback):
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
+    logger.critical(
+        f"Uncaught exception: {exc_value}\n"
+        f"Traceback: {''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))}"
+    )
+
+sys.excepthook = handle_exception
 
 @bot.event
 async def on_ready():
-    print(f"Logged in as {bot.user.name} ({bot.user.id})")
-    print('------')
-    print("Waiting 60s")
-    #await asyncio.sleep(60)
+    logger.info(f"Logged in as {bot.user.name} ({bot.user.id})")
     asyncio.create_task(pronote_main_checks_loop())
 
 
@@ -75,11 +140,11 @@ async def send_test_command(ctx):
 
         async with session.request("POST",url,data=message.encode("utf-8"),headers=headers) as response:
             if response.status == 200:
-                print("The test message has been successfully sent!")
+                logger.info("The test message has been successfully sent!")
                 await ctx.message.add_reaction("✉️")
             else:
                 await ctx.message.add_reaction("❌")
-                print(f"Failed to send test message. Status code: {response.status}")
+                logger.error(f"Failed to send test message. Status code: {response.status}")
 
 @bot.command(name="moyenne")
 async def send_average_command(ctx):
@@ -118,10 +183,10 @@ async def send_average_command(ctx):
         async with session.post(url, data=f"Ta moyenne générale est de {average}/20.\n{support_message}".encode("utf-8"), headers=headers) as response:
             if response.status == 200:
                 await ctx.message.add_reaction("✉️")
-                print("The average message has been successfully sent!")
+                logger.info("The average message has been successfully sent !")
 
             else:
-                print(f"Failed to send average message.")
+                logger.error(f"Failed to send average message...")
                 await ctx.message.add_reaction("❌")
                 client.refresh()
 
@@ -133,19 +198,19 @@ async def pronote_main_checks_loop():
 
      if client.logged_in:
         nom_utilisateur = client.info.name
-        print(f'Logged in as {nom_utilisateur}')
+        logger.info(f"Logged in as {nom_utilisateur} !")
 
 
         async def lesson_check():
             global class_check_print_flag
             
             today = datetime.date.today()
-            other_day = today + datetime.timedelta(days=3)
-            lesson_checker = client.lessons(date_from=other_day) #CHANGE TO FAKE OR REAL !!
+            #other_day = today + datetime.timedelta(days=3)
+            lesson_checker = client.lessons(date_from=today) #CHANGE TO FAKE OR REAL !!
 
             if not lesson_checker:
                 if not class_check_print_flag:
-                 print("There is probably no class today !")
+                 logger.info("There is probably no class today !")
                  class_check_print_flag = True
 
             elif lesson_checker:
@@ -154,10 +219,10 @@ async def pronote_main_checks_loop():
                 current_time = datetime.datetime.now(timezone).strftime("%H:%M")
                 
                 todays_date = datetime.datetime.now(timezone).strftime("%Y-%m-%d")
-                print(f"Real time: {todays_date} {current_time}")
+                logger.debug(f"Real time: {todays_date} {current_time}")
 
                 #fake_current_time = datetime.datetime.combine(other_day, datetime.time(13, 55)) - datetime.timedelta(minutes=0)
-                #print(f"Fake time: {fake_current_time}")
+                #logger.debug(f"Fake time: {fake_current_time}")
 
                 for lesson_checks in lesson_checker:
                     start_time = lesson_checks.start.time()
@@ -205,11 +270,11 @@ async def pronote_main_checks_loop():
                          async with aiohttp.ClientSession() as session:
                           async with session.post(url, data=message.encode('utf-8'), headers=headers) as response:
                            if response.status == 200:
-                            print("The canceled class information message has been successfully sent !")
+                            logger.info("The canceled class information message has been successfully sent !")
 
                             return response.status
                            else:
-                            print(f"A problem as occured while trying to send the class message : {response.status}")
+                            logger.error(f"A problem as occured while trying to send the class message : {response.status}")
                             client.refresh() 
 
                          
@@ -221,11 +286,11 @@ async def pronote_main_checks_loop():
                             if lower_cap_subject_name in subject_emojis:
                              random_subject_emojis = random.choice(subject_emojis[lower_cap_subject_name])
                             else:
-                             print(f"No emojis found for subject: {lower_cap_subject_name}")
+                             logger.error(f"No emojis found for subject: {lower_cap_subject_name}")
                              random_subject_emojis = ""
                             
                             class_time_message = f"Le cours de {lower_cap_subject_name} se fera en salle {room_name} et commencera à {class_start_time}. {random_subject_emojis}"
-                            print(class_time_message)
+                            logger.debug(class_time_message)
                             await send_class_info_notification_via_ntfy(class_time_message)
 
                     else:
@@ -299,7 +364,7 @@ async def pronote_main_checks_loop():
                class_tags_random_emojis = random.choice(emojis)
             else:
               emojis = [""]
-              print(f"No tag emojis found for subject : {all_low_cap_subject_name}")
+              logger.warning(f"No tag emojis found for subject : {all_low_cap_subject_name}")
                 
             topic = topic_name 
             url = f"https://ntfy.sh/{topic}"
@@ -308,11 +373,11 @@ async def pronote_main_checks_loop():
             async with aiohttp.ClientSession() as session:
              async with session.post(url, data=message.encode('utf-8'), headers=headers) as response:
               if response.status == 200:
-               print("The class information message has been successfully sent !")
+               logger.info("The class information message has been successfully sent !")
 
                return response.status
               else:
-                 print(f"A problem as occured while trying to send the class message : {response.status}")
+                 logger.error(f"A problem as occured while trying to send the class message : {response.status}")
                  client.refresh()
 
         async def send_food_menu_notification_via_ntfy(message):
@@ -328,33 +393,36 @@ async def pronote_main_checks_loop():
 
              return response.status
             else:
-                 print(f"A problem as occured while trying to send the menu message : {response.status}")
+                 logger.error(f"A problem as occured while trying to send the menu message : {response.status}")
                  client.refresh()
 
         async def menu_food_check():
-         today = datetime.date.today()
-         other_day = today + datetime.timedelta(days=1)
-         global menus
-         try:
-          menus = client.menus(date_from=other_day)
-         except Exception as e:
-          print(f"Error fetching menus: {e}")
-          return
-                   
-         current_time = datetime.datetime.now(timezone).time()
+          today = datetime.date.today()
+          #other_day = today + datetime.timedelta(days=1)
+          global menus
+          try:
+            menus = client.menus(date_from=today)
 
-         day_str = today.strftime('%A').lower()
-         lunch_time = lunch_times.get(day_str)
-         if lunch_time is not None:
-          lunch_hour, lunch_minute = lunch_time
-          if current_time.hour == lunch_hour and current_time.minute == lunch_minute:
-           print(f"{today.strftime('%A')} {lunch_hour:02d}:{lunch_minute:02d}")
+          except Exception as e:
+            logger.error(f"Error fetching menus: {e}")
+            return
+          if menus:
+           current_time = datetime.datetime.now(timezone).time()
+           day_str = today.strftime('%A').lower()
 
-           await food_notif_send_system()
-  
+           lunch_time = lunch_times.get(day_str)
 
-         elif not menus:
-            print("There is no menu defined for today !")
+           if lunch_time is not None:
+             lunch_hour, lunch_minute = lunch_time
+
+
+           if current_time.hour == lunch_hour and current_time.minute == lunch_minute:
+             logger.debug(f"{today.strftime('%A')} {lunch_hour:02d}:{lunch_minute:02d}")
+
+             await food_notif_send_system()
+          else:
+           if not menus:
+            logger.debug("There is no menu defined for today !")
          
 
         async def food_notif_send_system():
@@ -362,7 +430,7 @@ async def pronote_main_checks_loop():
             
             for menu in menus:
              if menu.is_lunch:
-              print(f"Menu pour le {menu.date} :")
+              logger.info(f"Menu pour le {menu.date} :")
               for menu_first_meal in menu.first_meal:
                 pass
               
@@ -380,10 +448,10 @@ async def pronote_main_checks_loop():
                 pass
                
                 await send_food_menu_notification_via_ntfy(f"Au menu: {menu_first_meal.name}, {menu_main_meal.name} (ou {other_meal.name}), {menu_side_meal.name} et {menu_dessert.name} en dessert.\nBon appétit ! 😁")
-                print(f"C'est l'heure de manger !\nAu menu: {menu_first_meal.name}, {menu_main_meal.name} (ou {other_meal.name}), {menu_side_meal.name} et {menu_dessert.name} en dessert.\nBon appétit ! 😁")
+                logger.debug(f"C'est l'heure de manger !\nAu menu: {menu_first_meal.name}, {menu_main_meal.name} (ou {other_meal.name}), {menu_side_meal.name} et {menu_dessert.name} en dessert.\nBon appétit ! 😁")
               else:
                 await send_food_menu_notification_via_ntfy(f"Au menu: {menu_first_meal.name}, {menu_main_meal.name}, {menu_side_meal.name} et {menu_dessert.name} en dessert.\nBon appétit ! 😁")
-                print(f"C'est l'heure de manger !\nAu menu: {menu_first_meal.name}, {menu_main_meal.name}, {menu_side_meal.name} et {menu_dessert.name} en dessert.\nBon appétit ! 😁")
+                logger.debug(f"C'est l'heure de manger !\nAu menu: {menu_first_meal.name}, {menu_main_meal.name}, {menu_side_meal.name} et {menu_dessert.name} en dessert.\nBon appétit ! 😁")
               
                
         while run_main_loop is True:
@@ -393,8 +461,8 @@ async def pronote_main_checks_loop():
          await asyncio.sleep(60)
         
      else:
-      print("LOGIN ERROR !!")
-      print(Exception)
+      logger.critical(f"An error has occured while login: {Exception}\n\nClosing program...")
+      time.sleep(2)
       exit(1)
 
       
