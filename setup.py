@@ -20,6 +20,9 @@ import shutil
 import subprocess
 import winsound
 import datetime
+import traceback
+from loguru import logger
+from notifiers.logging import NotificationHandler
 
 # Create a ConfigParser object
 config = configparser.ConfigParser()
@@ -60,7 +63,22 @@ github_paths = {
     "env_u": "Data/pronote_username.env"
 }
 
+# Adding custom colors and format to the logger
+logger.remove()  # Remove any existing handlers
+logger.add(sys.stdout, level="DEBUG")  # Log to console
+logger.add("setup_wizard_logs.log", level="DEBUG", rotation="500 MB")  # Log to file with rotation
 
+# Global exception handler
+def handle_exception(exc_type, exc_value, exc_traceback):
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
+    logger.critical(
+        f"Uncaught exception: {exc_value}\n"
+        f"Traceback: {''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))}"
+    )
+
+sys.excepthook = handle_exception
 
 #wanted file type can be : ico, config, ent_data, pronote_password or pronote_username
 
@@ -74,7 +92,7 @@ def check_important_file_existence(wanted_file_type):
   # Check if the file exists
   while not os.path.isfile(file_path):
     if github_file_path is not None:
-     print(f"File ({wanted_file_type}) does not exist. Downloading from the GitHub repo...")
+     logger.critical(f"File ({wanted_file_type}) does not exist. Downloading from the GitHub repo...")
 
      notify('Fichier manquant !', 'Un fichier nécéssaire au fonctionement du logiciel semble avoir été supprimé !\n\nTéléchargement en cours...', icon="https://i.postimg.cc/FRKD3Jgc/warning.png")
 
@@ -94,11 +112,11 @@ def check_important_file_existence(wanted_file_type):
         # Write the content to the file
         with open(file_path, 'wb') as f:
             f.write(content)
-            print(f"File ({wanted_file_type}) has been saved succesfully !")
+            logger.info(f"File ({wanted_file_type}) has been saved succesfully !")
             notify("Téléchargement terminé !","Merci d'avoir patienté ! 🚀", icon="https://i.postimg.cc/PJWpqSpM/ok-icon.png")
           
      else:
-        print(f"Failed to download file ({wanted_file_type}). Status code: {response.status_code}")
+        logger.critical(f"Failed to download file ({wanted_file_type}). Status code: {response.status_code}")
 
     else:
       # Create empty .env file for env_u or env_p if they don't exist
@@ -108,11 +126,11 @@ def check_important_file_existence(wanted_file_type):
         elif wanted_file_type == "env_u":
           f.write("User=")
         
-        print(f"File ({wanted_file_type}) has been created successfully!")
+        logger.info(f"File ({wanted_file_type}) has been created successfully!")
         notify("Téléchargement terminé !","Merci d'avoir patienté ! 😉", icon="https://i.postimg.cc/PJWpqSpM/ok-icon.png")   
 
   else:
-    print(f"File ({wanted_file_type}) exists. No action taken.")
+    logger.debug(f"File ({wanted_file_type}) exists. No action taken.")
 
 
 countdown_seconds = 20  # Define the countdown_seconds variable outside the function
@@ -137,11 +155,11 @@ def find_export_dir():
     subprocess.Popen(f'explorer {os.path.realpath(f"{script_directory}/Bot Files")}')
 
   else:
-    print("Ziping folder...")
+    logger.debug("Ziping folder...")
 
     shutil.make_archive(f"{script_directory}/Bot Files", 'zip', f"{script_directory}/Bot Files")
     
-    print("Folder has been ziped succesfully !")
+    logger.debug("Folder has been ziped succesfully !")
     shutil.rmtree(f"{script_directory}/Bot Files")
     subprocess.Popen(f'explorer {os.path.realpath(f"{script_directory}")}')
     
@@ -162,7 +180,7 @@ def find_export_dir():
 
 
 def final_step():
-  print("All steps have been succesfully completed !")
+  logger.debug("All steps have been succesfully completed !")
   tabview.pack_forget()
 
   main_text.place(relx=0.5, rely=0.3, anchor="center")
@@ -213,7 +231,7 @@ def get_ntfy_topic():
 
   if response == "Oui":
     defined_ntfy_topic_name = ntfy_entered_topic_name
-    print(f"ntfy topic name has been defined on: {defined_ntfy_topic_name}")
+    logger.debug(f"ntfy topic name has been defined on: {defined_ntfy_topic_name}")
 
     ntfy_topic_name_button.configure(state="disabled")
     ntfy_topic_name_entry.configure(state="disabled", text_color="grey")
@@ -357,7 +375,7 @@ def config_steps():
             submit_button.configure(state="disabled", text_color="grey")
             label.place_forget()
             config_tab_step2_text.configure(text="Vos paramètres ont étés enregistrés !\nPassez à la prochaine étape.")
-            print(f"Lunch times submitted:\n{lunch_times}")
+            logger.debug(f"Lunch times submitted:\n{lunch_times}")
 
             french_to_english = {
                 'lundi': 'Monday',
@@ -456,7 +474,7 @@ def config_steps():
     if switch_var.get() == "off":
         selected_option = combo_menu.get()
         if selected_option == "":
-         print("Value cannot be None !")
+         logger.error("Value cannot be None !")
          box = CTkMessagebox(title="Erreur !", message="Vous devez choisir une valeur du menu avant de valider !", icon=warning_icon_path, option_1="Réessayer",master=root, width=350, height=10, corner_radius=20,sound=True)
          box.info._text_label.configure(wraplength=450)
 
@@ -474,12 +492,12 @@ def config_steps():
             etc_gmt_offset = f"+{offset}"
     
            selected_timezone = f"Etc/GMT{etc_gmt_offset}"
-           print(f"New timezone has been selected : {selected_timezone}")
+           logger.debug(f"New timezone has been selected : {selected_timezone}")
           set_config_file_advanced()
     else:
         
         selected_timezone = "Europe/Paris"
-        print("Default timezone has been selected !")
+        logger.debug("Default timezone has been selected !")
         set_config_file_advanced()
 
   config_tab_step4_text = ctk.CTkLabel(master=tabview.tab("4. Avancé"), text="Au besoin changez le fuseau horaire utilisé.")
@@ -507,7 +525,7 @@ def save_credentials():
 
 
     if not username or not password:
-     print("Missing Entrys")
+     logger.error("Missing Entrys")
      box = CTkMessagebox(title="Erreur !", message="Vous devez renseigner un mot de passe et un identifiant...", icon=warning_icon_path, option_1="Réessayer",master=root, width=350, height=10, corner_radius=20,sound=True)
      box.info._text_label.configure(wraplength=450)
 
@@ -577,17 +595,11 @@ def save_credentials():
         nom_utilisateur = client.info.name
         student_class_name = client.info.class_name
 
-        print(f'Logged in as {nom_utilisateur}')
+        logger.info(f'Logged in as {nom_utilisateur}')
 
         # Enregistrer le nom d'utilisateur et le mot de passe dans deux fichiers .env différents
         set_key(f"{script_directory}/Data/pronote_username.env", 'User', username)
         set_key(f"{script_directory}/Data/pronote_password.env", 'Password', password)
-
-
-        # Separate uppercase letters (high caps) and other characters
-        #user_last_name = ' '.join(re.findall(r'\b[A-Z]+\b', nom_utilisateur))
-        #user_first_name = re.sub(r'\b[A-Z]+\b', '', nom_utilisateur)
-        #user_first_name = re.sub(r'[^a-zA-Z\s]', '', user_first_name) 
 
         pattern = r'\b(?:\S+\s*)+\S+\b'
         match = re.search(pattern, nom_utilisateur)
@@ -616,14 +628,14 @@ def save_credentials():
 
 
        else:
-        print("Unknow error !")
+        logger.critical("Unknow error !")
         box = CTkMessagebox(title="Erreur !", message="Une erreur inconnue est survenue...\nVeuillez réessayer plus tard.", icon=cancel_icon_path, option_1="Ok",master=root, width=300, height=10, corner_radius=20,sound=True)
         box.info._text_label.configure(wraplength=450) 
         root.config(cursor="arrow") 
 
 
       except (pronotepy.CryptoError, pronotepy.ENTLoginError):
-         print("Wrong credentials !")
+         logger.warning("Wrong credentials !")
          box = CTkMessagebox(title="Erreur !", message="Vos identifiants de connexion semblent incorrects...", icon=warning_icon_path, option_1="Réessayer",master=root, width=300, height=10, corner_radius=20,sound=True)
          box.info._text_label.configure(wraplength=450)
          password_entry.delete(0, 'end')
@@ -635,7 +647,6 @@ def search_school():
     root.config(cursor="watch")
 
     city = city_entry.get()
-    print(city)
 
     try:
      true_city_geocode = geolocator.geocode(city)
@@ -645,7 +656,7 @@ def search_school():
       root.config(cursor="arrow")
     
     if not true_city_geocode:
-       print("Unknow city !")
+       logger.error("Unknow city !")
        box = CTkMessagebox(title="Erreur !", message="Cette ville ne semble pas exister...", icon=warning_icon_path, option_1="Réessayer",master=root, width=300, height=10, corner_radius=20,sound=True)
        box.info._text_label.configure(wraplength=450)
        root.config(cursor="arrow")
@@ -654,15 +665,13 @@ def search_school():
 
     elif true_city_geocode:
      true_city_name = true_city_geocode.raw["name"]
-
-     print(true_city_name)
      
      display_name = true_city_geocode.raw["display_name"]
      # Split the display name by comma
      display_name_parts = display_name.split(", ")
      # Get the last part which should be the country name
      country_name = display_name_parts[-1]
-     print(country_name)
+     logger.debug(country_name)
 
      if country_name != "France":
       city_entry.delete(0, "end")
@@ -717,20 +726,19 @@ def search_school():
           results_number = data["total_count"]
 
           if results_number == 0:
-           print("No results for the city !")
+           logger.error("No results for the city !")
            box = CTkMessagebox(title="Aucun résultat", message="Il ne semble pas y avoir de collèges ou lycées dans cette ville...", icon=warning_icon_path, option_1="Réessayer",master=root, width=350, height=10, corner_radius=20,sound=True)
            box.info._text_label.configure(wraplength=450)
 
           else: 
            results_count = data["total_count"]
 
-           # Print the data
            appellation_officielle_values = []
            for record in data['results']:
               appellation_officielle = record['appellation_officielle']
               appellation_officielle_values.append(appellation_officielle)
 
-           print(f"{results_count} results have been returned for {true_city_name} ! (limit is {limit})")  
+           logger.info(f"{results_count} results have been returned for {true_city_name} ! (limit is {limit})")  
 
 
            def optionmenu_callback(choice):
@@ -756,8 +764,6 @@ def search_school():
             if response.status_code == 200:
              # Parse the JSON response
              data = response.json()
-             # Print the data
-          
 
              uai_number = data["results"][0]["numero_uai"]
 
@@ -771,8 +777,7 @@ def search_school():
 
              global pronote_url
              pronote_url = f"https://{uai_number}.index-education.net/pronote/eleve.html"
-             print(pronote_url)
-
+       
              check_important_file_existence(wanted_file_type="config")
 
              # Read the INI file with the appropriate encoding
@@ -804,7 +809,7 @@ def search_school():
 
              # Handle any other unexpected errors  
              if pronote_use and not pronote_use_msg and response.status_code == 200:
-               print(f"{choice} ({true_city_name}) uses Pronote !")
+               logger.info(f"{choice} ({true_city_name}) uses Pronote !")
 
                global used_ent_name
                used_ent_name = None
@@ -866,7 +871,7 @@ def search_school():
              else:
 
                if pronote_use_msg == "DNS Error":
-                 print(f"{choice} ({true_city_name}) doesn't seem to use Pronote... See below\nWebsite {pronote_url} does not exists. {pronote_use_msg}")
+                 logger.warning(f"{choice} ({true_city_name}) doesn't seem to use Pronote... See below\nWebsite {pronote_url} does not exists. {pronote_use_msg}")
                  box = CTkMessagebox(title="Aucun résultat", message="Votre établissement ne semble pas utiliser Pronote.", icon=warning_icon_path, option_1="Ok",master=root, width=350, height=10, corner_radius=20,sound=True)
                  box.info._text_label.configure(wraplength=450)
                  root.config(cursor="arrow")
@@ -922,7 +927,7 @@ def search_school():
 
                 # ENT Connexion
 
-                print(f"{choice} ({true_city_name}) uses Pronote (ENT Conexion: {used_ent_name}) !")
+                logger.debug(f"{choice} ({true_city_name}) uses Pronote (ENT Conexion: {used_ent_name}) !")
 
                 ent_connexion = True
 
@@ -969,8 +974,8 @@ def search_school():
 
                  
                else:
-                print(response)
-                print(f"Unknown error for {pronote_url}\nError detail : {pronote_use_msg}")
+                logger.critical(response)
+                logger.critical(f"Unknown error for {pronote_url}\nError detail : {pronote_use_msg}")
                 box = CTkMessagebox(title="Erreur", message="Une erreur inconnue est survenue.\nMerci de réessayer plus tard.", icon=cancel_icon_path, option_1="Ok",master=root, width=350, height=10, corner_radius=20,sound=True)
                 box.info._text_label.configure(wraplength=450)
 
@@ -991,7 +996,7 @@ def search_school():
 
        else:
           # If the request was not successful, print an error message
-          print("Error:", response.status_code)
+          logger.error("Error:", response.status_code)
           return []
 
 # Create the main window
@@ -1022,7 +1027,7 @@ def close_app():
   response = box.get()
 
   if response == "Fermer":
-    print("Window has been closed !")
+    logger.info("Window has been closed !")
     time.sleep(0.1)
     root.destroy()
     sys.exit(0)
@@ -1072,7 +1077,7 @@ def on_label_click(event):
     click_count += 1
     if click_count == 8:
        webbrowser.open_new_tab("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
-       print("Easter egg discovered !")
+       logger.critical("Easter egg discovered !")
 
 click_count = 0
 
@@ -1080,14 +1085,14 @@ def check_if_first_time():
   first_use_file = os.path.exists(f"{script_directory}/first_use.txt")
 
   if first_use_file:
-    print("Initial Startup !")
+    logger.info("Initial Startup !")
     box = CTkMessagebox(title="Premiere fois ici ?", message=f"On dirait que vous n'avez jamais utilisé Pronote Class Notifier...\n\nLisez la documentation pour mieux comprendre comment vous en servir.", icon=info_icon_path, option_1="D'accord", cancel_button=None ,cancel_button_color="light grey", justify="center", master=root, width=450, height=10, corner_radius=20)
     box.info._text_label.configure(wraplength=450)
     webbrowser.open_new_tab("https://github.com/TGA25dev/Pronote-Class-Notifier/wiki/Accueil")
     os.remove(f"{script_directory}/first_use.txt")
 
   else:
-    print("Not first startup...")
+    logger.info("Not first startup...")
 
 
 # Create a title label
