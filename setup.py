@@ -1018,20 +1018,42 @@ title_bar_color.set(root, "#16a376")
 window_frame.center(root)
 
 def close_app():
-
-  
-  box = CTkMessagebox(title="Fermer ?", message="Souhaitez vous vraiment annuler la configuration ?\nToute progression sera perdue", icon=question_icon_path, option_1="Annuler", option_2="Fermer",cancel_button=None ,cancel_button_color="light grey", justify="center", master=root, width=350, height=10, corner_radius=20,sound=True)
+  box = CTkMessagebox(title="Fermer ?", message="Annuler la configuration ?\nL'ensemble de vos données sera supprimé...", icon=question_icon_path, option_1="Annuler", option_2="Fermer",cancel_button=None ,cancel_button_color="light grey", justify="center", master=root, width=350, height=10, corner_radius=20,sound=True)
   box.info._text_label.configure(wraplength=450)
 
 
   response = box.get()
 
   if response == "Fermer":
-    logger.info("Window has been closed !")
+    logger.debug("Window is closing removing data...")
+
+    # List of file paths to delete
+    files_to_delete = [
+     os.path.join(script_directory, "Data", "config.ini"),
+     os.path.join(script_directory, "Data", "pronote_password.env"),
+     os.path.join(script_directory, "Data", "pronote_username.env")
+    ]
+    deleted_files_count = 0
+
+    # Attempt to delete each file
+    for file_path in files_to_delete:
+     try:
+        os.remove(file_path)
+        deleted_files_count += 1
+     except FileNotFoundError:
+        logger.error(f"File {file_path} not found.")
+     except PermissionError:
+        logger.warning(f"Permission denied to delete {file_path}.")
+     except Exception as e:
+        logger.critical(f"An error occurred while trying to delete {file_path}: {e}")
+
+    logger.debug(f"{deleted_files_count} files out of 3 deleted")
+
     time.sleep(0.1)
     root.destroy()
+    logger.info("Window has been closed !")
     sys.exit(0)
-
+    
   elif response == "Annuler":
     pass
 
