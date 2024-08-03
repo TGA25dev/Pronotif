@@ -24,13 +24,10 @@ import datetime
 # Create a ConfigParser object
 config = configparser.ConfigParser()
 
-
-default_title_font = "Roboto", 15
+default_title_font = "Roboto", 17, "bold"
 default_subtitle_font = "Roboto", 12 
 default_text_font = "Roboto", 13
 default_credit_font = "Roboto", 10
-
-default_font_name = "Roboto"
 
 geolocator = Nominatim(user_agent="Geocoder")
 
@@ -1119,7 +1116,7 @@ city_entry.bind("<Return>", lambda event: search_school())
 
 # Create search button
 global search_button
-search_button = ctk.CTkButton(root, text="Chercher", command=search_school) #Ajouter error handling 
+search_button = ctk.CTkButton(root, text="Chercher", command=search_school) 
 search_button.place(relx=0.75, rely=0.6, anchor="center")
 
 #Create internet status label
@@ -1127,7 +1124,7 @@ internet_status_label = ctk.CTkLabel(root, text="Checking connection...")
 internet_status_label.place(relx=0.75, rely=0.8, anchor="center")
 
 #Create close button
-close_button = ctk.CTkButton(root, text="Fermer",command=close_app, width=15)
+close_button = ctk.CTkButton(root, text="Fermer",command=close_app, width=15, hover_color="red")
 close_button.place(relx=0.01, rely=0.98, anchor="sw")
 
 root.protocol("WM_DELETE_WINDOW", close_app)

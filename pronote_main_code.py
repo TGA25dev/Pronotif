@@ -66,51 +66,11 @@ printed_message = False
 class_check_print_flag = False
 menu_check_print_flag = False
 
-# Define the parameters for the Gmail notifier
-params = {
-    "username": "letga25@gmail.com",
-    "password": "tkeb ckuy jgot twqy",
-    "to": "letga25@gmail.com",
-    "subject": "🔔 Pronote Class Notifier | New log received ! 🔔",
-    "html": True
-}
-
-# Initialize the Gmail notifier
-notifier = notifiers.get_notifier("gmail")
-
-# Custom notification handler to include HTML message
-class HTMLNotificationHandler(NotificationHandler):
-    def emit(self, record):
-        try:
-            log_entry = self.format(record)
-            if record.levelname == "CRITICAL":
-                message = f"<h2>🚨 Critical Error Alert !</h2><p><i>{log_entry}</i></p>"
-            elif record.levelname == "ERROR":
-                message = f"<h2>❌ Error Alert !</h2><p><i>{log_entry}</i></p>"
-            elif record.levelname == "WARNING":
-                message = f"<h2>⚠️ Warning Alert !</h2><p><i>{log_entry}</i></p>"
-            elif record.levelname == "INFO":
-                message = f"<h2>ℹ️ Info Alert !</h2><p><i>{log_entry}</i></p>"
-            elif record.levelname == "DEBUG":
-                message = f"<h2>🐛 Debug Alert !</h2><p><i>{log_entry}</i></p>"
-            else:
-                message = f"<p>{log_entry}</p>"
-
-            self.provider.notify(
-                message=message,
-                **self.defaults
-            )
-        except Exception:
-            self.handleError(record)
-
-# Set up a notification handler to be alerted on each error message
-handler = HTMLNotificationHandler("gmail", defaults=params)
 
 # Adding custom colors and format to the logger
 logger.remove()  # Remove any existing handlers
 logger.add(sys.stdout, level="DEBUG")  # Log to console
 logger.add("notif_system_logs.log", level="DEBUG", rotation="500 MB")  # Log to file with rotation
-logger.add(handler, level="INFO")  # Log to email for INFO level and above
 
 # Global exception handler
 def handle_exception(exc_type, exc_value, exc_traceback):
