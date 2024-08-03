@@ -1,5 +1,6 @@
 import pronotepy
 import datetime
+from datetime import timedelta
 import dotenv
 import os
 import random
@@ -151,6 +152,14 @@ async def send_average_command(ctx):
                 client.refresh()
 
 async def pronote_main_checks_loop():
+     now = datetime.datetime.now()
+     # Calculate the time to the next full minute
+     next_minute = (now + timedelta(minutes=1)).replace(second=0, microsecond=0)
+     wait_time = (next_minute - now).total_seconds()
+     logger.warning(f"Waiting for {round(wait_time, 1)} seconds until system start...")
+     await asyncio.sleep(wait_time)
+     logger.debug(f"System started ! ({datetime.datetime.now().strftime('%H:%M:%S')})")
+
      global client
      client = pronotepy.Client(login_page_link,
                               username=secured_username,
