@@ -33,7 +33,7 @@ Notifies you on your phone 5 minutes before each class.
 
 ## Instalation <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Hammer%20and%20Wrench.png" alt="Hammer and Wrench" width="25" height="25" />
 
-`Project documentaion is available [here](https://pronote-class-notifier-doc.gitbook.io/pronote-class-notifier-doc/) (French only)`
+**Project documentaion is available [here](https://pronote-class-notifier-doc.gitbook.io/pronote-class-notifier-doc/)** *(French only)*
 
 ## Roadmap <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Light%20Bulb.png" alt="Light Bulb" width="25" height="25" />
 
@@ -42,7 +42,7 @@ Notifies you on your phone 5 minutes before each class.
   - [x] Connection via an ENT
   - [ ] Connection with a QR code
   - [ ] Emojis customization
-  - [ ] Logging system
+  - [x] Logging system
  
 - **Notification System** 
   - **Global**
