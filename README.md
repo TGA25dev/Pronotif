@@ -42,7 +42,7 @@ Vous notifie sur votre téléphone 5 minutes avant chaque cours.
 
 ## Installation <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Hammer%20and%20Wrench.png" alt="Hammer and Wrench" width="25" height="25" />
 
-`Les étapes seront disponibles prochainement... ⏳`
+`La documentation du projet est disponible [ici](https://pronote-class-notifier-doc.gitbook.io/pronote-class-notifier-doc/)`
 
 ## Roadmap <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Light%20Bulb.png" alt="Light Bulb" width="25" height="25" />
 
@@ -51,7 +51,7 @@ Vous notifie sur votre téléphone 5 minutes avant chaque cours.
   - [x] Connexion via un ENT
   - [ ] Connexion avec un qr code
   - [ ] Personalisation des emojis
-  - [ ] Systeme de logs
+  - [x] Systeme de logs
  
 - **Systeme de notifications** 
   - **Global**
