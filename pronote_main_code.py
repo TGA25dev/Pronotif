@@ -16,6 +16,7 @@ import traceback
 from loguru import logger
 import notifiers
 from notifiers.logging import NotificationHandler
+import importlib
 
 config = configparser.ConfigParser(comment_prefixes=";")
 config.optionxform = str
@@ -57,6 +58,15 @@ logger.debug(f"bot_prefix is: {bot_prefix} !")
 timezone_str = config['Advanced'].get('timezone')
 timezone = pytz.timezone(timezone_str)
 logger.debug(f"timezone is: {timezone}")
+
+ent_used = config['Global'].get('ent_used')
+logger.debug(f"ent_used loaded ! (value is : {ent_used})")
+
+ent_name = config['Global'].get('ent_name')
+if ent_name is None:
+ logger.debug(f"ent_name is set to None...")
+else:
+  logger.debug(f"ent_name has been loaded !") 
 
 
 bot = commands.Bot(command_prefix={bot_prefix}, intents=discord.Intents.all())
@@ -161,9 +171,14 @@ async def pronote_main_checks_loop():
      logger.debug(f"System started ! ({datetime.datetime.now().strftime('%H:%M:%S')})")
 
      global client
-     client = pronotepy.Client(login_page_link,
-                              username=secured_username,
-                              password=secured_password)
+
+     if ent_used:
+       module = importlib.import_module("pronotepy.ent")
+       used_ent = getattr(module, ent_name, None)
+       client = pronotepy.Client(login_page_link, username=secured_username, password=secured_password, ent=used_ent)
+     else:
+       client = pronotepy.Client(login_page_link, username=secured_username, password=secured_password)
+         
 
      if client.logged_in:
         nom_utilisateur = client.info.name
