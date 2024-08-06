@@ -539,7 +539,7 @@ def save_credentials():
        with open(config_file_path, 'r', encoding='utf-8') as configfile:
         config.read_file(configfile)
 
-       if ent_connexion:
+        if ent_connexion:
          
          module = importlib.import_module("pronotepy.ent")
          used_ent = getattr(module, used_ent_name, None)
@@ -549,96 +549,103 @@ def save_credentials():
          # Modify a key in the INI file
          config['Global']['ent_used'] = "True"
          config['Global']['ent_name'] = used_ent_name
-       else:
+        else:
          client = pronotepy.Client(pronote_url, username=username, password=password)
 
          # Modify a key in the INI file
          config['Global']['ent_used'] = "False"
          config['Global']['ent_name'] = "None"
 
-       # Write the changes back to the INI file
-       with open(config_file_path, 'w', encoding='utf-8') as configfile:
-        config.write(configfile)
+        # Write the changes back to the INI file
+        with open(config_file_path, 'w', encoding='utf-8') as configfile:
+         config.write(configfile)
            
-       if client.logged_in:
-        box = CTkMessagebox(title="Succès !", message="Connexion effectuée !", icon=ok_icon_path, option_1="Parfait", master=root, width=300, height=10, corner_radius=20,sound=True)
-        box.info._text_label.configure(wraplength=450)
+        if client.logged_in:
+         box = CTkMessagebox(title="Succès !", message="Connexion effectuée !", icon=ok_icon_path, option_1="Parfait", master=root, width=300, height=10, corner_radius=20,sound=True)
+         box.info._text_label.configure(wraplength=450)
 
         
-        today = datetime.date.today()
-        fallback_dates = [
+         today = datetime.date.today()
+         fallback_dates = [
           datetime.date(2024, 5, 27),
           datetime.date(2024, 5, 28),
           datetime.date(2024, 5, 29),
           datetime.date(2024, 5, 30),
           datetime.date(2024, 5, 31)
-        ]
-        global menus
+         ]
+         global menus
 
-        dates_to_check = [today] + fallback_dates
+         dates_to_check = [today] + fallback_dates
 
-        global menus_found
-        menus_found = False
-        for date in dates_to_check:
-         try:
-          menus = client.menus(date_from=date)
-          if menus:  # If a menu is found, break out of the loop
-           menus_found = True
-           break
-         except KeyError:
-           menus_found = False 
+         global menus_found
+         menus_found = False
+         for date in dates_to_check:
+          try:
+           menus = client.menus(date_from=date)
+           if menus:  # If a menu is found, break out of the loop
+            menus_found = True
+            break
+          except KeyError:
+            menus_found = False 
          
           
-        global nom_utilisateur
-        global student_class_name
+         global nom_utilisateur
+         global student_class_name
 
-        nom_utilisateur = client.info.name
-        student_class_name = client.info.class_name
+         nom_utilisateur = client.info.name
+         student_class_name = client.info.class_name
 
-        logger.info(f'Logged in as {nom_utilisateur}')
+         logger.info(f'Logged in as {nom_utilisateur}')
 
-        # Enregistrer le nom d'utilisateur et le mot de passe dans deux fichiers .env différents
-        set_key(f"{script_directory}/Data/pronote_username.env", 'User', username)
-        set_key(f"{script_directory}/Data/pronote_password.env", 'Password', password)
+         # Enregistrer le nom d'utilisateur et le mot de passe dans deux fichiers .env différents
+         set_key(f"{script_directory}/Data/pronote_username.env", 'User', username)
+         set_key(f"{script_directory}/Data/pronote_password.env", 'Password', password)
 
-        pattern = r'\b(?:\S+\s*)+\S+\b'
-        match = re.search(pattern, nom_utilisateur)
-        global user_first_name
-        user_first_name = match.group().split()[-1] if match else None
-
-
-        root.config(cursor="arrow")
-
-        # Effacer les champs après enregistrement
-        username_entry.delete(0, 'end')
-        password_entry.delete(0, 'end')
-
-        username_label.place_forget()
-        username_entry.place_forget()
-
-        password_entry.place_forget()
-        password_label.place_forget()
-
-        save_button.place_forget()
-
-        title_label.configure(text="")
-        main_text.configure(text= "")
-
-        config_steps()
+         pattern = r'\b(?:\S+\s*)+\S+\b'
+         match = re.search(pattern, nom_utilisateur)
+         global user_first_name
+         user_first_name = match.group().split()[-1] if match else None
 
 
-       else:
-        logger.critical("Unknow error !")
-        box = CTkMessagebox(title="Erreur !", message="Une erreur inconnue est survenue...\nVeuillez réessayer plus tard.", icon=cancel_icon_path, option_1="Ok",master=root, width=300, height=10, corner_radius=20,sound=True)
-        box.info._text_label.configure(wraplength=450) 
-        root.config(cursor="arrow") 
+         root.config(cursor="arrow")
 
+         # Effacer les champs après enregistrement
+         username_entry.delete(0, 'end')
+         password_entry.delete(0, 'end')
+
+         username_label.place_forget()
+         username_entry.place_forget()
+
+         password_entry.place_forget()
+         password_label.place_forget()
+
+         save_button.place_forget()
+
+         title_label.configure(text="")
+         main_text.configure(text= "")
+
+         config_steps()
 
       except (pronotepy.CryptoError, pronotepy.ENTLoginError):
          logger.warning("Wrong credentials !")
          box = CTkMessagebox(title="Erreur !", message="Vos identifiants de connexion semblent incorrects...", icon=warning_icon_path, option_1="Réessayer",master=root, width=300, height=10, corner_radius=20,sound=True)
          box.info._text_label.configure(wraplength=450)
          password_entry.delete(0, 'end')
+         root.config(cursor="arrow")   
+
+
+      except Exception as e:
+         current_month = datetime.datetime.now().month
+         if current_month == 7 or current_month == 8:
+           
+           logger.critical(f"Unknown error ! Month is {current_month}, perhaps service closure due to summer break ?\n{e}")
+           box = CTkMessagebox(title="Erreur !", message="Une erreur inconnue est survenue...\n(Peut-être la fermeture estivale de Pronote ?)", icon=cancel_icon_path, option_1="Ok",master=root, width=400, height=10, corner_radius=20,sound=True)
+
+         else:
+            logger.critical(f"Unknown error ! Detail below :\n{e}")
+            box = CTkMessagebox(title="Erreur !", message="Une erreur inconnue est survenue...\nVeuillez réessayer plus tard.", icon=cancel_icon_path, option_1="Ok",master=root, width=300, height=10, corner_radius=20,sound=True)
+
+         box.info._text_label.configure(wraplength=450) 
          root.config(cursor="arrow")
 
 
