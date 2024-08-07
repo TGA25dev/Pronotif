@@ -50,17 +50,17 @@ topic_name = config['Global'].get('topic_name')
 logger.debug(f"topic_name is: {topic_name} !")
 
 lunch_times = {day.lower(): map(int, time.split(':')) for day, time in config['LunchTimes'].items()}
-logger.debug(f"lunch_times loaded !")
+logger.debug(f"lunch_times have been loaded !")
 
 bot_prefix = config['Advanced'].get('bot_prefix')
-logger.debug(f"bot_prefix is: {bot_prefix} !")
+logger.debug(f"bot_prefix is: ({bot_prefix}) !")
 
 timezone_str = config['Advanced'].get('timezone')
 timezone = pytz.timezone(timezone_str)
 logger.debug(f"timezone is: {timezone}")
 
 ent_used = config['Global'].get('ent_used')
-logger.debug(f"ent_used loaded ! (value is : {ent_used})")
+logger.debug(f"ent_used loaded ! (value is {ent_used})")
 
 ent_name = config['Global'].get('ent_name')
 if ent_name is None:
