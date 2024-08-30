@@ -49,7 +49,7 @@ github_repo_name = "TGA25dev/Pronote-Class-Notifier"
 
 local_paths = {
     "config": os.path.join(script_directory, "Data", "config.ini"),
-    "ico": os.path.join(script_directory, "Data", "pronote_butterfly.ico"),
+    "ico": os.path.join(script_directory, "pronote_butterfly.ico"),
     "ent_data": os.path.join(script_directory, "Data", "ent_data.json"),
     "env_p": os.path.join(script_directory, "Data", "pronote_password.env"),
     "env_u": os.path.join(script_directory, "Data", "pronote_username.env")
@@ -57,7 +57,7 @@ local_paths = {
 
 github_paths = {
     "config": "Data/config.ini",
-    "ico": "Data/pronote_butterfly.ico",
+    "ico": "pronote_butterfly.ico",
     "ent_data": "Data/ent_data.json",
     "env_p": "Data/pronote_password.env",
     "env_u": "Data/pronote_username.env"
@@ -1017,7 +1017,7 @@ root.title("Configuration Pronote Class Notifier")
 check_important_file_existence(wanted_file_type="ico")
 
 
-root.iconbitmap(f"{script_directory}/Data/pronote_butterfly.ico")
+root.iconbitmap(f"{script_directory}/pronote_butterfly.ico")
 
 ctk.set_appearance_mode("System")
 
