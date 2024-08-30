@@ -124,27 +124,27 @@ async def send_average_command(ctx):
 
     if average < 10:
        message_title = "Persévère!"
-       support_message = "📚"
+       support_message = "Tu peux le faire! 💪"
        tag_emoji = "muscle"
 
     elif average > 10 and  average <= 12:
        message_title = "Continue comme ça."
-       support_message = "Bien joué! 📝"
+       support_message = "Bien joué! 👏"
        tag_emoji = "smiley"
 
     elif average > 12 and average <= 14:
        message_title = "Super!"
-       support_message = "Tu progresses ! 📚"
+       support_message = "Tu progresses ! 📈"
        tag_emoji = "star2"
 
     elif average > 14 and average <= 16:
        message_title = "Excellent!"
-       support_message = "Tu es sur la bonne voie ! 📝"
+       support_message = "Tu es sur la bonne voie ! 🔥"
        tag_emoji = "rocket"
 
     elif average > 16:
        message_title = "Félicitations!"
-       support_message = "Tu es un exemple à suivre ! 🌟"
+       support_message = "Tu es un exemple à suivre ! 🏆"
        tag_emoji = "tada"
 
     url = f"https://ntfy.sh/{topic_name}"
@@ -432,10 +432,10 @@ async def pronote_main_checks_loop():
                 pass
                
                 await send_food_menu_notification_via_ntfy(f"Au menu: {menu_first_meal.name}, {menu_main_meal.name} (ou {other_meal.name}), {menu_side_meal.name} et {menu_dessert.name} en dessert.\nBon appétit ! 😁")
-                logger.debug(f"C'est l'heure de manger !\nAu menu: {menu_first_meal.name}, {menu_main_meal.name} (ou {other_meal.name}), {menu_side_meal.name} et {menu_dessert.name} en dessert.\nBon appétit ! 😁")
+                
               else:
                 await send_food_menu_notification_via_ntfy(f"Au menu: {menu_first_meal.name}, {menu_main_meal.name}, {menu_side_meal.name} et {menu_dessert.name} en dessert.\nBon appétit ! 😁")
-                logger.debug(f"C'est l'heure de manger !\nAu menu: {menu_first_meal.name}, {menu_main_meal.name}, {menu_side_meal.name} et {menu_dessert.name} en dessert.\nBon appétit ! 😁")
+              logger.debug("Lunch menu sent successfully !")    
               
                
         while run_main_loop is True:
