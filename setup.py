@@ -127,7 +127,7 @@ def check_important_file_existence(wanted_file_type):
           f.write("User=")
         
         logger.info(f"File ({wanted_file_type}) has been created successfully!")
-        notify("Téléchargement terminé !","Merci d'avoir patienté ! 😉", icon="https://i.postimg.cc/PJWpqSpM/ok-icon.png")   
+        notify("Téléchargement terminé !","Merci d'avoir patienté ! 🚀", icon="https://i.postimg.cc/PJWpqSpM/ok-icon.png")   
 
   else:
     logger.debug(f"File ({wanted_file_type}) exists. No action taken.")
@@ -257,8 +257,6 @@ def get_ntfy_topic():
   elif response == "Annuler":
     pass
 
-
-
 def config_steps():
   mid_canvas.place_forget()
   school_name_text.place_forget()
@@ -279,15 +277,12 @@ def config_steps():
   with open(config_file_path, 'w', encoding='utf-8') as configfile:
     config.write(configfile)
 
-  #right_text_label = ctk.CTkLabel(root, text="Vous pouvez désormais personaliser Pronote Class Notifier (certains parametres son obligatoires)")  # Adjust width as needed
-  #right_text_label.place(relx=0.75, rely=0.4, anchor="center")
-
   global tabview
   tabview = ctk.CTkTabview(master=root, height=195, width=450)
   tabview.pack(padx=20, pady=0)
 
-  tabview.add("1. ntfy")  # add tab at the end
-  tabview.add("2. Repas")  # add tab at the end
+  tabview.add("1. ntfy")
+  tabview.add("2. Repas")
   tabview.add("3. Emojis")
   tabview.add("4. Avancé")
 
@@ -567,8 +562,9 @@ def save_credentials():
         
          today = datetime.date.today()
          fallback_dates = [
-          datetime.date(2024, 5, 27),
-          datetime.date(2024, 5, 28),
+          datetime.date(2024, 4, 26),
+          datetime.date(2024, 4, 27),
+          datetime.date(2024, 4, 29),
           datetime.date(2024, 5, 29),
           datetime.date(2024, 5, 30),
           datetime.date(2024, 5, 31)
@@ -719,6 +715,9 @@ def search_school():
               "nature_uai_libe:LYCEE ENSEIGNT GENERAL ET TECHNOLOGIQUE",
               "nature_uai_libe:LYCEE POLYVALENT",
               "nature_uai_libe:LYCEE PROFESSIONNEL"
+              "nature_uai_libe:LYCEE CLIMATIQUE"
+              "nature_uai_libe:LYCEE EXPERIMENTAL"
+              "nature_uai_libe:LYCEE ENS GENERAL TECHNO PROF AGRICOLE"
           ]
         }
 
@@ -830,7 +829,7 @@ def search_school():
                
              
                title_label.configure(text="Etape 3/4")
-               main_text.configure(text=f"Connectez vous à Pronote\nà l'aide de vos indentifiants.")
+               main_text.configure(text=f"Connectez vous à Pronote\nà l'aide de vos identifiants.")
 
                def adjust_text_size(event=None):
                 # Get the current text of the label
@@ -942,7 +941,7 @@ def search_school():
                 root.config(cursor="arrow")
 
                 title_label.configure(text="Etape 3/4")
-                main_text.configure(text=f"Connectez vous à Pronote\nà l'aide de vos indentifiants.")
+                main_text.configure(text=f"Connectez vous à Pronote\nà l'aide de vos identifiants.")
 
                 def adjust_text_size(event=None):
                  # Get the current text of the label
@@ -1144,7 +1143,7 @@ main_text = ctk.CTkLabel(root, text="Recherchez ici la ville\n  de votre établi
 main_text.place(relx=0.23, rely=0.45, anchor="center")
 
 # Create city entry widget
-city_entry = ctk.CTkEntry(root, width=150)  # Adjust width as needed
+city_entry = ctk.CTkEntry(root, width=150)
 city_entry.place(relx=0.75, rely=0.4, anchor="center")
 city_entry.bind("<Return>", lambda event: search_school())
 
@@ -1166,5 +1165,5 @@ root.protocol("WM_DELETE_WINDOW", close_app)
 check_if_first_time()
 update_internet_label_state()
 
-# Lancer la boucle principale
+#Start main loop
 root.mainloop()
