@@ -52,8 +52,8 @@ Notifies you on your phone 5 minutes before each class.
 
   - **Notification Content (courses)**
     - [x] Room name
-    - [ ] Clearer subject name
-    - [ ] Agreement between subject name and determiner
+    - [x] Clearer subject name
+    - [x] Agreement between subject name and determiner
     - [ ] Improvement of random emoji system
     
 ## Screenshots <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Camera%20with%20Flash.png" alt="Camera with Flash" width="25" height="25" />

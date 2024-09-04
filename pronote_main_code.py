@@ -17,6 +17,7 @@ from loguru import logger
 import notifiers
 from notifiers.logging import NotificationHandler
 import importlib
+import json
 
 config = configparser.ConfigParser(comment_prefixes=";")
 config.optionxform = str
@@ -224,27 +225,58 @@ async def pronote_main_checks_loop():
                         class_start_time = lesson_checks.start.strftime("%H:%M")
                         canceled = lesson_checks.canceled
 
+                        # Load JSON data from files
+                        with open('Data/emoji_cours_names.json', 'r', encoding='utf-8') as file1, open('Data/subject_names_format.json', 'r', encoding='utf-8') as file2:
+                         emojis = json.load(file1)
+                         subjects = json.load(file2)
+
                         global lower_cap_subject_name
-                        lower_cap_subject_name = subject[0].capitalize() + subject[1:].lower()
+                        lower_cap_subject_name = subject[0].capitalize() + subject[1:].lower() 
 
-                        # Define preprocessed_subject_emojis dictionary
-                        preprocessed_subject_emojis = {}
+                        # Normalize function to simplify comparison
+                        def normalize(text):
+                         return text.lower().replace(' ', '').replace('-', '').replace('.', '').replace('é', 'e')
 
-                        # Iterate over the items in the SubjectEmojis section
-                        for subject, emojis_str in config['SubjectEmojis'].items():
-                         # Preprocess the subject string to have the first letter capitalized and the rest lowercase
-                         preprocessed_subject = subject[0].capitalize() + subject[1:].lower()
-                         # Store the preprocessed subject string and emojis in the new dictionary
-                         preprocessed_subject_emojis[preprocessed_subject] = emojis_str
+                        # Create a dictionary of normalized short names to emojis
+                        # Convert single emoji strings to lists for consistency
+                        normalized_emojis = {
+                          normalize(name): (emoji if isinstance(emoji, list) else [emoji])
+                          for name, emoji in emojis.items()
+                        }
 
-                        # Access the subject emojis from the preprocessed dictionary
+                        # Create a dictionary of normalized subject names
+                        normalized_subjects = {
+                         normalize(key): details
+                         for key, details in subjects.items()
+                        }
 
-                        subject_emojis = {}
+                        # Normalize lower_cap_subject_name for comparison
+                        normalized_subject_key = normalize(lower_cap_subject_name)
 
-                        for subject, emojis_str in preprocessed_subject_emojis.items():
-                         emojis = emojis_str.split(', ')  # Split the emoji string into a list
-                         subject_emojis[subject] = emojis
+                        # Find subject details from the subjects JSON
+                        if normalized_subject_key in normalized_subjects:
+                         subject_details = normalized_subjects[normalized_subject_key]
+                         name = subject_details["name"]
+                         det = subject_details["det"]
+                        else:
+                         name = lower_cap_subject_name
+                         det = "de"  # default determinant if not found
 
+                        # Find matching emoji
+                        found_emoji_list = ['📝']  # Default emoji if no match is found
+                        for short_name, emoji_list in normalized_emojis.items():
+                         if short_name in normalized_subject_key:
+                          found_emoji_list = emoji_list
+                          break
+                         
+                        # Randomly choose an emoji from the matched emoji list
+                        chosen_emoji = random.choice(found_emoji_list) 
+                      
+                        if det == "de":
+                          extra_space = " "
+                        else:
+                          extra_space = ""
+                      
                         async def send_class_canceled_message_via_ntfy(message): 
 
                          topic = topic_name 
@@ -263,17 +295,12 @@ async def pronote_main_checks_loop():
 
                          
                         if canceled:
-                            send_class_canceled_message_via_ntfy(f"Le cours de {lower_cap_subject_name} initialement prévu à {class_start_time} est annulé !")
+                            send_class_canceled_message_via_ntfy(f"Le cours {det}{extra_space}{name} initialement prévu à {class_start_time} est annulé !")
 
                         elif not canceled:
-
-                            if lower_cap_subject_name in subject_emojis:
-                             random_subject_emojis = random.choice(subject_emojis[lower_cap_subject_name])
-                            else:
-                             logger.error(f"No emojis found for subject: {lower_cap_subject_name}")
-                             random_subject_emojis = ""
                             
-                            class_time_message = f"Le cours de {lower_cap_subject_name} se fera en salle {room_name} et commencera à {class_start_time}. {random_subject_emojis}"
+                            
+                            class_time_message = f"Le cours {det}{extra_space}{name} se fera en salle {room_name} et commencera à {class_start_time}. {chosen_emoji}"
                             logger.debug(class_time_message)
                             await send_class_info_notification_via_ntfy(class_time_message)
 

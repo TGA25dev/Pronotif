@@ -61,8 +61,8 @@ Vous notifie sur votre téléphone 5 minutes avant chaque cours.
 
   - **Contenu des notifications (cours)**
     - [x] Nom de la salle
-    - [ ] Nom de matière plus clair
-    - [ ] Accord entre le nom de la matière et le déterminant
+    - [x] Nom de matière plus clair
+    - [x] Accord entre le nom de la matière et le déterminant
     - [ ] Amélioration du système d'emojis aléatoires
     
 ## Screenshots <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Camera%20with%20Flash.png" alt="Camera with Flash" width="25" height="25" />
