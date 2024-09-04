@@ -678,7 +678,7 @@ def search_school():
 
      if country_name != "France":
       city_entry.delete(0, "end")
-      box = CTkMessagebox(title="Info", message=f"Pronote Class Notifier ne peut être utilisé que dans un établissement situé en France !", icon=info_icon_path, option_1="Ok",master=root, width=350, height=10, corner_radius=20,sound=True)
+      box = CTkMessagebox(title="Info", message=f"Pour le moment Pronote Class Notifier ne peut être utilisé que dans un établissement situé en France !", icon=info_icon_path, option_1="Ok",master=root, width=350, height=10, corner_radius=20,sound=True)
       box.info._text_label.configure(wraplength=450)
       root.config(cursor="arrow")
 
@@ -733,7 +733,7 @@ def search_school():
 
           if results_number == 0:
            logger.error("No results for the city !")
-           box = CTkMessagebox(title="Aucun résultat", message="Il ne semble pas y avoir de collèges ou lycées dans cette ville...", icon=warning_icon_path, option_1="Réessayer",master=root, width=350, height=10, corner_radius=20,sound=True)
+           box = CTkMessagebox(title="Aucun résultat", message="Il ne semble pas y avoir de collèges ou lycées pris en charge dans cette ville...", icon=warning_icon_path, option_1="Réessayer",master=root, width=350, height=10, corner_radius=20,sound=True)
            box.info._text_label.configure(wraplength=450)
 
           else: 
