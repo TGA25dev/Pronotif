@@ -597,11 +597,8 @@ def save_credentials():
          set_key(f"{script_directory}/Data/pronote_username.env", 'User', username)
          set_key(f"{script_directory}/Data/pronote_password.env", 'Password', password)
 
-         pattern = r'\b(?:\S+\s*)+\S+\b'
-         match = re.search(pattern, nom_utilisateur)
          global user_first_name
-         user_first_name = match.group().split()[-1] if match else None
-
+         user_first_name = nom_utilisateur.split()[-1] if nom_utilisateur.strip() else None
 
          root.config(cursor="arrow")
 
