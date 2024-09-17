@@ -23,6 +23,7 @@ import datetime
 import traceback
 from loguru import logger
 from notifiers.logging import NotificationHandler
+from PIL import Image
 
 # Create a ConfigParser object
 config = configparser.ConfigParser()
@@ -39,11 +40,11 @@ script_directory = os.path.dirname(os.path.abspath(__file__))
 config_file_path = f"{script_directory}/Data/config.ini"
 config_file_name = "config.ini"
 
-cancel_icon_path = f"{script_directory}/Icons/cancel_icon.png"
-ok_icon_path = f"{script_directory}/Icons/ok_icon.png"
-question_icon_path = f"{script_directory}/Icons/question_icon.png"
-warning_icon_path = f"{script_directory}/Icons/warning_icon.png"
-info_icon_path = f"{script_directory}/Icons/info_icon.png"
+cancel_icon_path = f"{script_directory}/Icons/Messagebox UI/cancel_icon.png"
+ok_icon_path = f"{script_directory}/Icons/Messagebox UI/ok_icon.png"
+question_icon_path = f"{script_directory}/Icons/Messagebox UI/question_icon.png"
+warning_icon_path = f"{script_directory}/Icons/Messagebox UI/warning_icon.png"
+info_icon_path = f"{script_directory}/Icons/Messagebox UI/info_icon.png"
 
 github_repo_name = "TGA25dev/Pronote-Class-Notifier"
 
@@ -837,8 +838,28 @@ def search_school():
                 font_size = max(10, 12 - text_length // 10)  # Adjust the formula as needed
                 # Update the font size of the label
                 school_name_text.configure(font=("Roboto", font_size))
-                
 
+               global password_visible
+               password_visible = None
+               # Function to toggle the password visibility
+               def toggle_password(event=None):
+                    global password_visible
+                    if password_visible:
+                        logger.debug("Password has been hidden !") # Debugging line
+                        password_entry.configure(show="*")  # Hide password
+                        password_eye_button.configure(image=closed_eye_image)  # Change the eye icon to closed
+                        
+                        password_visible = False
+                    else:
+                        logger.debug("Password is being shown !")  # Debugging line
+                        password_entry.configure(show="")  # Show password
+                        password_eye_button.configure(image=open_eye_image)  # Change the eye icon to open
+                        password_visible = True
+
+               # Load the images for the eye icons (ensure correct paths to your image files)
+               closed_eye_image = ctk.CTkImage(light_image=Image.open("Icons/Global UI/closed_eye_light.png").resize((24, 24)), dark_image=Image.open("Icons/Global UI/closed_eye_dark.png").resize((24, 24)))
+               open_eye_image = ctk.CTkImage(light_image=Image.open("Icons/Global UI/open_eye_light.png").resize((24, 24)), dark_image=Image.open("Icons/Global UI/open_eye_dark.png").resize((24, 24)))
+                
                global school_name_text
                school_name_text = ctk.CTkLabel(root, text=f"{choice}", font=(default_subtitle_font))
                school_name_text.place(relx=0.23, rely=0.65, anchor="center")
@@ -849,27 +870,34 @@ def search_school():
                # Création des labels
                global username_label
                username_label = ctk.CTkLabel(root, text="Identifiant", font=(default_subtitle_font))
-               username_label.place(relx=0.75, rely=0.23, anchor="center")
+               username_label.place(relx=0.71, rely=0.23, anchor="center")
 
                global password_label
                password_label = ctk.CTkLabel(root, text="Mot de passe", font=(default_subtitle_font))
-               password_label.place(relx=0.75, rely=0.53, anchor="center")
+               password_label.place(relx=0.71, rely=0.52, anchor="center")
 
                # Création des champs de saisie
                global username_entry
-               username_entry = ctk.CTkEntry(root, width=150)
-               username_entry.place(relx=0.75, rely=0.35, anchor="center")
+               username_entry = ctk.CTkEntry(root, width=150, placeholder_text="Nom d'utilisateur")
+               username_entry.place(relx=0.71, rely=0.35, anchor="center")
 
                global password_entry
-               password_entry = ctk.CTkEntry(root, width=150, show="*")
-               password_entry.place(relx=0.75, rely=0.65, anchor="center")
+               password_entry = ctk.CTkEntry(root, width=150, height=35, show="*", placeholder_text="Mot de passe")
+               password_entry.place(relx=0.71, rely=0.65, anchor="center")
                password_entry.bind("<Return>", lambda event: save_credentials())
 
+               # Bouton pour afficher/masquer le mot de passe avec événements de clic
+               global password_eye_button
+               password_eye_button = ctk.CTkButton(root,width=1, height=10 ,image=closed_eye_image, text="", fg_color=["#f9f9fa", "#343638"], bg_color=["#f9f9fa", "#343638"], hover_color=["#f9f9fa", "#343638"])
+               password_eye_button.place(relx=0.85, rely=0.65, anchor="center")
 
-               # Création du bouton d'enregistrement
+               # Bind left mouse button click to toggle password visibility
+               password_eye_button.bind("<Button-1>", toggle_password)
+                                
+               # Create the save button with the lock icon
                global save_button
                save_button = ctk.CTkButton(root, text="Connexion", command=save_credentials)
-               save_button.place(relx=0.75, rely=0.83, anchor="center")
+               save_button.place(relx=0.71, rely=0.83, anchor="center")
 
              else:
 
