@@ -1,6 +1,7 @@
 import customtkinter as ctk
 from customtkinter import *
 from CTkMessagebox import CTkMessagebox
+from CTkToolTip import *
 import pronotepy
 import requests
 from geopy.geocoders import Nominatim
@@ -300,6 +301,12 @@ def config_steps():
   ntfy_topic_name_entry.place(relx=0.5, rely=0.5, anchor="center")
   ntfy_topic_name_entry.bind("<Return>", lambda event: get_ntfy_topic())
 
+  need_help_icon = ctk.CTkImage(light_image=Image.open("Icons/Global UI/need_help_light.png").resize((24, 24)), dark_image=Image.open("Icons/Global UI/need_help_dark.png").resize((24, 24)))
+  need_help_button = ctk.CTkButton(master=tabview.tab("1. ntfy"), image=need_help_icon, text="", width=1, height=10, fg_color=["#dbdbdb", "#2b2b2b"], bg_color=["#dbdbdb", "#2b2b2b"], hover_color=["#dbdbdb", "#2b2b2b"], corner_radius=10)
+  need_help_button.place(relx=0.84, rely=0.5, anchor="center")
+
+  need_help_tooltip = CTkToolTip(need_help_button, message="Vous ne savez pas quoi ecrire ici ?\nConsultez la documentation !", delay=0.3, alpha=0.8, wraplength=450, justify="center", font=default_credit_font)
+
   # Function to enable the button if entry is not empty
   def enable_button(event):
     if ntfy_topic_name_entry.get() and ntfy_topic_name_entry.get() != "mon-topic-ntfy":
@@ -314,7 +321,7 @@ def config_steps():
   ntfy_topic_name_entry.bind("<KeyRelease>", enable_button)
 
   global ntfy_topic_name_button
-  ntfy_topic_name_button = ctk.CTkButton(master=tabview.tab("1. ntfy"), text="Valider",command=get_ntfy_topic, state="disabled", text_color="grey")
+  ntfy_topic_name_button = ctk.CTkButton(master=tabview.tab("1. ntfy"), text="Valider",command=get_ntfy_topic, state="disabled", text_color="grey", corner_radius=10)
   ntfy_topic_name_button.place(relx=0.5, rely=0.75, anchor="center")
 
   #TAB 2 LUNCH TIMES
@@ -422,8 +429,10 @@ def config_steps():
         labels[days[current_day_index]].place(relx=0.35, rely=0.3)
         scales[days[current_day_index]].place(relx=0.5, rely=0.5, anchor="center")
 
+        submit_button_icon = ctk.CTkImage(light_image=Image.open("Icons/Global UI/save_meal_def.png").resize((24, 24)))
+
         # Create the submit button
-        submit_button = ctk.CTkButton(master=tabview.tab("2. Repas"), text="Enregistrer", command=submit_lunch_time)
+        submit_button = ctk.CTkButton(master=tabview.tab("2. Repas"), text="Enregistrer", image=submit_button_icon, compound="right", command=submit_lunch_time, corner_radius=10)
         submit_button.place(relx=0.5, rely=0.8, anchor="center")
   #TAB 3 EMOJIS
 
@@ -510,7 +519,7 @@ def config_steps():
   combo_menu.place_forget()  # Initially hidden
 
   # Add a save button
-  save_button = ctk.CTkButton(master=tabview.tab("4. Avancé"), text="Valider", command=save_selection)
+  save_button = ctk.CTkButton(master=tabview.tab("4. Avancé"), text="Valider", command=save_selection, corner_radius=10)
   save_button.place(relx=0.5, rely=0.8, anchor="center")
 
 
@@ -888,7 +897,7 @@ def search_school():
 
                # Bouton pour afficher/masquer le mot de passe avec événements de clic
                global password_eye_button
-               password_eye_button = ctk.CTkButton(root,width=1, height=10 ,image=closed_eye_image, text="", fg_color=["#f9f9fa", "#343638"], bg_color=["#f9f9fa", "#343638"], hover_color=["#f9f9fa", "#343638"])
+               password_eye_button = ctk.CTkButton(root,width=1, height=10 ,image=closed_eye_image, text="", fg_color=["#f9f9fa", "#343638"], bg_color=["#f9f9fa", "#343638"], hover_color=["#f9f9fa", "#343638"], corner_radius=10)
                password_eye_button.place(relx=0.85, rely=0.65, anchor="center")
 
                # Bind left mouse button click to toggle password visibility
@@ -896,7 +905,7 @@ def search_school():
                                 
                # Create the save button with the lock icon
                global save_button
-               save_button = ctk.CTkButton(root, text="Connexion", command=save_credentials)
+               save_button = ctk.CTkButton(root, text="Connexion", command=save_credentials, corner_radius=10, width=135, height=23)
                save_button.place(relx=0.71, rely=0.83, anchor="center")
 
              else:
@@ -1000,7 +1009,7 @@ def search_school():
                 password_entry.place(relx=0.75, rely=0.65, anchor="center")
 
                 # Création du bouton d'enregistrement
-                save_button = ctk.CTkButton(root, text="Connexion", command=save_credentials)
+                save_button = ctk.CTkButton(root, text="Connexion", command=save_credentials, corner_radius=10)
                 save_button.place(relx=0.75, rely=0.83, anchor="center")
 
                  
@@ -1172,9 +1181,11 @@ city_entry = ctk.CTkEntry(root, width=150)
 city_entry.place(relx=0.75, rely=0.4, anchor="center")
 city_entry.bind("<Return>", lambda event: search_school())
 
+search_icon = ctk.CTkImage(light_image=Image.open("Icons/Global UI/search_def.png").resize((48, 48)))
+
 # Create search button
 global search_button
-search_button = ctk.CTkButton(root, text="Chercher", command=search_school) 
+search_button = ctk.CTkButton(root, text="Chercher", command=search_school, image=search_icon, compound="right", corner_radius=10) 
 search_button.place(relx=0.75, rely=0.6, anchor="center")
 
 #Create internet status label
@@ -1182,7 +1193,7 @@ internet_status_label = ctk.CTkLabel(root, text="Checking connection...")
 internet_status_label.place(relx=0.75, rely=0.8, anchor="center")
 
 #Create close button
-close_button = ctk.CTkButton(root, text="Fermer",command=close_app, width=15, hover_color="red")
+close_button = ctk.CTkButton(root, text="Fermer",command=close_app, width=15, corner_radius=10, fg_color="#FF6347", hover_color="#FF4500")
 close_button.place(relx=0.01, rely=0.98, anchor="sw")
 
 root.protocol("WM_DELETE_WINDOW", close_app)
