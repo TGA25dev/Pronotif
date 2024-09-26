@@ -1,6 +1,6 @@
 # ✨ Nouvelle Pull Request
 
-Proposez ici vos modifications pour ameliorer Pronote Class Notifier
+Proposez ici vos modifications pour ameliorer Pronote Class Notifier 🔔
 
 ## Checklist d'avant pull request
 
