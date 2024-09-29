@@ -27,11 +27,11 @@ except Exception as e:
   time.sleep(2)
   sys.exit(1)
 
-dotenv.load_dotenv("Data/pronote_username.env")
+dotenv.load_dotenv("Data/pronote_user.env")
 secured_username = os.getenv("User")
 logger.debug("Pronote username has been loaded.")
 
-dotenv.load_dotenv("Token/pronote_password.env")
+dotenv.load_dotenv("Data/pronote_password.env")
 secured_password = os.getenv("Password")
 logger.debug("Pronote password has been loaded.")
 
