@@ -27,7 +27,7 @@ except Exception as e:
   time.sleep(2)
   sys.exit(1)
 
-dotenv.load_dotenv("Token/pronote_user.env")
+dotenv.load_dotenv("Data/pronote_username.env")
 secured_username = os.getenv("User")
 logger.debug("Pronote username has been loaded.")
 
@@ -81,17 +81,17 @@ def handle_exception(exc_type, exc_value, exc_traceback):
 sys.excepthook = handle_exception
 
 async def pronote_main_checks_loop():
-  now = datetime.datetime.now()
+  now = datetime.datetime.now(timezone)
   # Calculate the time to the next full minute
   next_minute = (now + timedelta(minutes=1)).replace(second=0, microsecond=0)
   wait_time = (next_minute - now).total_seconds()
   logger.warning(f"Waiting for {round(wait_time, 1)} seconds until system start...")
   await asyncio.sleep(wait_time)
-  logger.debug(f"System started ! ({datetime.datetime.now().strftime('%H:%M:%S')})")
+  logger.debug(f"System started ! ({datetime.datetime.now(timezone).strftime('%H:%M:%S')})")
 
   global client
 
-  if ent_used:
+  if ent_used == "True":
     module = importlib.import_module("pronotepy.ent")
     used_ent = getattr(module, ent_name, None)
     client = pronotepy.Client(login_page_link, username=secured_username, password=secured_password, ent=used_ent)
@@ -106,7 +106,7 @@ async def pronote_main_checks_loop():
       global class_check_print_flag
 
       today = datetime.date.today()
-      other_day = today + datetime.timedelta(days=1)
+      #other_day = today + datetime.timedelta(days=3)
       lesson_checker = client.lessons(date_from=today)  # CHANGE TO FAKE OR REAL !!
 
       if not lesson_checker:
