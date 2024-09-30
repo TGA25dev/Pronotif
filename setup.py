@@ -2,15 +2,19 @@ import customtkinter as ctk
 from customtkinter import *
 from CTkMessagebox import CTkMessagebox
 from CTkToolTip import *
+from hPyT import *
+import winsound
 import pronotepy
 import requests
 from geopy.geocoders import Nominatim
+from timezonefinder import TimezoneFinder
+import time
+import pytz
+import datetime
 from dotenv import set_key
 import re
 import sys
-import time
 import json
-from hPyT import *
 import importlib
 import os
 import webbrowser
@@ -19,14 +23,12 @@ import base64
 from win11toast import notify
 import shutil
 import subprocess
-import winsound
-import datetime
 import traceback
+import random
 from loguru import logger
-from notifiers.logging import NotificationHandler
 from PIL import Image
 
-# Create a ConfigParser object
+
 config = configparser.ConfigParser()
 
 default_title_font = "Roboto", 17, "bold"
