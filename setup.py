@@ -31,6 +31,7 @@ from PIL import Image
 
 config = configparser.ConfigParser()
 
+default_font_name = "Roboto"
 default_title_font = "Roboto", 17, "bold"
 default_subtitle_font = "Roboto", 12 
 default_text_font = "Roboto", 13
@@ -74,13 +75,13 @@ logger.add("setup_wizard_logs.log", level="DEBUG", rotation="500 MB")  # Log to 
 
 # Global exception handler
 def handle_exception(exc_type, exc_value, exc_traceback):
-    if issubclass(exc_type, KeyboardInterrupt):
-        sys.__excepthook__(exc_type, exc_value, exc_traceback)
-        return
-    logger.critical(
-        f"Uncaught exception: {exc_value}\n"
-        f"Traceback: {''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))}"
-    )
+  if issubclass(exc_type, KeyboardInterrupt):
+    sys.__excepthook__(exc_type, exc_value, exc_traceback)
+    return
+  logger.critical(
+    f"Uncaught exception: {exc_value}\n"
+    f"Traceback: {''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))}"
+  )
 
 sys.excepthook = handle_exception
 
@@ -329,7 +330,7 @@ def config_steps():
   #TAB 2 LUNCH TIMES
          
   if not menus_found:
-    config_tab_step2_text = ctk.CTkLabel(master=tabview.tab("2. Repas"), text="Votre établissement ne semble pas avoir défini\nle menu de la cantine dans Pronote...\n\nPassez cette étape.")
+    config_tab_step2_text = ctk.CTkLabel(master=tabview.tab("2. Repas"), text="Votre établissement ne semble pas avoir défini\nle menu de la cantine dans Pronote !\n\nPassez cette étape.")
     config_tab_step2_text.place(relx=0.5, rely=0.5, anchor="center")
 
     globals()['config_tab2_approved'] = True
@@ -380,7 +381,7 @@ def config_steps():
             submit_button.configure(state="disabled", text_color="grey")
             label.place_forget()
             config_tab_step2_text.configure(text="Vos paramètres ont étés enregistrés !\nPassez à la prochaine étape.")
-            logger.debug(f"Lunch times submitted:\n{lunch_times}")
+            logger.debug(f"Lunch times submitted !")
 
             french_to_english = {
                 'lundi': 'Monday',
