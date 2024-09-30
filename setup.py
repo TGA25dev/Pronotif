@@ -29,6 +29,7 @@ from loguru import logger
 from PIL import Image
 
 
+# Create a ConfigParser object
 config = configparser.ConfigParser()
 
 default_font_name = "Roboto"
@@ -85,6 +86,11 @@ def handle_exception(exc_type, exc_value, exc_traceback):
 
 sys.excepthook = handle_exception
 
+class Config_Data:
+    def __init__(self):
+        self.pronote_url = None
+config_data = Config_Data()
+
 #wanted file type can be : ico, config, ent_data, pronote_password or pronote_username
 
 def check_important_file_existence(wanted_file_type):
@@ -136,6 +142,12 @@ def check_important_file_existence(wanted_file_type):
 
   else:
     logger.debug(f"File ({wanted_file_type}) exists. No action taken.")
+
+def get_timezone(true_city_geocode):
+  tf = TimezoneFinder()
+  timezone_str = tf.timezone_at(lng=true_city_geocode.longitude, lat=true_city_geocode.latitude)
+  global automatic_school_timezone
+  automatic_school_timezone = pytz.timezone(timezone_str)
 
 
 countdown_seconds = 20  # Define the countdown_seconds variable outside the function
@@ -460,7 +472,7 @@ def config_steps():
      config.read_file(configfile)
 
     # Modify a key in the INI file
-    config['Advanced']['timezone'] = selected_timezone
+    config['Advanced']['timezone'] = f"{selected_timezone}"
 
     # Write the changes back to the INI file
     with open(config_file_path, 'w', encoding='utf-8') as configfile:
@@ -470,50 +482,49 @@ def config_steps():
     check_all_steps_completed()
 
     
-
   def switch_toggled():
-    if switch_var.get() == "on":
-        combo_menu.place_forget()
-    else:
-        combo_menu.place(relx=0.5, rely=0.55, anchor="center")
-
+      if switch_var.get() == "off":
+          switch.configure(text="Manuel (déconseillé !)")
+          combo_menu.place(relx=0.5, rely=0.55, anchor="center")
+      else:
+          switch.configure(text="Automatique (par défaut)")
+          combo_menu.place_forget()
+  
   def save_selection():
-    global selected_timezone
-    if switch_var.get() == "off":
-        selected_option = combo_menu.get()
-        if selected_option == "":
-         logger.error("Value cannot be None !")
-         box = CTkMessagebox(title="Erreur !", message="Vous devez choisir une valeur du menu avant de valider !", icon=warning_icon_path, option_1="Réessayer",master=root, width=350, height=10, corner_radius=20,sound=True)
-         box.info._text_label.configure(wraplength=450)
-
-        else:
-          if selected_option == "UTC":
-           selected_timezone = "UTC"
-          else: 
-           sign = selected_option[3]
-           offset = selected_option[4:]
-
-           # Invert the sign for the Etc/GMT format
-           if sign == '+':
-            etc_gmt_offset = f"-{offset}"
-           elif sign == '-':
-            etc_gmt_offset = f"+{offset}"
-    
-           selected_timezone = f"Etc/GMT{etc_gmt_offset}"
-           logger.debug(f"New timezone has been selected : {selected_timezone}")
+      global selected_timezone
+      if switch_var.get() == "off":
+          selected_option = combo_menu.get()
+          if selected_option == "":
+              logger.error("Value cannot be None !")
+              box = CTkMessagebox(title="Erreur !", message="Vous devez choisir une valeur du menu avant de valider !", icon=warning_icon_path, option_1="Réessayer", master=root, width=350, height=10, corner_radius=20, sound=True)
+              box.info._text_label.configure(wraplength=450)
+          else:
+              if selected_option == "UTC":
+                  selected_timezone = "UTC"
+              else:
+                  sign = selected_option[3]
+                  offset = selected_option[4:]
+  
+                  # Invert the sign for the Etc/GMT format
+                  if sign == '+':
+                      etc_gmt_offset = f"-{offset}"
+                  elif sign == '-':
+                      etc_gmt_offset = f"+{offset}"
+  
+                  selected_timezone = f"Etc/GMT{etc_gmt_offset}"
+                  logger.debug(f"New timezone has been selected : {selected_timezone}")
+              set_config_file_advanced()
+      else:
+          selected_timezone = automatic_school_timezone  # Use the automatic timezone
+          logger.debug("Default timezone has been selected !")
           set_config_file_advanced()
-    else:
-        
-        selected_timezone = "Europe/Paris"
-        logger.debug("Default timezone has been selected !")
-        set_config_file_advanced()
-
+  
   config_tab_step4_text = ctk.CTkLabel(master=tabview.tab("4. Avancé"), text="Au besoin changez le fuseau horaire utilisé.")
   config_tab_step4_text.place(relx=0.5, rely=0.15, anchor="center")
-
+  
   # Add a switch (CTkSwitch)
   switch_var = ctk.StringVar(value="on")  # Set the switch to be enabled by default
-  switch = ctk.CTkSwitch(master=tabview.tab("4. Avancé"), text="France (par défaut)", variable=switch_var, onvalue="on", offvalue="off", command=switch_toggled)
+  switch = ctk.CTkSwitch(master=tabview.tab("4. Avancé"), text="Automatique (par défaut)", variable=switch_var, onvalue="on", offvalue="off", command=switch_toggled)
   switch.place(relx=0.5, rely=0.35, anchor="center")
 
   # Add a combobox
@@ -522,7 +533,7 @@ def config_steps():
   combo_menu.place_forget()  # Initially hidden
 
   # Add a save button
-  save_button = ctk.CTkButton(master=tabview.tab("4. Avancé"), text="Valider", command=save_selection, corner_radius=10)
+  save_button = ctk.CTkButton(master=tabview.tab("4. Avancé"), text="Enregistrer", command=save_selection, corner_radius=10)
   save_button.place(relx=0.5, rely=0.8, anchor="center")
 
 
@@ -552,13 +563,13 @@ def save_credentials():
          module = importlib.import_module("pronotepy.ent")
          used_ent = getattr(module, used_ent_name, None)
 
-         client = pronotepy.Client(pronote_url, username=username, password=password, ent=used_ent)
+         client = pronotepy.Client(config_data.pronote_url, username=username, password=password, ent=used_ent)
 
          # Modify a key in the INI file
          config['Global']['ent_used'] = "True"
          config['Global']['ent_name'] = used_ent_name
         else:
-         client = pronotepy.Client(pronote_url, username=username, password=password)
+         client = pronotepy.Client(config_data.pronote_url, username=username, password=password)
 
          # Modify a key in the INI file
          config['Global']['ent_used'] = "False"
@@ -567,35 +578,42 @@ def save_credentials():
         # Write the changes back to the INI file
         with open(config_file_path, 'w', encoding='utf-8') as configfile:
          config.write(configfile)
-           
+            
         if client.logged_in:
          box = CTkMessagebox(title="Succès !", message="Connexion effectuée !", icon=ok_icon_path, option_1="Parfait", master=root, width=300, height=10, corner_radius=20,sound=True)
          box.info._text_label.configure(wraplength=450)
 
-        
+         # Get today's date
          today = datetime.date.today()
-         fallback_dates = [
-          datetime.date(2024, 4, 26),
-          datetime.date(2024, 4, 27),
-          datetime.date(2024, 4, 29),
-          datetime.date(2024, 5, 29),
-          datetime.date(2024, 5, 30),
-          datetime.date(2024, 5, 31)
-         ]
+
+         # Automatically determine the start date (e.g., 30 days before today)
+         days_back = 30  # Number of days to go back
+         start_date = today - datetime.timedelta(days=days_back)
+
+         # Generate a list of weekdays (excluding Saturdays and Sundays) between start_date and today
+         weekdays = []
+         current_date = start_date
+         while current_date <= today:
+              if current_date.weekday() < 5:  # Monday to Friday (0=Monday, 4=Friday)
+                  weekdays.append(current_date)
+              current_date += datetime.timedelta(days=1)
+
+         # Randomly choose some days from the weekdays list
+         fallback_dates = random.sample(weekdays, k=7)  # Choose 7 random dates
          global menus
 
-         dates_to_check = [today] + fallback_dates
+         dates_to_check = [today] + fallback_dates #
 
          global menus_found
          menus_found = False
-         for date in dates_to_check:
+         for date in dates_to_check: 
           try:
            menus = client.menus(date_from=date)
            if menus:  # If a menu is found, break out of the loop
-            menus_found = True
+            menus_found = True # Set the flag to True
             break
           except KeyError:
-            menus_found = False 
+            menus_found = False # If no menu is found, set the flag to False
          
           
          global nom_utilisateur
@@ -630,6 +648,11 @@ def save_credentials():
          title_label.configure(text="")
          main_text.configure(text= "")
 
+         password_eye_button.place_forget()
+
+         if country_and_city_label is not None: # If the label exists
+          country_and_city_label.place_forget()
+
          config_steps()
 
       except (pronotepy.CryptoError, pronotepy.ENTLoginError):
@@ -654,7 +677,266 @@ def save_credentials():
          box.info._text_label.configure(wraplength=450) 
          root.config(cursor="arrow")
 
+def login_step(choice, international_use):
+  pronote_url = config_data.pronote_url
+    
+  check_important_file_existence(wanted_file_type="config")
 
+  # Read the INI file with the appropriate encoding
+  with open(config_file_path, 'r', encoding='utf-8') as configfile:
+    config.read_file(configfile)
+
+  config["Global"]["login_page_link"] = pronote_url
+
+  # Write the changes back to the INI file
+  with open(config_file_path, 'w', encoding='utf-8') as configfile:
+    config.write(configfile) 
+
+  pronote_use = True
+  pronote_use_msg = None
+  try:
+    response = requests.get(pronote_url, allow_redirects=False)
+
+  except requests.exceptions.ConnectionError:
+    pronote_use = False
+    pronote_use_msg = "DNS Error"
+
+
+  except Exception as e:
+
+    pronote_use_msg = str(e)
+
+    pronote_use = False
+
+  # Handle any other unexpected errors  
+  if pronote_use and not pronote_use_msg and response.status_code == 200:
+    logger.info(f"{choice} ({true_city_name}) uses Pronote !")
+
+    global used_ent_name
+    used_ent_name = None
+
+    global ent_connexion
+    ent_connexion = False
+
+    if international_use:
+       manual_pronote_url_entry.place_forget()
+       maunual_pronote_url_button.place_forget()
+    else:   
+     choice_menu.place_forget()
+     
+    root.config(cursor="arrow")
+    
+    title_label.configure(text="Etape 3/4")
+    main_text.configure(text=f"Connectez vous à Pronote\nà l'aide de vos identifiants.")
+
+    def adjust_text_size(event=None):
+      # Get the current text of the label
+      text = school_name_text.cget("text")
+      # Calculate the length of the text
+      text_length = len(text)
+      # Adjust font size based on text length
+      font_size = max(10, 12 - text_length // 10)  # Adjust the formula as needed
+      # Update the font size of the label
+      school_name_text.configure(font=("Roboto", font_size))
+
+    global password_visible
+    password_visible = None
+    # Function to toggle the password visibility
+    def toggle_password(event=None):
+          global password_visible
+          if password_visible:
+              logger.debug("Password has been hidden !") # Debugging line
+              password_entry.configure(show="*")  # Hide password
+              password_eye_button.configure(image=closed_eye_image)  # Change the eye icon to closed
+              
+              password_visible = False
+          else:
+              logger.debug("Password is being shown !")  # Debugging line
+              password_entry.configure(show="")  # Show password
+              password_eye_button.configure(image=open_eye_image)  # Change the eye icon to open
+              password_visible = True
+
+    # Load the images for the eye icons (ensure correct paths to your image files)
+    closed_eye_image = ctk.CTkImage(light_image=Image.open("Icons/Global UI/closed_eye_light.png").resize((24, 24)), dark_image=Image.open("Icons/Global UI/closed_eye_dark.png").resize((24, 24)))
+    open_eye_image = ctk.CTkImage(light_image=Image.open("Icons/Global UI/open_eye_light.png").resize((24, 24)), dark_image=Image.open("Icons/Global UI/open_eye_dark.png").resize((24, 24)))
+      
+    global school_name_text
+    school_name_text = ctk.CTkLabel(root, text=f"{choice}", font=(default_subtitle_font))
+    school_name_text.place(relx=0.23, rely=0.65, anchor="center")
+
+    # Bind the label to the adjust_text_size function
+    school_name_text.bind("<Configure>", adjust_text_size)
+
+    # Création des labels
+    global username_label
+    username_label = ctk.CTkLabel(root, text="Identifiant", font=(default_subtitle_font))
+    username_label.place(relx=0.71, rely=0.23, anchor="center")
+
+    global password_label
+    password_label = ctk.CTkLabel(root, text="Mot de passe", font=(default_subtitle_font))
+    password_label.place(relx=0.71, rely=0.52, anchor="center")
+
+    # Création des champs de saisie
+    global username_entry
+    username_entry = ctk.CTkEntry(root, width=150, placeholder_text="Nom d'utilisateur")
+    username_entry.place(relx=0.71, rely=0.35, anchor="center")
+
+    global password_entry
+    password_entry = ctk.CTkEntry(root, width=150, height=35, show="*", placeholder_text="Mot de passe")
+    password_entry.place(relx=0.71, rely=0.65, anchor="center")
+    password_entry.bind("<Return>", lambda event: save_credentials())
+
+    # Bouton pour afficher/masquer le mot de passe avec événements de clic
+    global password_eye_button
+    password_eye_button = ctk.CTkButton(root,width=1, height=10 ,image=closed_eye_image, text="", fg_color=["#f9f9fa", "#343638"], bg_color=["#f9f9fa", "#343638"], hover_color=["#f9f9fa", "#343638"], corner_radius=10)
+    password_eye_button.place(relx=0.85, rely=0.65, anchor="center")
+
+    # Bind left mouse button click to toggle password visibility
+    password_eye_button.bind("<Button-1>", toggle_password)
+                      
+    # Create the save button with the lock icon
+    global save_button
+    save_button = ctk.CTkButton(root, text="Connexion", command=save_credentials, corner_radius=10, width=135, height=23)
+    save_button.place(relx=0.71, rely=0.83, anchor="center")
+
+  else:
+
+    if pronote_use_msg == "DNS Error":
+      logger.warning(f"{choice} ({true_city_name}) doesn't seem to use Pronote... See below\nWebsite {pronote_url} does not exists. {pronote_use_msg}")
+      box = CTkMessagebox(title="Aucun résultat", message="Votre établissement ne semble pas utiliser Pronote.", icon=warning_icon_path, option_1="Ok",master=root, width=350, height=10, corner_radius=20,sound=True)
+      box.info._text_label.configure(wraplength=450)
+      root.config(cursor="arrow")
+
+    elif response != 202 and not pronote_use_msg:
+
+      api_response = { 
+      "region": f"{region_name}",
+      "departement": f"{departement_code}",
+      "type": f"{school_type}"
+      }
+
+      check_important_file_existence(wanted_file_type="ent_data")
+
+      # Load the JSON file
+      with open(f"{script_directory}/Data/ent_data.json", 'r') as file:
+        data = json.load(file)
+
+      # Count the number of correspondences between the API response and each option except variable_name
+      correspondence_counts = {}
+      for option_key, option_value in data.items():
+        # Count correspondences for all options except variable_name
+        count = sum(api_response[arg] == option_value[arg] for arg in api_response.keys())
+
+      # Check if any of the departments match
+      option_departements = option_value["departement"]
+      if isinstance(option_departements, list):
+
+        departement_count = any(dept in api_response["departement"] for dept in option_departements)
+
+      else:
+        # Split the department string into individual codes
+        option_departements = option_departements.split(", ")
+        # Check if any of the individual departments match
+        departement_count = any(dept in api_response["departement"] for dept in option_departements)
+
+      type_match_lycee = False
+      if api_response["type"].startswith("LYCEE") and option_value["type"] == "LYCEE":
+        type_match_lycee = True
+
+      type_match_clg = False
+      if api_response["type"].startswith("COLLEGE"):
+        type_match_clg = True 
+
+      correspondence_counts[option_key] = count + departement_count + type_match_lycee + type_match_clg
+
+      # Choose the option with the highest correspondence
+      chosen_option = max(correspondence_counts, key=correspondence_counts.get)
+
+      # Print the chosen option key and its associated variable_name
+      
+      used_ent_name = data[chosen_option]["variable_name"]
+
+      # ENT Connexion
+
+      logger.debug(f"{choice} ({true_city_name}) uses Pronote (ENT Conexion: {used_ent_name}) !")
+
+      ent_connexion = True
+
+      choice_menu.place_forget()
+      root.config(cursor="arrow")
+
+      title_label.configure(text="Etape 3/4")
+      main_text.configure(text=f"Connectez vous à Pronote\nà l'aide de vos identifiants.")
+
+      def adjust_text_size(event=None):
+        # Get the current text of the label
+        text = school_name_text.cget("text")
+        # Calculate the length of the text
+        text_length = len(text)
+        # Adjust font size based on text length
+        font_size = max(10, 12 - text_length // 10)  # Adjust the formula as needed
+        # Update the font size of the label
+        school_name_text.configure(font=("Roboto", font_size))
+      
+    
+      school_name_text = ctk.CTkLabel(root, text=f"{choice}", font=(default_subtitle_font))
+      school_name_text.place(relx=0.23, rely=0.65, anchor="center")
+
+      # Bind the label to the adjust_text_size function
+      school_name_text.bind("<Configure>", adjust_text_size)
+
+      # Création des labels
+      username_label = ctk.CTkLabel(root, text="Identifiant", font=(default_subtitle_font)) #CHANGE ALL FONTS TO ROBOTO (BOLD)
+      username_label.place(relx=0.75, rely=0.23, anchor="center")
+
+      password_label = ctk.CTkLabel(root, text="Mot de passe", font=(default_subtitle_font))
+      password_label.place(relx=0.75, rely=0.53, anchor="center")
+
+      # Création des champs de saisie
+      username_entry = ctk.CTkEntry(root, width=150)
+      username_entry.place(relx=0.75, rely=0.35, anchor="center")
+
+      password_entry = ctk.CTkEntry(root, width=150, show="*")
+      password_entry.place(relx=0.75, rely=0.65, anchor="center")
+
+      # Création du bouton d'enregistrement
+      save_button = ctk.CTkButton(root, text="Connexion", command=save_credentials, corner_radius=10)
+      save_button.place(relx=0.75, rely=0.83, anchor="center")
+
+      
+    else:
+      logger.critical(response)
+      logger.critical(f"Unknown error for {pronote_url}\nError detail : {pronote_use_msg}")
+      box = CTkMessagebox(title="Erreur", message="Une erreur inconnue est survenue.\nMerci de réessayer plus tard.", icon=cancel_icon_path, option_1="Ok",master=root, width=350, height=10, corner_radius=20,sound=True)
+      box.info._text_label.configure(wraplength=450)
+
+
+def process_manual_login_url():
+  manual_login_url = manual_pronote_url_entry.get()
+
+  # Define the patterns for the two URL formats
+  manual_login_url_patter1 = r'^https://[a-zA-Z0-9.-]+\.index-education\.net$'
+  manual_login_url_patter2 = r'^[a-zA-Z0-9.-]+\.index-education\.net$'
+
+  # Check if the URL matches one of the patterns
+  if re.match(manual_login_url_patter1, manual_login_url): #If the URL matches the first pattern
+        
+        global manual_pronote_url
+        manual_pronote_url = manual_login_url + "/pronote/eleve.html" #Add the pronote part to the URL
+        config_data.pronote_url = manual_pronote_url #Save the URL in the config_data object
+        
+        login_step(choice="", international_use=True) #Call the login_step function with the manual URL
+
+  elif re.match(manual_login_url_patter2, manual_login_url): #If the URL matches the second pattern
+        manual_pronote_url = "https://" + manual_login_url + "/pronote/eleve.html" #Add the pronote part to the URL
+        config_data.pronote_url = manual_pronote_url #Save the URL in the config_data object
+
+        login_step(choice="", international_use=True) #Call the login_step function with the manual URL
+
+  else:
+    logger.error("Given URL string is not well formated...")
+    box = CTkMessagebox(title="Erreur !", height=50, message="L'URL que vous avez entrée n'est pas correcte.\n\nVeuillez vérifier le format et réessayer.", icon=warning_icon_path, option_1="Réessayer", master=root, corner_radius=20, sound=True)
+    box.info._text_label.configure(wraplength=500)
 
 def search_school():
     root.config(cursor="watch")
@@ -677,6 +959,7 @@ def search_school():
        city_entry.delete(0, "end")
 
     elif true_city_geocode:
+     global true_city_name
      true_city_name = true_city_geocode.raw["name"]
      
      display_name = true_city_geocode.raw["display_name"]
@@ -687,10 +970,29 @@ def search_school():
      logger.debug(country_name)
 
      if country_name != "France":
-      city_entry.delete(0, "end")
-      box = CTkMessagebox(title="Info", message=f"Pour le moment Pronote Class Notifier ne peut être utilisé que dans un établissement situé en France !", icon=info_icon_path, option_1="Ok",master=root, width=350, height=10, corner_radius=20,sound=True)
-      box.info._text_label.configure(wraplength=450)
+      search_button.configure(state="disabled", text_color="grey")
       root.config(cursor="arrow")
+
+      get_timezone(true_city_geocode)
+
+      search_button.place_forget()
+      city_entry.place_forget()
+
+      title_label.configure(text="Etape 2/4")
+      main_text.configure(text="Etablissement à l'étranger ?\n\nRenseignez manuellement\n   votre url de connexion Pronote.",justify="center", anchor="w")
+ 
+      global country_and_city_label
+      country_and_city_label = ctk.CTkLabel(master=root, text=f"{true_city_name}, {country_name}", font=(default_font_name, 11, "underline"), justify="center", anchor="center")
+      country_and_city_label.place(relx=0.23, rely=0.70, anchor="center")
+
+      global manual_pronote_url_entry
+      manual_pronote_url_entry = ctk.CTkEntry(master=root, font=(default_font_name, 11), width=190, placeholder_text="https://xxxxxxxx.index-education.net")
+      manual_pronote_url_entry.place(relx=0.75, rely=0.50, anchor="center")
+      manual_pronote_url_entry.bind("<Return>", lambda event: process_manual_login_url())
+
+      global maunual_pronote_url_button
+      maunual_pronote_url_button = ctk.CTkButton(master=root, text="Valider", command=process_manual_login_url, corner_radius=10)
+      maunual_pronote_url_button.place(relx=0.75, rely=0.67, anchor="center")
 
      else:
       city_entry.delete(0, "end")
@@ -722,6 +1024,7 @@ def search_school():
           "refine": [
               f"libelle_commune:{true_city_name}",
               "nature_uai_libe:COLLEGE",
+              "nature_uai_libe:LYCEE D ENSEIGNEMENT GENERAL",
               "nature_uai_libe:LYCEE ENSEIGNT GENERAL ET TECHNOLOGIQUE",
               "nature_uai_libe:LYCEE POLYVALENT",
               "nature_uai_libe:LYCEE PROFESSIONNEL"
@@ -756,9 +1059,8 @@ def search_school():
 
            logger.info(f"{results_count} results have been returned for {true_city_name} ! (limit is {limit})")  
 
-
            def optionmenu_callback(choice):
-
+ 
             root.config(cursor="watch")
             
             url = "https://data.education.gouv.fr/api/explore/v2.1/catalog/datasets/fr-en-adresse-et-geolocalisation-etablissements-premier-et-second-degre/records"
@@ -791,236 +1093,13 @@ def search_school():
              region_name = data["results"][0]["libelle_region"]
              school_type = data["results"][0]["nature_uai_libe"]
 
-             global pronote_url
-             pronote_url = f"https://{uai_number}.index-education.net/pronote/eleve.html"
-       
-             check_important_file_existence(wanted_file_type="config")
+             config_data.pronote_url = f"https://{uai_number}.index-education.net/pronote/eleve.html"
 
-             # Read the INI file with the appropriate encoding
-             with open(config_file_path, 'r', encoding='utf-8') as configfile:
-              config.read_file(configfile)
+             global country_and_city_label
+             country_and_city_label = None
 
-             config["Global"]["login_page_link"] = pronote_url
-
-             # Write the changes back to the INI file
-             with open(config_file_path, 'w', encoding='utf-8') as configfile:
-              config.write(configfile) 
-
-             pronote_use = True
-             pronote_use_msg = None
-             try:
-             
-              response = requests.get(pronote_url, allow_redirects=False)
-
-             except requests.exceptions.ConnectionError:
-               pronote_use = False
-               pronote_use_msg = "DNS Error"
-
-
-             except Exception as e:
-
-              pronote_use_msg = str(e)
-
-              pronote_use = False
-
-             # Handle any other unexpected errors  
-             if pronote_use and not pronote_use_msg and response.status_code == 200:
-               logger.info(f"{choice} ({true_city_name}) uses Pronote !")
-
-               global used_ent_name
-               used_ent_name = None
-
-               global ent_connexion
-               ent_connexion = False
-
-               choice_menu.place_forget()
-               root.config(cursor="arrow")
-               
-               
-             
-               title_label.configure(text="Etape 3/4")
-               main_text.configure(text=f"Connectez vous à Pronote\nà l'aide de vos identifiants.")
-
-               def adjust_text_size(event=None):
-                # Get the current text of the label
-                text = school_name_text.cget("text")
-                # Calculate the length of the text
-                text_length = len(text)
-                # Adjust font size based on text length
-                font_size = max(10, 12 - text_length // 10)  # Adjust the formula as needed
-                # Update the font size of the label
-                school_name_text.configure(font=("Roboto", font_size))
-
-               global password_visible
-               password_visible = None
-               # Function to toggle the password visibility
-               def toggle_password(event=None):
-                    global password_visible
-                    if password_visible:
-                        logger.debug("Password has been hidden !") # Debugging line
-                        password_entry.configure(show="*")  # Hide password
-                        password_eye_button.configure(image=closed_eye_image)  # Change the eye icon to closed
-                        
-                        password_visible = False
-                    else:
-                        logger.debug("Password is being shown !")  # Debugging line
-                        password_entry.configure(show="")  # Show password
-                        password_eye_button.configure(image=open_eye_image)  # Change the eye icon to open
-                        password_visible = True
-
-               # Load the images for the eye icons (ensure correct paths to your image files)
-               closed_eye_image = ctk.CTkImage(light_image=Image.open("Icons/Global UI/closed_eye_light.png").resize((24, 24)), dark_image=Image.open("Icons/Global UI/closed_eye_dark.png").resize((24, 24)))
-               open_eye_image = ctk.CTkImage(light_image=Image.open("Icons/Global UI/open_eye_light.png").resize((24, 24)), dark_image=Image.open("Icons/Global UI/open_eye_dark.png").resize((24, 24)))
-                
-               global school_name_text
-               school_name_text = ctk.CTkLabel(root, text=f"{choice}", font=(default_subtitle_font))
-               school_name_text.place(relx=0.23, rely=0.65, anchor="center")
-
-               # Bind the label to the adjust_text_size function
-               school_name_text.bind("<Configure>", adjust_text_size)
-
-               # Création des labels
-               global username_label
-               username_label = ctk.CTkLabel(root, text="Identifiant", font=(default_subtitle_font))
-               username_label.place(relx=0.71, rely=0.23, anchor="center")
-
-               global password_label
-               password_label = ctk.CTkLabel(root, text="Mot de passe", font=(default_subtitle_font))
-               password_label.place(relx=0.71, rely=0.52, anchor="center")
-
-               # Création des champs de saisie
-               global username_entry
-               username_entry = ctk.CTkEntry(root, width=150, placeholder_text="Nom d'utilisateur")
-               username_entry.place(relx=0.71, rely=0.35, anchor="center")
-
-               global password_entry
-               password_entry = ctk.CTkEntry(root, width=150, height=35, show="*", placeholder_text="Mot de passe")
-               password_entry.place(relx=0.71, rely=0.65, anchor="center")
-               password_entry.bind("<Return>", lambda event: save_credentials())
-
-               # Bouton pour afficher/masquer le mot de passe avec événements de clic
-               global password_eye_button
-               password_eye_button = ctk.CTkButton(root,width=1, height=10 ,image=closed_eye_image, text="", fg_color=["#f9f9fa", "#343638"], bg_color=["#f9f9fa", "#343638"], hover_color=["#f9f9fa", "#343638"], corner_radius=10)
-               password_eye_button.place(relx=0.85, rely=0.65, anchor="center")
-
-               # Bind left mouse button click to toggle password visibility
-               password_eye_button.bind("<Button-1>", toggle_password)
-                                
-               # Create the save button with the lock icon
-               global save_button
-               save_button = ctk.CTkButton(root, text="Connexion", command=save_credentials, corner_radius=10, width=135, height=23)
-               save_button.place(relx=0.71, rely=0.83, anchor="center")
-
-             else:
-
-               if pronote_use_msg == "DNS Error":
-                 logger.warning(f"{choice} ({true_city_name}) doesn't seem to use Pronote... See below\nWebsite {pronote_url} does not exists. {pronote_use_msg}")
-                 box = CTkMessagebox(title="Aucun résultat", message="Votre établissement ne semble pas utiliser Pronote.", icon=warning_icon_path, option_1="Ok",master=root, width=350, height=10, corner_radius=20,sound=True)
-                 box.info._text_label.configure(wraplength=450)
-                 root.config(cursor="arrow")
-
-               elif response != 202 and not pronote_use_msg:
-
-                api_response = { 
-                 "region": f"{region_name}",
-                 "departement": f"{departement_code}",
-                 "type": f"{school_type}"
-                }
-
-                check_important_file_existence(wanted_file_type="ent_data")
-
-                # Load the JSON file
-                with open(f"{script_directory}/Data/ent_data.json", 'r') as file:
-                 data = json.load(file)
-
-                # Count the number of correspondences between the API response and each option except variable_name
-                correspondence_counts = {}
-                for option_key, option_value in data.items():
-                 # Count correspondences for all options except variable_name
-                 count = sum(api_response[arg] == option_value[arg] for arg in api_response.keys())
-
-                 # Check if any of the departments match
-                 option_departements = option_value["departement"]
-                 if isinstance(option_departements, list):
-
-                  departement_count = any(dept in api_response["departement"] for dept in option_departements)
-
-                 else:
-                  # Split the department string into individual codes
-                  option_departements = option_departements.split(", ")
-                  # Check if any of the individual departments match
-                  departement_count = any(dept in api_response["departement"] for dept in option_departements)
-
-                 type_match_lycee = False
-                 if api_response["type"].startswith("LYCEE") and option_value["type"] == "LYCEE":
-                  type_match_lycee = True
-
-                 type_match_clg = False
-                 if api_response["type"].startswith("COLLEGE"):
-                  type_match_clg = True 
-
-                 correspondence_counts[option_key] = count + departement_count + type_match_lycee + type_match_clg
-
-                # Choose the option with the highest correspondence
-                chosen_option = max(correspondence_counts, key=correspondence_counts.get)
-
-                # Print the chosen option key and its associated variable_name
-                
-                used_ent_name = data[chosen_option]["variable_name"]
-
-                # ENT Connexion
-
-                logger.debug(f"{choice} ({true_city_name}) uses Pronote (ENT Conexion: {used_ent_name}) !")
-
-                ent_connexion = True
-
-                choice_menu.place_forget()
-                root.config(cursor="arrow")
-
-                title_label.configure(text="Etape 3/4")
-                main_text.configure(text=f"Connectez vous à Pronote\nà l'aide de vos identifiants.")
-
-                def adjust_text_size(event=None):
-                 # Get the current text of the label
-                 text = school_name_text.cget("text")
-                 # Calculate the length of the text
-                 text_length = len(text)
-                 # Adjust font size based on text length
-                 font_size = max(10, 12 - text_length // 10)  # Adjust the formula as needed
-                 # Update the font size of the label
-                 school_name_text.configure(font=("Roboto", font_size))
-                
-               
-                school_name_text = ctk.CTkLabel(root, text=f"{choice}", font=(default_subtitle_font))
-                school_name_text.place(relx=0.23, rely=0.65, anchor="center")
-
-                # Bind the label to the adjust_text_size function
-                school_name_text.bind("<Configure>", adjust_text_size)
-
-                # Création des labels
-                username_label = ctk.CTkLabel(root, text="Identifiant", font=(default_subtitle_font)) #CHANGE ALL FONTS TO ROBOTO (BOLD)
-                username_label.place(relx=0.75, rely=0.23, anchor="center")
-
-                password_label = ctk.CTkLabel(root, text="Mot de passe", font=(default_subtitle_font))
-                password_label.place(relx=0.75, rely=0.53, anchor="center")
-
-                # Création des champs de saisie
-                username_entry = ctk.CTkEntry(root, width=150)
-                username_entry.place(relx=0.75, rely=0.35, anchor="center")
-
-                password_entry = ctk.CTkEntry(root, width=150, show="*")
-                password_entry.place(relx=0.75, rely=0.65, anchor="center")
-
-                # Création du bouton d'enregistrement
-                save_button = ctk.CTkButton(root, text="Connexion", command=save_credentials, corner_radius=10)
-                save_button.place(relx=0.75, rely=0.83, anchor="center")
-
-                 
-               else:
-                logger.critical(response)
-                logger.critical(f"Unknown error for {pronote_url}\nError detail : {pronote_use_msg}")
-                box = CTkMessagebox(title="Erreur", message="Une erreur inconnue est survenue.\nMerci de réessayer plus tard.", icon=cancel_icon_path, option_1="Ok",master=root, width=350, height=10, corner_radius=20,sound=True)
-                box.info._text_label.configure(wraplength=450)
+             get_timezone(true_city_geocode)
+             login_step(choice, international_use=False)
 
            title_label.configure(text="Etape 2/4")
            main_text.configure(text="Selectionnez \nvotre établissement.")
@@ -1029,6 +1108,7 @@ def search_school():
            default_choice_menu_var = ctk.StringVar(value="Selectionnez votre établissement")
 
            # Create the OptionMenu with dynamic width
+           global choice_menu
            choice_menu = ctk.CTkOptionMenu(root, width=175, dynamic_resizing=False, values=appellation_officielle_values, variable=default_choice_menu_var, command=optionmenu_callback)
            choice_menu.place(relx=0.75, rely=0.4, anchor="center")
 
