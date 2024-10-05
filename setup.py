@@ -808,67 +808,24 @@ def login_step(choice, international_use):
       root.config(cursor="arrow")
 
     elif response != 202 and not pronote_use_msg:
+      def process_chosen_ent(best_match):
+       # Print the chosen option key and its associated variable_name
+       used_ent_name = data[best_match]['variable_name']
 
-      api_response = { 
-      "region": f"{region_name}",
-      "departement": f"{departement_code}",
-      "type": f"{school_type}"
-      }
+       # ENT Connexion
 
-      check_important_file_existence(wanted_file_type="ent_data")
+       logger.debug(f"{choice} ({true_city_name}) uses Pronote (ENT Conexion: {used_ent_name}) !")
 
-      # Load the JSON file
-      with open(f"{script_directory}/Data/ent_data.json", 'r') as file:
-        data = json.load(file)
+       global ent_connexion
+       ent_connexion = True
 
-      # Count the number of correspondences between the API response and each option except variable_name
-      correspondence_counts = {}
-      for option_key, option_value in data.items():
-        # Count correspondences for all options except variable_name
-        count = sum(api_response[arg] == option_value[arg] for arg in api_response.keys())
+       choice_menu.place_forget()
+       root.config(cursor="arrow")
 
-      # Check if any of the departments match
-      option_departements = option_value["departement"]
-      if isinstance(option_departements, list):
+       title_label.configure(text="Etape 3/4")
+       main_text.configure(text=f"Connectez vous à Pronote\nà l'aide de vos identifiants.")
 
-        departement_count = any(dept in api_response["departement"] for dept in option_departements)
-
-      else:
-        # Split the department string into individual codes
-        option_departements = option_departements.split(", ")
-        # Check if any of the individual departments match
-        departement_count = any(dept in api_response["departement"] for dept in option_departements)
-
-      type_match_lycee = False
-      if api_response["type"].startswith("LYCEE") and option_value["type"] == "LYCEE":
-        type_match_lycee = True
-
-      type_match_clg = False
-      if api_response["type"].startswith("COLLEGE"):
-        type_match_clg = True 
-
-      correspondence_counts[option_key] = count + departement_count + type_match_lycee + type_match_clg
-
-      # Choose the option with the highest correspondence
-      chosen_option = max(correspondence_counts, key=correspondence_counts.get)
-
-      # Print the chosen option key and its associated variable_name
-      
-      used_ent_name = data[chosen_option]["variable_name"]
-
-      # ENT Connexion
-
-      logger.debug(f"{choice} ({true_city_name}) uses Pronote (ENT Conexion: {used_ent_name}) !")
-
-      ent_connexion = True
-
-      choice_menu.place_forget()
-      root.config(cursor="arrow")
-
-      title_label.configure(text="Etape 3/4")
-      main_text.configure(text=f"Connectez vous à Pronote\nà l'aide de vos identifiants.")
-
-      def adjust_text_size(event=None):
+       def adjust_text_size(event=None):
         # Get the current text of the label
         text = school_name_text.cget("text")
         # Calculate the length of the text
@@ -879,30 +836,88 @@ def login_step(choice, international_use):
         school_name_text.configure(font=("Roboto", font_size))
       
     
-      school_name_text = ctk.CTkLabel(root, text=f"{choice}", font=(default_subtitle_font))
-      school_name_text.place(relx=0.23, rely=0.65, anchor="center")
+       school_name_text = ctk.CTkLabel(root, text=f"{choice}", font=(default_subtitle_font))
+       school_name_text.place(relx=0.23, rely=0.65, anchor="center")
 
-      # Bind the label to the adjust_text_size function
-      school_name_text.bind("<Configure>", adjust_text_size)
+       # Bind the label to the adjust_text_size function
+       school_name_text.bind("<Configure>", adjust_text_size)
 
-      # Création des labels
-      username_label = ctk.CTkLabel(root, text="Identifiant", font=(default_subtitle_font)) #CHANGE ALL FONTS TO ROBOTO (BOLD)
-      username_label.place(relx=0.75, rely=0.23, anchor="center")
+       # Création des labels
+       username_label = ctk.CTkLabel(root, text="Identifiant", font=(default_subtitle_font)) #CHANGE ALL FONTS TO ROBOTO (BOLD)
+       username_label.place(relx=0.75, rely=0.23, anchor="center")
 
-      password_label = ctk.CTkLabel(root, text="Mot de passe", font=(default_subtitle_font))
-      password_label.place(relx=0.75, rely=0.53, anchor="center")
+       password_label = ctk.CTkLabel(root, text="Mot de passe", font=(default_subtitle_font))
+       password_label.place(relx=0.75, rely=0.53, anchor="center")
 
-      # Création des champs de saisie
-      username_entry = ctk.CTkEntry(root, width=150)
-      username_entry.place(relx=0.75, rely=0.35, anchor="center")
+       # Création des champs de saisie
+       username_entry = ctk.CTkEntry(root, width=150)
+       username_entry.place(relx=0.75, rely=0.35, anchor="center")
 
-      password_entry = ctk.CTkEntry(root, width=150, show="*")
-      password_entry.place(relx=0.75, rely=0.65, anchor="center")
+       password_entry = ctk.CTkEntry(root, width=150, show="*")
+       password_entry.place(relx=0.75, rely=0.65, anchor="center")
 
-      # Création du bouton d'enregistrement
-      save_button = ctk.CTkButton(root, text="Connexion", command=save_credentials, corner_radius=10)
-      save_button.place(relx=0.75, rely=0.83, anchor="center")
+       # Création du bouton d'enregistrement
+       save_button = ctk.CTkButton(root, text="Connexion", command=save_credentials, corner_radius=10)
+       save_button.place(relx=0.75, rely=0.83, anchor="center")
 
+      split_school_type = school_type.split()[0] # Get the first word of the school type value
+
+      api_response = { 
+      "region": f"{region_name}",
+      "departement": f"{departement_code}",
+      "type": f"{split_school_type}"
+      }
+
+      check_important_file_existence(wanted_file_type="ent_data")
+
+      # Load JSON data
+      with open('Data/ent_data.json', 'r') as file:
+        data = json.load(file)
+
+      # Define weights for each criterion
+      weights = {
+        'region': 3,
+        'departement': 2,
+        'type': 1
+      }
+
+      # Initialize correspondence counts
+      correspondence_counts = {key: 0 for key in data.keys()}
+
+      # Iterate over JSON entries
+      for key, value in data.items():
+        # Match region
+        if api_response['region'] == value['region']:
+            correspondence_counts[key] += weights['region']
+
+        # Match department
+        if api_response['departement'] in value['departement']:
+            correspondence_counts[key] += weights['departement']
+
+        # Match type
+        if api_response['type'] == value['type']:
+            correspondence_counts[key] += weights['type']
+
+      # Select best match
+      best_match = max(correspondence_counts, key=correspondence_counts.get)
+
+      def on_choice_select(selected_option):
+        global best_match
+        best_match = selected_option
+        process_chosen_ent(best_match)
+
+      # Handle ties (if needed)
+      max_count = correspondence_counts[best_match]
+      tied_matches = [key for key, count in correspondence_counts.items() if count == max_count]
+      if len(tied_matches) > 1:
+        root.config(cursor="arrow")
+
+        choice_menu.configure(values=tied_matches, command=on_choice_select)
+        choice_menu.set("Selectionnez votre ENT")
+        main_text.configure(text="Plusieurs ENT sont possibles\npour votre recherche.\n\nVeuillez selectionner le votre.")
+
+      else:
+        process_chosen_ent(best_match)
       
     else:
       logger.critical(response)
@@ -1048,6 +1063,9 @@ def search_school():
            logger.error("No results for the city !")
            box = CTkMessagebox(title="Aucun résultat", message="Il ne semble pas y avoir de collèges ou lycées pris en charge dans cette ville...", icon=warning_icon_path, option_1="Réessayer",master=root, width=350, height=10, corner_radius=20,sound=True)
            box.info._text_label.configure(wraplength=450)
+
+           root.config(cursor="arrow")
+           search_button.configure(state="normal")
 
           else: 
            results_count = data["total_count"]
