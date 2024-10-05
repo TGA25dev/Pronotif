@@ -1073,7 +1073,12 @@ def search_school():
            appellation_officielle_values = []
            for record in data['results']:
               appellation_officielle = record['appellation_officielle']
-              appellation_officielle_values.append(appellation_officielle)
+              if appellation_officielle is None: # If the school name is None
+                school_adress = record['adresse_uai']
+                logger.info(f"Unnamed school ! ({school_adress})")
+
+              else:
+                appellation_officielle_values.append(appellation_officielle)  # Add the school name to the list
 
            logger.info(f"{results_count} results have been returned for {true_city_name} ! (limit is {limit})")  
 
