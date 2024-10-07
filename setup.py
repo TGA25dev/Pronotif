@@ -1049,11 +1049,22 @@ def search_school():
           ]
         }
 
-       # Make the GET request
-       response = requests.get(url, params=params)
-
-       # Check if the request was successful (status code 200)
-       if response.status_code == 200:
+       try:
+        # Make the GET request with SSL verification disabled
+        try:
+            response = requests.get(url, params=params, verify=True)
+        except requests.exceptions.SSLError:
+            logger.error("Unable to verify SSL certificate !")
+            box = CTkMessagebox(title="Impossible de verifier le certificat SSL", message="La connexion ne peut s'effectuer en HTTP...", icon=cancel_icon_path, option_1="Annuler", master=root, width=350, height=10, corner_radius=20, sound=True)
+            box.info._text_label.configure(wraplength=450)
+            response = box.get()
+            if response == "Annuler":
+              root.config(cursor="arrow")
+              search_button.configure(state="normal", text_color="white")
+              return []
+             
+        # Check if the request was successful (status code 200)
+        if response.status_code == 200:
           # Parse the JSON response
           data = response.json()
 
@@ -1140,10 +1151,18 @@ def search_school():
 
            root.config(cursor="arrow")
 
-       else:
+        else:
           # If the request was not successful, print an error message
           logger.error("Error:", response.status_code)
           return []
+       
+       except Exception as e:
+        logger.error(f"An error occurred while trying to search for the city !\n{e}")
+        box = CTkMessagebox(title="Erreur !", message="Une erreur inconnue est survenue...", icon=warning_icon_path, option_1="Réessayer",master=root, width=300, height=10, corner_radius=20,sound=True)
+        box.info._text_label.configure(wraplength=450)
+        root.config(cursor="arrow")
+        search_button.configure(state="normal")
+         
 
 # Create the main window
 root = ctk.CTk()
