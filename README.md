@@ -1,28 +1,28 @@
 > [!IMPORTANT]
 >**Projet incomplet !** <br>
->Pronote Class Notifier est encore **en cours de développement**.<br>
+>Pronot'if est encore **en cours de développement**.<br>
 >**Pour le moment la connexion ENT est resérvée aux établissements situés en Île-de-France !**
 
 
 ![logo à finir](logo.png)
 
 
-# Pronote Class Notifier <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Books.png" alt="Books" width="25" height="25" />
+# Pronot'if <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Books.png" alt="Books" width="25" height="25" />
 
 Vous notifie sur votre téléphone 5 minutes avant chaque cours.
 
 [![Licence](https://img.shields.io/github/license/Ileriayo/markdown-badges?style=for-the-badge)](./LICENSE)
 ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
-[![wakatime](https://wakatime.com/badge/github/TGA25dev/Pronote-Class-Notifier.svg?style=for-the-badge)](https://wakatime.com/badge/github/TGA25dev/Pronote-Class-Notifier)
+[![wakatime](https://wakatime.com/badge/github/TGA25dev/Pronotif.svg?style=for-the-badge)](https://wakatime.com/badge/github/TGA25dev/Pronotif)
 
 [**English**](README_EN.md) | [LICENCE](LICENSE)
 
 ## Table des matieres <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Clipboard.png" alt="Clipboard" width="25" height="25" />
 
-- [Fonctionalités](https://github.com/TGA25dev/Pronote-Class-Notifier#fonctionalités--)
-- [Installation](https://github.com/TGA25dev/Pronote-Class-Notifier#installation-)
-- [Screenshots](https://github.com/TGA25dev/Pronote-Class-Notifier#screenshots-)
-- [Licence](https://github.com/TGA25dev/Pronote-Class-Notifier#licence-)
+- [Fonctionalités](https://github.com/TGA25dev/Pronotif#fonctionalités--)
+- [Installation](https://github.com/TGA25dev/Pronotif#installation-)
+- [Screenshots](https://github.com/TGA25dev/Pronotif#screenshots-)
+- [Licence](https://github.com/TGA25dev/Pronotif#licence-)
 
 ## Fonctionalités  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Glowing%20Star.png" alt="Glowing Star" width="25" height="25" />
 

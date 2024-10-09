@@ -51,7 +51,7 @@ question_icon_path = f"{script_directory}/Icons/Messagebox UI/question_icon.png"
 warning_icon_path = f"{script_directory}/Icons/Messagebox UI/warning_icon.png"
 info_icon_path = f"{script_directory}/Icons/Messagebox UI/info_icon.png"
 
-github_repo_name = "TGA25dev/Pronote-Class-Notifier"
+github_repo_name = "TGA25dev/Pronotif"
 
 local_paths = {
     "config": os.path.join(script_directory, "Data", "config.ini"),
@@ -201,7 +201,7 @@ def final_step():
   tabview.pack_forget()
 
   main_text.place(relx=0.5, rely=0.3, anchor="center")
-  main_text.configure(text="Vous avez terminé la configuration de Pronote Class Notifier !\n\nCliquez sur le boutton ci-dessous pour trouver le dossier\nde votre bot.")
+  main_text.configure(text="Vous avez terminé la configuration de Pronot'if !\n\nCliquez sur le boutton ci-dessous pour trouver le dossier\nde votre bot.")
 
   global find_dir_button
   find_dir_button = CTkButton(root, text="Trouver", command=find_export_dir)
@@ -1168,7 +1168,7 @@ def search_school():
 root = ctk.CTk()
 root.geometry("400x200")
 root.resizable(False, False)
-root.title("Configuration Pronote Class Notifier")
+root.title("Configuration Pronot'if")
 
 #wanted file type can be : ico, config, ent_data, pronote_password or pronote_username
 
@@ -1273,9 +1273,9 @@ def check_if_first_time():
 
   if first_use_file:
     logger.info("Initial Startup !")
-    box = CTkMessagebox(title="Premiere fois ici ?", message=f"On dirait que vous n'avez jamais utilisé Pronote Class Notifier...\n\nLisez la documentation pour mieux comprendre comment vous en servir.", icon=info_icon_path, option_1="D'accord", cancel_button=None ,cancel_button_color="light grey", justify="center", master=root, width=450, height=10, corner_radius=20)
+    box = CTkMessagebox(title="Premiere fois ici ?", message=f"On dirait que vous n'avez jamais utilisé Pronot'if...\n\nLisez la documentation pour mieux comprendre comment vous en servir.", icon=info_icon_path, option_1="D'accord", cancel_button=None ,cancel_button_color="light grey", justify="center", master=root, width=450, height=10, corner_radius=20)
     box.info._text_label.configure(wraplength=450)
-    webbrowser.open_new_tab("https://github.com/TGA25dev/Pronote-Class-Notifier/wiki/Accueil")
+    webbrowser.open_new_tab("https://github.com/TGA25dev/Pronotif/wiki/Accueil")
     os.remove(f"{script_directory}/first_use.txt")
 
   else:

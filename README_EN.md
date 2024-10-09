@@ -2,22 +2,22 @@
 ![logo à finir](logo.png)
 
 
-# Pronote Class Notifier <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Books.png" alt="Books" width="25" height="25" />
+# Pronot'if <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Books.png" alt="Books" width="25" height="25" />
 
 Notifies you on your phone 5 minutes before each class.
 
 [![Licence](https://img.shields.io/github/license/Ileriayo/markdown-badges?style=for-the-badge)](./LICENSE)
 ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
-[![wakatime](https://wakatime.com/badge/github/TGA25dev/Pronote-Class-Notifier.svg?style=for-the-badge)](https://wakatime.com/badge/github/TGA25dev/Pronote-Class-Notifier)
+[![wakatime](https://wakatime.com/badge/github/TGA25dev/Pronotif.svg?style=for-the-badge)](https://wakatime.com/badge/github/TGA25dev/Pronotif)
 
 [**Français**](README.md) | [LICENSE](LICENSE)
 
 ## Contents <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Clipboard.png" alt="Clipboard" width="25" height="25" />
 
-- [Features](https://github.com/TGA25dev/Pronote-Class-Notifier/blob/main/README_EN.md#features--)
-- [Instalation](https://github.com/TGA25dev/Pronote-Class-Notifier/blob/main/README_EN.md#instalation-)
-- [Screenshots](https://github.com/TGA25dev/Pronote-Class-Notifier/blob/main/README_EN.md#screenshots-)
-- [License](https://github.com/TGA25dev/Pronote-Class-Notifier/blob/main/README_EN.md#license-)
+- [Features](https://github.com/TGA25dev/Pronotif/blob/main/README_EN.md#features--)
+- [Instalation](https://github.com/TGA25dev/Pronotif/blob/main/README_EN.md#instalation-)
+- [Screenshots](https://github.com/TGA25dev/Pronotif/blob/main/README_EN.md#screenshots-)
+- [License](https://github.com/TGA25dev/Pronotif/blob/main/README_EN.md#license-)
 
 ## Features  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Glowing%20Star.png" alt="Glowing Star" width="25" height="25" />
 

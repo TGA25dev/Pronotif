@@ -1,12 +1,12 @@
 cff-version: 1.2.0
-title: Pronote Class Notifier
+title: Pronot'if
 message: >-
   If you use this software, please cite it using the
   metadata from this file.
 type: software
 authors:
   - given-names: TGA25
-repository-code: 'https://github.com/TGA25dev/Pronote-Class-Notifier'
+repository-code: 'https://github.com/TGA25dev/Pronotif'
 abstract: >-
   Utilise ntfy et l'api Pronote de bain3 pour notifier les
   utilisateurs sur leur téléphone 5 minutes avant chaque
