@@ -1,5 +1,8 @@
 
-
+> [!IMPORTANT]  
+> **Incomplete project!** <br>  
+> Pronot'if is still **under development**.<br>  
+> **At the moment, the ENT login is only available for institutions located in Île-de-France!**
 
 # Pronot'if <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Books.png" alt="Books" width="25" height="25" />
 
