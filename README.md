@@ -1,7 +1,7 @@
 > [!IMPORTANT]
->**Projet incomplet !** <br>
->Pronot'if est encore **en cours de développement**.<br>
->**Pour le moment la connexion ENT est resérvée aux établissements situés en Île-de-France !**
+>**Projet indépendant** <br>
+>Pronot'if **n'est pas affilié** à Index Education ni à l'application **Pronote**.  
+>Il s'agit d'un projet **indépendant**, sans lien avec les services officiels de Pronote.
 
 
 ![logo à finir](logo.png)
