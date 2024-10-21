@@ -37,6 +37,7 @@ default_title_font = "Roboto", 17, "bold"
 default_subtitle_font = "Roboto", 12 
 default_text_font = "Roboto", 13
 default_credit_font = "Roboto", 10
+default_conditions_font = "Roboto", 9
 
 geolocator = Nominatim(user_agent="Geocoder")
 
@@ -992,6 +993,9 @@ def search_school():
 
       search_button.place_forget()
       city_entry.place_forget()
+      tos_label.place_forget()
+      mid_canvas.configure(height=190)
+      internet_status_label.place(relx=0.75, rely=0.8, anchor="center")
 
       title_label.configure(text="Etape 2/4")
       main_text.configure(text="Etablissement à l'étranger ?\n\nRenseignez manuellement\n   votre url de connexion Pronote.",justify="center", anchor="w")
@@ -1135,6 +1139,10 @@ def search_school():
              get_timezone(true_city_geocode)
              login_step(choice, international_use=False)
 
+           tos_label.place_forget()
+           mid_canvas.configure(height=190)
+           internet_status_label.place(relx=0.75, rely=0.8, anchor="center")
+
            title_label.configure(text="Etape 2/4")
            main_text.configure(text="Selectionnez \nvotre établissement.")
 
@@ -1168,7 +1176,7 @@ def search_school():
 root = ctk.CTk()
 root.geometry("400x200")
 root.resizable(False, False)
-root.title("Configuration Pronot'if")
+root.title("Pronot'if Setup")
 
 #wanted file type can be : ico, config, ent_data, pronote_password or pronote_username
 
@@ -1282,20 +1290,56 @@ def check_if_first_time():
     logger.info("Not first startup...")
 
 
-# Create a title label
-title_label = ctk.CTkLabel(root, text="Etape 1/4", font=(default_title_font))
-title_label.place(relx=0.5, rely=0.1, anchor="center")
-
 #Create name label
 global author_name_label
-author_name_label = ctk.CTkLabel(root, text="TGA25dev | ©2024", font=(default_credit_font), bg_color="transparent")
-author_name_label.place(relx=0.77, rely=0.89)
+author_name_label = ctk.CTkLabel(root, text="Pronot'if Team | ©2024", font=(default_credit_font), bg_color="transparent")
+author_name_label.place(relx=0.73, rely=0.89)
 author_name_label.bind("<Button-1>", on_label_click)
 
 # Create a Canvas widget to draw the line
 
-mid_canvas = ctk.CTkCanvas(root, width=2, height=190, background= "white", highlightthickness=0)
+mid_canvas = ctk.CTkCanvas(root, width=2, height=150, background= "white", highlightthickness=0)
 mid_canvas.place(relx=0.5, rely=0.55, anchor="center")
+
+# Functions to open links in the default web browser
+def open_tos(event):
+    webbrowser.open("https://safety.pronotif.tech/docs/terms-of-service")
+
+def open_privacy(event):
+    webbrowser.open("https://safety.pronotif.tech/docs/politique-de-confidentialite")
+
+# Create a Text widget
+tos_label = ctk.CTkTextbox(root, height=10, width=385, fg_color="transparent", bg_color="transparent", font=default_conditions_font, wrap="word")
+tos_label.place(relx=0.51, rely=0.78, anchor="center")
+
+# Insert normal text and the link text
+tos_label.insert("end", "En continuant vous acceptez les ")
+tos_label.insert("end", "conditions d'utilisation", "link_tos")
+tos_label.insert("end", " et la ")
+tos_label.insert("end", "politique de confidentialité", "link_privacy")
+tos_label.insert("end", ".")
+
+# Configure tags for the link parts (make them blue and underline)
+tos_label.tag_config("link_tos", foreground="blue", underline=1)
+tos_label.tag_config("link_privacy", foreground="blue", underline=1)
+
+# Bind the tags to open links when clicked
+tos_label.tag_bind("link_tos", "<Button-1>", open_tos)
+tos_label.tag_bind("link_privacy", "<Button-1>", open_privacy)
+
+# Change cursor on hover over the links
+tos_label.tag_bind("link_tos", "<Enter>", lambda e: tos_label.configure(cursor="hand2"))  # Hand cursor on hover
+tos_label.tag_bind("link_tos", "<Leave>", lambda e: tos_label.configure(cursor="xterm"))  # Reset to default
+
+tos_label.tag_bind("link_privacy", "<Enter>", lambda e: tos_label.configure(cursor="hand2"))  # Hand cursor on hover
+tos_label.tag_bind("link_privacy", "<Leave>", lambda e: tos_label.configure(cursor="xterm"))  # Reset to default
+
+# Disable editing of the text widget (making it like a label)
+tos_label.configure(state="disabled")
+
+# Create a title label
+title_label = ctk.CTkLabel(root, text="Etape 1/4", font=(default_title_font))
+title_label.place(relx=0.5, rely=0.1, anchor="center")
 
 # Create main text label
 main_text = ctk.CTkLabel(root, text="Recherchez ici la ville\n  de votre établissement.", font=(default_text_font))
@@ -1315,7 +1359,7 @@ search_button.place(relx=0.75, rely=0.6, anchor="center")
 
 #Create internet status label
 internet_status_label = ctk.CTkLabel(root, text="Checking connection...")
-internet_status_label.place(relx=0.75, rely=0.8, anchor="center")
+internet_status_label.place(relx=0.25, rely=0.6, anchor="center")
 
 #Create close button
 close_button = ctk.CTkButton(root, text="Fermer",command=close_app, width=15, corner_radius=10, fg_color="#FF6347", hover_color="#FF4500")
