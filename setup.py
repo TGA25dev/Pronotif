@@ -317,7 +317,7 @@ def config_steps():
   ntfy_topic_name_entry.place(relx=0.5, rely=0.5, anchor="center")
   ntfy_topic_name_entry.bind("<Return>", lambda event: get_ntfy_topic())
 
-  need_help_icon = ctk.CTkImage(light_image=Image.open("Icons/Global UI/need_help_light.png").resize((24, 24)), dark_image=Image.open("Icons/Global UI/need_help_dark.png").resize((24, 24)))
+  need_help_icon = ctk.CTkImage(light_image=Image.open(f"{script_directory}/Icons/Global UI/need_help_light.png").resize((24, 24)), dark_image=Image.open(f"{script_directory}/Icons/Global UI/need_help_dark.png").resize((24, 24)))
   need_help_button = ctk.CTkButton(master=tabview.tab("1. ntfy"), image=need_help_icon, text="", width=1, height=10, fg_color=["#dbdbdb", "#2b2b2b"], bg_color=["#dbdbdb", "#2b2b2b"], hover_color=["#dbdbdb", "#2b2b2b"], corner_radius=10)
   need_help_button.place(relx=0.84, rely=0.5, anchor="center")
 
@@ -445,7 +445,7 @@ def config_steps():
         labels[days[current_day_index]].place(relx=0.35, rely=0.3)
         scales[days[current_day_index]].place(relx=0.5, rely=0.5, anchor="center")
 
-        submit_button_icon = ctk.CTkImage(light_image=Image.open("Icons/Global UI/save_meal_def.png").resize((24, 24)))
+        submit_button_icon = ctk.CTkImage(light_image=Image.open(f"{script_directory}/Icons/Global UI/save_meal_def.png").resize((24, 24)))
 
         # Create the submit button
         submit_button = ctk.CTkButton(master=tabview.tab("2. Repas"), text="Enregistrer", image=submit_button_icon, compound="right", command=submit_lunch_time, corner_radius=10)
@@ -758,8 +758,8 @@ def login_step(choice, international_use):
               password_visible = True
 
     # Load the images for the eye icons (ensure correct paths to your image files)
-    closed_eye_image = ctk.CTkImage(light_image=Image.open("Icons/Global UI/closed_eye_light.png").resize((24, 24)), dark_image=Image.open("Icons/Global UI/closed_eye_dark.png").resize((24, 24)))
-    open_eye_image = ctk.CTkImage(light_image=Image.open("Icons/Global UI/open_eye_light.png").resize((24, 24)), dark_image=Image.open("Icons/Global UI/open_eye_dark.png").resize((24, 24)))
+    closed_eye_image = ctk.CTkImage(light_image=Image.open(f"{script_directory}/Icons/Global UI/closed_eye_light.png").resize((24, 24)), dark_image=Image.open(f"{script_directory}/Icons/Global UI/closed_eye_dark.png").resize((24, 24)))
+    open_eye_image = ctk.CTkImage(light_image=Image.open(f"{script_directory}/Icons/Global UI/open_eye_light.png").resize((24, 24)), dark_image=Image.open(f"{script_directory}/Icons/Global UI/open_eye_dark.png").resize((24, 24)))
       
     global school_name_text
     school_name_text = ctk.CTkLabel(root, text=f"{choice}", font=(default_subtitle_font))
@@ -1350,7 +1350,7 @@ city_entry = ctk.CTkEntry(root, width=150)
 city_entry.place(relx=0.75, rely=0.4, anchor="center")
 city_entry.bind("<Return>", lambda event: search_school())
 
-search_icon = ctk.CTkImage(light_image=Image.open("Icons/Global UI/search_def.png").resize((48, 48)))
+search_icon = ctk.CTkImage(light_image=Image.open(f"{script_directory}/Icons/Global UI/search_def.png").resize((48, 48)))
 
 # Create search button
 global search_button
