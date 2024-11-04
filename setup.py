@@ -27,6 +27,8 @@ import traceback
 import random
 from loguru import logger
 from PIL import Image
+from tkextrafont import Font
+from ctypes import windll
 
 
 # Create a ConfigParser object
@@ -309,7 +311,9 @@ def config_steps():
   author_name_label.tkraise()
 
   global config_tab_step1_text
-  config_tab_step1_text = ctk.CTkLabel(master=tabview.tab("1. ntfy"), text= f"Bonjour {user_first_name} !\nEnregistrez ici le nom de votre topic ntfy.")
+  current_hour = datetime.datetime.now().hour
+  greeting = "Bonjour" if 6 <= current_hour < 18 else "Bonsoir"
+  config_tab_step1_text = ctk.CTkLabel(master=tabview.tab("1. ntfy"), text=f"{greeting} {user_first_name} !\nEnregistrez ici le nom de votre topic ntfy.")
   config_tab_step1_text.place(relx=0.5, rely=0.2, anchor="center")
 
   global ntfy_topic_name_entry
@@ -738,7 +742,7 @@ def login_step(choice, international_use):
       # Adjust font size based on text length
       font_size = max(10, 12 - text_length // 10)  # Adjust the formula as needed
       # Update the font size of the label
-      school_name_text.configure(font=("Roboto", font_size))
+      school_name_text.configure(font=(default_font_name, font_size))
 
     global password_visible
     password_visible = None
@@ -762,7 +766,7 @@ def login_step(choice, international_use):
     open_eye_image = ctk.CTkImage(light_image=Image.open(f"{script_directory}/Icons/Global UI/open_eye_light.png").resize((24, 24)), dark_image=Image.open(f"{script_directory}/Icons/Global UI/open_eye_dark.png").resize((24, 24)))
       
     global school_name_text
-    school_name_text = ctk.CTkLabel(root, text=f"{choice}", font=(default_subtitle_font))
+    school_name_text = ctk.CTkLabel(root, text=f"{choice}", font=default_subtitle_font)
     school_name_text.place(relx=0.23, rely=0.65, anchor="center")
 
     # Bind the label to the adjust_text_size function
@@ -770,11 +774,11 @@ def login_step(choice, international_use):
 
     # Création des labels
     global username_label
-    username_label = ctk.CTkLabel(root, text="Identifiant", font=(default_subtitle_font))
+    username_label = ctk.CTkLabel(root, text="Identifiant", font=default_subtitle_font)
     username_label.place(relx=0.71, rely=0.23, anchor="center")
 
     global password_label
-    password_label = ctk.CTkLabel(root, text="Mot de passe", font=(default_subtitle_font))
+    password_label = ctk.CTkLabel(root, text="Mot de passe", font=default_subtitle_font)
     password_label.place(relx=0.71, rely=0.52, anchor="center")
 
     # Création des champs de saisie
@@ -834,20 +838,20 @@ def login_step(choice, international_use):
         # Adjust font size based on text length
         font_size = max(10, 12 - text_length // 10)  # Adjust the formula as needed
         # Update the font size of the label
-        school_name_text.configure(font=("Roboto", font_size))
+        school_name_text.configure(font=(default_font_name, font_size))
       
     
-       school_name_text = ctk.CTkLabel(root, text=f"{choice}", font=(default_subtitle_font))
+       school_name_text = ctk.CTkLabel(root, text=f"{choice}", font=default_subtitle_font)
        school_name_text.place(relx=0.23, rely=0.65, anchor="center")
 
        # Bind the label to the adjust_text_size function
        school_name_text.bind("<Configure>", adjust_text_size)
 
        # Création des labels
-       username_label = ctk.CTkLabel(root, text="Identifiant", font=(default_subtitle_font)) #CHANGE ALL FONTS TO ROBOTO (BOLD)
+       username_label = ctk.CTkLabel(root, text="Identifiant", font=default_subtitle_font)
        username_label.place(relx=0.75, rely=0.23, anchor="center")
 
-       password_label = ctk.CTkLabel(root, text="Mot de passe", font=(default_subtitle_font))
+       password_label = ctk.CTkLabel(root, text="Mot de passe", font=default_subtitle_font)
        password_label.place(relx=0.75, rely=0.53, anchor="center")
 
        # Création des champs de saisie
@@ -1059,7 +1063,7 @@ def search_school():
             response = requests.get(url, params=params, verify=True)
         except requests.exceptions.SSLError:
             logger.error("Unable to verify SSL certificate !")
-            box = CTkMessagebox(title="Impossible de verifier le certificat SSL", message="La connexion ne peut s'effectuer en HTTP...", icon=cancel_icon_path, option_1="Annuler", master=root, width=350, height=10, corner_radius=20, sound=True)
+            box = CTkMessagebox(title="Erreur réseau !", message="Une erreeur SSL est survenue et une connexion sécurisée ne peut être établie.", icon=cancel_icon_path, option_1="D'accord", master=root, width=350, height=10, corner_radius=20, sound=True)
             box.info._text_label.configure(wraplength=450)
             response = box.get()
             if response == "Annuler":
@@ -1173,6 +1177,7 @@ def search_school():
          
 
 # Create the main window
+windll.shcore.SetProcessDpiAwareness(1)
 root = ctk.CTk()
 root.geometry("400x200")
 root.resizable(False, False)
@@ -1292,8 +1297,8 @@ def check_if_first_time():
 
 #Create name label
 global author_name_label
-author_name_label = ctk.CTkLabel(root, text="Pronot'if Team | ©2024", font=(default_credit_font), bg_color="transparent")
-author_name_label.place(relx=0.73, rely=0.89)
+author_name_label = ctk.CTkLabel(root, text="Pronot'if Team | ©2024", font=default_credit_font, bg_color="transparent")
+author_name_label.place(relx=0.67, rely=0.89)
 author_name_label.bind("<Button-1>", on_label_click)
 
 # Create a Canvas widget to draw the line
@@ -1309,12 +1314,12 @@ def open_privacy(event):
     webbrowser.open("https://safety.pronotif.tech/docs/politique-de-confidentialite")
 
 # Create a Text widget
-tos_label = ctk.CTkTextbox(root, height=10, width=385, fg_color="transparent", bg_color="transparent", font=default_conditions_font, wrap="word")
-tos_label.place(relx=0.51, rely=0.78, anchor="center")
+tos_label = ctk.CTkTextbox(root, height=10, width=600, fg_color="transparent", bg_color="transparent", font=default_conditions_font, wrap="word")
+tos_label.place(relx=0.78, rely=0.78, anchor="center")
 
 # Insert normal text and the link text
 tos_label.insert("end", "En continuant vous acceptez les ")
-tos_label.insert("end", "conditions d'utilisation", "link_tos")
+tos_label.insert("end", "conditions", "link_tos")
 tos_label.insert("end", " et la ")
 tos_label.insert("end", "politique de confidentialité", "link_privacy")
 tos_label.insert("end", ".")
@@ -1338,11 +1343,11 @@ tos_label.tag_bind("link_privacy", "<Leave>", lambda e: tos_label.configure(curs
 tos_label.configure(state="disabled")
 
 # Create a title label
-title_label = ctk.CTkLabel(root, text="Etape 1/4", font=(default_title_font))
+title_label = ctk.CTkLabel(root, text="Etape 1/4", font=default_title_font)
 title_label.place(relx=0.5, rely=0.1, anchor="center")
 
 # Create main text label
-main_text = ctk.CTkLabel(root, text="Recherchez ici la ville\n  de votre établissement.", font=(default_text_font))
+main_text = ctk.CTkLabel(root, text="Recherchez ici la ville\n  de votre établissement.", font=default_text_font)
 main_text.place(relx=0.23, rely=0.45, anchor="center")
 
 # Create city entry widget
