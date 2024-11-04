@@ -1063,10 +1063,10 @@ def search_school():
             response = requests.get(url, params=params, verify=True)
         except requests.exceptions.SSLError:
             logger.error("Unable to verify SSL certificate !")
-            box = CTkMessagebox(title="Erreur réseau !", message="Une erreeur SSL est survenue et une connexion sécurisée ne peut être établie.", icon=cancel_icon_path, option_1="D'accord", master=root, width=350, height=10, corner_radius=20, sound=True)
+            box = CTkMessagebox(title="Erreur réseau !", message="Une erreur SSL est survenue et une connexion sécurisée ne peut être établie.", icon=cancel_icon_path, option_1="D'accord", master=root, width=350, height=10, corner_radius=20, sound=True)
             box.info._text_label.configure(wraplength=450)
             response = box.get()
-            if response == "Annuler":
+            if response == "D'accord":
               root.config(cursor="arrow")
               search_button.configure(state="normal", text_color="white")
               return []
