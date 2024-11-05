@@ -34,12 +34,17 @@ from ctypes import windll
 # Create a ConfigParser object
 config = configparser.ConfigParser()
 
-default_font_name = "Roboto"
-default_title_font = "Roboto", 17, "bold"
-default_subtitle_font = "Roboto", 12 
-default_text_font = "Roboto", 13
-default_credit_font = "Roboto", 10
-default_conditions_font = "Roboto", 9
+default_font_style = "Fixel Text Medium", 13
+default_font_name = "Fixel Text Medium"
+
+default_title_font = ("Fixel Display Bold", 18)
+
+default_messagebox_font = ("Fixel Text Medium", 15)
+default_items_font = ("Fixel Text Regular", 14)
+default_text_font = ("Fixel Text Medium", 14)
+default_config_step_font = ("Fixel Text Medium", 13)
+default_subtitle_font = ("Fixel Text Medium", 12)
+default_conditions_font = ("Fixel Text Medium", 10)
 
 geolocator = Nominatim(user_agent="Geocoder")
 
@@ -153,7 +158,7 @@ def get_timezone(true_city_geocode):
   automatic_school_timezone = pytz.timezone(timezone_str)
 
 
-countdown_seconds = 20  # Define the countdown_seconds variable outside the function
+countdown_seconds = 35  # Define the countdown_seconds variable outside the function
 
 def update_countdown():
     global countdown_seconds  # Declare that you're using the global variable
@@ -166,7 +171,7 @@ def update_countdown():
         root.destroy()  # Close the window or take any other action when the countdown reaches 0
 
 def find_export_dir():  
-  box = CTkMessagebox(title="Ziper le dossier ?", message=f"Souhaitez-vous ziper le dossier du bot pour alléger son poid ?", icon=question_icon_path, option_1="Oui", option_2="Non",cancel_button=None ,cancel_button_color="light grey", justify="center", master=root, width=350, height=10, corner_radius=20)
+  box = CTkMessagebox(title="Ziper le dossier ?", font=default_messagebox_font, message=f"Souhaitez-vous ziper le dossier du bot pour alléger son poid ?", icon=question_icon_path, option_1="Oui", option_2="Non",cancel_button=None ,cancel_button_color="light grey", justify="center", master=root, width=350, height=10, corner_radius=20)
   box.info._text_label.configure(wraplength=450)
 
   response = box.get()
@@ -186,8 +191,8 @@ def find_export_dir():
   find_dir_button.configure(state="disabled", text_color="grey")
 
   global closing_countdown_label
-  closing_countdown_label = CTkLabel(root, text="Fermeture...")
-  closing_countdown_label.place(relx=0.2, rely=0.95, anchor="center")
+  closing_countdown_label = CTkLabel(root, text="Fermeture...", font=default_subtitle_font)
+  closing_countdown_label.place(relx=0.16, rely=0.95, anchor="center")
 
   close_button.place_forget()
 
@@ -204,10 +209,10 @@ def final_step():
   tabview.pack_forget()
 
   main_text.place(relx=0.5, rely=0.3, anchor="center")
-  main_text.configure(text="Vous avez terminé la configuration de Pronot'if !\n\nCliquez sur le boutton ci-dessous pour trouver le dossier\nde votre bot.")
+  main_text.configure(text="Vous avez terminé la configuration de Pronot'if !\n\nCliquez sur le boutton ci-dessous pour trouver le dossier\nde votre bot.", font=default_config_step_font)
 
   global find_dir_button
-  find_dir_button = CTkButton(root, text="Trouver", command=find_export_dir)
+  find_dir_button = CTkButton(root,font=default_items_font , text="Trouver", command=find_export_dir)
   find_dir_button.place(relx=0.5, rely=0.65, anchor="center")
 
   bot_files_folder = os.path.exists(f"{script_directory}/Bot Files")
@@ -244,7 +249,7 @@ def check_all_steps_completed():
 def get_ntfy_topic():
   ntfy_entered_topic_name = ntfy_topic_name_entry.get()
  
-  box = CTkMessagebox(title="Valider ?", message=f"Est-ce bien le nom de votre topic ?\n{ntfy_entered_topic_name}", icon=question_icon_path, option_1="Oui", option_2="Annuler",cancel_button=None ,cancel_button_color="light grey", justify="center", master=root, width=350, height=10, corner_radius=20)
+  box = CTkMessagebox(title="Valider ?", font=default_messagebox_font, message=f"Est-ce bien le nom de votre topic ?\n{ntfy_entered_topic_name}", icon=question_icon_path, option_1="Oui", option_2="Annuler",cancel_button=None ,cancel_button_color="light grey", justify="center", master=root, width=350, height=10, corner_radius=20)
   box.info._text_label.configure(wraplength=450)
 
   response = box.get()
@@ -313,11 +318,11 @@ def config_steps():
   global config_tab_step1_text
   current_hour = datetime.datetime.now().hour
   greeting = "Bonjour" if 6 <= current_hour < 18 else "Bonsoir"
-  config_tab_step1_text = ctk.CTkLabel(master=tabview.tab("1. ntfy"), text=f"{greeting} {user_first_name} !\nEnregistrez ici le nom de votre topic ntfy.")
+  config_tab_step1_text = ctk.CTkLabel(master=tabview.tab("1. ntfy"), font=default_config_step_font ,text=f"{greeting} {user_first_name} !\nEnregistrez ici le nom de votre topic ntfy.")
   config_tab_step1_text.place(relx=0.5, rely=0.2, anchor="center")
 
   global ntfy_topic_name_entry
-  ntfy_topic_name_entry = ctk.CTkEntry(master=tabview.tab("1. ntfy"), width=200)  
+  ntfy_topic_name_entry = ctk.CTkEntry(master=tabview.tab("1. ntfy"), width=200, font=default_text_font)  
   ntfy_topic_name_entry.place(relx=0.5, rely=0.5, anchor="center")
   ntfy_topic_name_entry.bind("<Return>", lambda event: get_ntfy_topic())
 
@@ -325,7 +330,7 @@ def config_steps():
   need_help_button = ctk.CTkButton(master=tabview.tab("1. ntfy"), image=need_help_icon, text="", width=1, height=10, fg_color=["#dbdbdb", "#2b2b2b"], bg_color=["#dbdbdb", "#2b2b2b"], hover_color=["#dbdbdb", "#2b2b2b"], corner_radius=10)
   need_help_button.place(relx=0.84, rely=0.5, anchor="center")
 
-  need_help_tooltip = CTkToolTip(need_help_button, message="Vous ne savez pas quoi ecrire ici ?\nConsultez la documentation !", delay=0.3, alpha=0.8, wraplength=450, justify="center", font=default_credit_font)
+  need_help_tooltip = CTkToolTip(need_help_button, message="Vous ne savez pas quoi ecrire ici ?\nConsultez la documentation !", delay=0.3, alpha=0.8, wraplength=450, justify="center", font=default_subtitle_font)
 
   # Function to enable the button if entry is not empty
   def enable_button(event):
@@ -341,13 +346,13 @@ def config_steps():
   ntfy_topic_name_entry.bind("<KeyRelease>", enable_button)
 
   global ntfy_topic_name_button
-  ntfy_topic_name_button = ctk.CTkButton(master=tabview.tab("1. ntfy"), text="Valider",command=get_ntfy_topic, state="disabled", text_color="grey", corner_radius=10)
+  ntfy_topic_name_button = ctk.CTkButton(master=tabview.tab("1. ntfy"),font=default_items_font , text="Valider",command=get_ntfy_topic, state="disabled", text_color="grey", corner_radius=10)
   ntfy_topic_name_button.place(relx=0.5, rely=0.75, anchor="center")
 
   #TAB 2 LUNCH TIMES
          
   if not menus_found:
-    config_tab_step2_text = ctk.CTkLabel(master=tabview.tab("2. Repas"), text="Votre établissement ne semble pas avoir défini\nle menu de la cantine dans Pronote !\n\nPassez cette étape.")
+    config_tab_step2_text = ctk.CTkLabel(master=tabview.tab("2. Repas"), text="Votre établissement ne semble pas avoir défini\nle menu de la cantine dans Pronote !\n\nPassez cette étape.", font=default_config_step_font)
     config_tab_step2_text.place(relx=0.5, rely=0.5, anchor="center")
 
     globals()['config_tab2_approved'] = True
@@ -355,7 +360,7 @@ def config_steps():
 
   # Handling the case when a menu is found
   else:
-    config_tab_step2_text = ctk.CTkLabel(master=tabview.tab("2. Repas"), text="Déplacez le curseur bleu pour définir vos horaires\nde déjeuner.")
+    config_tab_step2_text = ctk.CTkLabel(master=tabview.tab("2. Repas"), text="Déplacez le curseur bleu pour définir vos horaires\nde déjeuner.", font=default_config_step_font)
     config_tab_step2_text.place(relx=0.5, rely=0.15, anchor="center")
 
     # Create labels and Scale widgets for each day
@@ -432,7 +437,7 @@ def config_steps():
     increment = 5  # 5 minutes increment
 
     for day in days:
-        label = ctk.CTkLabel(master=tabview.tab("2. Repas"), text=f"{day} 12h30 (par défaut)")
+        label = ctk.CTkLabel(master=tabview.tab("2. Repas"), text=f"{day} 12h30 (par défaut)", font=default_subtitle_font)
         labels[day] = label
 
         scale = ctk.CTkSlider(master=tabview.tab("2. Repas"), from_=start_time, to=end_time, number_of_steps=(end_time - start_time) // increment)
@@ -452,11 +457,11 @@ def config_steps():
         submit_button_icon = ctk.CTkImage(light_image=Image.open(f"{script_directory}/Icons/Global UI/save_meal_def.png").resize((24, 24)))
 
         # Create the submit button
-        submit_button = ctk.CTkButton(master=tabview.tab("2. Repas"), text="Enregistrer", image=submit_button_icon, compound="right", command=submit_lunch_time, corner_radius=10)
+        submit_button = ctk.CTkButton(master=tabview.tab("2. Repas"),font=default_items_font , text="Enregistrer", image=submit_button_icon, compound="right", command=submit_lunch_time, corner_radius=10)
         submit_button.place(relx=0.5, rely=0.8, anchor="center")
   #TAB 3 EMOJIS
 
-  config_tab_step3_text = ctk.CTkLabel(master=tabview.tab("3. Emojis"), text="La configuration des emojis arrivera dans une\nprochaine version.\n\n(Vous pouvez toujours le faire manuellement dans le\nfichier de configuration)")
+  config_tab_step3_text = ctk.CTkLabel(master=tabview.tab("3. Emojis"), text="La configuration des emojis arrivera dans une\nprochaine version.\n\n(Vous pouvez toujours le faire manuellement dans le\nfichier de configuration)", font=default_config_step_font)
   config_tab_step3_text.place(relx=0.5, rely=0.5, anchor="center")
 
   globals()['config_tab3_approved'] = True
@@ -501,7 +506,7 @@ def config_steps():
           selected_option = combo_menu.get()
           if selected_option == "":
               logger.error("Value cannot be None !")
-              box = CTkMessagebox(title="Erreur !", message="Vous devez choisir une valeur du menu avant de valider !", icon=warning_icon_path, option_1="Réessayer", master=root, width=350, height=10, corner_radius=20, sound=True)
+              box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Vous devez choisir une valeur du menu avant de valider !", icon=warning_icon_path, option_1="Réessayer", master=root, width=350, height=10, corner_radius=20, sound=True)
               box.info._text_label.configure(wraplength=450)
           else:
               if selected_option == "UTC":
@@ -524,21 +529,21 @@ def config_steps():
           logger.debug("Default timezone has been selected !")
           set_config_file_advanced()
   
-  config_tab_step4_text = ctk.CTkLabel(master=tabview.tab("4. Avancé"), text="Au besoin changez le fuseau horaire utilisé.")
+  config_tab_step4_text = ctk.CTkLabel(master=tabview.tab("4. Avancé"), text="Au besoin changez le fuseau horaire utilisé.", font=default_config_step_font)
   config_tab_step4_text.place(relx=0.5, rely=0.15, anchor="center")
   
   # Add a switch (CTkSwitch)
   switch_var = ctk.StringVar(value="on")  # Set the switch to be enabled by default
-  switch = ctk.CTkSwitch(master=tabview.tab("4. Avancé"), text="Automatique (par défaut)", variable=switch_var, onvalue="on", offvalue="off", command=switch_toggled)
+  switch = ctk.CTkSwitch(master=tabview.tab("4. Avancé"), font=default_subtitle_font, text="Automatique (par défaut)", variable=switch_var, onvalue="on", offvalue="off", command=switch_toggled)
   switch.place(relx=0.5, rely=0.35, anchor="center")
 
   # Add a combobox
   options = ["UTC", "UTC+1", "UTC+2", "UTC+3", "UTC+4", "UTC+5", "UTC+6", "UTC+7", "UTC+8", "UTC+9", "UTC+10", "UTC+11", "UTC+12", "UTC-1", "UTC-2", "UTC-3", "UTC-4", "UTC-5", "UTC-6", "UTC-7", "UTC-8", "UTC-9", "UTC-10", "UTC-11", "UTC-12", "UTC-13", "UTC-14"]
-  combo_menu = ctk.CTkComboBox(master=tabview.tab("4. Avancé"), values=options, state="readonly")
+  combo_menu = ctk.CTkComboBox(master=tabview.tab("4. Avancé"), font=default_text_font , values=options, state="readonly")
   combo_menu.place_forget()  # Initially hidden
 
   # Add a save button
-  save_button = ctk.CTkButton(master=tabview.tab("4. Avancé"), text="Enregistrer", command=save_selection, corner_radius=10)
+  save_button = ctk.CTkButton(master=tabview.tab("4. Avancé"), font=default_items_font ,text="Enregistrer", command=save_selection, corner_radius=10)
   save_button.place(relx=0.5, rely=0.8, anchor="center")
 
 
@@ -550,7 +555,7 @@ def save_credentials():
 
     if not username or not password:
      logger.error("Missing Entrys")
-     box = CTkMessagebox(title="Erreur !", message="Vous devez renseigner un mot de passe et un identifiant...", icon=warning_icon_path, option_1="Réessayer",master=root, width=350, height=10, corner_radius=20,sound=True)
+     box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Vous devez renseigner un mot de passe et un identifiant...", icon=warning_icon_path, option_1="Réessayer",master=root, width=350, height=10, corner_radius=20,sound=True)
      box.info._text_label.configure(wraplength=450)
 
     else: 
@@ -585,7 +590,7 @@ def save_credentials():
          config.write(configfile)
             
         if client.logged_in:
-         box = CTkMessagebox(title="Succès !", message="Connexion effectuée !", icon=ok_icon_path, option_1="Parfait", master=root, width=300, height=10, corner_radius=20,sound=True)
+         box = CTkMessagebox(title="Succès !", font=default_messagebox_font, message="Connexion effectuée !", icon=ok_icon_path, option_1="Parfait", master=root, width=300, height=10, corner_radius=20,sound=True)
          box.info._text_label.configure(wraplength=450)
 
          # Get today's date
@@ -662,7 +667,7 @@ def save_credentials():
 
       except (pronotepy.CryptoError, pronotepy.ENTLoginError):
          logger.warning("Wrong credentials !")
-         box = CTkMessagebox(title="Erreur !", message="Vos identifiants de connexion semblent incorrects...", icon=warning_icon_path, option_1="Réessayer",master=root, width=300, height=10, corner_radius=20,sound=True)
+         box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Vos identifiants de connexion semblent incorrects...", icon=warning_icon_path, option_1="Réessayer",master=root, width=300, height=10, corner_radius=20,sound=True)
          box.info._text_label.configure(wraplength=450)
          password_entry.delete(0, 'end')
          root.config(cursor="arrow")   
@@ -673,11 +678,11 @@ def save_credentials():
          if current_month == 7 or current_month == 8:
            
            logger.critical(f"Unknown error ! Month is {current_month}, perhaps service closure due to summer break ?\n{e}")
-           box = CTkMessagebox(title="Erreur !", message="Une erreur inconnue est survenue...\n(Peut-être la fermeture estivale de Pronote ?)", icon=cancel_icon_path, option_1="Ok",master=root, width=400, height=10, corner_radius=20,sound=True)
+           box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Une erreur inconnue est survenue...\n(Peut-être la fermeture estivale de Pronote ?)", icon=cancel_icon_path, option_1="Ok",master=root, width=400, height=10, corner_radius=20,sound=True)
 
          else:
             logger.critical(f"Unknown error ! Detail below :\n{e}")
-            box = CTkMessagebox(title="Erreur !", message="Une erreur inconnue est survenue...\nVeuillez réessayer plus tard.", icon=cancel_icon_path, option_1="Ok",master=root, width=300, height=10, corner_radius=20,sound=True)
+            box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Une erreur inconnue est survenue...\nVeuillez réessayer plus tard.", icon=cancel_icon_path, option_1="Ok",master=root, width=300, height=10, corner_radius=20,sound=True)
 
          box.info._text_label.configure(wraplength=450) 
          root.config(cursor="arrow")
@@ -732,7 +737,8 @@ def login_step(choice, international_use):
     root.config(cursor="arrow")
     
     title_label.configure(text="Etape 3/4")
-    main_text.configure(text=f"Connectez vous à Pronote\nà l'aide de vos identifiants.")
+    main_text.configure(text=f"Connectez vous à Pronote\nà l'aide de vos identifiants.", font=default_text_font)
+    main_text.place(relx=0.23, rely=0.45, anchor="center") #Reposition the text to the initial position
 
     def adjust_text_size(event=None):
       # Get the current text of the label
@@ -783,11 +789,11 @@ def login_step(choice, international_use):
 
     # Création des champs de saisie
     global username_entry
-    username_entry = ctk.CTkEntry(root, width=150, placeholder_text="Nom d'utilisateur")
+    username_entry = ctk.CTkEntry(root, width=150, placeholder_text="Nom d'utilisateur", font=default_subtitle_font)
     username_entry.place(relx=0.71, rely=0.35, anchor="center")
 
     global password_entry
-    password_entry = ctk.CTkEntry(root, width=150, height=35, show="*", placeholder_text="Mot de passe")
+    password_entry = ctk.CTkEntry(root, width=150, height=35, show="*", placeholder_text="Mot de passe", font=default_subtitle_font)
     password_entry.place(relx=0.71, rely=0.65, anchor="center")
     password_entry.bind("<Return>", lambda event: save_credentials())
 
@@ -801,14 +807,14 @@ def login_step(choice, international_use):
                       
     # Create the save button with the lock icon
     global save_button
-    save_button = ctk.CTkButton(root, text="Connexion", command=save_credentials, corner_radius=10, width=135, height=23)
+    save_button = ctk.CTkButton(root, text="Connexion", font=default_items_font, command=save_credentials, corner_radius=10, width=135, height=23)
     save_button.place(relx=0.71, rely=0.83, anchor="center")
 
   else:
 
     if pronote_use_msg == "DNS Error":
       logger.warning(f"{choice} ({true_city_name}) doesn't seem to use Pronote... See below\nWebsite {pronote_url} does not exists. {pronote_use_msg}")
-      box = CTkMessagebox(title="Aucun résultat", message="Votre établissement ne semble pas utiliser Pronote.", icon=warning_icon_path, option_1="Ok",master=root, width=350, height=10, corner_radius=20,sound=True)
+      box = CTkMessagebox(title="Aucun résultat", font=default_messagebox_font, message="Votre établissement ne semble pas utiliser Pronote.", icon=warning_icon_path, option_1="Ok",master=root, width=350, height=10, corner_radius=20,sound=True)
       box.info._text_label.configure(wraplength=450)
       root.config(cursor="arrow")
 
@@ -828,7 +834,8 @@ def login_step(choice, international_use):
        root.config(cursor="arrow")
 
        title_label.configure(text="Etape 3/4")
-       main_text.configure(text=f"Connectez vous à Pronote\nà l'aide de vos identifiants.")
+       main_text.configure(text=f"Connectez vous à Pronote\nà l'aide de vos identifiants.", font=default_text_font)
+       main_text.place(relx=0.23, rely=0.45, anchor="center") #Reposition the text to the initial position
 
        def adjust_text_size(event=None):
         # Get the current text of the label
@@ -855,14 +862,14 @@ def login_step(choice, international_use):
        password_label.place(relx=0.75, rely=0.53, anchor="center")
 
        # Création des champs de saisie
-       username_entry = ctk.CTkEntry(root, width=150)
+       username_entry = ctk.CTkEntry(root, width=150, placeholder_text="Nom d'utilisateur", font=default_text_font)
        username_entry.place(relx=0.75, rely=0.35, anchor="center")
 
-       password_entry = ctk.CTkEntry(root, width=150, show="*")
+       password_entry = ctk.CTkEntry(root, width=150, height=35, show="*", font=default_text_font, placeholder_text="Mot de passe")
        password_entry.place(relx=0.75, rely=0.65, anchor="center")
 
        # Création du bouton d'enregistrement
-       save_button = ctk.CTkButton(root, text="Connexion", command=save_credentials, corner_radius=10)
+       save_button = ctk.CTkButton(root, text="Connexion", font=default_items_font, command=save_credentials, corner_radius=10)
        save_button.place(relx=0.75, rely=0.83, anchor="center")
 
       split_school_type = school_type.split()[0] # Get the first word of the school type value
@@ -927,7 +934,7 @@ def login_step(choice, international_use):
     else:
       logger.critical(response)
       logger.critical(f"Unknown error for {pronote_url}\nError detail : {pronote_use_msg}")
-      box = CTkMessagebox(title="Erreur", message="Une erreur inconnue est survenue.\nMerci de réessayer plus tard.", icon=cancel_icon_path, option_1="Ok",master=root, width=350, height=10, corner_radius=20,sound=True)
+      box = CTkMessagebox(title="Erreur", font=default_messagebox_font, message="Une erreur inconnue est survenue.\nMerci de réessayer plus tard.", icon=cancel_icon_path, option_1="Ok",master=root, width=350, height=10, corner_radius=20,sound=True)
       box.info._text_label.configure(wraplength=450)
 
 
@@ -955,7 +962,7 @@ def process_manual_login_url():
 
   else:
     logger.error("Given URL string is not well formated...")
-    box = CTkMessagebox(title="Erreur !", height=50, message="L'URL que vous avez entrée n'est pas correcte.\n\nVeuillez vérifier le format et réessayer.", icon=warning_icon_path, option_1="Réessayer", master=root, corner_radius=20, sound=True)
+    box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, height=50, message="L'URL que vous avez entrée n'est pas correcte.\n\nVeuillez vérifier le format et réessayer.", icon=warning_icon_path, option_1="Réessayer", master=root, corner_radius=20, sound=True)
     box.info._text_label.configure(wraplength=500)
 
 def search_school():
@@ -966,13 +973,13 @@ def search_school():
     try:
      true_city_geocode = geolocator.geocode(city)
     except:
-      box = CTkMessagebox(title="Erreur !", message="Une erreur inconnue est survenue...", icon=warning_icon_path, option_1="Réessayer",master=root, width=300, height=10, corner_radius=20,sound=True)
+      box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Une erreur inconnue est survenue...", icon=warning_icon_path, option_1="Réessayer",master=root, width=300, height=10, corner_radius=20,sound=True)
       box.info._text_label.configure(wraplength=450)
       root.config(cursor="arrow")
     
     if not true_city_geocode:
        logger.error("Unknow city !")
-       box = CTkMessagebox(title="Erreur !", message="Cette ville ne semble pas exister...", icon=warning_icon_path, option_1="Réessayer",master=root, width=300, height=10, corner_radius=20,sound=True)
+       box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Cette ville ne semble pas exister...", icon=warning_icon_path, option_1="Réessayer",master=root, width=300, height=10, corner_radius=20,sound=True)
        box.info._text_label.configure(wraplength=450)
        root.config(cursor="arrow")
 
@@ -1002,30 +1009,32 @@ def search_school():
       internet_status_label.place(relx=0.75, rely=0.8, anchor="center")
 
       title_label.configure(text="Etape 2/4")
-      main_text.configure(text="Etablissement à l'étranger ?\n\nRenseignez manuellement\n   votre url de connexion Pronote.",justify="center", anchor="w")
+      
+      main_text.configure(text="Etablissement à l'étranger ?\n\nRenseignez manuellement\nvotre url de connexion Pronote.", justify="center", anchor="w", font=default_config_step_font)
+      main_text.place(relx=0.25, rely=0.45, anchor="center")
  
       global country_and_city_label
       country_and_city_label = ctk.CTkLabel(master=root, text=f"{true_city_name}, {country_name}", font=(default_font_name, 11, "underline"), justify="center", anchor="center")
       country_and_city_label.place(relx=0.23, rely=0.70, anchor="center")
 
       global manual_pronote_url_entry
-      manual_pronote_url_entry = ctk.CTkEntry(master=root, font=(default_font_name, 11), width=190, placeholder_text="https://xxxxxxxx.index-education.net")
+      manual_pronote_url_entry = ctk.CTkEntry(master=root, font=(default_font_name, 11), width=188, placeholder_text="https://xxxxxxxx.index-education.net")
       manual_pronote_url_entry.place(relx=0.75, rely=0.50, anchor="center")
       manual_pronote_url_entry.bind("<Return>", lambda event: process_manual_login_url())
 
       global maunual_pronote_url_button
-      maunual_pronote_url_button = ctk.CTkButton(master=root, text="Valider", command=process_manual_login_url, corner_radius=10)
+      maunual_pronote_url_button = ctk.CTkButton(master=root, text="Valider", font=default_items_font , command=process_manual_login_url, corner_radius=10)
       maunual_pronote_url_button.place(relx=0.75, rely=0.67, anchor="center")
 
      else:
       city_entry.delete(0, "end")
       if ("Marseille" in true_city_name) and "Arrondissement" not in true_city_name:  
-       box = CTkMessagebox(title="Info", message=f"Pour Marseille merci de spécifier l'arrondissement en entier !\nExemple : Marseille 1er Arrondissement, Marseille 2e Arrondissement,", icon=info_icon_path, option_1="Réessayer",master=root, width=350, height=15, corner_radius=20,sound=True)
+       box = CTkMessagebox(title="Info", font=default_messagebox_font, message=f"Pour Marseille merci de spécifier l'arrondissement en entier !\nExemple : Marseille 1er Arrondissement, Marseille 2e Arrondissement,", icon=info_icon_path, option_1="Réessayer",master=root, width=350, height=15, corner_radius=20,sound=True)
        box.info._text_label.configure(wraplength=450)
        root.config(cursor="arrow")
 
       elif ("Paris" in true_city_name or "Lyon" in true_city_name) and "Arrondissement" not in true_city_name:
-       box = CTkMessagebox(title="Info", message=f"Pour {true_city_name} merci de spécifier l'arrondissement !\nExemple : {true_city_name} 19e, {true_city_name} 20e, {true_city_name} 1er", icon=info_icon_path, option_1="Réessayer",master=root, width=350, height=10, corner_radius=20,sound=True)
+       box = CTkMessagebox(title="Info", font=default_messagebox_font, message=f"Pour {true_city_name} merci de spécifier l'arrondissement !\nExemple : {true_city_name} 19e, {true_city_name} 20e, {true_city_name} 1er", icon=info_icon_path, option_1="Réessayer",master=root, width=350, height=10, corner_radius=20,sound=True)
        box.info._text_label.configure(wraplength=450)
        root.config(cursor="arrow")
 
@@ -1063,7 +1072,7 @@ def search_school():
             response = requests.get(url, params=params, verify=True)
         except requests.exceptions.SSLError:
             logger.error("Unable to verify SSL certificate !")
-            box = CTkMessagebox(title="Erreur réseau !", message="Une erreur SSL est survenue et une connexion sécurisée ne peut être établie.", icon=cancel_icon_path, option_1="D'accord", master=root, width=350, height=10, corner_radius=20, sound=True)
+            box = CTkMessagebox(title="Erreur réseau !", font=default_messagebox_font, message="Une erreur SSL est survenue et une connexion sécurisée ne peut être établie.", icon=cancel_icon_path, option_1="D'accord", master=root, width=350, height=10, corner_radius=20, sound=True)
             box.info._text_label.configure(wraplength=450)
             response = box.get()
             if response == "D'accord":
@@ -1080,7 +1089,7 @@ def search_school():
 
           if results_number == 0:
            logger.error("No results for the city !")
-           box = CTkMessagebox(title="Aucun résultat", message="Il ne semble pas y avoir de collèges ou lycées pris en charge dans cette ville...", icon=warning_icon_path, option_1="Réessayer",master=root, width=350, height=10, corner_radius=20,sound=True)
+           box = CTkMessagebox(title="Aucun résultat", font=default_messagebox_font, message="Il ne semble pas y avoir de collèges ou lycées pris en charge dans cette ville...", icon=warning_icon_path, option_1="Réessayer",master=root, width=350, height=10, corner_radius=20,sound=True)
            box.info._text_label.configure(wraplength=450)
 
            root.config(cursor="arrow")
@@ -1155,7 +1164,7 @@ def search_school():
 
            # Create the OptionMenu with dynamic width
            global choice_menu
-           choice_menu = ctk.CTkOptionMenu(root, width=175, dynamic_resizing=False, values=appellation_officielle_values, variable=default_choice_menu_var, command=optionmenu_callback)
+           choice_menu = ctk.CTkOptionMenu(root, font=default_items_font , width=175, dynamic_resizing=False, values=appellation_officielle_values, variable=default_choice_menu_var, command=optionmenu_callback)
            choice_menu.place(relx=0.75, rely=0.4, anchor="center")
 
            search_button.place_forget()
@@ -1170,7 +1179,7 @@ def search_school():
        
        except Exception as e:
         logger.error(f"An error occurred while trying to search for the city !\n{e}")
-        box = CTkMessagebox(title="Erreur !", message="Une erreur inconnue est survenue...", icon=warning_icon_path, option_1="Réessayer",master=root, width=300, height=10, corner_radius=20,sound=True)
+        box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Une erreur inconnue est survenue...", icon=warning_icon_path, option_1="Réessayer",master=root, width=300, height=10, corner_radius=20,sound=True)
         box.info._text_label.configure(wraplength=450)
         root.config(cursor="arrow")
         search_button.configure(state="normal")
@@ -1182,9 +1191,21 @@ root = ctk.CTk()
 root.geometry("400x200")
 root.resizable(False, False)
 root.title("Pronot'if Setup")
+root.option_add("*Font", default_font_style)
+
+# Load the custom .otf fonts
+
+#Fixel Text
+fixeltext_font_regular = Font(file=f"{script_directory}/Fonts/FixelText-Regular.otf", family="Fixel Text Regular")
+fixeltext_font_semi_bold = Font(file=f"{script_directory}/Fonts/FixelText-SemiBold.otf", family="Fixel Text SemiBold")
+#fixeltext_font_light = Font(file=f"{script_directory}/Fonts/FixelText-Light.otf", family="Fixel Text Light") Unused font
+fixeltext_font_medium = Font(file=f"{script_directory}/Fonts/FixelText-Medium.otf", family="Fixel Text Medium")
+
+#Fixel Display
+fixeldisplay_font_bold = Font(file=f"{script_directory}/Fonts/FixelDisplay-Bold.otf", family="Fixel Display Bold")
+fixeldisplay_font_medium = Font(file=f"{script_directory}/Fonts/FixelDisplay-Medium.otf", family="Fixel Display Medium")
 
 #wanted file type can be : ico, config, ent_data, pronote_password or pronote_username
-
 check_important_file_existence(wanted_file_type="ico")
 
 
@@ -1196,7 +1217,7 @@ title_bar_color.set(root, "#16a376")
 window_frame.center(root)
 
 def close_app():
-  box = CTkMessagebox(title="Fermer ?", message="Annuler la configuration ?\nL'ensemble de vos données sera supprimé...", icon=question_icon_path, option_1="Annuler", option_2="Fermer",cancel_button=None ,cancel_button_color="light grey", justify="center", master=root, width=350, height=10, corner_radius=20,sound=True)
+  box = CTkMessagebox(title="Fermer ?", font=default_messagebox_font, message="Annuler la configuration ?\nL'ensemble de vos données sera supprimé...", icon=question_icon_path, option_1="Annuler", option_2="Fermer",cancel_button=None ,cancel_button_color="light grey", justify="center", master=root, width=350, height=10, corner_radius=20,sound=True)
   box.info._text_label.configure(wraplength=450)
 
 
@@ -1286,7 +1307,7 @@ def check_if_first_time():
 
   if first_use_file:
     logger.info("Initial Startup !")
-    box = CTkMessagebox(title="Premiere fois ici ?", message=f"On dirait que vous n'avez jamais utilisé Pronot'if...\n\nLisez la documentation pour mieux comprendre comment vous en servir.", icon=info_icon_path, option_1="D'accord", cancel_button=None ,cancel_button_color="light grey", justify="center", master=root, width=450, height=10, corner_radius=20)
+    box = CTkMessagebox(title="Premiere fois ici ?", font=default_messagebox_font, message=f"On dirait que vous n'avez jamais utilisé Pronot'if...\n\nLisez la documentation pour mieux comprendre comment vous en servir.", icon=info_icon_path, option_1="D'accord", cancel_button=None ,cancel_button_color="light grey", justify="center", master=root, width=450, height=10, corner_radius=20)
     box.info._text_label.configure(wraplength=450)
     webbrowser.open_new_tab("https://github.com/TGA25dev/Pronotif/wiki/Accueil")
     os.remove(f"{script_directory}/first_use.txt")
@@ -1297,7 +1318,7 @@ def check_if_first_time():
 
 #Create name label
 global author_name_label
-author_name_label = ctk.CTkLabel(root, text="Pronot'if Team | ©2024", font=default_credit_font, bg_color="transparent")
+author_name_label = ctk.CTkLabel(root, text="Pronot'if Team | ©2024", font=default_subtitle_font, bg_color="transparent")
 author_name_label.place(relx=0.67, rely=0.89)
 author_name_label.bind("<Button-1>", on_label_click)
 
@@ -1351,7 +1372,7 @@ main_text = ctk.CTkLabel(root, text="Recherchez ici la ville\n  de votre établi
 main_text.place(relx=0.23, rely=0.45, anchor="center")
 
 # Create city entry widget
-city_entry = ctk.CTkEntry(root, width=150)
+city_entry = ctk.CTkEntry(root, width=150, font=default_text_font)
 city_entry.place(relx=0.75, rely=0.4, anchor="center")
 city_entry.bind("<Return>", lambda event: search_school())
 
@@ -1359,15 +1380,15 @@ search_icon = ctk.CTkImage(light_image=Image.open(f"{script_directory}/Icons/Glo
 
 # Create search button
 global search_button
-search_button = ctk.CTkButton(root, text="Chercher", command=search_school, image=search_icon, compound="right", corner_radius=10) 
+search_button = ctk.CTkButton(root, text="Chercher",font=default_items_font, command=search_school, image=search_icon, compound="right", corner_radius=10) 
 search_button.place(relx=0.75, rely=0.6, anchor="center")
 
 #Create internet status label
-internet_status_label = ctk.CTkLabel(root, text="Checking connection...")
+internet_status_label = ctk.CTkLabel(root, text="Checking connection...", font=default_subtitle_font)
 internet_status_label.place(relx=0.25, rely=0.6, anchor="center")
 
 #Create close button
-close_button = ctk.CTkButton(root, text="Fermer",command=close_app, width=15, corner_radius=10, fg_color="#FF6347", hover_color="#FF4500")
+close_button = ctk.CTkButton(root, text="Fermer", font=default_items_font, command=close_app, width=15, corner_radius=10, fg_color="#FF6347", hover_color="#FF4500")
 close_button.place(relx=0.01, rely=0.98, anchor="sw")
 
 root.protocol("WM_DELETE_WINDOW", close_app)
