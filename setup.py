@@ -94,10 +94,41 @@ def handle_exception(exc_type, exc_value, exc_traceback):
 
 sys.excepthook = handle_exception
 
-class Config_Data:
+class SystemData: #System related data (needed for the system to work but not saved or sent to the server.)
     def __init__(self):
+      self.true_city_name = None
+      self.departement_code = None
+      self.region_name = None
+      self.country_name = None
+      self.school_type = None
+      self.automatic_school_timezone = None
+
+system_data = SystemData()      
+       
+class ConfigData:
+    def __init__(self):
+        #Main data
         self.pronote_url = None
-config_data = Config_Data()
+        self.student_fullname = None
+        self.firstname = None
+        self.student_class = None
+        self.ent_used = None
+        self.ent_name = None
+        self.topic_name = None
+
+        #Lunch times
+        self.lunch_times = {
+            "Monday": None,
+            "Tuesday": None,
+            "Wednesday": None,
+            "Thursday": None,
+            "Friday": None,
+        }
+
+        #Advanced
+        self.selected_timezone = None
+
+config_data = ConfigData()
 
 #wanted file type can be : ico, config, ent_data, pronote_password or pronote_username
 
@@ -154,8 +185,7 @@ def check_important_file_existence(wanted_file_type):
 def get_timezone(true_city_geocode):
   tf = TimezoneFinder()
   timezone_str = tf.timezone_at(lng=true_city_geocode.longitude, lat=true_city_geocode.latitude)
-  global automatic_school_timezone
-  automatic_school_timezone = pytz.timezone(timezone_str)
+  system_data.automatic_school_timezone = pytz.timezone(timezone_str)
 
 
 countdown_seconds = 35  # Define the countdown_seconds variable outside the function
@@ -255,8 +285,8 @@ def get_ntfy_topic():
   response = box.get()
 
   if response == "Oui":
-    defined_ntfy_topic_name = ntfy_entered_topic_name
-    logger.debug(f"ntfy topic name has been defined on: {defined_ntfy_topic_name}")
+    config_data.topic_name = ntfy_entered_topic_name
+    logger.debug(f"ntfy topic name has been defined on: {config_data.topic_name}")
 
     ntfy_topic_name_button.configure(state="disabled")
     ntfy_topic_name_entry.configure(state="disabled", text_color="grey")
@@ -269,7 +299,7 @@ def get_ntfy_topic():
      config.read_file(configfile)
 
     # Modify a key in the INI file
-     config['Global']['topic_name'] = defined_ntfy_topic_name
+     config['Global']['topic_name'] = config_data.topic_name
 
     # Write the changes back to the INI file
     with open(config_file_path, 'w', encoding='utf-8') as configfile:
@@ -293,9 +323,9 @@ def config_steps():
     config.read_file(configfile)
 
   # Modify a key in the INI file
-  config['Global']['student_fullname'] = nom_utilisateur
-  config['Global']['student_firstname'] = user_first_name
-  config['Global']['student_class'] = student_class_name
+  config['Global']['student_fullname'] = config_data.student_fullname
+  config['Global']['student_firstname'] = config_data.user_first_name
+  config['Global']['student_class'] = config_data.student_class_name
 
 
   # Write the changes back to the INI file
@@ -318,7 +348,7 @@ def config_steps():
   global config_tab_step1_text
   current_hour = datetime.datetime.now().hour
   greeting = "Bonjour" if 6 <= current_hour < 18 else "Bonsoir"
-  config_tab_step1_text = ctk.CTkLabel(master=tabview.tab("1. ntfy"), font=default_config_step_font ,text=f"{greeting} {user_first_name} !\nEnregistrez ici le nom de votre topic ntfy.")
+  config_tab_step1_text = ctk.CTkLabel(master=tabview.tab("1. ntfy"), font=default_config_step_font ,text=f"{greeting} {config_data.user_first_name} !\nEnregistrez ici le nom de votre topic ntfy.")
   config_tab_step1_text.place(relx=0.5, rely=0.2, anchor="center")
 
   global ntfy_topic_name_entry
@@ -389,6 +419,17 @@ def config_steps():
         selected_minutes = int(scales[day].get())
         lunch_times[day] = minutes_to_time(selected_minutes)
 
+        french_to_english = {
+            'Lundi': 'Monday',
+            'Mardi': 'Tuesday',
+            'Mercredi': 'Wednesday',
+            'Jeudi': 'Thursday',
+            'Vendredi': 'Friday'
+        }
+        
+        # Assign to ConfigData class
+        config_data.lunch_times[french_to_english[day]] = lunch_times[day]
+
         if current_day_index < len(days) - 1:
             # Hide the current day and move to the next day
             labels[day].place_forget()
@@ -405,23 +446,15 @@ def config_steps():
             config_tab_step2_text.configure(text="Vos paramètres ont étés enregistrés !\nPassez à la prochaine étape.")
             logger.debug(f"Lunch times submitted !")
 
-            french_to_english = {
-                'lundi': 'Monday',
-                'mardi': 'Tuesday',
-                'mercredi': 'Wednesday',
-                'jeudi': 'Thursday',
-                'vendredi': 'Friday'
-            }
-
             check_important_file_existence(wanted_file_type="config")
 
             # Read the INI file with the appropriate encoding
             with open(config_file_path, 'r', encoding='utf-8') as configfile:
                 config.read_file(configfile)
 
-            for french_day, time in lunch_times.items():
-                english_day = french_to_english.get(french_day.lower())  # Translate French day to English
-                if english_day:
+            # Save to config file
+            for english_day, time in config_data.lunch_times.items():
+                if time:
                     config['LunchTimes'][english_day] = time
 
             # Write the changes back to the INI file
@@ -459,6 +492,7 @@ def config_steps():
         # Create the submit button
         submit_button = ctk.CTkButton(master=tabview.tab("2. Repas"),font=default_items_font , text="Enregistrer", image=submit_button_icon, compound="right", command=submit_lunch_time, corner_radius=10)
         submit_button.place(relx=0.5, rely=0.8, anchor="center")
+
   #TAB 3 EMOJIS
 
   config_tab_step3_text = ctk.CTkLabel(master=tabview.tab("3. Emojis"), text="La configuration des emojis arrivera dans une\nprochaine version.\n\n(Vous pouvez toujours le faire manuellement dans le\nfichier de configuration)", font=default_config_step_font)
@@ -482,7 +516,7 @@ def config_steps():
      config.read_file(configfile)
 
     # Modify a key in the INI file
-    config['Advanced']['timezone'] = f"{selected_timezone}"
+    config['Advanced']['timezone'] = f"{config_data.selected_timezone}"
 
     # Write the changes back to the INI file
     with open(config_file_path, 'w', encoding='utf-8') as configfile:
@@ -510,7 +544,7 @@ def config_steps():
               box.info._text_label.configure(wraplength=450)
           else:
               if selected_option == "UTC":
-                  selected_timezone = "UTC"
+                  config_data.selected_timezone = "UTC"
               else:
                   sign = selected_option[3]
                   offset = selected_option[4:]
@@ -521,11 +555,11 @@ def config_steps():
                   elif sign == '-':
                       etc_gmt_offset = f"+{offset}"
   
-                  selected_timezone = f"Etc/GMT{etc_gmt_offset}"
+                  config_data.selected_timezone = f"Etc/GMT{etc_gmt_offset}"
                   logger.debug(f"New timezone has been selected : {selected_timezone}")
               set_config_file_advanced()
       else:
-          selected_timezone = automatic_school_timezone  # Use the automatic timezone
+          config_data.selected_timezone = system_data.automatic_school_timezone  # Use the automatic timezone
           logger.debug("Default timezone has been selected !")
           set_config_file_advanced()
   
@@ -568,16 +602,16 @@ def save_credentials():
        with open(config_file_path, 'r', encoding='utf-8') as configfile:
         config.read_file(configfile)
 
-        if ent_connexion:
+        if config_data.ent_connexion:
          
          module = importlib.import_module("pronotepy.ent")
-         used_ent = getattr(module, used_ent_name, None)
+         used_ent = getattr(module, config_data.used_ent_name, None)
 
          client = pronotepy.Client(config_data.pronote_url, username=username, password=password, ent=used_ent)
 
          # Modify a key in the INI file
          config['Global']['ent_used'] = "True"
-         config['Global']['ent_name'] = used_ent_name
+         config['Global']['ent_name'] = config_data.used_ent_name
         else:
          client = pronotepy.Client(config_data.pronote_url, username=username, password=password)
 
@@ -625,21 +659,16 @@ def save_credentials():
           except KeyError:
             menus_found = False # If no menu is found, set the flag to False
          
-          
-         global nom_utilisateur
-         global student_class_name
+         config_data.student_fullname = client.info.name
+         config_data.student_class_name = client.info.class_name
 
-         nom_utilisateur = client.info.name
-         student_class_name = client.info.class_name
-
-         logger.info(f'Logged in as {nom_utilisateur}')
+         logger.info(f'Logged in as {config_data.student_fullname}')
 
          # Enregistrer le nom d'utilisateur et le mot de passe dans deux fichiers .env différents
          set_key(f"{script_directory}/Data/pronote_username.env", 'User', username)
          set_key(f"{script_directory}/Data/pronote_password.env", 'Password', password)
 
-         global user_first_name
-         user_first_name = nom_utilisateur.split()[-1] if nom_utilisateur.strip() else None
+         config_data.user_first_name = config_data.student_fullname.split()[-1] if config_data.student_fullname.strip() else None
 
          root.config(cursor="arrow")
 
@@ -720,13 +749,11 @@ def login_step(choice, international_use):
 
   # Handle any other unexpected errors  
   if pronote_use and not pronote_use_msg and response.status_code == 200:
-    logger.info(f"{choice} ({true_city_name}) uses Pronote !")
+    logger.info(f"{choice} ({system_data.true_city_name}) uses Pronote !")
 
-    global used_ent_name
-    used_ent_name = None
+    config_data.used_ent_name = None
 
-    global ent_connexion
-    ent_connexion = False
+    config_data.ent_connexion = False
 
     if international_use:
        manual_pronote_url_entry.place_forget()
@@ -813,7 +840,7 @@ def login_step(choice, international_use):
   else:
 
     if pronote_use_msg == "DNS Error":
-      logger.warning(f"{choice} ({true_city_name}) doesn't seem to use Pronote... See below\nWebsite {pronote_url} does not exists. {pronote_use_msg}")
+      logger.warning(f"{choice} ({system_data.true_city_name}) doesn't seem to use Pronote... See below\nWebsite {pronote_url} does not exists. {pronote_use_msg}")
       box = CTkMessagebox(title="Aucun résultat", font=default_messagebox_font, message="Votre établissement ne semble pas utiliser Pronote.", icon=warning_icon_path, option_1="Ok",master=root, width=350, height=10, corner_radius=20,sound=True)
       box.info._text_label.configure(wraplength=450)
       root.config(cursor="arrow")
@@ -821,14 +848,12 @@ def login_step(choice, international_use):
     elif response != 202 and not pronote_use_msg:
       def process_chosen_ent(best_match):
        # Print the chosen option key and its associated variable_name
-       used_ent_name = data[best_match]['variable_name']
+       config_data.used_ent_name = data[best_match]['variable_name']
 
        # ENT Connexion
+       logger.debug(f"{choice} ({system_data.true_city_name}) uses Pronote (ENT Conexion: {config_data.used_ent_name}) !")
 
-       logger.debug(f"{choice} ({true_city_name}) uses Pronote (ENT Conexion: {used_ent_name}) !")
-
-       global ent_connexion
-       ent_connexion = True
+       config_data.ent_connexion = True
 
        choice_menu.place_forget()
        root.config(cursor="arrow")
@@ -862,9 +887,11 @@ def login_step(choice, international_use):
        password_label.place(relx=0.75, rely=0.53, anchor="center")
 
        # Création des champs de saisie
+       global username_entry
        username_entry = ctk.CTkEntry(root, width=150, placeholder_text="Nom d'utilisateur", font=default_text_font)
        username_entry.place(relx=0.75, rely=0.35, anchor="center")
 
+       global password_entry 
        password_entry = ctk.CTkEntry(root, width=150, height=35, show="*", font=default_text_font, placeholder_text="Mot de passe")
        password_entry.place(relx=0.75, rely=0.65, anchor="center")
 
@@ -872,11 +899,11 @@ def login_step(choice, international_use):
        save_button = ctk.CTkButton(root, text="Connexion", font=default_items_font, command=save_credentials, corner_radius=10)
        save_button.place(relx=0.75, rely=0.83, anchor="center")
 
-      split_school_type = school_type.split()[0] # Get the first word of the school type value
+      split_school_type = system_data.school_type.split()[0] # Get the first word of the school type value
 
       api_response = { 
-      "region": f"{region_name}",
-      "departement": f"{departement_code}",
+      "region": f"{system_data.region_name}",
+      "departement": f"{system_data.departement_code}",
       "type": f"{split_school_type}"
       }
 
@@ -986,17 +1013,16 @@ def search_school():
        city_entry.delete(0, "end")
 
     elif true_city_geocode:
-     global true_city_name
-     true_city_name = true_city_geocode.raw["name"]
+     system_data.true_city_name = true_city_geocode.raw["name"]
      
      display_name = true_city_geocode.raw["display_name"]
      # Split the display name by comma
      display_name_parts = display_name.split(", ")
      # Get the last part which should be the country name
-     country_name = display_name_parts[-1]
-     logger.debug(country_name)
+     system_data.country_name = display_name_parts[-1]
+     logger.debug(system_data.country_name)
 
-     if country_name != "France":
+     if system_data.country_name != "France":
       search_button.configure(state="disabled", text_color="grey")
       root.config(cursor="arrow")
 
@@ -1014,7 +1040,7 @@ def search_school():
       main_text.place(relx=0.25, rely=0.45, anchor="center")
  
       global country_and_city_label
-      country_and_city_label = ctk.CTkLabel(master=root, text=f"{true_city_name}, {country_name}", font=(default_font_name, 11, "underline"), justify="center", anchor="center")
+      country_and_city_label = ctk.CTkLabel(master=root, text=f"{system_data.true_city_name}, {system_data.country_name}", font=(default_font_name, 11, "underline"), justify="center", anchor="center")
       country_and_city_label.place(relx=0.23, rely=0.70, anchor="center")
 
       global manual_pronote_url_entry
@@ -1028,24 +1054,24 @@ def search_school():
 
      else:
       city_entry.delete(0, "end")
-      if ("Marseille" in true_city_name) and "Arrondissement" not in true_city_name:  
+      if ("Marseille" in system_data.true_city_name) and "Arrondissement" not in system_data.true_city_name:  
        box = CTkMessagebox(title="Info", font=default_messagebox_font, message=f"Pour Marseille merci de spécifier l'arrondissement en entier !\nExemple : Marseille 1er Arrondissement, Marseille 2e Arrondissement,", icon=info_icon_path, option_1="Réessayer",master=root, width=350, height=15, corner_radius=20,sound=True)
        box.info._text_label.configure(wraplength=450)
        root.config(cursor="arrow")
 
-      elif ("Paris" in true_city_name or "Lyon" in true_city_name) and "Arrondissement" not in true_city_name:
-       box = CTkMessagebox(title="Info", font=default_messagebox_font, message=f"Pour {true_city_name} merci de spécifier l'arrondissement !\nExemple : {true_city_name} 19e, {true_city_name} 20e, {true_city_name} 1er", icon=info_icon_path, option_1="Réessayer",master=root, width=350, height=10, corner_radius=20,sound=True)
+      elif ("Paris" in system_data.true_city_name or "Lyon" in system_data.true_city_name) and "Arrondissement" not in system_data.true_city_name:
+       box = CTkMessagebox(title="Info", font=default_messagebox_font, message=f"Pour {system_data.true_city_name} merci de spécifier l'arrondissement !\nExemple : {system_data.true_city_name} 19e, {system_data.true_city_name} 20e, {system_data.true_city_name} 1er", icon=info_icon_path, option_1="Réessayer",master=root, width=350, height=10, corner_radius=20,sound=True)
        box.info._text_label.configure(wraplength=450)
        root.config(cursor="arrow")
 
       else:
        search_button.configure(state="disabled", text_color="grey")
-       if "Arrondissement" in true_city_name:
+       if "Arrondissement" in system_data.true_city_name:
          # Define the pattern to match
          pattern = r'(\d+e)\s+(Arrondissement)' or r'(\d+er)\s+(Arrondissement)'
 
          # Replace the matched pattern with a space between the number and "Arrondissement"
-         true_city_name = re.sub(pattern, r'\1  \2', true_city_name)
+         system_data.true_city_name = re.sub(pattern, r'\1  \2', system_data.true_city_name)
 
        url = "https://data.education.gouv.fr/api/explore/v2.1/catalog/datasets/fr-en-adresse-et-geolocalisation-etablissements-premier-et-second-degre/records"
 
@@ -1054,7 +1080,7 @@ def search_school():
        params = {
           "limit": 30,
           "refine": [
-              f"libelle_commune:{true_city_name}",
+              f"libelle_commune:{system_data.true_city_name}",
               "nature_uai_libe:COLLEGE",
               "nature_uai_libe:LYCEE D ENSEIGNEMENT GENERAL",
               "nature_uai_libe:LYCEE ENSEIGNT GENERAL ET TECHNOLOGIQUE",
@@ -1108,7 +1134,7 @@ def search_school():
               else:
                 appellation_officielle_values.append(appellation_officielle)  # Add the school name to the list
 
-           logger.info(f"{results_count} results have been returned for {true_city_name} ! (limit is {limit})")  
+           logger.info(f"{results_count} results have been returned for {system_data.true_city_name} ! (limit is {limit})")  
 
            def optionmenu_callback(choice):
  
@@ -1121,7 +1147,7 @@ def search_school():
             "limit": 10,
             "refine": [
                f"appellation_officielle:{choice}",
-               f"libelle_commune:{true_city_name}",
+               f"libelle_commune:{system_data.true_city_name}",
 
              ]
            }
@@ -1136,13 +1162,9 @@ def search_school():
 
              uai_number = data["results"][0]["numero_uai"]
 
-             global departement_code
-             global region_name
-             global school_type
-
-             departement_code = data["results"][0]["code_departement"]
-             region_name = data["results"][0]["libelle_region"]
-             school_type = data["results"][0]["nature_uai_libe"]
+             system_data.departement_code = data["results"][0]["code_departement"]
+             system_data.region_name = data["results"][0]["libelle_region"]
+             system_data.school_type = data["results"][0]["nature_uai_libe"]
 
              config_data.pronote_url = f"https://{uai_number}.index-education.net/pronote/eleve.html"
 
