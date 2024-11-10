@@ -3,6 +3,7 @@ from customtkinter import *
 from CTkMessagebox import CTkMessagebox
 from CTkToolTip import *
 from hPyT import *
+import tkinter as tk
 import winsound
 import pronotepy
 import requests
@@ -26,9 +27,12 @@ import subprocess
 import traceback
 import random
 from loguru import logger
-from PIL import Image
+from PIL import Image, ImageGrab, ImageTk
 from tkextrafont import Font
 from ctypes import windll
+from pyzbar.pyzbar import decode
+from uuid import uuid4
+import cv2
 
 
 # Create a ConfigParser object
@@ -102,6 +106,9 @@ class SystemData: #System related data (needed for the system to work but not sa
       self.country_name = None
       self.school_type = None
       self.automatic_school_timezone = None
+      self.qrcode_data = None
+      self.scan_qr_code_method = None
+      self.international_use = None
 
 system_data = SystemData()      
        
@@ -112,9 +119,10 @@ class ConfigData:
         self.student_fullname = None
         self.firstname = None
         self.student_class = None
-        self.ent_used = None
-        self.ent_name = None
+        self.ent_connexion = None
+        self.used_ent_name = None
         self.topic_name = None
+        self.uuid = None
 
         #Lunch times
         self.lunch_times = {
@@ -604,11 +612,6 @@ def save_credentials():
 
         if config_data.ent_connexion:
          
-         module = importlib.import_module("pronotepy.ent")
-         used_ent = getattr(module, config_data.used_ent_name, None)
-
-         client = pronotepy.Client(config_data.pronote_url, username=username, password=password, ent=used_ent)
-
          # Modify a key in the INI file
          config['Global']['ent_used'] = "True"
          config['Global']['ent_name'] = config_data.used_ent_name
@@ -716,7 +719,421 @@ def save_credentials():
          box.info._text_label.configure(wraplength=450) 
          root.config(cursor="arrow")
 
-def login_step(choice, international_use):
+
+def qr_code_login_process():
+    pin=enter_pin_entry.get()
+    uuid=uuid4()
+
+    try:
+        client=pronotepy.Client.qrcode_login(system_data.qrcode_data, pin, str(uuid))
+
+        config_data.uuid = client.uuid
+        config_data.pronote_url = client.pronote_url
+        # Extract the URL and remove the "mobile." section
+        config_data.pronote_url = client.pronote_url.replace("mobile.", "")
+
+        if client.logged_in:
+         box = CTkMessagebox(title="Succès !", font=default_messagebox_font, message="Connexion effectuée !", icon=ok_icon_path, option_1="Parfait", master=root, width=300, height=10, corner_radius=20,sound=True)
+         box.info._text_label.configure(wraplength=450)
+
+         # Get today's date
+         today = datetime.date.today()
+
+         # Automatically determine the start date (e.g., 30 days before today)
+         days_back = 30  # Number of days to go back
+         start_date = today - datetime.timedelta(days=days_back)
+
+         # Generate a list of weekdays (excluding Saturdays and Sundays) between start_date and today
+         weekdays = []
+         current_date = start_date
+         while current_date <= today:
+              if current_date.weekday() < 5:  # Monday to Friday (0=Monday, 4=Friday)
+                  weekdays.append(current_date)
+              current_date += datetime.timedelta(days=1)
+
+         # Randomly choose some days from the weekdays list
+         fallback_dates = random.sample(weekdays, k=7)  # Choose 7 random dates
+         global menus
+
+         dates_to_check = [today] + fallback_dates #
+
+         global menus_found
+         menus_found = False
+         for date in dates_to_check: 
+          try:
+           menus = client.menus(date_from=date)
+           if menus:  # If a menu is found, break out of the loop
+            menus_found = True # Set the flag to True
+            break
+          except KeyError:
+            menus_found = False # If no menu is found, set the flag to False
+         
+         config_data.student_fullname = client.info.name
+         config_data.student_class_name = client.info.class_name
+
+         logger.info(f'Logged in as {config_data.student_fullname}')
+
+         # Enregistrer le nom d'utilisateur et le mot de passe dans deux fichiers .env différents
+         set_key(f"{script_directory}/Data/pronote_username.env", 'User', client.username)
+         set_key(f"{script_directory}/Data/pronote_password.env", 'Password', client.password)
+
+         config_data.user_first_name = config_data.student_fullname.split()[-1] if config_data.student_fullname.strip() else None
+
+         root.config(cursor="arrow")
+
+         # Effacer les champs après enregistrement
+         enter_pin_entry.place_forget()
+         enter_pin_button.place_forget()
+
+         title_label.configure(text="")
+         main_text.configure(text= "")
+
+         config_steps()
+
+    except Exception as e:
+        # Vérifie si le message d'erreur indique un problème de déchiffrement lié à un QR code expiré
+        if "Decryption failed while trying to un pad" in str(e) and "qr code has expired" in str(e):
+          box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Le QR code a expiré !\nVeuillez en générer un nouveau sur Pronote.", icon=warning_icon_path, option_1="Réessayer",master=root, width=350, height=10, corner_radius=20,sound=True)
+          box.info._text_label.configure(wraplength=450)
+          logger.error("QR Code has expired !")
+
+        elif "invalid confirmation code" in str(e):
+          box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Le code de confirmation est incorrect !", icon=warning_icon_path, option_1="Réessayer",master=root, width=350, height=10, corner_radius=20,sound=True)
+          box.info._text_label.configure(wraplength=450)
+          logger.error("Invalid confirmation code !")
+
+        else:
+          box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Une erreur inconnue est survenue...\nVeuillez réessayer plus tard.", icon=cancel_icon_path, option_1="Ok",master=root, width=300, height=10, corner_radius=20,sound=True)
+          box.info._text_label.configure(wraplength=450)
+          
+          logger.error(f"Can not login with QR code: {str(e)}")
+
+def ask_qr_code_pin():
+   root.deiconify()  # Restore the main window
+   main_text.configure(text="Entrez le code PIN défini\nsur Pronote.", font=default_text_font)
+
+   if system_data.scan_qr_code_method == "file":
+    file_qr_code_button.place_forget()
+    under_button_text.place_forget()
+
+   elif system_data.scan_qr_code_method == "screen":
+    on_screen_qr_code_button.place_forget()
+    camera_qr_code_button.place_forget()
+    file_qr_code_button.place_forget()
+
+   global enter_pin_entry
+   enter_pin_entry = ctk.CTkEntry(root, width=100, font=default_text_font, placeholder_text="1234")
+   enter_pin_entry.place(relx=0.70, rely=0.5, anchor="center")
+
+   global enter_pin_button
+   enter_pin_button = ctk.CTkButton(root, text="Valider", font=default_items_font, command=qr_code_login_process)
+   enter_pin_button.place(relx=0.70, rely=0.65, anchor="center")
+   
+
+def analyse_qr_code(screenshot):
+    decoded_objects = decode(screenshot) #Decode the QR Code
+    
+    #print(decoded_objects)
+    try:
+        system_data.qrcode_data=json.loads(decoded_objects[0].data.decode("utf-8")) #Get the data from the QR Code
+  
+        file_qr_code_button.configure(state='disabled')
+        ask_qr_code_pin()
+
+    except Exception as e:
+        logger.error(f"Can not decode QR code: {str(e)}")
+        box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Le QR Code scanné ne semble pas être valide...", icon=warning_icon_path, option_1="Réessayer",master=root, width=350, height=10, corner_radius=20,sound=True)
+        box.info._text_label.configure(wraplength=450)
+
+        root.deiconify()  # Restore the main window
+        root.lift()  # Bring main window to top
+
+def process_coords(start_x, start_y, end_x, end_y):
+    overlay.destroy()
+    # Ensure coordinates are ordered correctly
+    left = min(start_x, end_x)
+    top = min(start_y, end_y)
+    right = max(start_x, end_x)
+    bottom = max(start_y, end_y)
+    screenshot = ImageGrab.grab(bbox=(left, top, right, bottom))
+    logger.info("Screenshot has been processed !")
+    analyse_qr_code(screenshot)
+
+class DragRectangle:
+    def __init__(self, canvas):
+        self.canvas = canvas
+        self.start_x = None
+        self.start_y = None
+        self.rect = None
+
+    def start_drag(self, event):
+        self.start_x = event.x
+        self.start_y = event.y
+
+        global start_x
+        global start_y
+        start_x = self.start_x
+        start_y = self.start_y
+        #print(f"Starting coordinates: ({self.start_x}, {self.start_y})")
+        self.rect = self.canvas.create_rectangle(
+            self.start_x, self.start_y, self.start_x, self.start_y,
+            outline="#FF0000", width=4
+        )
+
+    def drag(self, event):
+        if self.rect:
+            self.canvas.coords(
+                self.rect,
+                self.start_x, self.start_y,
+                event.x, event.y
+            )
+
+    def stop_drag(self, event):
+        if self.rect:
+            end_x, end_y = event.x, event.y
+            #print(f"Start: {start_x}, {start_y} End: {end_x}, {end_y}")
+            process_coords(start_x, start_y, end_x, end_y)
+
+def create_overlay():
+    global overlay
+    overlay = ctk.CTkToplevel(root)
+    overlay.overrideredirect(True)  # Remove title bar
+    overlay.attributes('-alpha', 0.3)  # Set transparency to slightly transparent
+    overlay.state('zoomed')
+    overlay.attributes('-topmost', True)
+    overlay.config(cursor="crosshair")
+    overlay.lift()
+
+    canvas = tk.Canvas(overlay, highlightthickness=0)
+    canvas.pack(fill='both', expand=True)
+    
+    drag_rect = DragRectangle(canvas)
+    canvas.bind('<Button-1>', drag_rect.start_drag)
+    canvas.bind('<B1-Motion>', drag_rect.drag)
+
+    canvas.bind('<ButtonRelease-1>', drag_rect.stop_drag)
+    overlay.focus_force()  # Force focus on overlay
+
+    def on_overlay_close():
+        overlay.destroy()
+        on_screen_qr_code_button.configure(state='normal')
+
+    overlay.bind('<space>', lambda _: on_overlay_close())
+
+    return overlay     
+
+def scan_qr_code(scan_qr_code_method):
+   system_data.scan_qr_code_method = scan_qr_code_method
+
+   if scan_qr_code_method == "file": #If the user wants to scan a QR Code from a file
+      on_screen_qr_code_button.place_forget()
+      camera_qr_code_button.place_forget()
+
+      def import_qr_code_image():
+        filename = filedialog.askopenfilename(parent=root, filetypes=[("Images", "*.png"), ("Images", "*.jpg"), ("Images", "*.jpeg"), ("Images", "*.svg"), ("Images", "*.webp")], title="Selectionnez le fichier contenant votre QR Code", initialdir="/downloads")
+        if filename:
+
+          screenshot = Image.open(filename)
+          analyse_qr_code(screenshot)
+
+        else:
+          logger.warning("No file selected")
+          file_qr_code_button.configure(state='normal')
+      
+
+      main_text.configure(text="Importez l'image\nde votre QR Code", font=default_text_font)
+      global file_qr_code_button
+      file_qr_code_button.configure(text="Charger un fichier", command=import_qr_code_image)
+      file_qr_code_button.place(relx=0.75, rely=0.5, anchor="center")
+
+      global under_button_text
+      under_button_text = ctk.CTkLabel(root, text="Formats supportés : PNG, JPG, JPEG, SVG, WEBP", font=default_subtitle_font)
+      under_button_text.place(relx=0.75, rely=0.85, anchor="center")   
+
+   elif scan_qr_code_method == "screen":
+      logger.debug("Scan on screen method chosen !")
+      root.iconify() # Minimize the main window
+      create_overlay()
+
+   elif scan_qr_code_method == "camera":
+      logger.debug("Scan with camera method chosen !")
+
+      on_screen_qr_code_button.place_forget()
+      file_qr_code_button.place_forget()
+      camera_qr_code_button.place_forget()
+
+      main_text.configure(text="Placez votre QR Code\ndans le carrée vert", font=default_text_font)
+      # Create camera frame
+      camera_frame = ctk.CTkFrame(root, width=300, height=255)
+      camera_frame.place(relx=0.74, rely=0.56, anchor="center")
+      
+      camera_label = tk.Label(camera_frame)
+      camera_label.pack()
+
+      # Start video capture
+      cap = cv2.VideoCapture(0)
+      
+      def update_frame():
+          nonlocal cap, camera_frame
+          try:
+              ret, frame = cap.read()
+              if ret:
+                  frame = cv2.flip(frame, 1) # Flip the frame horizontally
+                  frame = cv2.resize(frame, (300, 255)) # Resize the frame
+
+                  # Draw green square in center
+                  h, w = frame.shape[:2]
+                  center_x, center_y = w//2, h//2
+                  square_size = 240
+                  cv2.rectangle(frame, 
+                              (center_x-square_size//2, center_y-square_size//2),
+                              (center_x+square_size//2, center_y+square_size//2),
+                              (0,255,0), 3)
+                  
+                  # Convert frame for display
+                  frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                  img = Image.fromarray(frame_rgb)
+                  imgtk = ImageTk.PhotoImage(image=img)
+                  camera_label.imgtk = imgtk
+                  camera_label.configure(image=imgtk)
+                  
+                  # Scan QR code in green square region
+                  qr_region = frame[center_y-square_size//2:center_y+square_size//2,
+                                  center_x-square_size//2:center_x+square_size//2]
+                  decoded = decode(qr_region)
+                  if decoded:
+                      try:
+                          decoded_data = decoded[0].data.decode("utf-8")
+                          qrcode_data = json.loads(decoded_data)
+                          cap.release()
+                          camera_frame.destroy()
+                          system_data.qrcode_data = qrcode_data
+                          ask_qr_code_pin()
+                          return
+                      except json.JSONDecodeError:
+                          logger.error("Invalid QR code format")
+
+                          box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Le QR Code scanné ne semble pas être valide...", icon=warning_icon_path, option_1="Réessayer",master=root, width=350, height=10, corner_radius=20,sound=True)
+                          box.info._text_label.configure(wraplength=450)
+                      
+                  root.after(10, update_frame)
+              else:
+                  cap.release()
+                  camera_frame.destroy()
+          except Exception as e:
+              print(f"Camera error: {str(e)}")
+              cap.release()
+              camera_frame.destroy()
+      
+      update_frame()
+
+def qr_code_login():
+  logger.debug("User has chosen QR Code login method !")
+  title_label.configure(text="Etape 4/4")
+  main_text.configure(text="Choissisez comment\nscanner votre QR Code", font=default_text_font)
+  
+  login_with_credentials_button.place_forget()
+  login_with_qr_button.place_forget()
+
+  on_screen_qr_code_image = ctk.CTkImage(light_image=Image.open(f"{script_directory}/Icons/Global UI/select_on_screen_def.png").resize((24, 24)))
+  file_qr_code_image = ctk.CTkImage(light_image=Image.open(f"{script_directory}/Icons/Global UI/open_folder_def.png").resize((24, 24)))
+  camera_qr_code_image = ctk.CTkImage(light_image=Image.open(f"{script_directory}/Icons/Global UI/camera_def.png").resize((24, 24)))
+
+  #Create 3 buttons for 3 methods
+  global on_screen_qr_code_button
+  on_screen_qr_code_button = ctk.CTkButton(root, text="Scanner depuis l'écran", font=default_items_font, command=lambda: scan_qr_code("screen"), image=on_screen_qr_code_image, compound="left")
+  on_screen_qr_code_button.place(relx=0.75, rely=0.35, anchor="center")
+
+  global camera_qr_code_button
+  camera_qr_code_button = ctk.CTkButton(root, text="Scanner avec la caméra", font=default_items_font, command=lambda: scan_qr_code("camera"), image=camera_qr_code_image, compound="left")
+  camera_qr_code_button.place(relx=0.75, rely=0.55, anchor="center")
+
+  global file_qr_code_button
+  file_qr_code_button = ctk.CTkButton(root, text="Importer une image", font=default_items_font, command=lambda: scan_qr_code("file"), image=file_qr_code_image, compound="left")
+  file_qr_code_button.place(relx=0.75, rely=0.75, anchor="center")
+   
+def select_login_method(choice):
+   root.config(cursor="arrow")
+   choice_menu.place_forget()
+   title_label.configure(text="Etape 3/4")
+   main_text.configure(text="Choisissez votre méthode\nde connexion à Pronote.", font=default_text_font)
+
+   def adjust_text_size(event=None):
+    # Get the current text of the label
+    text = school_name_text.cget("text")
+    # Calculate the length of the text
+    text_length = len(text)
+    # Adjust font size based on text length
+    font_size = max(10, 12 - text_length // 10)  # Adjust the formula as needed
+    # Update the font size of the label
+    school_name_text.configure(font=(default_font_name, font_size))
+
+   global school_name_text
+   school_name_text = ctk.CTkLabel(root, text=f"{choice}", font=default_subtitle_font)
+   school_name_text.place(relx=0.23, rely=0.65, anchor="center")
+
+   # Bind the label to the adjust_text_size function
+   school_name_text.bind("<Configure>", adjust_text_size)
+
+   #Load the images
+   qr_code_login_image = ctk.CTkImage(light_image=Image.open(f"{script_directory}/Icons/Global UI/qr_code_def.png").resize((24, 24)))
+   credentials_login_image = ctk.CTkImage(light_image=Image.open(f"{script_directory}/Icons/Global UI/credentials_def.png").resize((24, 24)))
+   disabled_credentials_login_image = ctk.CTkImage(light_image=Image.open(f"{script_directory}/Icons/Global UI/credentials_disabled.png").resize((24, 24)))
+
+   #Create 2 buttons for two login methods
+   global login_with_qr_button
+   login_with_qr_button = ctk.CTkButton(root, text="Avec le QR Code", font=default_items_font, image=qr_code_login_image, compound="left", command=qr_code_login)
+   login_with_qr_button.place(relx=0.75, rely=0.4, anchor="center")
+
+   global login_with_credentials_button
+   login_with_credentials_button = ctk.CTkButton(root, text="Avec vos Identifiants", font=default_items_font, image=credentials_login_image, compound="left", command=lambda: login_step(choice, international_use=False))
+   login_with_credentials_button.place(relx=0.75, rely=0.65, anchor="center")
+
+   if config_data.ent_connexion == True: #If the school uses ENT connexion disable the credentials login button
+     login_with_credentials_button.configure(state="disabled", text_color="grey", image=disabled_credentials_login_image)
+     credentials_login_disabled_tooltip = CTkToolTip(login_with_credentials_button, message="La connexion via ENT n'est plus supportée par Pronot'if.\nVeuillez utiliser le QR Code.\n\nPlus d'infos dans la documentation.", delay=0.3, alpha=0.8, wraplength=450, justify="center", font=default_subtitle_font)
+
+def check_pronote_use(choice): 
+  pronote_use = True
+  pronote_use_msg = None
+  try:
+    response = requests.get(config_data.pronote_url, allow_redirects=False)
+
+  except requests.exceptions.ConnectionError:
+    pronote_use = False
+    pronote_use_msg = "DNS Error"
+
+  except Exception as e:
+    pronote_use_msg = str(e)
+    pronote_use = False
+
+    # Handle any other unexpected errors  
+  if pronote_use and not pronote_use_msg and response.status_code == 200:
+    logger.info(f"{choice} ({system_data.true_city_name}) uses Pronote !")
+
+    config_data.used_ent_name = None
+    config_data.ent_connexion = False
+    select_login_method(choice)
+
+  else:
+    if pronote_use_msg == "DNS Error":
+      logger.warning(f"{choice} ({system_data.true_city_name}) doesn't seem to use Pronote... See below\nWebsite {config_data.pronote_url} does not exists. {pronote_use_msg}")
+      box = CTkMessagebox(title="Aucun résultat", font=default_messagebox_font, message="Votre établissement ne semble pas utiliser Pronote.", icon=warning_icon_path, option_1="Ok",master=root, width=350, height=10, corner_radius=20,sound=True)
+      box.info._text_label.configure(wraplength=450)
+      root.config(cursor="arrow")
+
+    elif response != 202 and not pronote_use_msg:
+       logger.debug(f"{choice} ({system_data.true_city_name}) uses Pronote (ENT Conexion) !")
+       config_data.ent_connexion = True
+       select_login_method(choice)
+
+    else:
+      logger.critical(response)
+      logger.critical(f"Unknown error for {config_data.pronote_url}\nError detail : {pronote_use_msg}")
+      box = CTkMessagebox(title="Erreur", font=default_messagebox_font, message="Une erreur inconnue est survenue.\nMerci de réessayer plus tard.", icon=cancel_icon_path, option_1="Ok",master=root, width=350, height=10, corner_radius=20,sound=True)
+      box.info._text_label.configure(wraplength=450)
+
+def login_step(choice):
   pronote_url = config_data.pronote_url
     
   check_important_file_existence(wanted_file_type="config")
@@ -731,35 +1148,16 @@ def login_step(choice, international_use):
   with open(config_file_path, 'w', encoding='utf-8') as configfile:
     config.write(configfile) 
 
-  pronote_use = True
-  pronote_use_msg = None
-  try:
-    response = requests.get(pronote_url, allow_redirects=False)
-
-  except requests.exceptions.ConnectionError:
-    pronote_use = False
-    pronote_use_msg = "DNS Error"
-
-
-  except Exception as e:
-
-    pronote_use_msg = str(e)
-
-    pronote_use = False
-
-  # Handle any other unexpected errors  
-  if pronote_use and not pronote_use_msg and response.status_code == 200:
-    logger.info(f"{choice} ({system_data.true_city_name}) uses Pronote !")
-
-    config_data.used_ent_name = None
-
-    config_data.ent_connexion = False
-
-    if international_use:
+  # Handle any other unexpected errors
+  if (config_data.ent_connexion is False or config_data.ent_connexion is None) and config_data.used_ent_name is None:
+    
+    if system_data.international_use:
        manual_pronote_url_entry.place_forget()
        maunual_pronote_url_button.place_forget()
     else:   
      choice_menu.place_forget()
+     login_with_qr_button.place_forget()
+     login_with_credentials_button.place_forget()
      
     root.config(cursor="arrow")
     
@@ -837,134 +1235,6 @@ def login_step(choice, international_use):
     save_button = ctk.CTkButton(root, text="Connexion", font=default_items_font, command=save_credentials, corner_radius=10, width=135, height=23)
     save_button.place(relx=0.71, rely=0.83, anchor="center")
 
-  else:
-
-    if pronote_use_msg == "DNS Error":
-      logger.warning(f"{choice} ({system_data.true_city_name}) doesn't seem to use Pronote... See below\nWebsite {pronote_url} does not exists. {pronote_use_msg}")
-      box = CTkMessagebox(title="Aucun résultat", font=default_messagebox_font, message="Votre établissement ne semble pas utiliser Pronote.", icon=warning_icon_path, option_1="Ok",master=root, width=350, height=10, corner_radius=20,sound=True)
-      box.info._text_label.configure(wraplength=450)
-      root.config(cursor="arrow")
-
-    elif response != 202 and not pronote_use_msg:
-      def process_chosen_ent(best_match):
-       # Print the chosen option key and its associated variable_name
-       config_data.used_ent_name = data[best_match]['variable_name']
-
-       # ENT Connexion
-       logger.debug(f"{choice} ({system_data.true_city_name}) uses Pronote (ENT Conexion: {config_data.used_ent_name}) !")
-
-       config_data.ent_connexion = True
-
-       choice_menu.place_forget()
-       root.config(cursor="arrow")
-
-       title_label.configure(text="Etape 3/4")
-       main_text.configure(text=f"Connectez vous à Pronote\nà l'aide de vos identifiants.", font=default_text_font)
-       main_text.place(relx=0.23, rely=0.45, anchor="center") #Reposition the text to the initial position
-
-       def adjust_text_size(event=None):
-        # Get the current text of the label
-        text = school_name_text.cget("text")
-        # Calculate the length of the text
-        text_length = len(text)
-        # Adjust font size based on text length
-        font_size = max(10, 12 - text_length // 10)  # Adjust the formula as needed
-        # Update the font size of the label
-        school_name_text.configure(font=(default_font_name, font_size))
-      
-    
-       school_name_text = ctk.CTkLabel(root, text=f"{choice}", font=default_subtitle_font)
-       school_name_text.place(relx=0.23, rely=0.65, anchor="center")
-
-       # Bind the label to the adjust_text_size function
-       school_name_text.bind("<Configure>", adjust_text_size)
-
-       # Création des labels
-       username_label = ctk.CTkLabel(root, text="Identifiant", font=default_subtitle_font)
-       username_label.place(relx=0.75, rely=0.23, anchor="center")
-
-       password_label = ctk.CTkLabel(root, text="Mot de passe", font=default_subtitle_font)
-       password_label.place(relx=0.75, rely=0.53, anchor="center")
-
-       # Création des champs de saisie
-       global username_entry
-       username_entry = ctk.CTkEntry(root, width=150, placeholder_text="Nom d'utilisateur", font=default_text_font)
-       username_entry.place(relx=0.75, rely=0.35, anchor="center")
-
-       global password_entry 
-       password_entry = ctk.CTkEntry(root, width=150, height=35, show="*", font=default_text_font, placeholder_text="Mot de passe")
-       password_entry.place(relx=0.75, rely=0.65, anchor="center")
-
-       # Création du bouton d'enregistrement
-       save_button = ctk.CTkButton(root, text="Connexion", font=default_items_font, command=save_credentials, corner_radius=10)
-       save_button.place(relx=0.75, rely=0.83, anchor="center")
-
-      split_school_type = system_data.school_type.split()[0] # Get the first word of the school type value
-
-      api_response = { 
-      "region": f"{system_data.region_name}",
-      "departement": f"{system_data.departement_code}",
-      "type": f"{split_school_type}"
-      }
-
-      check_important_file_existence(wanted_file_type="ent_data")
-
-      # Load JSON data
-      with open('Data/ent_data.json', 'r') as file:
-        data = json.load(file)
-
-      # Define weights for each criterion
-      weights = {
-        'region': 3,
-        'departement': 2,
-        'type': 1
-      }
-
-      # Initialize correspondence counts
-      correspondence_counts = {key: 0 for key in data.keys()}
-
-      # Iterate over JSON entries
-      for key, value in data.items():
-        # Match region
-        if api_response['region'] == value['region']:
-            correspondence_counts[key] += weights['region']
-
-        # Match department
-        if api_response['departement'] in value['departement']:
-            correspondence_counts[key] += weights['departement']
-
-        # Match type
-        if api_response['type'] == value['type']:
-            correspondence_counts[key] += weights['type']
-
-      # Select best match
-      best_match = max(correspondence_counts, key=correspondence_counts.get)
-
-      def on_choice_select(selected_option):
-        global best_match
-        best_match = selected_option
-        process_chosen_ent(best_match)
-
-      # Handle ties (if needed)
-      max_count = correspondence_counts[best_match]
-      tied_matches = [key for key, count in correspondence_counts.items() if count == max_count]
-      if len(tied_matches) > 1:
-        root.config(cursor="arrow")
-
-        choice_menu.configure(values=tied_matches, command=on_choice_select)
-        choice_menu.set("Selectionnez votre ENT")
-        main_text.configure(text="Plusieurs ENT sont possibles\npour votre recherche.\n\nVeuillez selectionner le votre.")
-
-      else:
-        process_chosen_ent(best_match)
-      
-    else:
-      logger.critical(response)
-      logger.critical(f"Unknown error for {pronote_url}\nError detail : {pronote_use_msg}")
-      box = CTkMessagebox(title="Erreur", font=default_messagebox_font, message="Une erreur inconnue est survenue.\nMerci de réessayer plus tard.", icon=cancel_icon_path, option_1="Ok",master=root, width=350, height=10, corner_radius=20,sound=True)
-      box.info._text_label.configure(wraplength=450)
-
-
 def process_manual_login_url():
   manual_login_url = manual_pronote_url_entry.get()
 
@@ -979,18 +1249,21 @@ def process_manual_login_url():
         manual_pronote_url = manual_login_url + "/pronote/eleve.html" #Add the pronote part to the URL
         config_data.pronote_url = manual_pronote_url #Save the URL in the config_data object
         
-        login_step(choice="", international_use=True) #Call the login_step function with the manual URL
+        system_data.international_use = True
+        login_step(choice="") #Call the login_step function with the manual URL
 
   elif re.match(manual_login_url_patter2, manual_login_url): #If the URL matches the second pattern
         manual_pronote_url = "https://" + manual_login_url + "/pronote/eleve.html" #Add the pronote part to the URL
         config_data.pronote_url = manual_pronote_url #Save the URL in the config_data object
 
-        login_step(choice="", international_use=True) #Call the login_step function with the manual URL
+        system_data.international_use = True
+        login_step(choice="") #Call the login_step function with the manual URL
 
   else:
     logger.error("Given URL string is not well formated...")
     box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, height=50, message="L'URL que vous avez entrée n'est pas correcte.\n\nVeuillez vérifier le format et réessayer.", icon=warning_icon_path, option_1="Réessayer", master=root, corner_radius=20, sound=True)
     box.info._text_label.configure(wraplength=500)
+    
 
 def search_school():
     root.config(cursor="watch")
@@ -1172,7 +1445,7 @@ def search_school():
              country_and_city_label = None
 
              get_timezone(true_city_geocode)
-             login_step(choice, international_use=False)
+             check_pronote_use(choice)
 
            tos_label.place_forget()
            mid_canvas.configure(height=190)
