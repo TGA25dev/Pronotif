@@ -1086,7 +1086,7 @@ def select_login_method(choice):
    login_with_qr_button.place(relx=0.75, rely=0.4, anchor="center")
 
    global login_with_credentials_button
-   login_with_credentials_button = ctk.CTkButton(root, text="Avec vos Identifiants", font=default_items_font, image=credentials_login_image, compound="left", command=lambda: login_step(choice, international_use=False))
+   login_with_credentials_button = ctk.CTkButton(root, text="Avec vos Identifiants", font=default_items_font, image=credentials_login_image, compound="left", command=lambda: login_step(choice))
    login_with_credentials_button.place(relx=0.75, rely=0.65, anchor="center")
 
    if config_data.ent_connexion == True: #If the school uses ENT connexion disable the credentials login button
