@@ -119,10 +119,12 @@ class ConfigData:
         self.student_fullname = None
         self.firstname = None
         self.student_class = None
+        self.user_password = None
+        self.user_username = None
         self.ent_connexion = None
-        self.used_ent_name = None
         self.topic_name = None
         self.uuid = None
+        self.qr_code_login = None
 
         #Lunch times
         self.lunch_times = {
@@ -604,98 +606,96 @@ def save_credentials():
       root.config(cursor="watch")
 
       try:
-       check_important_file_existence(wanted_file_type="config") 
+        check_important_file_existence(wanted_file_type="config") 
       
-       # Read the INI file with the appropriate encoding
-       with open(config_file_path, 'r', encoding='utf-8') as configfile:
-        config.read_file(configfile)
+        # Read the INI file with the appropriate encoding
+        with open(config_file_path, 'r', encoding='utf-8') as configfile:
+          config.read_file(configfile)
 
-        if config_data.ent_connexion:
-         
-         # Modify a key in the INI file
-         config['Global']['ent_used'] = "True"
-         config['Global']['ent_name'] = config_data.used_ent_name
-        else:
-         client = pronotepy.Client(config_data.pronote_url, username=username, password=password)
+        client = pronotepy.Client(config_data.pronote_url, username=username, password=password)
 
-         # Modify a key in the INI file
-         config['Global']['ent_used'] = "False"
-         config['Global']['ent_name'] = "None"
+        # Modify a key in the INI file
+        config['Global']['ent_used'] = "False"
+        config['Global']['qr_code_login'] = "False"
 
         # Write the changes back to the INI file
         with open(config_file_path, 'w', encoding='utf-8') as configfile:
-         config.write(configfile)
+          config.write(configfile)
+
+        config_data.qr_code_login = False  
             
         if client.logged_in:
-         box = CTkMessagebox(title="Succès !", font=default_messagebox_font, message="Connexion effectuée !", icon=ok_icon_path, option_1="Parfait", master=root, width=300, height=10, corner_radius=20,sound=True)
-         box.info._text_label.configure(wraplength=450)
+          box = CTkMessagebox(title="Succès !", font=default_messagebox_font, message="Connexion effectuée !", icon=ok_icon_path, option_1="Parfait", master=root, width=300, height=10, corner_radius=20,sound=True)
+          box.info._text_label.configure(wraplength=450)
 
-         # Get today's date
-         today = datetime.date.today()
+          # Get today's date
+          today = datetime.date.today()
 
-         # Automatically determine the start date (e.g., 30 days before today)
-         days_back = 30  # Number of days to go back
-         start_date = today - datetime.timedelta(days=days_back)
+          # Automatically determine the start date (e.g., 30 days before today)
+          days_back = 30  # Number of days to go back
+          start_date = today - datetime.timedelta(days=days_back)
 
-         # Generate a list of weekdays (excluding Saturdays and Sundays) between start_date and today
-         weekdays = []
-         current_date = start_date
-         while current_date <= today:
+          # Generate a list of weekdays (excluding Saturdays and Sundays) between start_date and today
+          weekdays = []
+          current_date = start_date
+          while current_date <= today:
               if current_date.weekday() < 5:  # Monday to Friday (0=Monday, 4=Friday)
                   weekdays.append(current_date)
               current_date += datetime.timedelta(days=1)
 
-         # Randomly choose some days from the weekdays list
-         fallback_dates = random.sample(weekdays, k=7)  # Choose 7 random dates
-         global menus
+          # Randomly choose some days from the weekdays list
+          fallback_dates = random.sample(weekdays, k=7)  # Choose 7 random dates
+          global menus
 
-         dates_to_check = [today] + fallback_dates #
+          dates_to_check = [today] + fallback_dates #
 
-         global menus_found
-         menus_found = False
-         for date in dates_to_check: 
-          try:
-           menus = client.menus(date_from=date)
-           if menus:  # If a menu is found, break out of the loop
-            menus_found = True # Set the flag to True
-            break
-          except KeyError:
-            menus_found = False # If no menu is found, set the flag to False
-         
-         config_data.student_fullname = client.info.name
-         config_data.student_class_name = client.info.class_name
+          global menus_found
+          menus_found = False
+          for date in dates_to_check: 
+            try:
+              menus = client.menus(date_from=date)
+              if menus:  # If a menu is found, break out of the loop
+                menus_found = True # Set the flag to True
+                break
+            except KeyError:
+              menus_found = False # If no menu is found, set the flag to False
+          
+          config_data.student_fullname = client.info.name
+          config_data.student_class_name = client.info.class_name
 
-         logger.info(f'Logged in as {config_data.student_fullname}')
+          logger.info(f'Logged in as {config_data.student_fullname}')
 
-         # Enregistrer le nom d'utilisateur et le mot de passe dans deux fichiers .env différents
-         set_key(f"{script_directory}/Data/pronote_username.env", 'User', username)
-         set_key(f"{script_directory}/Data/pronote_password.env", 'Password', password)
+          # Enregistrer le nom d'utilisateur et le mot de passe dans deux fichiers .env différents
+          set_key(f"{script_directory}/Data/pronote_username.env", 'User', username)
+          config_data.user_username = username
+          set_key(f"{script_directory}/Data/pronote_password.env", 'Password', password)
+          config_data.user_password = password
 
-         config_data.user_first_name = config_data.student_fullname.split()[-1] if config_data.student_fullname.strip() else None
+          config_data.user_first_name = config_data.student_fullname.split()[-1] if config_data.student_fullname.strip() else None
 
-         root.config(cursor="arrow")
+          root.config(cursor="arrow")
 
-         # Effacer les champs après enregistrement
-         username_entry.delete(0, 'end')
-         password_entry.delete(0, 'end')
+          # Effacer les champs après enregistrement
+          username_entry.delete(0, 'end')
+          password_entry.delete(0, 'end')
 
-         username_label.place_forget()
-         username_entry.place_forget()
+          username_label.place_forget()
+          username_entry.place_forget()
 
-         password_entry.place_forget()
-         password_label.place_forget()
+          password_entry.place_forget()
+          password_label.place_forget()
 
-         save_button.place_forget()
+          save_button.place_forget()
 
-         title_label.configure(text="")
-         main_text.configure(text= "")
+          title_label.configure(text="")
+          main_text.configure(text= "")
 
-         password_eye_button.place_forget()
+          password_eye_button.place_forget()
 
-         if country_and_city_label is not None: # If the label exists
-          country_and_city_label.place_forget()
+          if country_and_city_label is not None: # If the label exists
+            country_and_city_label.place_forget()
 
-         config_steps()
+          config_steps()
 
       except (pronotepy.CryptoError, pronotepy.ENTLoginError):
          logger.warning("Wrong credentials !")
@@ -726,13 +726,29 @@ def qr_code_login_process():
 
     try:
         client=pronotepy.Client.qrcode_login(system_data.qrcode_data, pin, str(uuid))
+        logger.debug(client.pronote_url)
+        logger.debug(client.username)
+        logger.debug(client.password)
+        logger.debug(client.uuid)
 
         config_data.uuid = client.uuid
         config_data.pronote_url = client.pronote_url
-        # Extract the URL and remove the "mobile." section
-        config_data.pronote_url = client.pronote_url.replace("mobile.", "")
 
         if client.logged_in:
+         config_data.qr_code_login = True
+         
+         check_important_file_existence("config")
+         # Read the INI file with the appropriate encoding
+         with open(config_file_path, 'r', encoding='utf-8') as configfile:
+            config.read_file(configfile)
+
+         config["Global"]["qr_code_login"] = "True"
+         config["Global"]["uuid"] = uuid
+
+         # Write the changes back to the INI file
+         with open(config_file_path, 'w', encoding='utf-8') as configfile:
+            config.write(configfile) 
+
          box = CTkMessagebox(title="Succès !", font=default_messagebox_font, message="Connexion effectuée !", icon=ok_icon_path, option_1="Parfait", master=root, width=300, height=10, corner_radius=20,sound=True)
          box.info._text_label.configure(wraplength=450)
 
@@ -775,7 +791,9 @@ def qr_code_login_process():
 
          # Enregistrer le nom d'utilisateur et le mot de passe dans deux fichiers .env différents
          set_key(f"{script_directory}/Data/pronote_username.env", 'User', client.username)
+         config_data.user_username = client.username
          set_key(f"{script_directory}/Data/pronote_password.env", 'Password', client.password)
+         config_data.user_password = client.password
 
          config_data.user_first_name = config_data.student_fullname.split()[-1] if config_data.student_fullname.strip() else None
 
@@ -1111,7 +1129,6 @@ def check_pronote_use(choice):
   if pronote_use and not pronote_use_msg and response.status_code == 200:
     logger.info(f"{choice} ({system_data.true_city_name}) uses Pronote !")
 
-    config_data.used_ent_name = None
     config_data.ent_connexion = False
     select_login_method(choice)
 
@@ -1149,7 +1166,7 @@ def login_step(choice):
     config.write(configfile) 
 
   # Handle any other unexpected errors
-  if (config_data.ent_connexion is False or config_data.ent_connexion is None) and config_data.used_ent_name is None:
+  if config_data.ent_connexion is False or config_data.ent_connexion is None:
     
     if system_data.international_use:
        manual_pronote_url_entry.place_forget()
