@@ -743,7 +743,7 @@ def qr_code_login_process():
             config.read_file(configfile)
 
          config["Global"]["qr_code_login"] = "True"
-         config["Global"]["uuid"] = uuid
+         config["Global"]["uuid"] = str(uuid)
 
          # Write the changes back to the INI file
          with open(config_file_path, 'w', encoding='utf-8') as configfile:
