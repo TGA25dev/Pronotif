@@ -7,16 +7,18 @@ import random
 import asyncio
 import pytz
 import aiohttp
+import requests
 import configparser
 import time
 import sys
 import traceback
 from loguru import logger
-import importlib
+from dotenv import set_key
 import json
 
 config = configparser.ConfigParser(comment_prefixes=";")
 config.optionxform = str
+script_directory = os.path.dirname(os.path.abspath(__file__))
 
 try:
   with open("Data/config.ini", encoding='utf-8') as f:
@@ -46,16 +48,16 @@ logger.debug(f"lunch_times have been loaded !")
 
 timezone_str = config['Advanced'].get('timezone')
 timezone = pytz.timezone(timezone_str)
-logger.debug(f"timezone is: {timezone}")
+logger.debug(f"timezone is: {timezone} !")
 
 ent_used = config['Global'].get('ent_used')
 logger.debug(f"ent_used loaded ! (value is {ent_used})")
 
-ent_name = config['Global'].get('ent_name')
-if ent_name is None:
-  logger.debug(f"ent_name is set to None...")
-else:
-  logger.debug(f"ent_name has been loaded !")
+qr_code_login = config['Global'].get('qr_code_login')
+logger.debug(f"qr_code_login loaded ! (value is {qr_code_login})")
+
+uuid = config['Global'].get('uuid')
+logger.debug(f"uuid loaded !")
 
 run_main_loop = True
 printed_message = False
@@ -80,7 +82,61 @@ def handle_exception(exc_type, exc_value, exc_traceback):
 
 sys.excepthook = handle_exception
 
+internet_connected = None
+async def check_internet_connexion():
+  url = "http://www.google.com"
+  timeout = 5
+  global internet_connected
+  try:
+    requests.get(url, timeout=timeout)
+    internet_connected = True
+  except requests.ConnectionError:
+    internet_connected = False
+
+first_login = True    
+async def check_session(client):
+
+  global first_login #Don't get session status for 1st check
+  if first_login:
+    first_login = False
+    pass
+
+  else:
+    if client.session_check() is True: #Set to False for testing purposes, real is True
+      logger.error("Session has expired !")
+
+      if qr_code_login == "True":
+        try:
+          os.environ.pop('Password', None)  # Clear memory cache of the password variable
+
+          dotenv.load_dotenv("Data/pronote_password.env")
+          secured_password = os.getenv("Password")
+          logger.debug("Pronote password has been reloaded !")
+
+          client = pronotepy.Client.token_login(login_page_link, username=secured_username, password=secured_password, uuid=uuid) #As refreshing is not available for QR Code login, create a new session
+          if client.logged_in:
+            logger.info("A new session has been created !")
+            set_key(f"{script_directory}/Data/pronote_password.env", 'Password', client.password)
+
+        except Exception as e:
+          logger.error(f"An error happened during session creation: {e}\nClosing program...")
+          sys.exit(1)
+
+      else:
+        client.refresh()
+        logger.info("Session has been refreshed !")
+    else:
+      if qr_code_login != "True":
+        client.refresh()
+
 async def pronote_main_checks_loop():
+  await check_internet_connexion()
+  if internet_connected is False:
+    logger.critical("No Internet connexion !\n\nProgram will close in 2 seconds...")
+    time.sleep(2)
+    exit(1)
+  
+  logger.debug(internet_connected)
   now = datetime.datetime.now(timezone)
   # Calculate the time to the next full minute
   next_minute = (now + timedelta(minutes=1)).replace(second=0, microsecond=0)
@@ -91,16 +147,18 @@ async def pronote_main_checks_loop():
 
   global client
 
-  if ent_used == "True":
-    module = importlib.import_module("pronotepy.ent")
-    used_ent = getattr(module, ent_name, None)
-    client = pronotepy.Client(login_page_link, username=secured_username, password=secured_password, ent=used_ent)
+  if qr_code_login == "True":
+    client = pronotepy.Client.token_login(login_page_link, username=secured_username, password=secured_password, uuid=uuid)
   else:
     client = pronotepy.Client(login_page_link, username=secured_username, password=secured_password)
 
   if client.logged_in:
     nom_utilisateur = client.info.name
     logger.info(f"Logged in as {nom_utilisateur} !")
+
+    if qr_code_login == "True":
+      set_key(f"{script_directory}/Data/pronote_password.env", 'Password', client.password) # Update the password in the .env file for future connexions
+      logger.debug(f"New token password generated !")
 
     async def lesson_check():
       global class_check_print_flag
@@ -112,10 +170,8 @@ async def pronote_main_checks_loop():
       if not lesson_checker:
         if not class_check_print_flag:
           logger.info("There is probably no class today !")
-          class_check_print_flag = True
-
       elif lesson_checker:
-        has_printed = False
+        current_time = datetime.datetime.now(timezone).strftime("%H:%M")
 
         current_time = datetime.datetime.now(timezone).strftime("%H:%M")
 
@@ -362,11 +418,18 @@ async def pronote_main_checks_loop():
           logger.debug("Lunch menu sent successfully !")
 
     while run_main_loop is True:
-      await lesson_check()
-      await menu_food_check()
-      client.refresh()
+      await check_internet_connexion()
+      if internet_connected:
+        no_internet_message = False
+        await check_session(client)
+        await lesson_check()
+        await menu_food_check()
+      else:
+        if not no_internet_message:
+          logger.critical("Tasks have been paused... (No Internet connexion)")
+          no_internet_message = True
       await asyncio.sleep(60)
-
+      
   else:
     logger.critical(f"An error has occured while login: {Exception}\n\nClosing program...")
     time.sleep(2)
