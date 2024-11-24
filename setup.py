@@ -367,11 +367,14 @@ def config_steps():
   ntfy_topic_name_entry.place(relx=0.5, rely=0.5, anchor="center")
   ntfy_topic_name_entry.bind("<Return>", lambda event: get_ntfy_topic())
 
+  def open_docs():
+    webbrowser.open("https://docs.pronotif.tech/installation/ntfy")
+
   need_help_icon = ctk.CTkImage(light_image=Image.open(f"{script_directory}/Icons/Global UI/need_help_light.png").resize((24, 24)), dark_image=Image.open(f"{script_directory}/Icons/Global UI/need_help_dark.png").resize((24, 24)))
-  need_help_button = ctk.CTkButton(master=tabview.tab("1. ntfy"), image=need_help_icon, text="", width=1, height=10, fg_color=["#dbdbdb", "#2b2b2b"], bg_color=["#dbdbdb", "#2b2b2b"], hover_color=["#dbdbdb", "#2b2b2b"], corner_radius=10)
+  need_help_button = ctk.CTkButton(master=tabview.tab("1. ntfy"), command=open_docs, image=need_help_icon, text="", width=1, height=10, fg_color=["#dbdbdb", "#2b2b2b"], bg_color=["#dbdbdb", "#2b2b2b"], hover_color=["#dbdbdb", "#2b2b2b"], corner_radius=10)
   need_help_button.place(relx=0.84, rely=0.5, anchor="center")
 
-  need_help_tooltip = CTkToolTip(need_help_button, message="Vous ne savez pas quoi ecrire ici ?\nConsultez la documentation !", delay=0.3, alpha=0.8, wraplength=450, justify="center", font=default_subtitle_font)
+  need_help_tooltip = CTkToolTip(need_help_button, message="Vous ne savez pas quoi ecrire ici ?\nCliquez sur le point d'interrogation !", delay=0.3, alpha=0.8, wraplength=450, justify="center", font=default_subtitle_font)
 
   # Function to enable the button if entry is not empty
   def enable_button(event):
