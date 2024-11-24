@@ -270,76 +270,9 @@ async def pronote_main_checks_loop():
               await send_class_info_notification_via_ntfy(class_time_message)
 
     async def send_class_info_notification_via_ntfy(message):
-      subject_emojis = {
-        "ANGLAIS LV1": ["earth_africa", "books", "pencil2", "gb", "mortar_board", " us"],
-        "ANGLAIS LV SECTION": ["earth_africa", "books", "pencil2", "gb", "mortar_board", " us"],
-        "SC. ECONO.& SOCIALES": ["chart_with_upwards_trend", "briefcase", "globe_with_meridians", "busts_in_silhouette", "moneybag"],
-        "MATHEMATIQUES": ["heavy_plus_sign", "heavy_minus_sign", "heavy_multiplication_x", "heavy_division_sign", "triangular_ruler"],
-        "FRANCAIS": ["memo", "book", "fr", "performing_arts", "mag"],
-        "ED.PHYSIQUE & SPORT.": ["soccer", "basketball", "weight_lifting_man", "swimmer", "bicyclist"],
-        "HISTOIRE-GEOGRAPHIE": ["earth_africa", "scroll", "world_map", "classical_building", "mantelpiece_clock"],
-        "ALLEMAND LV2": ["de", "books", "speaking_head", "de", "at"],
-        "SC.NUMERIQ.TECHNOL.": ["computer", "wrench", "rocket", "robot", "globe_with_meridians "],
-        "SCIENCES VIE & TERRE": ["seedling", "microscope", "dna", "ocean", "microbe", "earth_africa"],
-        "PHYSIQUE-CHIMIE": ["atom_symbol", "test_tube", "alembic", "fire", "bulb", "straight_ruler"],
-        "ENS. MORAL & CIVIQUE": ["handshake", "speech_balloon", "balance_scale", "ballot_box", "brain"],
-        "CANTINE": ["plate_with_cutlery", "fork_and_knife", "sandwich", "cup_with_straw", "cookie"],
-        "ART PLASTIQUE": ["art", "paintbrush", "framed_picture", "scissors", "jigsaw"],
-      }
-
-      # Select emojis based on subject
-      all_low_cap_subject_name = lower_cap_subject_name.lower()  # Convert subject to lowercase for case-insensitive matching
-
-      emojis = []
-
-      if any(word in all_low_cap_subject_name for word in ["anglais", "amc"]):
-        emojis = subject_emojis.get("ANGLAIS LV1", [])
-
-      elif any(word in all_low_cap_subject_name for word in ["eco", "sociale", "économie", "economie"]):
-        emojis = subject_emojis.get("SC. ECONO.& SOCIALES", [])
-
-      elif any(word in all_low_cap_subject_name for word in ["math", "mathématiques", "mathematiques"]):
-        emojis = subject_emojis.get("MATHEMATIQUES", [])
-
-      elif any(word in all_low_cap_subject_name for word in ["sport", "sportive", "eps"]):
-        emojis = subject_emojis.get("ED.PHYSIQUE & SPORT.", [])
-
-      elif any(word in all_low_cap_subject_name for word in ["histoire", "géo", "geo", "géographie"]):
-        emojis = subject_emojis.get("HISTOIRE-GEOGRAPHIE", [])
-
-      elif any(word in all_low_cap_subject_name for word in ["allemand"]):
-        emojis = subject_emojis.get("ALLEMAND LV2", [])
-
-      elif any(word in all_low_cap_subject_name for word in ["informatique", "numerique", "numérique", "techno", "nsi"]):
-        emojis = subject_emojis.get("SC.NUMERIQ.TECHNOL.", [])
-
-      elif any(word in all_low_cap_subject_name for word in ["svt", "terre", "biologie"]):
-        emojis = subject_emojis.get("SCIENCES VIE & TERRE", [])
-
-      elif any(word in all_low_cap_subject_name for word in ["physique", "chimie", "sciences", "scientifique"]):
-        emojis = subject_emojis.get("PHYSIQUE-CHIMIE", [])
-
-      elif any(word in all_low_cap_subject_name for word in ["moral", "civique", "emc"]):
-        emojis = subject_emojis.get("ENS. MORAL & CIVIQUE", [])
-
-      elif any(word in all_low_cap_subject_name for word in ["art", "plastique"]):
-        emojis = subject_emojis.get("ART PLASTIQUE", [])
-
-      elif any(word in all_low_cap_subject_name for word in ["cantine", "repas", "diner", "dejeuner"]):
-        emojis = subject_emojis.get("CANTINE", [])
-
-      elif any(word in all_low_cap_subject_name for word in ["français", "francais", "philo", "humanisme"]):
-        emojis = subject_emojis.get("FRANCAIS", [])
-
-      if emojis:
-        class_tags_random_emojis = random.choice(emojis)
-      else:
-        emojis = [""]
-        logger.warning(f"No tag emojis found for subject : {all_low_cap_subject_name}")
-
       topic = topic_name
       url = f"https://ntfy.sh/{topic}"
-      headers = {"Priority": "5", "Title": "Prochain cours dans 5 minutes !", "Tags": f"{class_tags_random_emojis}"}
+      headers = {"Priority": "5", "Title": "Prochain cours dans 5 minutes !", "Tags": "school_satchel"}
 
       async with aiohttp.ClientSession() as session:
         async with session.post(url, data=message.encode('utf-8'), headers=headers) as response:
