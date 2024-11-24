@@ -323,7 +323,9 @@ def get_ntfy_topic():
 
 def config_steps():
   mid_canvas.place_forget()
-  school_name_text.place_forget()
+
+  if school_name_text is not None: # If the label exists
+    school_name_text.place_forget()
 
   check_important_file_existence(wanted_file_type="config")
 
@@ -725,10 +727,6 @@ def qr_code_login_process():
 
     try:
         client=pronotepy.Client.qrcode_login(system_data.qrcode_data, pin, str(uuid))
-        logger.debug(client.pronote_url)
-        logger.debug(client.username)
-        logger.debug(client.password)
-        logger.debug(client.uuid)
 
         config_data.uuid = client.uuid
         config_data.pronote_url = client.pronote_url
@@ -1049,6 +1047,10 @@ def qr_code_login():
   logger.debug("User has chosen QR Code login method !")
   title_label.configure(text="Etape 4/4")
   main_text.configure(text="Choissisez comment\nscanner votre QR Code", font=default_text_font)
+
+  global school_name_text
+  school_name_text = ctk.CTkLabel(root, text="")
+  school_name_text.place(relx=0.23, rely=0.65, anchor="center")
   
   login_with_credentials_button.place_forget()
   login_with_qr_button.place_forget()
@@ -1077,6 +1079,13 @@ def select_login_method(choice):
    main_text.configure(text="Choisissez votre méthode\nde connexion à Pronote.", font=default_text_font)
 
    def adjust_text_size(event=None):
+    global school_name_text
+    school_name_text = ctk.CTkLabel(root, text=f"{choice}", font=default_subtitle_font)
+    school_name_text.place(relx=0.23, rely=0.65, anchor="center")
+
+    # Bind the label to the adjust_text_size function
+    school_name_text.bind("<Configure>", adjust_text_size)
+
     # Get the current text of the label
     text = school_name_text.cget("text")
     # Calculate the length of the text
@@ -1085,13 +1094,6 @@ def select_login_method(choice):
     font_size = max(10, 12 - text_length // 10)  # Adjust the formula as needed
     # Update the font size of the label
     school_name_text.configure(font=(default_font_name, font_size))
-
-   global school_name_text
-   school_name_text = ctk.CTkLabel(root, text=f"{choice}", font=default_subtitle_font)
-   school_name_text.place(relx=0.23, rely=0.65, anchor="center")
-
-   # Bind the label to the adjust_text_size function
-   school_name_text.bind("<Configure>", adjust_text_size)
 
    #Load the images
    qr_code_login_image = ctk.CTkImage(light_image=Image.open(f"{script_directory}/Icons/Global UI/qr_code_def.png").resize((24, 24)))
