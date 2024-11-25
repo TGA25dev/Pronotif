@@ -675,7 +675,8 @@ def save_credentials():
           set_key(f"{script_directory}/Data/pronote_password.env", 'Password', password)
           config_data.user_password = password
 
-          config_data.user_first_name = config_data.student_fullname.split()[-1] if config_data.student_fullname.strip() else None
+          names = config_data.student_fullname.strip().split() if config_data.student_fullname.strip() else []
+          config_data.user_first_name = names[1] if len(names) > 1 else None
 
           root.config(cursor="arrow")
 
@@ -796,7 +797,8 @@ def qr_code_login_process():
          set_key(f"{script_directory}/Data/pronote_password.env", 'Password', client.password)
          config_data.user_password = client.password
 
-         config_data.user_first_name = config_data.student_fullname.split()[-1] if config_data.student_fullname.strip() else None
+         names = config_data.student_fullname.strip().split() if config_data.student_fullname.strip() else []
+         config_data.user_first_name = names[1] if len(names) > 1 else None
 
          root.config(cursor="arrow")
 
@@ -1714,4 +1716,6 @@ check_if_first_time()
 update_internet_label_state()
 
 #Start main loop
+root.mainloop()
+
 root.mainloop()
