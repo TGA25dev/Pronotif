@@ -43,8 +43,11 @@ logger.debug(f"login_page_link is: {login_page_link} !")
 topic_name = config['Global'].get('topic_name')
 logger.debug(f"topic_name is: {topic_name} !")
 
-lunch_times = {day.lower(): list(map(int, time.split(':'))) for day, time in config['LunchTimes'].items()}
+lunch_times = {day.lower(): list(map(int, time.split(':'))) for day, time in config['LunchTimes'].items() if ':' in time}  # Include only entries that look like time
 logger.debug(f"lunch_times have been loaded !")
+
+evening_menu = config["LunchTimes"].get("evening_menu")
+logger.debug(f"evening_menu is: {evening_menu} !")
 
 timezone_str = config['Advanced'].get('timezone')
 timezone = pytz.timezone(timezone_str)
@@ -283,8 +286,8 @@ async def pronote_main_checks_loop():
             logger.error(f"A problem as occured while trying to send the class message : {response.status}")
             client.refresh()
 
-    async def send_food_menu_notification_via_ntfy(message):
-      food_tags_emojis = ["plate_with_cutlery", "fork_and_knife", "clock3"]
+    async def send_food_menu_notification_via_ntfy(message, dinner_time):
+      food_tags_emojis = ["plate_with_cutlery", "fork_and_knife", "clock7" if dinner_time else "clock3"]
       food_tags_random_emojis = random.choice(food_tags_emojis)
 
       topic = topic_name
@@ -315,40 +318,106 @@ async def pronote_main_checks_loop():
         if lunch_time is not None:
           lunch_hour, lunch_minute = lunch_time
 
+        global dinner_time
+        dinner_time = None
         if current_time.hour == lunch_hour and current_time.minute == lunch_minute:
-          logger.debug(f"{today.strftime('%A')} {lunch_hour:02d}:{lunch_minute:02d}")
+          logger.info(f"Lunch time ! ({today.strftime('%A')} {lunch_hour:02d}:{lunch_minute:02d})")
+          dinner_time = False
+          await food_notif_send_system()
+
+        elif current_time.hour == 18 and current_time.minute == 55 and evening_menu == "True":
+          logger.info(f"Diner time ! ({today.strftime('%A')} 18:55)")
+          dinner_time = True
           await food_notif_send_system()
       else:
         if not menus:
-          logger.debug("There is no menu defined for today !")
+          logger.warning("There is no menu defined for today !")
 
     async def food_notif_send_system():
-      global menus
+        def format_menu(menu_items):
+            def extract_relevant_item(item_string):
+                # Handle both string and list inputs
+                if isinstance(item_string, str):
+                    items = [elem.strip() for elem in item_string.split(',')]
+                elif isinstance(item_string, list):
+                    items = [str(elem).strip() for elem in item_string]
+                else:
+                    items = []
 
-      for menu in menus:
-        if menu.is_lunch:
-          logger.info(f"Menu pour le {menu.date} :")
-          for menu_first_meal in menu.first_meal:
-            pass
+                # Heuristique pour déterminer le plat principal
+                def is_main_dish(item):
+                    # Exclure les éléments contenant certains mots-clés ou étant très courts
+                    if len(item.split()) <= 2:  # Généralement, les plats principaux ont peu de mots
+                        return True
+                    if "de" in item.lower():  # Éviter les phrases avec des "de"
+                        return False
+                    return True
 
-          for menu_main_meal in menu.main_meal:
-            pass
+                # Filtrer pour garder uniquement les plats principaux
+                # Handle the case where items might be Menu.Food objects
+                if isinstance(item_string, list):
+                  formatted_items = []
+                  for item in item_string:
+                    if hasattr(item, 'name'):  # Check if it's a Menu.Food object with a name attribute
+                      formatted_items.append(str(item.name))
+                    else:
+                      formatted_items.append(str(item))
+                  items = formatted_items
+                main_dishes = [item for item in items if is_main_dish(item)]
 
-          for menu_side_meal in menu.side_meal:
-            pass
+                # Si aucun plat principal n'est détecté, renvoyer tout pour éviter des pertes de données
+                return ', '.join(main_dishes) if main_dishes else ', '.join(items)
 
-          for menu_dessert in menu.dessert:
-            pass
+            def get_menu_items(items):
+                if not items:
+                    return ''
+                # Appliquer l'extraction aux chaînes de chaque catégorie
+                return extract_relevant_item(items)
 
-          if menu.other_meal:
-            for other_meal in menu.other_meal:
-              pass
+            return {
+                'first_meal': get_menu_items(menu_items.first_meal),
+                'main_meal': get_menu_items(menu_items.main_meal),
+                'side_meal': get_menu_items(menu_items.side_meal),
+                'dessert': get_menu_items(menu_items.dessert),
+            }
 
-            await send_food_menu_notification_via_ntfy(f"Au menu: {menu_first_meal.name}, {menu_main_meal.name} (ou {other_meal.name}), {menu_side_meal.name} et {menu_dessert.name} en dessert.\nBon appétit ! 😁")
+        for menu in menus:
+            if dinner_time is False and menu.is_lunch:
+                # Formatter les items du menu
+                menu_items = format_menu(menu)
 
-          else:
-            await send_food_menu_notification_via_ntfy(f"Au menu: {menu_first_meal.name}, {menu_main_meal.name}, {menu_side_meal.name} et {menu_dessert.name} en dessert.\nBon appétit ! 😁")
-          logger.debug("Lunch menu sent successfully !")
+                if all(menu_items.values()):  # Vérifie que toutes les catégories sont présentes
+                    menu_text = (
+                        f"Au menu: {menu_items['first_meal']}, "
+                        f"{menu_items['main_meal']}, "
+                        f"{menu_items['side_meal']} "
+                        f"et {menu_items['dessert']} en dessert.\n"
+                        "Bon appétit ! 😁"
+                    )
+
+                    await send_food_menu_notification_via_ntfy(menu_text, dinner_time)
+                    logger.info(menu_text)
+                else:
+                    logger.warning(f"Incomplete lunch menu for {menu.date}. Skipping notification.")
+
+            elif dinner_time is True and menu.is_dinner:
+                # Formatter les items du menu
+                menu_items = format_menu(menu)
+
+                if all(menu_items.values()):  # Vérifie que toutes les catégories sont présentes
+                    menu_text = (
+                        f"Au menu: {menu_items['first_meal']}, "
+                        f"{menu_items['main_meal']}, "
+                        f"{menu_items['side_meal']} "
+                        f"et {menu_items['dessert']} en dessert.\n"
+                        "Bonne soirée ! 🌙"
+                    )
+
+                    await send_food_menu_notification_via_ntfy(menu_text, dinner_time)
+                    logger.info(menu_text)
+
+                else:
+                    logger.warning(f"Incomplete dinner menu for {menu.date}. Skipping notification.")
 
     while run_main_loop is True:
       await check_internet_connexion()

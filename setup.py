@@ -133,6 +133,7 @@ class ConfigData:
             "Thursday": None,
             "Friday": None,
         }
+        self.evening_menu = None
 
         #Advanced
         self.selected_timezone = None
@@ -407,6 +408,18 @@ def config_steps():
     config_tab_step2_text = ctk.CTkLabel(master=tabview.tab("2. Repas"), text="Déplacez le curseur bleu pour définir vos horaires\nde déjeuner.", font=default_config_step_font)
     config_tab_step2_text.place(relx=0.5, rely=0.15, anchor="center")
 
+    def evening_switch_toogle():
+        if evening_switch_var.get() == "True":
+            evening_menu_switch.configure(text="Diner (oui)", progress_color="light green")
+        else:
+            evening_menu_switch.configure(text="Diner (non)", progress_color="grey")
+
+    evening_switch_var = ctk.StringVar(value="False") # Set the switch to be disabled by default
+    evening_menu_switch = ctk.CTkSwitch(master=tabview.tab("2. Repas"), switch_width=50, switch_height=20, button_color="white", progress_color="grey", variable=evening_switch_var, font=default_subtitle_font, text="Diner (non)", onvalue="True", offvalue="False", command=evening_switch_toogle)
+    evening_menu_switch.place(relx=0.8, rely=0.47, anchor="center")
+
+    evening_menu_tooltip = CTkToolTip(evening_menu_switch, message="Si l'option est activée, une notification avec le\nmenu du soir est envoyée vers 19h.", delay=0.2, alpha=0.8, wraplength=450, justify="center", font=default_subtitle_font)
+
     # Create labels and Scale widgets for each day
     days = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"]
     labels = {}
@@ -450,13 +463,21 @@ def config_steps():
             scales[day].place_forget()
             current_day_index += 1
             next_day = days[current_day_index]
-            labels[next_day].place(relx=0.35, rely=0.3)
-            scales[next_day].place(relx=0.5, rely=0.5, anchor="center")
+            labels[next_day].place(relx=0.2, rely=0.35)
+            scales[next_day].place(relx=0.3, rely=0.55, anchor="center")
+
+            evening_menu_switch.configure(state="disabled", text_color="grey", button_color="grey") # Disable the switch
+            evening_menu_tooltip.configure(message="Vous avez déjà défini cette option...")
         else:
             # Final submission
             scales[day].configure(state="disabled", progress_color="grey")
+            label.configure(text_color="grey")
             submit_button.configure(state="disabled", text_color="grey")
-            label.place_forget()
+
+            config_data.evening_menu = evening_switch_var.get() # Save the evening menu option
+            logger.debug(f"Evening menu option has been set to {config_data.evening_menu}")
+            logger.info(type(config_data.evening_menu))
+
             config_tab_step2_text.configure(text="Vos paramètres ont étés enregistrés !\nPassez à la prochaine étape.")
             logger.debug(f"Lunch times submitted !")
 
@@ -470,6 +491,7 @@ def config_steps():
             for english_day, time in config_data.lunch_times.items():
                 if time:
                     config['LunchTimes'][english_day] = time
+            config['LunchTimes']['evening_menu'] = config_data.evening_menu        
 
             # Write the changes back to the INI file
             with open(config_file_path, 'w', encoding='utf-8') as configfile:
@@ -484,7 +506,7 @@ def config_steps():
     increment = 5  # 5 minutes increment
 
     for day in days:
-        label = ctk.CTkLabel(master=tabview.tab("2. Repas"), text=f"{day} 12h30 (par défaut)", font=default_subtitle_font)
+        label = ctk.CTkLabel(master=tabview.tab("2. Repas"), text=f"{day} 12h30", font=default_subtitle_font)
         labels[day] = label
 
         scale = ctk.CTkSlider(master=tabview.tab("2. Repas"), from_=start_time, to=end_time, number_of_steps=(end_time - start_time) // increment)
@@ -498,8 +520,8 @@ def config_steps():
         scale.configure(command=lambda value, scale=scale, label=label, day=day: update_label(value, scale, label, day))
 
         # Show the Scale for the first day only
-        labels[days[current_day_index]].place(relx=0.35, rely=0.3)
-        scales[days[current_day_index]].place(relx=0.5, rely=0.5, anchor="center")
+        labels[days[current_day_index]].place(relx=0.2, rely=0.35)
+        scales[days[current_day_index]].place(relx=0.3, rely=0.55, anchor="center")
 
         submit_button_icon = ctk.CTkImage(light_image=Image.open(f"{script_directory}/Icons/Global UI/save_meal_def.png").resize((24, 24)))
 
