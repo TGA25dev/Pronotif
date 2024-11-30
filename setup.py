@@ -352,7 +352,7 @@ def config_steps():
 
   tabview.add("1. ntfy")
   tabview.add("2. Repas")
-  tabview.add("3. Emojis")
+  tabview.add("3. Notifications")
   tabview.add("4. Avancé")
 
   tabview.set("1. ntfy")  # set currently visible tab
@@ -530,25 +530,75 @@ def config_steps():
         submit_button = ctk.CTkButton(master=tabview.tab("2. Repas"),font=default_items_font , text="Enregistrer", image=submit_button_icon, compound="right", command=submit_lunch_time, corner_radius=10)
         submit_button.place(relx=0.5, rely=0.8, anchor="center")
 
-  #TAB 3 EMOJIS
+  #TAB 3 NOTIFICATIONS
 
-  config_tab_step3_text = ctk.CTkLabel(master=tabview.tab("3. Emojis"), text="La configuration des emojis arrivera dans une\nprochaine version.\n\n(Vous pouvez toujours le faire manuellement dans le\nfichier de configuration)", font=default_config_step_font)
-  config_tab_step3_text.place(relx=0.5, rely=0.5, anchor="center")
+  def save_notifications_settings():
+    unfinished_homework_reminder_switch.configure(state="disabled", text_color="grey", button_color="grey")
+    get_bag_ready_reminder_switch.configure(state="disabled", text_color="grey", button_color="grey")
 
-  globals()['config_tab3_approved'] = True
-  check_all_steps_completed()
+    check_important_file_existence(wanted_file_type="config")
+    reminders_info_label.configure(text="Vos paramètres ont bien été enregistrés !")
+
+    # Read the INI file with the appropriate encoding
+    with open(config_file_path, 'r', encoding='utf-8') as configfile:
+     config.read_file(configfile)
+
+    config['Advanced']['unfinished_homework_reminder'] = str(config_data.unfinished_homework_reminder)
+    config['Advanced']['get_bag_ready_reminder'] = str(config_data.get_bag_ready_reminder)
+
+    # Write the changes back to the INI file
+    with open(config_file_path, 'w', encoding='utf-8') as configfile:
+     config.write(configfile)
+
+    globals()['config_tab3_approved'] = True
+    check_all_steps_completed()
+     
+  def unfinished_homework_reminder_switch_toogle():
+    if unfinished_homework_reminder_switch_var.get() == "True":
+      unfinished_homework_reminder_switch.configure(progress_color="light green")
+    else:
+      unfinished_homework_reminder_switch.configure(progress_color="grey")
+
+  def get_bag_ready_reminder_toogle():
+    if get_bag_ready_reminder_switch_var.get() == "True":
+      get_bag_ready_reminder_switch.configure(progress_color="light green")
+    else:
+      get_bag_ready_reminder_switch.configure(progress_color="grey")                  
+
+  def save_notifications_selection():
+      config.unfinished_homework_reminder = unfinished_homework_reminder_switch_var.get()
+      config.get_bag_ready_reminder = get_bag_ready_reminder_switch_var.get()
+
+      logger.debug(f"Unfinished homework reminder has been set to {config.unfinished_homework_reminder}")
+      logger.debug(f"Get bag ready reminder has been set to {config.get_bag_ready_reminder}")
+      save_notifications_settings()
+     
+  config_tab_step3_text = ctk.CTkLabel(master=tabview.tab("3. Notifications"), text="Paramètres de notifications", font=default_config_step_font)
+  config_tab_step3_text.place(relx=0.5, rely=0.05, anchor="center")
+
+  unfinished_homework_reminder_switch_var = ctk.StringVar(value="False") # Set the switch to be disabled by default
+  unfinished_homework_reminder_switch = ctk.CTkSwitch(master=tabview.tab("3. Notifications"), switch_width=50, switch_height=20, button_color="white", progress_color="grey", variable=unfinished_homework_reminder_switch_var, font=default_subtitle_font, text="Devoirs non faits", onvalue="True", offvalue="False", command=unfinished_homework_reminder_switch_toogle)
+  unfinished_homework_reminder_switch.place(relx=0.25, rely=0.25, anchor="center")
+
+  get_bag_ready_reminder_switch_var = ctk.StringVar(value="False") # Set the switch to be disabled by default
+  get_bag_ready_reminder_switch = ctk.CTkSwitch(master=tabview.tab("3. Notifications"), switch_width=50, switch_height=20, button_color="white", progress_color="grey", variable=get_bag_ready_reminder_switch_var, font=default_subtitle_font, text="Faire son sac", onvalue="True", offvalue="False", command=get_bag_ready_reminder_toogle)
+  get_bag_ready_reminder_switch.place(relx=0.21, rely=0.45, anchor="center")
+
+  reminders_info_label = ctk.CTkLabel(master=tabview.tab("3. Notifications"), text="La notification de devoirs non faits à rendre pour le lendemain sera\nenvoyée vers 18h, le rappel de faire son sac vers 19h30.", font=default_conditions_font)
+  reminders_info_label.place(relx=0.5, rely=0.69, anchor="center")
+
+  # Add a save button
+  save_button = ctk.CTkButton(master=tabview.tab("3. Notifications"), font=default_items_font ,text="Enregistrer", command=save_notifications_selection, corner_radius=10, width=135, height=23)
+  save_button.place(relx=0.5, rely=0.92, anchor="center")
 
   #TAB 4 ADVANCED
 
   def set_config_file_advanced():
     save_button.configure(state="disabled", text_color="grey")
     switch.configure(state="disabled", text_color="grey", button_color="grey")
-    unfinished_homework_reminder_switch.configure(state="disabled", text_color="grey", button_color="grey")
-    get_bag_ready_reminder_switch.configure(state="disabled", text_color="grey", button_color="grey")
     combo_menu.configure(state="disabled", button_color="grey")
 
     check_important_file_existence(wanted_file_type="config")
-    reminders_info_label.configure(text="Vos paramètres ont bien été enregistrés !")
    
     # Read the INI file with the appropriate encoding
     with open(config_file_path, 'r', encoding='utf-8') as configfile:
@@ -556,8 +606,6 @@ def config_steps():
 
     # Modify a key in the INI file
     config['Advanced']['timezone'] = f"{config_data.selected_timezone}"
-    config['Advanced']['unfinished_homework_reminder'] = str(config_data.unfinished_homework_reminder)
-    config['Advanced']['get_bag_ready_reminder'] = str(config_data.get_bag_ready_reminder)
 
     # Write the changes back to the INI file
     with open(config_file_path, 'w', encoding='utf-8') as configfile:
@@ -575,18 +623,6 @@ def config_steps():
           switch.configure(text="Automatique")
           combo_menu.place_forget()
 
-  def unfinished_homework_reminder_switch_toogle():
-      if unfinished_homework_reminder_switch_var.get() == "True":
-        unfinished_homework_reminder_switch.configure(progress_color="light green")
-      else:
-        unfinished_homework_reminder_switch.configure(progress_color="grey")
-
-  def get_bag_ready_reminder_toogle():
-      if get_bag_ready_reminder_switch_var.get() == "True":
-        get_bag_ready_reminder_switch.configure(progress_color="light green")
-      else:
-        get_bag_ready_reminder_switch.configure(progress_color="grey")                  
-  
   def save_selection():
       global selected_timezone
       if switch_var.get() == "off":
