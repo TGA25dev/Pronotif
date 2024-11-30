@@ -62,6 +62,12 @@ logger.debug(f"qr_code_login loaded ! (value is {qr_code_login})")
 uuid = config['Global'].get('uuid')
 logger.debug(f"uuid loaded !")
 
+unfinished_homework_reminder = config['Advanced'].get('unfinished_homework_reminder')
+logger.debug(f"unfinished_homework_reminder loaded ! (value is {unfinished_homework_reminder})")
+
+get_bag_ready_reminder = config['Advanced'].get('get_bag_ready_reminder')
+logger.debug(f"get_bag_ready_reminder loaded ! (value is {get_bag_ready_reminder})")
+
 run_main_loop = True
 printed_message = False
 
@@ -331,7 +337,7 @@ async def pronote_main_checks_loop():
           await food_notif_send_system()
       else:
         if not menus:
-          logger.warning("There is no menu defined for today !")
+          logger.info("There is no menu defined for today !")
 
     async def food_notif_send_system():
         def format_menu(menu_items):
@@ -419,6 +425,100 @@ async def pronote_main_checks_loop():
                 else:
                     logger.warning(f"Incomplete dinner menu for {menu.date}. Skipping notification.")
 
+    async def send_reminder_notification_via_ntfy(message, reminder_type):
+      topic = topic_name
+      url = f"https://ntfy.sh/{topic}"
+
+      if reminder_type == "bag":
+          reminder_notification_title = "N'oubliez pas !"
+          reminder_notification_tag = "school_satchel"
+
+      elif reminder_type == "homework":
+          if not_finished_homeworks_count == 0: # No homeworks left
+            reminder_notification_title = "Reposez vous bien !" 
+            
+          elif not_finished_homeworks_count > 1: # Multiple homeworks left (plural)
+            reminder_notification_title = "Devoirs non faits !"
+
+          elif not_finished_homeworks_count == 1: # One homework (singular)
+            reminder_notification_title = "Devoir non fait !"  
+
+          reminder_notification_tag = "memo"  
+      else:
+        reminder_notification_title = ""  # Default title
+        reminder_notification_tag = ""  # Default tag
+
+      headers = {"Priority": "4", "Title": reminder_notification_title, "Tags": reminder_notification_tag}
+      async with aiohttp.ClientSession() as session:
+        async with session.post(url, data=message.encode('utf-8'), headers=headers) as response:
+          if response.status == 200:
+            logger.info("Reminder message sent successfully!")
+            return response.status
+          else:
+            logger.error(f"Error sending Reminder message: {response.status}")
+
+    async def check_reminder_notifications():
+        global reminder_type
+        global reminder_message
+        global current_time
+        current_time = datetime.datetime.now(timezone).time()
+
+        # Convert tomorrow to date object for homework check
+        tomorrow_date = (datetime.datetime.now(timezone) + datetime.timedelta(days=1)).date()
+        
+        class_checker = client.lessons(date_from=tomorrow_date)
+
+        if class_checker:
+            class_tomorrow = True
+        else:
+            class_tomorrow = False
+
+        if current_time.hour == 19 and current_time.minute == 35 and get_bag_ready_reminder == "True" and class_tomorrow:
+            reminder_message = "Il est temps de préparer votre sac pour demain !"
+            reminder_type = "bag"
+            await send_reminder_notification_via_ntfy(reminder_message, reminder_type)
+            logger.info(reminder_message)
+
+        if current_time.hour == 18 and current_time.minute == 15 and unfinished_homework_reminder == "True" and class_tomorrow:
+            logger.debug(tomorrow_date)
+            
+            homeworks = client.homework(tomorrow_date, tomorrow_date)
+            reminder_type = "homework"
+
+            # Initialize variables
+            global not_finished_homeworks_count
+            not_finished_homeworks_count = 0
+
+            global defined_homework_for_tomorrow
+            defined_homework_for_tomorrow = False
+
+            if not homeworks:
+                # Handle case where no homework is found
+                not_finished_homeworks_count = 0
+                defined_homework_for_tomorrow = False
+                logger.warning("No homeworks found for tomorrow !")
+            else:
+                # Process each homework
+                for homework in homeworks:
+                    
+                    defined_homework_for_tomorrow = True
+                    if not homework.done:
+                        not_finished_homeworks_count += 1
+                
+                # Set reminder message based on homework completion status
+                if not_finished_homeworks_count == 0:
+                    reminder_message = "Vous avez fini tous vos devoirs pour demain, vous pouvez souffler ! 😮‍💨"
+                else:
+                  if not_finished_homeworks_count > 1:
+                    reminder_message = f"Il vous reste {not_finished_homeworks_count} devoirs à terminer pour demain."
+
+                  elif not_finished_homeworks_count == 1:
+                    reminder_message = "Il vous reste 1 devoir à terminer pour demain."  
+    
+                # Send the reminder notification
+                await send_reminder_notification_via_ntfy(reminder_message, reminder_type)
+                logger.info(reminder_message)
+
     while run_main_loop is True:
       await check_internet_connexion()
       if internet_connected:
@@ -426,6 +526,7 @@ async def pronote_main_checks_loop():
         await check_session(client)
         await lesson_check()
         await menu_food_check()
+        await check_reminder_notifications()
       else:
         if not no_internet_message:
           logger.critical("Tasks have been paused... (No Internet connexion)")

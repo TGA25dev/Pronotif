@@ -137,6 +137,8 @@ class ConfigData:
 
         #Advanced
         self.selected_timezone = None
+        self.unfinished_homework_reminder = None
+        self.get_bag_ready_reminder = None
 
 config_data = ConfigData()
 
@@ -476,7 +478,6 @@ def config_steps():
 
             config_data.evening_menu = evening_switch_var.get() # Save the evening menu option
             logger.debug(f"Evening menu option has been set to {config_data.evening_menu}")
-            logger.info(type(config_data.evening_menu))
 
             config_tab_step2_text.configure(text="Vos paramètres ont étés enregistrés !\nPassez à la prochaine étape.")
             logger.debug(f"Lunch times submitted !")
@@ -542,10 +543,12 @@ def config_steps():
   def set_config_file_advanced():
     save_button.configure(state="disabled", text_color="grey")
     switch.configure(state="disabled", text_color="grey", button_color="grey")
+    unfinished_homework_reminder_switch.configure(state="disabled", text_color="grey", button_color="grey")
+    get_bag_ready_reminder_switch.configure(state="disabled", text_color="grey", button_color="grey")
     combo_menu.configure(state="disabled", button_color="grey")
 
     check_important_file_existence(wanted_file_type="config")
-    config_tab_step4_text.configure(text="Votre fuseau horaire à bien été enregistré !") 
+    reminders_info_label.configure(text="Vos paramètres ont bien été enregistrés !")
    
     # Read the INI file with the appropriate encoding
     with open(config_file_path, 'r', encoding='utf-8') as configfile:
@@ -553,6 +556,8 @@ def config_steps():
 
     # Modify a key in the INI file
     config['Advanced']['timezone'] = f"{config_data.selected_timezone}"
+    config['Advanced']['unfinished_homework_reminder'] = str(config_data.unfinished_homework_reminder)
+    config['Advanced']['get_bag_ready_reminder'] = str(config_data.get_bag_ready_reminder)
 
     # Write the changes back to the INI file
     with open(config_file_path, 'w', encoding='utf-8') as configfile:
@@ -564,11 +569,23 @@ def config_steps():
     
   def switch_toggled():
       if switch_var.get() == "off":
-          switch.configure(text="Manuel (déconseillé !)")
-          combo_menu.place(relx=0.5, rely=0.55, anchor="center")
+          switch.configure(text="Manuel")
+          combo_menu.place(relx=0.21, rely=0.45, anchor="center")
       else:
-          switch.configure(text="Automatique (par défaut)")
+          switch.configure(text="Automatique")
           combo_menu.place_forget()
+
+  def unfinished_homework_reminder_switch_toogle():
+      if unfinished_homework_reminder_switch_var.get() == "True":
+        unfinished_homework_reminder_switch.configure(progress_color="light green")
+      else:
+        unfinished_homework_reminder_switch.configure(progress_color="grey")
+
+  def get_bag_ready_reminder_toogle():
+      if get_bag_ready_reminder_switch_var.get() == "True":
+        get_bag_ready_reminder_switch.configure(progress_color="light green")
+      else:
+        get_bag_ready_reminder_switch.configure(progress_color="grey")                  
   
   def save_selection():
       global selected_timezone
@@ -593,28 +610,48 @@ def config_steps():
   
                   config_data.selected_timezone = f"Etc/GMT{etc_gmt_offset}"
                   logger.debug(f"New timezone has been selected : {selected_timezone}")
-              set_config_file_advanced()
       else:
           config_data.selected_timezone = system_data.automatic_school_timezone  # Use the automatic timezone
           logger.debug("Default timezone has been selected !")
-          set_config_file_advanced()
+          
+      config.unfinished_homework_reminder = unfinished_homework_reminder_switch_var.get()
+      config.get_bag_ready_reminder = get_bag_ready_reminder_switch_var.get()
+
+      logger.debug(f"Unfinished homework reminder has been set to {config.unfinished_homework_reminder}")
+      logger.debug(f"Get bag ready reminder has been set to {config.get_bag_ready_reminder}")
+      set_config_file_advanced()
   
-  config_tab_step4_text = ctk.CTkLabel(master=tabview.tab("4. Avancé"), text="Au besoin changez le fuseau horaire utilisé.", font=default_config_step_font)
-  config_tab_step4_text.place(relx=0.5, rely=0.15, anchor="center")
+  config_tab_step4_text = ctk.CTkLabel(master=tabview.tab("4. Avancé"), text="Fuseau horaire", font=default_config_step_font)
+  config_tab_step4_text.place(relx=0.2, rely=0.05, anchor="center")
+
+  config_tab_step4_text2 = ctk.CTkLabel(master=tabview.tab("4. Avancé"), text="Notifications", font=default_config_step_font)
+  config_tab_step4_text2.place(relx=0.75, rely=0.05, anchor="center") #PAS OUBLIER DE LE PLACE FORGET AUSSI
   
   # Add a switch (CTkSwitch)
   switch_var = ctk.StringVar(value="on")  # Set the switch to be enabled by default
-  switch = ctk.CTkSwitch(master=tabview.tab("4. Avancé"), font=default_subtitle_font, text="Automatique (par défaut)", variable=switch_var, onvalue="on", offvalue="off", command=switch_toggled)
-  switch.place(relx=0.5, rely=0.35, anchor="center")
+  switch = ctk.CTkSwitch(master=tabview.tab("4. Avancé"), font=default_subtitle_font, switch_width=50, switch_height=20, text="Automatique", variable=switch_var, onvalue="on", offvalue="off", command=switch_toggled)
+  switch.place(relx=0.2, rely=0.25, anchor="center")
+  manual_timezone_not_recommende_tooltip = CTkToolTip(switch, message="Il est déconseillé de changer le fuseau horaire !", delay=0.3, alpha=0.8, wraplength=450, justify="center", font=default_subtitle_font)
 
   # Add a combobox
   options = ["UTC", "UTC+1", "UTC+2", "UTC+3", "UTC+4", "UTC+5", "UTC+6", "UTC+7", "UTC+8", "UTC+9", "UTC+10", "UTC+11", "UTC+12", "UTC-1", "UTC-2", "UTC-3", "UTC-4", "UTC-5", "UTC-6", "UTC-7", "UTC-8", "UTC-9", "UTC-10", "UTC-11", "UTC-12", "UTC-13", "UTC-14"]
   combo_menu = ctk.CTkComboBox(master=tabview.tab("4. Avancé"), font=default_text_font , values=options, state="readonly")
   combo_menu.place_forget()  # Initially hidden
 
+  unfinished_homework_reminder_switch_var = ctk.StringVar(value="False") # Set the switch to be disabled by default
+  unfinished_homework_reminder_switch = ctk.CTkSwitch(master=tabview.tab("4. Avancé"), switch_width=50, switch_height=20, button_color="white", progress_color="grey", variable=unfinished_homework_reminder_switch_var, font=default_subtitle_font, text="Devoirs non faits", onvalue="True", offvalue="False", command=unfinished_homework_reminder_switch_toogle)
+  unfinished_homework_reminder_switch.place(relx=0.76, rely=0.25, anchor="center")
+
+  get_bag_ready_reminder_switch_var = ctk.StringVar(value="False") # Set the switch to be disabled by default
+  get_bag_ready_reminder_switch = ctk.CTkSwitch(master=tabview.tab("4. Avancé"), switch_width=50, switch_height=20, button_color="white", progress_color="grey", variable=get_bag_ready_reminder_switch_var, font=default_subtitle_font, text="Faire son sac", onvalue="True", offvalue="False", command=get_bag_ready_reminder_toogle)
+  get_bag_ready_reminder_switch.place(relx=0.73, rely=0.45, anchor="center")
+
+  reminders_info_label = ctk.CTkLabel(master=tabview.tab("4. Avancé"), text="La notification de devoirs non faits à rendre pour le lendemain sera\nenvoyée vers 18h, le rappel de faire son sac vers 19h30.", font=default_conditions_font)
+  reminders_info_label.place(relx=0.5, rely=0.67, anchor="center")
+  
   # Add a save button
   save_button = ctk.CTkButton(master=tabview.tab("4. Avancé"), font=default_items_font ,text="Enregistrer", command=save_selection, corner_radius=10)
-  save_button.place(relx=0.5, rely=0.8, anchor="center")
+  save_button.place(relx=0.5, rely=0.9, anchor="center")
 
 
 
