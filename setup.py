@@ -672,7 +672,7 @@ def save_credentials():
         check_important_file_existence(wanted_file_type="config") 
       
         # Read the INI file with the appropriate encoding
-        with open(config_file_path, 'a', encoding='utf-8') as configfile:
+        with open(config_file_path, 'r', encoding='utf-8') as configfile:
           config.read_file(configfile)
 
         client = pronotepy.Client(config_data.pronote_url, username=username, password=password)
