@@ -122,6 +122,7 @@ class ConfigData:
         self.user_username = None
         self.ent_connexion = None
         self.topic_name = None
+        self.notification_delay = None
         self.uuid = None
         self.qr_code_login = None
 
@@ -597,6 +598,7 @@ def config_steps():
     save_button.configure(state="disabled", text_color="grey")
     switch.configure(state="disabled", text_color="grey", button_color="grey")
     combo_menu.configure(state="disabled", button_color="grey")
+    notification_delay_menu.configure(state="disabled", button_color="grey")
 
     check_important_file_existence(wanted_file_type="config")
    
@@ -606,6 +608,7 @@ def config_steps():
 
     # Modify a key in the INI file
     config['Advanced']['timezone'] = f"{config_data.selected_timezone}"
+    config['Global']['notification_delay'] = f"{config_data.notification_delay}"
 
     # Write the changes back to the INI file
     with open(config_file_path, 'w', encoding='utf-8') as configfile:
@@ -649,20 +652,17 @@ def config_steps():
       else:
           config_data.selected_timezone = system_data.automatic_school_timezone  # Use the automatic timezone
           logger.debug("Default timezone has been selected !")
-          
-      config.unfinished_homework_reminder = unfinished_homework_reminder_switch_var.get()
-      config.get_bag_ready_reminder = get_bag_ready_reminder_switch_var.get()
 
-      logger.debug(f"Unfinished homework reminder has been set to {config.unfinished_homework_reminder}")
-      logger.debug(f"Get bag ready reminder has been set to {config.get_bag_ready_reminder}")
+      # Extract just the number from the string
+      delay = int(notification_delay_menu.get().split()[0])
+      config_data.notification_delay = delay
+      logger.debug(f"Notification delay set to {delay} minutes")
+          
       set_config_file_advanced()
   
   config_tab_step4_text = ctk.CTkLabel(master=tabview.tab("4. Avancé"), text="Fuseau horaire", font=default_config_step_font)
-  config_tab_step4_text.place(relx=0.2, rely=0.05, anchor="center")
+  config_tab_step4_text.place(relx=0.2, rely=0.1, anchor="center")
 
-  config_tab_step4_text2 = ctk.CTkLabel(master=tabview.tab("4. Avancé"), text="Notifications", font=default_config_step_font)
-  config_tab_step4_text2.place(relx=0.75, rely=0.05, anchor="center") #PAS OUBLIER DE LE PLACE FORGET AUSSI
-  
   # Add a switch (CTkSwitch)
   switch_var = ctk.StringVar(value="on")  # Set the switch to be enabled by default
   switch = ctk.CTkSwitch(master=tabview.tab("4. Avancé"), font=default_subtitle_font, switch_width=50, switch_height=20, text="Automatique", variable=switch_var, onvalue="on", offvalue="off", command=switch_toggled)
@@ -674,17 +674,17 @@ def config_steps():
   combo_menu = ctk.CTkComboBox(master=tabview.tab("4. Avancé"), font=default_text_font , values=options, state="readonly")
   combo_menu.place_forget()  # Initially hidden
 
-  unfinished_homework_reminder_switch_var = ctk.StringVar(value="False") # Set the switch to be disabled by default
-  unfinished_homework_reminder_switch = ctk.CTkSwitch(master=tabview.tab("4. Avancé"), switch_width=50, switch_height=20, button_color="white", progress_color="grey", variable=unfinished_homework_reminder_switch_var, font=default_subtitle_font, text="Devoirs non faits", onvalue="True", offvalue="False", command=unfinished_homework_reminder_switch_toogle)
-  unfinished_homework_reminder_switch.place(relx=0.76, rely=0.25, anchor="center")
+  # Add notification delay selection
+  notification_delay_label = ctk.CTkLabel(master=tabview.tab("4. Avancé"), text="Délai avant envoi", font=default_items_font)
+  notification_delay_label.place(relx=0.2, rely=0.47, anchor="center")
 
-  get_bag_ready_reminder_switch_var = ctk.StringVar(value="False") # Set the switch to be disabled by default
-  get_bag_ready_reminder_switch = ctk.CTkSwitch(master=tabview.tab("4. Avancé"), switch_width=50, switch_height=20, button_color="white", progress_color="grey", variable=get_bag_ready_reminder_switch_var, font=default_subtitle_font, text="Faire son sac", onvalue="True", offvalue="False", command=get_bag_ready_reminder_toogle)
-  get_bag_ready_reminder_switch.place(relx=0.73, rely=0.45, anchor="center")
+  # Create notification delay dropdown menu
+  notification_delays = ["1 minute", "3 minutes", "5 minutes", "10 minutes"]
+  notification_delay_var = ctk.StringVar(value=notification_delays[2])  # Default to 5 minutes
 
-  reminders_info_label = ctk.CTkLabel(master=tabview.tab("4. Avancé"), text="La notification de devoirs non faits à rendre pour le lendemain sera\nenvoyée vers 18h, le rappel de faire son sac vers 19h30.", font=default_conditions_font)
-  reminders_info_label.place(relx=0.5, rely=0.67, anchor="center")
-  
+  notification_delay_menu = ctk.CTkOptionMenu(master=tabview.tab("4. Avancé"), font=default_subtitle_font, values=notification_delays, variable=notification_delay_var, width=120)
+  notification_delay_menu.place(relx=0.2, rely=0.63, anchor="center")
+
   # Add a save button
   save_button = ctk.CTkButton(master=tabview.tab("4. Avancé"), font=default_items_font ,text="Enregistrer", command=save_selection, corner_radius=10)
   save_button.place(relx=0.5, rely=0.9, anchor="center")

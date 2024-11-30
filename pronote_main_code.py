@@ -43,6 +43,9 @@ logger.debug(f"login_page_link is: {login_page_link} !")
 topic_name = config['Global'].get('topic_name')
 logger.debug(f"topic_name is: {topic_name} !")
 
+notification_delay = config['Global'].get('notification_delay')
+logger.debug(f"notification_delay is: {notification_delay} !")
+
 lunch_times = {day.lower(): list(map(int, time.split(':'))) for day, time in config['LunchTimes'].items() if ':' in time}  # Include only entries that look like time
 logger.debug(f"lunch_times have been loaded !")
 
@@ -182,8 +185,6 @@ async def pronote_main_checks_loop():
       elif lesson_checker:
         current_time = datetime.datetime.now(timezone).strftime("%H:%M")
 
-        current_time = datetime.datetime.now(timezone).strftime("%H:%M")
-
         todays_date = datetime.datetime.now(timezone).strftime("%Y-%m-%d")
         logger.debug(f"Real time: {todays_date} {current_time}")
 
@@ -193,11 +194,11 @@ async def pronote_main_checks_loop():
         for lesson_checks in lesson_checker:
           start_time = lesson_checks.start.time()
 
-          five_minutes_before_start = datetime.datetime.combine(today, start_time) - datetime.timedelta(minutes=5)
-          five_minutes_before_start = five_minutes_before_start.strftime("%H:%M") #Comment when testing with fake time
+          time_before_start = datetime.datetime.combine(today, start_time) - datetime.timedelta(minutes=int(notification_delay))
+          time_before_start = time_before_start.strftime("%H:%M") #Comment when testing with fake time
 
-          if current_time == five_minutes_before_start:
-          #if fake_current_time.time() ==  five_minutes_before_start.time():
+          if current_time == time_before_start:
+          #if fake_current_time.time() ==  time_before_start.time():
             global subject
             subject = lesson_checks.subject.name
 
@@ -281,7 +282,8 @@ async def pronote_main_checks_loop():
     async def send_class_info_notification_via_ntfy(message):
       topic = topic_name
       url = f"https://ntfy.sh/{topic}"
-      headers = {"Priority": "5", "Title": "Prochain cours dans 5 minutes !", "Tags": "school_satchel"}
+      s = "" if notification_delay == "1" else "s"
+      headers = {"Priority": "5", "Title": f"Prochain cours dans {notification_delay} minute{s} !", "Tags": "school_satchel"}
 
       async with aiohttp.ClientSession() as session:
         async with session.post(url, data=message.encode('utf-8'), headers=headers) as response:
