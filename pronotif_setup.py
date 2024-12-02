@@ -26,6 +26,8 @@ import subprocess
 import traceback
 import random
 from loguru import logger
+import sentry_sdk
+from sentry_sdk import start_transaction
 from PIL import Image, ImageGrab, ImageTk
 from tkextrafont import Font
 from ctypes import windll
@@ -63,6 +65,14 @@ warning_icon_path = f"{script_directory}/Icons/Messagebox UI/warning_icon.png"
 info_icon_path = f"{script_directory}/Icons/Messagebox UI/info_icon.png"
 
 github_repo_name = "TGA25dev/Pronotif"
+version = "v0.5beta"
+
+sentry_sdk.init("https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992", 
+                enable_tracing=True,
+                traces_sample_rate=1.0,
+                environment="development",
+                release=version,
+                server_name="User-Machine")
 
 local_paths = {
     "config": os.path.join(script_directory, "Data", "config.ini"),
@@ -87,14 +97,20 @@ logger.add("setup_wizard_logs.log", level="DEBUG", rotation="500 MB")  # Log to 
 
 # Global exception handler
 def handle_exception(exc_type, exc_value, exc_traceback):
-  if issubclass(exc_type, KeyboardInterrupt):
-    sys.__excepthook__(exc_type, exc_value, exc_traceback)
-    return
-  logger.critical(
-    f"Uncaught exception: {exc_value}\n"
-    f"Traceback: {''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))}"
-  )
+    if issubclass(exc_type, KeyboardInterrupt):
+        # Handle KeyboardInterrupt gracefully
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
 
+    # Send exception to Sentry
+    sentry_sdk.capture_exception((exc_type, exc_value, exc_traceback))
+
+    logger.critical(
+        f"Uncaught exception: {exc_value}\n"
+        f"Traceback: {''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))}"
+    )
+
+# Set the global exception handler
 sys.excepthook = handle_exception
 
 class SystemData: #System related data (needed for the system to work but not saved or sent to the server.)
@@ -815,6 +831,7 @@ def save_credentials():
          else:
             logger.critical(f"Unknown error ! Detail below :\n{e}")
             box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Une erreur inconnue est survenue...\nVeuillez réessayer plus tard.", icon=cancel_icon_path, option_1="Ok",master=root, width=300, height=10, corner_radius=20,sound=True)
+            sentry_sdk.capture_exception(e)
 
          box.info._text_label.configure(wraplength=450) 
          root.config(cursor="arrow")
@@ -921,8 +938,8 @@ def qr_code_login_process():
         else:
           box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Une erreur inconnue est survenue...\nVeuillez réessayer plus tard.", icon=cancel_icon_path, option_1="Ok",master=root, width=300, height=10, corner_radius=20,sound=True)
           box.info._text_label.configure(wraplength=450)
-          
           logger.error(f"Can not login with QR code: {str(e)}")
+          sentry_sdk.capture_exception(e)
 
 def ask_qr_code_pin():
    root.deiconify()  # Restore the main window
@@ -1137,9 +1154,10 @@ def scan_qr_code(scan_qr_code_method):
                   cap.release()
                   camera_frame.destroy()
           except Exception as e:
-              print(f"Camera error: {str(e)}")
+              logger.critical(f"Camera error: {str(e)}")
               cap.release()
               camera_frame.destroy()
+              sentry_sdk.capture_exception(e)
       
       update_frame()
 
@@ -1395,6 +1413,7 @@ def search_school():
       box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Une erreur inconnue est survenue...", icon=warning_icon_path, option_1="Réessayer",master=root, width=300, height=10, corner_radius=20,sound=True)
       box.info._text_label.configure(wraplength=450)
       root.config(cursor="arrow")
+      sentry_sdk.capture_exception(e)
     
     if not true_city_geocode:
        logger.error("Unknow city !")
@@ -1595,6 +1614,7 @@ def search_school():
         logger.error(f"An error occurred while trying to search for the city !\n{e}")
         box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Une erreur inconnue est survenue...", icon=warning_icon_path, option_1="Réessayer",master=root, width=300, height=10, corner_radius=20,sound=True)
         box.info._text_label.configure(wraplength=450)
+        sentry_sdk.capture_exception(e)
         root.config(cursor="arrow")
         search_button.configure(state="normal")
          
@@ -1659,6 +1679,7 @@ def close_app():
         logger.warning(f"Permission denied to delete {file_path}.")
      except Exception as e:
         logger.critical(f"An error occurred while trying to delete {file_path}: {e}")
+        sentry_sdk.capture_exception(e)
 
     logger.debug(f"{deleted_files_count} files out of 3 deleted")
 
@@ -1811,6 +1832,4 @@ check_if_first_time()
 update_internet_label_state()
 
 #Start main loop
-root.mainloop()
-
 root.mainloop()
