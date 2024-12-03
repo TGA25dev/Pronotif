@@ -13,12 +13,21 @@ import time
 import sys
 import traceback
 from loguru import logger
+import sentry_sdk
 from dotenv import set_key
 import json
 
 config = configparser.ConfigParser(comment_prefixes=";")
 config.optionxform = str
 script_directory = os.path.dirname(os.path.abspath(__file__))
+version = "v0.5beta"
+
+sentry_sdk.init("https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992", 
+                enable_tracing=True,
+                traces_sample_rate=1.0,
+                environment="development",
+                release=version,
+                server_name="Server")
 
 try:
   with open("Data/config.ini", encoding='utf-8') as f:
@@ -26,6 +35,7 @@ try:
   logger.info("Config file has been succesfully loaded !")
 except Exception as e:
   logger.critical(f"An error has occurred while trying to open the config file: {e}\n\nClosing program...")
+  sentry_sdk.capture_exception(e)
   time.sleep(2)
   sys.exit(1)
 
@@ -91,6 +101,7 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     f"Uncaught exception: {exc_value}\n"
     f"Traceback: {''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))}"
   )
+  sentry_sdk.capture_exception(exc_type, exc_value, exc_traceback)
 
 sys.excepthook = handle_exception
 
@@ -132,6 +143,7 @@ async def check_session(client):
 
         except Exception as e:
           logger.error(f"An error happened during session creation: {e}\nClosing program...")
+          sentry_sdk.capture_exception(e)
           sys.exit(1)
 
       else:
@@ -316,6 +328,7 @@ async def pronote_main_checks_loop():
         menus = client.menus(date_from=today)
       except Exception as e:
         logger.error(f"Error fetching menus: {e}")
+        sentry_sdk.capture_exception(e)
         return
       if menus:
         current_time = datetime.datetime.now(timezone).time()
@@ -537,6 +550,7 @@ async def pronote_main_checks_loop():
       
   else:
     logger.critical(f"An error has occured while login: {Exception}\n\nClosing program...")
+    sentry_sdk.capture_exception(Exception)
     time.sleep(2)
     exit(1)
 
