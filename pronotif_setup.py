@@ -287,7 +287,7 @@ def final_step():
   os.mkdir(f"{script_directory}/Bot Files/Data")
 
   shutil.copy(f"{script_directory}/requirements.txt", f"{script_directory}/Bot Files/requirements.txt")
-  shutil.copy(f"{script_directory}/pronote_main_code.py", f"{script_directory}/Bot Files/pronote_main_code.py")
+  shutil.copy(f"{script_directory}/pronotif_main_system.py", f"{script_directory}/Bot Files/pronotif_main_system.py")
   shutil.copy(f"{script_directory}/Data/{config_file_name}", f"{script_directory}/Bot Files/Data/{config_file_name}")
   shutil.copy(f"{script_directory}/Data/ent_data.json", f"{script_directory}/Bot Files/Data/ent_data.json")
   shutil.copy(f"{script_directory}/Data/pronote_password.env", f"{script_directory}/Bot Files/Data/pronote_password.env")
