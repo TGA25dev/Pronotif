@@ -20,7 +20,7 @@ import json
 config = configparser.ConfigParser(comment_prefixes=";")
 config.optionxform = str
 script_directory = os.path.dirname(os.path.abspath(__file__))
-version = "v0.5beta"
+version = "v0.5"
 
 sentry_sdk.init("https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992", 
                 enable_tracing=True,
