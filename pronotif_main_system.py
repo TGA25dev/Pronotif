@@ -25,7 +25,7 @@ version = "v0.5"
 sentry_sdk.init("https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992", 
                 enable_tracing=True,
                 traces_sample_rate=1.0,
-                environment="development",
+                environment="production",
                 release=version,
                 server_name="Server")
 
@@ -101,7 +101,7 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     f"Uncaught exception: {exc_value}\n"
     f"Traceback: {''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))}"
   )
-  sentry_sdk.capture_exception(exc_type, exc_value, exc_traceback)
+  sentry_sdk.capture_exception(exc_value)
 
 sys.excepthook = handle_exception
 
@@ -149,9 +149,6 @@ async def check_session(client):
       else:
         client.refresh()
         logger.info("Session has been refreshed !")
-    else:
-      if qr_code_login != "True":
-        client.refresh()
 
 async def pronote_main_checks_loop():
   await check_internet_connexion()
@@ -535,18 +532,17 @@ async def pronote_main_checks_loop():
                 logger.info(reminder_message)
 
     while run_main_loop is True:
+      start_time = time.time() 
       await check_internet_connexion()
       if internet_connected:
         no_internet_message = False
         await check_session(client)
-        await lesson_check()
-        await menu_food_check()
-        await check_reminder_notifications()
+        await asyncio.gather(lesson_check(), menu_food_check(), check_reminder_notifications())
       else:
         if not no_internet_message:
           logger.critical("Tasks have been paused... (No Internet connexion)")
           no_internet_message = True
-      await asyncio.sleep(60)
+      await asyncio.sleep(60 - ((time.time() - start_time) % 60))
       
   else:
     logger.critical(f"An error has occured while login: {Exception}\n\nClosing program...")
