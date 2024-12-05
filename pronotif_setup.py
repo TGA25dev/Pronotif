@@ -28,6 +28,7 @@ import random
 from loguru import logger
 import sentry_sdk
 from sentry_sdk import start_transaction
+from sentry_sdk import set_user
 from PIL import Image, ImageGrab, ImageTk
 from tkextrafont import Font
 from ctypes import windll
@@ -66,13 +67,17 @@ info_icon_path = f"{script_directory}/Icons/Messagebox UI/info_icon.png"
 
 github_repo_name = "TGA25dev/Pronotif"
 version = "v0.5"
+app_session_id = str(uuid4())
+logger.debug(app_session_id)
 
 sentry_sdk.init("https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992", 
                 enable_tracing=True,
                 traces_sample_rate=1.0,
-                environment="development",
+                environment="production",
                 release=version,
                 server_name="User-Machine")
+
+sentry_sdk.set_user({"id": app_session_id})
 
 local_paths = {
     "config": os.path.join(script_directory, "Data", "config.ini"),
