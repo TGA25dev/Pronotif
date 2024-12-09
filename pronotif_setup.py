@@ -27,8 +27,6 @@ import traceback
 import random
 from loguru import logger
 import sentry_sdk
-from sentry_sdk import start_transaction
-from sentry_sdk import set_user
 from PIL import Image, ImageGrab, ImageTk
 from tkextrafont import Font
 from ctypes import windll
