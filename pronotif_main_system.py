@@ -130,58 +130,70 @@ async def check_internet_connexion():
 
 first_login = True    
 async def check_session(client):
+    global first_login
+    if first_login: # Skip session check on first login
+        first_login = False 
+        return
 
-  global first_login #Don't get session status for 1st check
-  if first_login:
-    first_login = False
-    pass
-
-  else:
-    if client.session_check() is True: #Set to False for testing purposes, real is True
-      logger.error("Session has expired !")
-
-      if qr_code_login == "True":
+    try:
+        session_expired = client.session_check()
+    except (ConnectionError, requests.exceptions.ConnectionError) as e:
+        logger.warning(f"Connection error during session check: {e}")
+        # Wait a bit before retrying
+        await asyncio.sleep(5)
         try:
-          os.environ.pop('Password', None)  # Clear memory cache of the password variable
+            session_expired = client.session_check()
+        except Exception as retry_error:
+            logger.error(f"Failed to check session after retry: {retry_error}")
+            return
+    except Exception as e:
+        logger.error(f"Unexpected error during session check: {e}")
+        return
 
-          dotenv.load_dotenv("Data/pronote_password.env")
-          secured_password = os.getenv("Password")
-          logger.debug("Pronote password has been reloaded !")
+    if session_expired: #True: Session has expired | False: Session is still active
+        logger.warning("Session has expired !")
+        if qr_code_login == "True":
+            try:
+                os.environ.pop('Password', None)  # Clear memory cache of the password variable
 
-          client = pronotepy.Client.token_login(login_page_link, username=secured_username, password=secured_password, uuid=uuid) #As refreshing is not available for QR Code login, create a new session
-          if client.logged_in:
-            logger.info("A new session has been created !")
-            set_key(f"{script_directory}/Data/pronote_password.env", 'Password', client.password)
+                dotenv.load_dotenv("Data/pronote_password.env")
+                secured_password = os.getenv("Password")
+                logger.debug("Pronote password has been reloaded !")
 
-        except Exception as e:
-          logger.error(f"An error happened during session creation: {e}\nClosing program...")
-          sentry_sdk.capture_exception(e)
-          sys.exit(1)
+                client = pronotepy.Client.token_login(login_page_link, username=secured_username, password=secured_password, uuid=uuid) #As refreshing is not available for QR Code login, create a new session
+                if client.logged_in:
+                    logger.info("A new session has been created !")
+                    set_key(f"{script_directory}/Data/pronote_password.env", 'Password', client.password)
 
-      else:
-        max_retries = 3
-        retry_delay = 5  # seconds
-        
-        for attempt in range(max_retries):
-          try:
-            client.refresh()
-            logger.info("Session has been refreshed !")
-            break
-          
-          except (requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError) as e:
-            if attempt < max_retries - 1:
-              logger.warning(f"Connection timeout during session refresh (attempt {attempt + 1}/{max_retries}). Retrying in {retry_delay} seconds...")
-              await asyncio.sleep(retry_delay)
+            except Exception as e:
+                logger.critical(f"An error happened during session creation: {e}\nClosing program...")
+                sentry_sdk.capture_exception(e)
+                sys.exit(1)
 
-            else:
-              logger.critical("Failed to refresh session after multiple attempts. Connection timeout.")
-              sentry_sdk.capture_exception(e)
-              sys.exit(1)
+        else:
+            max_retries = 3
+            retry_delay = 5  # seconds
+            
+            for attempt in range(max_retries):
+                try:
+                    client.refresh()
+                    logger.info("Session has been refreshed !")
+                    break
+                
+                except (requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError) as e:
+                    if attempt < max_retries - 1:
+                        logger.warning(f"Connection timeout during session refresh (attempt {attempt + 1}/{max_retries}). Retrying in {retry_delay} seconds...")
+                        await asyncio.sleep(retry_delay)
 
-          except Exception as e:
-            logger.critical(f"Unexpected error during session refresh: {e}")
-            sentry_sdk.capture_exception(e)
-            sys.exit(1)
+                    else:
+                        logger.critical("Failed to refresh session after multiple attempts. Connection timeout.")
+                        sentry_sdk.capture_exception(e)
+                        sys.exit(1)
+
+                except Exception as e:
+                    logger.critical(f"Unexpected error during session refresh: {e}")
+                    sentry_sdk.capture_exception(e)
+                    sys.exit(1)
 
 async def pronote_main_checks_loop():
   await check_internet_connexion()
@@ -325,7 +337,7 @@ async def pronote_main_checks_loop():
       topic = topic_name
       url = f"https://ntfy.sh/{topic}"
       s = "" if notification_delay == "1" else "s"
-      headers = {"Priority": "5", "Title": f"Prochain cours dans {notification_delay} minute{s} !", "Tags": "school_satchel"}
+      headers = {"Priority": "5", "Title": f"Prochain cours dans {notification_delay} minute{s} !", "Tags": "bell"}
 
       async with aiohttp.ClientSession() as session:
         async with session.post(url, data=message.encode('utf-8'), headers=headers) as response:
