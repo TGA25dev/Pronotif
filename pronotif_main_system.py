@@ -8,6 +8,7 @@ import asyncio
 import pytz
 import aiohttp
 import requests
+from requests.adapters import TimeoutSauce
 import configparser
 import time
 import sys
@@ -16,6 +17,17 @@ from loguru import logger
 import sentry_sdk
 from dotenv import set_key
 import json
+
+# Configure default timeouts for requests
+class DefaultTimeout(TimeoutSauce):
+    def __init__(self, *args, **kwargs):
+        if kwargs['connect'] is None:
+            kwargs['connect'] = 5  # 5 seconds connection timeout
+        if kwargs['read'] is None:
+            kwargs['read'] = 5  # 5 seconds read timeout
+        super(DefaultTimeout, self).__init__(*args, **kwargs)
+
+requests.adapters.TimeoutSauce = DefaultTimeout
 
 config = configparser.ConfigParser(comment_prefixes=";")
 config.optionxform = str
@@ -147,8 +159,29 @@ async def check_session(client):
           sys.exit(1)
 
       else:
-        client.refresh()
-        logger.info("Session has been refreshed !")
+        max_retries = 3
+        retry_delay = 5  # seconds
+        
+        for attempt in range(max_retries):
+          try:
+            client.refresh()
+            logger.info("Session has been refreshed !")
+            break
+          
+          except (requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError) as e:
+            if attempt < max_retries - 1:
+              logger.warning(f"Connection timeout during session refresh (attempt {attempt + 1}/{max_retries}). Retrying in {retry_delay} seconds...")
+              await asyncio.sleep(retry_delay)
+
+            else:
+              logger.critical("Failed to refresh session after multiple attempts. Connection timeout.")
+              sentry_sdk.capture_exception(e)
+              sys.exit(1)
+
+          except Exception as e:
+            logger.critical(f"Unexpected error during session refresh: {e}")
+            sentry_sdk.capture_exception(e)
+            sys.exit(1)
 
 async def pronote_main_checks_loop():
   await check_internet_connexion()
