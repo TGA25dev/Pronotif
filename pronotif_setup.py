@@ -96,8 +96,13 @@ github_paths = {
 
 # Adding custom colors and format to the logger
 logger.remove()  # Remove any existing handlers
-logger.add(sys.stdout, level="DEBUG")  # Log to console
-logger.add("setup_wizard_logs.log", level="DEBUG", rotation="500 MB")  # Log to file with rotation
+
+# Add logging to the console (only if a console exists)
+if hasattr(sys, "stdout") and sys.stdout is not None:
+    logger.add(sys.stdout, level="DEBUG")
+
+# Add logging to a file with rotation
+logger.add("setup_wizard_logs.log", level="DEBUG", rotation="500 MB")
 
 # Global exception handler
 def handle_exception(exc_type, exc_value, exc_traceback):
