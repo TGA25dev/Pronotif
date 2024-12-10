@@ -4,6 +4,8 @@ from CTkMessagebox import CTkMessagebox
 from CTkToolTip import *
 from hPyT import *
 import tkinter as tk
+import pyglet
+from pathlib import Path
 import winsound
 import pronotepy
 import requests
@@ -28,7 +30,6 @@ import random
 from loguru import logger
 import sentry_sdk
 from PIL import Image, ImageGrab, ImageTk
-from tkextrafont import Font
 from ctypes import windll
 from pyzbar.pyzbar import decode
 from uuid import uuid4
@@ -1630,17 +1631,11 @@ root.resizable(False, False)
 root.title("Pronot'if Setup")
 root.option_add("*Font", default_font_style)
 
-# Load the custom .otf fonts
+pyglet.options['win32_gdi_font'] = True # Use GDI font rendering
+fonts_dir = Path(__file__).parent / 'Fonts' # Create path to fonts directory
 
-#Fixel Text
-fixeltext_font_regular = Font(file=f"{script_directory}/Fonts/FixelText-Regular.otf", family="Fixel Text Regular")
-fixeltext_font_semi_bold = Font(file=f"{script_directory}/Fonts/FixelText-SemiBold.otf", family="Fixel Text SemiBold")
-#fixeltext_font_light = Font(file=f"{script_directory}/Fonts/FixelText-Light.otf", family="Fixel Text Light") Unused font
-fixeltext_font_medium = Font(file=f"{script_directory}/Fonts/FixelText-Medium.otf", family="Fixel Text Medium")
-
-#Fixel Display
-fixeldisplay_font_bold = Font(file=f"{script_directory}/Fonts/FixelDisplay-Bold.otf", family="Fixel Display Bold")
-fixeldisplay_font_medium = Font(file=f"{script_directory}/Fonts/FixelDisplay-Medium.otf", family="Fixel Display Medium")
+for font_file in fonts_dir.glob('*.otf'): # Load all .otf fonts from the directory
+    pyglet.font.add_file(str(font_file))
 
 #wanted file type can be : ico, config, ent_data, pronote_password or pronote_username
 check_important_file_existence(wanted_file_type="ico")
