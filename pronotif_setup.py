@@ -65,7 +65,7 @@ warning_icon_path = f"{script_directory}/Icons/Messagebox UI/warning_icon.png"
 info_icon_path = f"{script_directory}/Icons/Messagebox UI/info_icon.png"
 
 github_repo_name = "TGA25dev/Pronotif"
-version = "v0.5"
+version = "v0.5.1"
 app_session_id = str(uuid4())
 logger.debug(app_session_id)
 
