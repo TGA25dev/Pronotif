@@ -22,9 +22,9 @@ import json
 class DefaultTimeout(TimeoutSauce):
     def __init__(self, *args, **kwargs):
         if kwargs['connect'] is None:
-            kwargs['connect'] = 5  # 5 seconds connection timeout
+            kwargs['connect'] = 10  # 10 seconds connection timeout
         if kwargs['read'] is None:
-            kwargs['read'] = 5  # 5 seconds read timeout
+            kwargs['read'] = 10  # 10 seconds read timeout
         super(DefaultTimeout, self).__init__(*args, **kwargs)
 
 requests.adapters.TimeoutSauce = DefaultTimeout
@@ -172,7 +172,7 @@ async def check_session(client):
 
         else:
             max_retries = 3
-            retry_delay = 5  # seconds
+            retry_delay = 10  # seconds
             
             for attempt in range(max_retries):
                 try:
@@ -180,10 +180,10 @@ async def check_session(client):
                     logger.info("Session has been refreshed !")
                     break
                 
-                except (requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError) as e:
+                except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError) as e:
                     if attempt < max_retries - 1:
                         logger.warning(f"Connection timeout during session refresh (attempt {attempt + 1}/{max_retries}). Retrying in {retry_delay} seconds...")
-                        await asyncio.sleep(retry_delay)
+                        await asyncio.sleep(retry_delay * (2 ** attempt))
 
                     else:
                         logger.critical("Failed to refresh session after multiple attempts. Connection timeout.")
