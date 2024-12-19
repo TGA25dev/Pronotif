@@ -253,25 +253,6 @@ async def pronote_main_checks_loop():
             lesson_checker = []
             break
 
-      for attempt in range(max_retries):
-          try:
-            lesson_checker = client.lessons(date_from=today)  # CHANGE TO FAKE OR REAL !!
-            break
-          except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError) as e:
-            if attempt < max_retries - 1:
-              logger.warning(f"Connection timeout during lesson check (attempt {attempt + 1}/{max_retries}). Retrying in {retry_delay} seconds...")
-              await asyncio.sleep(retry_delay * (2 ** attempt))
-            else:
-              logger.error(f"Failed to check lessons after {max_retries} attempts")
-              sentry_sdk.capture_exception(e)
-              lesson_checker = []  # List is empty for fallback
-
-          except Exception as e:
-            logger.error(f"Unexpected error checking lessons: {e}")
-            sentry_sdk.capture_exception(e)
-            lesson_checker = []
-            break
-
       if not lesson_checker:
         if not class_check_print_flag:
           logger.info("There is probably no class today !")
@@ -281,96 +262,116 @@ async def pronote_main_checks_loop():
         todays_date = datetime.datetime.now(timezone).strftime("%Y-%m-%d")
         logger.debug(f"Real time: {todays_date} {current_time}")
 
-        #fake_current_time = datetime.datetime.combine(other_day, datetime.time(9, 5)) - datetime.timedelta(minutes=0)
+        #fake_current_time = datetime.datetime.combine(other_day, datetime.time(11, 10)) - datetime.timedelta(minutes=0)
         #logger.debug(f"Fake time: {fake_current_time}")
 
-        for lesson_checks in lesson_checker:
-          start_time = lesson_checks.start.time()
+        # Group all lessons by their start time
+        lessons_by_time = {}
+        for lesson in lesson_checker:
+            start_time = lesson.start.strftime("%H:%M")
+            if start_time not in lessons_by_time:
+                lessons_by_time[start_time] = []
+            lessons_by_time[start_time].append(lesson)
 
-          time_before_start = datetime.datetime.combine(today, start_time) - datetime.timedelta(minutes=int(notification_delay))
-          time_before_start = time_before_start.strftime("%H:%M") #Comment when testing with fake time
+        # Process each time slot only once
+        for start_time, lessons in lessons_by_time.items():
+            lesson_start = datetime.datetime.strptime(start_time, "%H:%M").time()
+            time_before_start = (datetime.datetime.combine(today, lesson_start) - datetime.timedelta(minutes=int(notification_delay))).time()
 
-          if current_time == time_before_start:
-          #if fake_current_time.time() ==  time_before_start.time():
-            global subject
-            subject = lesson_checks.subject.name
+            #if fake_current_time.time() == time_before_start:
+            if current_time == time_before_start.strftime("%H:%M"):
+                if len(lessons) > 1:
+                    #logger.debug(f"Multiple subjects: {len(lessons)}")
+                    lesson_checks = max(lessons, key=lambda lesson: lesson.num)
+                else:
+                    lesson_checks = lessons[0]
 
-            room_name = lesson_checks.classroom
-            class_start_time = lesson_checks.start.strftime("%H:%M")
-            canceled = lesson_checks.canceled
+                # Rest of your existing code for processing the lesson
+                global subject
+                subject = lesson_checks.subject.name         
+                room_name = lesson_checks.classroom
+                class_start_time = lesson_checks.start.strftime("%H:%M")
+                canceled = lesson_checks.canceled
+                status = lesson_checks.status
+                num = lesson_checks.num
+              
+                #logger.debug("Debug Data : " + subject + " " + room_name + " " + class_start_time + " " + str(canceled) + " " + status + " " + str(num))
+                
+                # Load JSON data from files
+                with open('Data/emoji_cours_names.json', 'r', encoding='utf-8') as emojis_data, open('Data/subject_names_format.json', 'r', encoding='utf-8') as subjects_data:
+                  emojis = json.load(emojis_data)
+                  subjects = json.load(subjects_data)
 
-            # Load JSON data from files
-            with open('Data/emoji_cours_names.json', 'r', encoding='utf-8') as file1, open('Data/subject_names_format.json', 'r', encoding='utf-8') as file2:
-              emojis = json.load(file1)
-              subjects = json.load(file2)
+                global lower_cap_subject_name
+                lower_cap_subject_name = subject[0].capitalize() + subject[1:].lower()
 
-            global lower_cap_subject_name
-            lower_cap_subject_name = subject[0].capitalize() + subject[1:].lower()
+                # Normalize function to simplify comparison
+                def normalize(text):
+                  return text.lower().replace(' ', '').replace('-', '').replace('.', '').replace('é', 'e')
 
-            # Normalize function to simplify comparison
-            def normalize(text):
-              return text.lower().replace(' ', '').replace('-', '').replace('.', '').replace('é', 'e')
+                # Create a dictionary of normalized short names to emojis
+                normalized_emojis = {
+                  normalize(name): (emoji if isinstance(emoji, list) else [emoji])
+                  for name, emoji in emojis.items()
+                }
 
-            # Create a dictionary of normalized short names to emojis
-            normalized_emojis = {
-              normalize(name): (emoji if isinstance(emoji, list) else [emoji])
-              for name, emoji in emojis.items()
-            }
+                # Create a dictionary of normalized subject names
+                normalized_subjects = {
+                  normalize(key): details
+                  for key, details in subjects.items()
+                }
 
-            # Create a dictionary of normalized subject names
-            normalized_subjects = {
-              normalize(key): details
-              for key, details in subjects.items()
-            }
+                # Normalize lower_cap_subject_name for comparison
+                normalized_subject_key = normalize(lower_cap_subject_name)
 
-            # Normalize lower_cap_subject_name for comparison
-            normalized_subject_key = normalize(lower_cap_subject_name)
+                # Find subject details from the subjects JSON
+                if normalized_subject_key in normalized_subjects:
+                  subject_details = normalized_subjects[normalized_subject_key]
+                  name = subject_details["name"]
+                  det = subject_details["det"]
+                else:
+                  name = lower_cap_subject_name
+                  det = "de"  # default determinant if not found
 
-            # Find subject details from the subjects JSON
-            if normalized_subject_key in normalized_subjects:
-              subject_details = normalized_subjects[normalized_subject_key]
-              name = subject_details["name"]
-              det = subject_details["det"]
-            else:
-              name = lower_cap_subject_name
-              det = "de"  # default determinant if not found
+                # Find matching emoji
+                found_emoji_list = ['📝']  # Default emoji if no match is found
+                for short_name, emoji_list in normalized_emojis.items():
+                  if short_name in normalized_subject_key:
+                    found_emoji_list = emoji_list
+                    break
 
-            # Find matching emoji
-            found_emoji_list = ['📝']  # Default emoji if no match is found
-            for short_name, emoji_list in normalized_emojis.items():
-              if short_name in normalized_subject_key:
-                found_emoji_list = emoji_list
+                # Randomly choose an emoji from the matched emoji list
+                chosen_emoji = random.choice(found_emoji_list)
+
+                if det == "de":
+                  extra_space = " "
+                else:
+                  extra_space = ""
+
+                async def send_class_canceled_message_via_ntfy(message):
+                  topic = topic_name
+                  url = f"https://ntfy.sh/{topic}"
+                  headers = {"Priority": "5", "Title": "Cours annulé !", "Tags": f"date"}
+
+                  async with aiohttp.ClientSession() as session:
+                    async with session.post(url, data=message.encode('utf-8'), headers=headers) as response:
+                      if response.status == 200:
+                        logger.info("The canceled class information message has been successfully sent !")
+                        return response.status
+                      else:
+                        logger.error(f"A problem as occured while trying to send the class message : {response.status}")
+                        client.refresh()
+
+                if canceled:
+                  await send_class_canceled_message_via_ntfy(f"Le cours {det}{extra_space}{name} initialement prévu à {class_start_time} est annulé !")
+
+                elif not canceled:
+                  class_time_message = f"Le cours {det}{extra_space}{name} se fera en salle {room_name} et commencera à {class_start_time}. {chosen_emoji}"
+                  logger.debug(class_time_message)
+                  await send_class_info_notification_via_ntfy(class_time_message)
+
+                # Break after processing the matching time slot
                 break
-
-            # Randomly choose an emoji from the matched emoji list
-            chosen_emoji = random.choice(found_emoji_list)
-
-            if det == "de":
-              extra_space = " "
-            else:
-              extra_space = ""
-
-            async def send_class_canceled_message_via_ntfy(message):
-              topic = topic_name
-              url = f"https://ntfy.sh/{topic}"
-              headers = {"Priority": "5", "Title": "Cours annulé !", "Tags": f"date"}
-
-              async with aiohttp.ClientSession() as session:
-                async with session.post(url, data=message.encode('utf-8'), headers=headers) as response:
-                  if response.status == 200:
-                    logger.info("The canceled class information message has been successfully sent !")
-                    return response.status
-                  else:
-                    logger.error(f"A problem as occured while trying to send the class message : {response.status}")
-                    client.refresh()
-
-            if canceled:
-              await send_class_canceled_message_via_ntfy(f"Le cours {det}{extra_space}{name} initialement prévu à {class_start_time} est annulé !")
-
-            elif not canceled:
-              class_time_message = f"Le cours {det}{extra_space}{name} se fera en salle {room_name} et commencera à {class_start_time}. {chosen_emoji}"
-              logger.debug(class_time_message)
-              await send_class_info_notification_via_ntfy(class_time_message)
 
     async def send_class_info_notification_via_ntfy(message):
       topic = topic_name
@@ -388,16 +389,6 @@ async def pronote_main_checks_loop():
             client.refresh()
 
     async def send_food_menu_notification_via_ntfy(message, dinner_time):
-          menus = client.menus(date_from=today)
-          break
-        except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError) as e:
-          if attempt < max_retries - 1:
-            logger.warning(f"Connection timeout during menu check (attempt {attempt + 1}/{max_retries}). Retrying in {retry_delay} seconds...")
-            await asyncio.sleep(retry_delay * (2 ** attempt))
-          else:
-            logger.error(f"Failed to check menu after {max_retries} attempts")
-            sentry_sdk.capture_exception(e)
-            menus = []  # List is empty for fallback
       food_tags_emojis = ["plate_with_cutlery", "fork_and_knife", "clock7" if dinner_time else "clock3"]
       food_tags_random_emojis = random.choice(food_tags_emojis)
 
@@ -558,36 +549,6 @@ async def pronote_main_checks_loop():
             reminder_notification_title = "Reposez vous bien !" 
             
           elif not_finished_homeworks_count > 1: # Multiple homeworks left (plural)
-              class_checker = client.lessons(date_from=tomorrow_date)
-              break
-            except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError) as e:
-              if attempt < max_retries - 1:
-                logger.warning(f"Connection timeout during lesson check (attempt {attempt + 1}/{max_retries}). Retrying in {retry_delay} seconds...")
-                await asyncio.sleep(retry_delay * (2 ** attempt))
-              else:
-                logger.error(f"Failed to check lessons after {max_retries} attempts")
-                sentry_sdk.capture_exception(e)
-                class_checker = []  # List is empty for fallback
-
-            except Exception as e:
-              logger.error(f"Unexpected error checking lessons: {e}")
-              sentry_sdk.capture_exception(e)
-              class_checker = []
-              class_checker = client.lessons(date_from=tomorrow_date)
-              break
-            except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError) as e:
-              if attempt < max_retries - 1:
-                logger.warning(f"Connection timeout during lesson check (attempt {attempt + 1}/{max_retries}). Retrying in {retry_delay} seconds...")
-                await asyncio.sleep(retry_delay * (2 ** attempt))
-              else:
-                logger.error(f"Failed to check lessons after {max_retries} attempts")
-                sentry_sdk.capture_exception(e)
-                class_checker = []  # List is empty for fallback
-
-            except Exception as e:
-              logger.error(f"Unexpected error checking lessons: {e}")
-              sentry_sdk.capture_exception(e)
-              class_checker = []
             reminder_notification_title = "Devoirs non faits !"
 
           elif not_finished_homeworks_count == 1: # One homework (singular)
