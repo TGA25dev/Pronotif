@@ -22,9 +22,9 @@ import json
 class DefaultTimeout(TimeoutSauce):
     def __init__(self, *args, **kwargs):
         if kwargs['connect'] is None:
-            kwargs['connect'] = 10  # 10 seconds connection timeout
+            kwargs['connect'] = 5  # 5 seconds connection timeout
         if kwargs['read'] is None:
-            kwargs['read'] = 10  # 10 seconds read timeout
+            kwargs['read'] = 5  # 5 seconds read timeout
         super(DefaultTimeout, self).__init__(*args, **kwargs)
 
 requests.adapters.TimeoutSauce = DefaultTimeout
@@ -99,6 +99,9 @@ printed_message = False
 class_check_print_flag = False
 menu_check_print_flag = False
 
+max_retries = 3
+retry_delay = 5
+
 # Adding custom colors and format to the logger
 logger.remove()  # Remove any existing handlers
 logger.add(sys.stdout, level="DEBUG")  # Log to console
@@ -137,7 +140,7 @@ async def check_session(client):
 
     try:
         session_expired = client.session_check()
-    except (ConnectionError, requests.exceptions.ConnectionError) as e:
+    except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError) as e:
         logger.warning(f"Connection error during session check: {e}")
         # Wait a bit before retrying
         await asyncio.sleep(5)
@@ -171,8 +174,6 @@ async def check_session(client):
                 sys.exit(1)
 
         else:
-            max_retries = 3
-            retry_delay = 10  # seconds
             
             for attempt in range(max_retries):
                 try:
@@ -232,6 +233,44 @@ async def pronote_main_checks_loop():
       today = datetime.date.today()
       #other_day = today + datetime.timedelta(days=3)
       lesson_checker = client.lessons(date_from=today)  # CHANGE TO FAKE OR REAL !!
+      
+      for attempt in range(max_retries):
+          try:
+            lesson_checker = client.lessons(date_from=today)  # CHANGE TO FAKE OR REAL !!
+            break
+          except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError) as e:
+            if attempt < max_retries - 1:
+              logger.warning(f"Connection timeout during lesson check (attempt {attempt + 1}/{max_retries}). Retrying in {retry_delay} seconds...")
+              await asyncio.sleep(retry_delay * (2 ** attempt))
+            else:
+              logger.error(f"Failed to check lessons after {max_retries} attempts")
+              sentry_sdk.capture_exception(e)
+              lesson_checker = []  # List is empty for fallback
+
+          except Exception as e:
+            logger.error(f"Unexpected error checking lessons: {e}")
+            sentry_sdk.capture_exception(e)
+            lesson_checker = []
+            break
+
+      for attempt in range(max_retries):
+          try:
+            lesson_checker = client.lessons(date_from=today)  # CHANGE TO FAKE OR REAL !!
+            break
+          except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError) as e:
+            if attempt < max_retries - 1:
+              logger.warning(f"Connection timeout during lesson check (attempt {attempt + 1}/{max_retries}). Retrying in {retry_delay} seconds...")
+              await asyncio.sleep(retry_delay * (2 ** attempt))
+            else:
+              logger.error(f"Failed to check lessons after {max_retries} attempts")
+              sentry_sdk.capture_exception(e)
+              lesson_checker = []  # List is empty for fallback
+
+          except Exception as e:
+            logger.error(f"Unexpected error checking lessons: {e}")
+            sentry_sdk.capture_exception(e)
+            lesson_checker = []
+            break
 
       if not lesson_checker:
         if not class_check_print_flag:
@@ -349,6 +388,16 @@ async def pronote_main_checks_loop():
             client.refresh()
 
     async def send_food_menu_notification_via_ntfy(message, dinner_time):
+          menus = client.menus(date_from=today)
+          break
+        except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError) as e:
+          if attempt < max_retries - 1:
+            logger.warning(f"Connection timeout during menu check (attempt {attempt + 1}/{max_retries}). Retrying in {retry_delay} seconds...")
+            await asyncio.sleep(retry_delay * (2 ** attempt))
+          else:
+            logger.error(f"Failed to check menu after {max_retries} attempts")
+            sentry_sdk.capture_exception(e)
+            menus = []  # List is empty for fallback
       food_tags_emojis = ["plate_with_cutlery", "fork_and_knife", "clock7" if dinner_time else "clock3"]
       food_tags_random_emojis = random.choice(food_tags_emojis)
 
@@ -366,12 +415,26 @@ async def pronote_main_checks_loop():
     async def menu_food_check():
       today = datetime.date.today()
       global menus
-      try:
-        menus = client.menus(date_from=today)
-      except Exception as e:
-        logger.error(f"Error fetching menus: {e}")
-        sentry_sdk.capture_exception(e)
-        return
+  
+      for attempt in range(max_retries):
+        try:
+          menus = client.menus(date_from=today)
+          break
+        except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError) as e:
+          if attempt < max_retries - 1:
+            logger.warning(f"Connection timeout during menu check (attempt {attempt + 1}/{max_retries}). Retrying in {retry_delay} seconds...")
+            await asyncio.sleep(retry_delay * (2 ** attempt))
+          else:
+            logger.error(f"Failed to check menu after {max_retries} attempts")
+            sentry_sdk.capture_exception(e)
+            menus = []  # List is empty for fallback
+
+        except Exception as e:
+          logger.error(f"Unexpected error checking menu: {e}")
+          sentry_sdk.capture_exception(e)
+          menus = []
+          break
+
       if menus:
         current_time = datetime.datetime.now(timezone).time()
         day_str = today.strftime('%A').lower()
@@ -495,6 +558,36 @@ async def pronote_main_checks_loop():
             reminder_notification_title = "Reposez vous bien !" 
             
           elif not_finished_homeworks_count > 1: # Multiple homeworks left (plural)
+              class_checker = client.lessons(date_from=tomorrow_date)
+              break
+            except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError) as e:
+              if attempt < max_retries - 1:
+                logger.warning(f"Connection timeout during lesson check (attempt {attempt + 1}/{max_retries}). Retrying in {retry_delay} seconds...")
+                await asyncio.sleep(retry_delay * (2 ** attempt))
+              else:
+                logger.error(f"Failed to check lessons after {max_retries} attempts")
+                sentry_sdk.capture_exception(e)
+                class_checker = []  # List is empty for fallback
+
+            except Exception as e:
+              logger.error(f"Unexpected error checking lessons: {e}")
+              sentry_sdk.capture_exception(e)
+              class_checker = []
+              class_checker = client.lessons(date_from=tomorrow_date)
+              break
+            except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError) as e:
+              if attempt < max_retries - 1:
+                logger.warning(f"Connection timeout during lesson check (attempt {attempt + 1}/{max_retries}). Retrying in {retry_delay} seconds...")
+                await asyncio.sleep(retry_delay * (2 ** attempt))
+              else:
+                logger.error(f"Failed to check lessons after {max_retries} attempts")
+                sentry_sdk.capture_exception(e)
+                class_checker = []  # List is empty for fallback
+
+            except Exception as e:
+              logger.error(f"Unexpected error checking lessons: {e}")
+              sentry_sdk.capture_exception(e)
+              class_checker = []
             reminder_notification_title = "Devoirs non faits !"
 
           elif not_finished_homeworks_count == 1: # One homework (singular)
@@ -522,8 +615,25 @@ async def pronote_main_checks_loop():
 
         # Convert tomorrow to date object for homework check
         tomorrow_date = (datetime.datetime.now(timezone) + datetime.timedelta(days=1)).date()
-        
-        class_checker = client.lessons(date_from=tomorrow_date)
+                
+        for attempt in range(max_retries):
+            try:
+              class_checker = client.lessons(date_from=tomorrow_date)
+              break
+            except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError) as e:
+              if attempt < max_retries - 1:
+                logger.warning(f"Connection timeout during lesson check (attempt {attempt + 1}/{max_retries}). Retrying in {retry_delay} seconds...")
+                await asyncio.sleep(retry_delay * (2 ** attempt))
+              else:
+                logger.error(f"Failed to check lessons after {max_retries} attempts")
+                sentry_sdk.capture_exception(e)
+                class_checker = []  # List is empty for fallback
+
+            except Exception as e:
+              logger.error(f"Unexpected error checking lessons: {e}")
+              sentry_sdk.capture_exception(e)
+              class_checker = []
+              break
 
         if class_checker:
             class_tomorrow = True
