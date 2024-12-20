@@ -231,8 +231,7 @@ async def pronote_main_checks_loop():
       global class_check_print_flag
 
       today = datetime.date.today()
-      #other_day = today + datetime.timedelta(days=3)
-      lesson_checker = client.lessons(date_from=today)  # CHANGE TO FAKE OR REAL !!
+      #other_day = today + datetime.timedelta(days=3)  # For testing purposes
       
       for attempt in range(max_retries):
           try:
@@ -295,7 +294,7 @@ async def pronote_main_checks_loop():
                 status = lesson_checks.status
                 num = lesson_checks.num
               
-                #logger.debug("Debug Data : " + subject + " " + room_name + " " + class_start_time + " " + str(canceled) + " " + status + " " + str(num))
+                #logger.debug("Debug Data : " + str(subject) + " " + str(room_name) + " " + str(class_start_time) + " " + str(canceled) + " " + str(status) + " " + str(num))
                 
                 # Load JSON data from files
                 with open('Data/emoji_cours_names.json', 'r', encoding='utf-8') as emojis_data, open('Data/subject_names_format.json', 'r', encoding='utf-8') as subjects_data:
@@ -331,19 +330,22 @@ async def pronote_main_checks_loop():
                   det = subject_details["det"]
                 else:
                   name = lower_cap_subject_name
-                  det = "de"  # default determinant if not found
+                  det = ":"  # default caracter if not found
 
-                # Find matching emoji
+                # Find matching emoji using the better subject name
                 found_emoji_list = ['📝']  # Default emoji if no match is found
+                normalized_name_key = normalize(name)
                 for short_name, emoji_list in normalized_emojis.items():
-                  if short_name in normalized_subject_key:
+                  # Use word boundary check or exact match
+                  if (short_name in normalized_name_key or normalized_name_key == short_name):
+                    #logger.debug(f"Debug Data : {name} {short_name} {emoji_list}")
                     found_emoji_list = emoji_list
                     break
 
                 # Randomly choose an emoji from the matched emoji list
                 chosen_emoji = random.choice(found_emoji_list)
 
-                if det == "de":
+                if det == "de" or det ==":":
                   extra_space = " "
                 else:
                   extra_space = ""
@@ -366,7 +368,10 @@ async def pronote_main_checks_loop():
                   await send_class_canceled_message_via_ntfy(f"Le cours {det}{extra_space}{name} initialement prévu à {class_start_time} est annulé !")
 
                 elif not canceled:
-                  class_time_message = f"Le cours {det}{extra_space}{name} se fera en salle {room_name} et commencera à {class_start_time}. {chosen_emoji}"
+                  if room_name is None:
+                    class_time_message = f"Le cours {det}{extra_space}{name} commencera à {class_start_time}. {chosen_emoji}"
+                  else:  
+                    class_time_message = f"Le cours {det}{extra_space}{name} se fera en salle {room_name} et commencera à {class_start_time}. {chosen_emoji}"
                   logger.debug(class_time_message)
                   await send_class_info_notification_via_ntfy(class_time_message)
 
