@@ -40,15 +40,15 @@
             </div>
 
             <div class="bento-box main-feature-box">
-                <h2>Recevez une notification avant chaque cours !</h2>
-                <p>Pronot'if vous envoie une notification avant chaque cours pour que vous ne soyez jamais en retard.</p>
-                <img src="images/notification.png" alt="Notification">
+                <h2>Notifications en direct</h2>
+                <p>Recevez une notification avant chaque cours pour ne plus jamais être en retard.</p>
+                <img src="../notificaion.png" alt="Notification">
             </div>
 
             <div class="bento-box secondary-feature-box">
-                <h2>Rappels de devoirs non faits !</h2>
-                <p>Recevez un rappel quotidien pour vos devoirs non faits</p>
-                <img src="images/homework.png" alt="Notification devoirs">
+                <h2>Rappels utiles</h2>
+                <p>Pronot'if vous rapelle de faire vos devoirs pour le lendemain.</p>
+                <img src="../homework.png" alt="Notification devoirs">
             </div>
 
             <div class="bento-box support-project-box">
@@ -63,5 +63,32 @@
                 <p>&copy; 2024 Pronot'if.<br>Le code de ce site est open-source.</p>
             </div>
         </div>
+
+        <script>
+            const carouselTexts = document.querySelectorAll('.carousel-text');
+            
+            function adjustFontSize() {
+            carouselTexts.forEach(text => {
+                const length = text.textContent.length;
+                if (window.innerWidth <= 768) {  // Only for mobile screens
+                    if (length > 30) {
+                        text.style.fontSize = '18px';
+                    } else if (length > 20) {
+                        text.style.fontSize = '21px';
+                    } else {
+                        text.style.fontSize = '26px';
+                    }
+                } else {
+                    text.style.fontSize = ''; // Reset font size for larger screens
+                }
+            });
+            }
+            
+            // Initial adjustment
+            adjustFontSize();
+            
+            // Adjust on window resize
+            window.addEventListener('resize', adjustFontSize);
+        </script>
     </body>
 </html>
