@@ -8,12 +8,12 @@
     "theme_color": "#2196F3",
     "icons": [
         {
-            "src": "logo.jpg",
+            "src": "images/PWA/Assets/logo.jpg",
             "sizes": "192x192",
             "type": "image/jpg"
         },
         {
-            "src": "logo.jpg",
+            "src": "images/PWA/Assets/logo.jpg",
             "sizes": "512x512",
             "type": "image/jpg"
         }

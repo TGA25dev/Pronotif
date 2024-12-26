@@ -1,9 +1,8 @@
 :root {
-    /* Light Mode Colors - Matched exactly with index-style.css */
     --primary: #45a8a8;
     --primary-light: #74d4d4;
     --primary-dark: #317878;
-    --accent: #5ebfbf; /* Lighter teal shade */
+    --accent: #5ebfbf;
     --background: #f0f9f9;
     --card-bg: #ffffff;
     --text: #2C3E50;
@@ -18,10 +17,10 @@
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --primary: #45a8a8;          /* Made solid instead of semi-transparent */
+        --primary: #45a8a8;
         --primary-light: #74d4d474;
         --primary-dark: #31787872;
-        --accent: #45a8a8; /* Changed from #2f578f to match primary */
+        --accent: #45a8a8;
         --background: #1a1a1a;
         --card-bg: #242424;
         --text: #e0e0e0;
@@ -56,9 +55,9 @@ body {
 .bento-container {
     width: 100%;
     margin: 0;
-    padding: 2rem; /* Add padding around container */
-    max-width: 100%; /* Ensure it takes the full width */
-    gap: 2rem; /* Increase gap between elements */
+    padding: 2rem;
+    max-width: 100%;
+    gap: 2rem;
 }
 
 .bento-box {
@@ -75,7 +74,7 @@ body {
 .main-title-box {
     grid-column: span 3;
     text-align: center;
-    margin-top: 20px; /* Add margin to the top */
+    margin-top: 20px;
 }
 
 .main-title-box h1 {
@@ -171,7 +170,7 @@ body {
     width: 100%;
     margin: 0;
     padding: 0;
-    margin-top: 20px; /* Added margin to separate from title */
+    margin-top: 20px;
 }
 
 .progress-bar {
@@ -289,7 +288,7 @@ body {
     border: 2px solid transparent;
     transition: all 0.3s ease;
     height: auto;
-    min-height: 400px; /* Increase minimum height */
+    min-height: 400px;
     display: flex;
     flex-direction: column;
 }
@@ -304,55 +303,118 @@ body {
 }
 
 .platform-buttons {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 30px;
-    margin: 40px auto;
-    width: 90%;
-    max-width: 800px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 500px;
+    margin: 2rem auto;
+    transition: all 0.5s ease;
+    position: relative;
+}
+
+.platform-buttons.collapsed {
+    transform: scale(0.9);
+    opacity: 0.7;
+    margin-bottom: 1rem;
+}
+
+.platform-buttons.collapsed .platform-btn {
+    transform: scale(0.85);
+    pointer-events: none;
+}
+
+.platform-buttons.collapsed .platform-btn.active {
+    transform: scale(0.85);
+    pointer-events: auto;
 }
 
 .platform-btn {
-    cursor: hand;
+    position: relative;
     background: var(--card-bg);
     border: 2px solid var(--border-highlight);
-    border-radius: 20px;
-    padding: 30px;
-    min-height: 180px;
+    border-radius: 16px;
+    padding: 1.5rem;
+    min-height: 100px;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 20px;
+    gap: 1.5rem;
     transition: all 0.3s ease;
+    cursor: pointer;
+    overflow: hidden;
 }
 
-.platform-btn svg {
-    width: 48px;
-    height: 48px;
-    fill: var(--text);
-    transition: all 0.3s ease;
+.platform-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        135deg,
+        rgba(69, 168, 168, 0.1) 0%,
+        rgba(69, 168, 168, 0) 100%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 .platform-btn:hover {
-    background: var(--accent);
-    border-color: var(--accent);
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px var(--shadow);
-}
-
-.platform-btn:hover svg {
-    fill: var(--text-light);
-}
-
-.platform-btn.active {
-    background: var(--primary);
     border-color: var(--primary);
-    color: var(--text-light);
+    box-shadow: 0 8px 20px var(--shadow);
+    opacity: 1;
 }
 
-.platform-btn.active svg {
-    fill: var(--text-light);
+.platform-btn:hover::before {
+    opacity: 1;
+}
+
+.platform-btn-icon {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    padding: 10px;
+    border-radius: 12px;
+    background: var(--primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.platform-btn-icon svg {
+    width: 100%;
+    height: 100%;
+    fill: var(--primary);
+}
+
+.platform-btn-content {
+    flex-grow: 1;
+    text-align: left;
+}
+
+.platform-btn-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.25rem;
+}
+
+.platform-btn-description {
+    font-size: 0.875rem;
+    color: var(--feature-text);
+}
+
+.platform-btn-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: var(--primary);
+    color: var(--text-light);
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-weight: 500;
 }
 
 .store-btn, .download-exe-btn {
@@ -378,21 +440,143 @@ body {
 }
 
 .store-btn:hover, .download-exe-btn:hover {
-    transform: translateY(-2px);
     box-shadow: 0 6px 20px var(--shadow);
     background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
+}
+.platform-btn {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.platform-btn.active {
+    background: var(--primary);
+    color: var(--text-light);
+}
+
+.platform-btn.active .platform-btn-title,
+.platform-btn.active .platform-btn-description {
+    color: var(--text-light);
+}
+
+.platform-btn.active .platform-btn-icon {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.platform-btn.active .platform-btn-icon svg {
+    fill: var(--text-light);
 }
 
 .install-steps {
     background: var(--card-bg);
-    border-radius: 20px;
-    padding: 30px;
-    margin: 20px auto;
-    width: 90%;
-    max-width: 800px;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-top: 2rem;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.5s ease;
+    border: 2px solid var(--border-highlight);
+}
+
+.install-steps.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.install-steps-content {
     display: flex;
-    flex-direction: column;
-    gap: 25px;
+    gap: 2rem;
+    align-items: flex-start;
+}
+
+.install-steps-list {
+    flex: 1;
+    position: relative;
+    padding-left: 3rem;
+}
+
+.install-steps-list::before {
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: 0;
+    height: 100%;
+    width: 2px;
+    background: var(--border-highlight);
+    border-radius: 1px;
+}
+
+.install-step {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.install-step::before {
+    content: '';
+    position: absolute;
+    left: -3rem;
+    top: 0.25rem;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--card-bg);
+    border: 2px solid var(--primary);
+    z-index: 1;
+}
+
+.install-step.active::before {
+    background: var(--primary);
+}
+
+.install-step-number {
+    font-size: 0.875rem;
+    color: var(--feature-text);
+    margin-bottom: 0.25rem;
+}
+
+.install-step-text {
+    font-size: 1rem;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+}
+
+.final-action {
+    flex: 0 0 300px;
+    background: var(--gradient-primary);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-light);
+}
+
+.final-action-title {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.final-action-btn {
+    width: 100%;
+    padding: 1rem;
+    border-radius: 12px;
+    border: none;
+    background: var(--text-light);
+    color: var(--primary);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.final-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.final-action-btn svg {
+    width: 20px;
+    height: 20px;
 }
 
 .download-action {
@@ -453,7 +637,7 @@ body {
     flex-direction: column;
     padding: 0;
     flex-grow: 1;
-    min-height: auto; /* Changer de 800px à auto */
+    min-height: auto;
     width: 100%;
     max-width: none;
 }
@@ -461,14 +645,14 @@ body {
 .pwa-instructions iframe,
 .pwa-instructions .bento-box {
     width: 100%;
-    height: auto; /* Changer de 800px à auto */
+    height: auto;
     border: none;
     border-radius: 12px;
     overflow: hidden;
 }
 
 .pwa-instructions .install-steps {
-    height: auto; /* Changer de 100% à auto */
+    height: auto;
     background: var(--card-bg);
     padding: 2rem;
     border-radius: 12px;
@@ -576,14 +760,14 @@ body {
 
 .main-title {
     font-size: 42px;
-    color: var(--text-light); /* Changed to use direct color instead of gradient */
+    color: var(--text-light);
     font-weight: bold;
     margin: 0;
     padding: 0;
 }
 
 .main-title-subtitle {
-    color: var(--text-light); /* Changed to use the same color as the title */
+    color: var(--text-light);
     font-size: 18px;
     opacity: 0.9;
     max-width: 600px;
@@ -599,15 +783,15 @@ body {
     overflow: hidden;
     background: 
         radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.15) 1px, transparent 0) 0 0/20px 20px,
-        linear-gradient(135deg, var(--primary), var(--primary-dark));
-    height: 200px; /* Increase height */
+        linear-gradient(135deg, var(--primary-light), var(--primary-dark));
+    height: 200px;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 15px; /* Added gap between title and subtitle */
-    padding-top: 40px; /* Adjusted padding */
-    margin-bottom: 1rem; /* Reduce bottom margin from 2rem to 1rem */
-    margin-top: 1rem; /* Add top margin */
+    gap: 15px;
+    padding-top: 40px;
+    margin-bottom: 1rem;
+    margin-top: 1rem;
     max-width: none;
     width: 100%;
 }
@@ -644,7 +828,7 @@ body {
 }
 
 .main-title-container .main-title-subtitle {
-    color: var(--text-light) !important;  /* Forcer la couleur blanche */
+    color: var(--text-light) !important;
     font-size: 18px;
     opacity: 0.9;
     max-width: 600px;
@@ -741,7 +925,7 @@ body {
 }
 
 .install-btn {
-    display: block; /* Ensure the button is displayed */
+    display: block;
     width: 100%;
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: var(--text-light);
@@ -819,33 +1003,265 @@ footer p {
 
 .pc-message {
     text-align: center;
-    padding: 3rem 1rem;
-    color: var(--text);
-    flex: 1;
+    padding: 2rem;
+    margin: 1rem auto;
+    max-width: 600px;
+    background: transparent;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    transition: none;
+    transform: none;
+}
+
+.pc-message:hover {
+    transform: none;
+    box-shadow: none;
 }
 
 .pc-message .device-icon {
-    font-size: 2.5em;
-    display: block;
+    font-size: 3rem;
     margin-bottom: 1rem;
+    display: block;
     animation: float 3s ease-in-out infinite;
 }
 
 .pc-message p {
+    font-size: 1.2rem;
+    color: var(--text);
     margin: 0.5rem 0;
-    font-size: 1.1rem;
-    color: var (--feature-text);
 }
 
 .pc-message .secondary-text {
-    color: var (--feature-text);
-    font-size: 0.9rem;
+    font-size: 1rem;
+    color: var(--feature-text);
+    margin-top: 0.5rem;
+}
+
+#installSteps {
+    opacity: 1 !important;
+    display: block !important;
+    visibility: visible !important;
+}
+
+#ios-steps, #android-steps {
+    padding: 1rem;
+    background: transparent;
+    margin: 1rem 0;
 }
 
 @keyframes float {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-10px); }
+}
+
+.pwa-instructions .bento-box {
+    box-shadow: none;
+    background: transparent;
+    transform: none;
+}
+
+.pwa-instructions .bento-box:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.pwa-instructions .install-steps {
+    box-shadow: none;
+    border: none;
+    background: transparent;
+}
+
+/* Responsive Design System */
+@media screen and (max-width: 768px) {
+    .bento-container {
+        padding: 1rem;
+    }
+
+    .main-title-container {
+        height: 160px;
+        padding: 20px;
+    }
+
+    .main-title {
+        font-size: 32px;
+    }
+
+    .main-title-subtitle {
+        font-size: 16px;
+    }
+
+    .back-home-link {
+        bottom: 10px;
+        right: 10px;
+        font-size: 14px;
+        padding: 6px 12px;
+    }
+
+    .step-content {
+        padding: 20px;
+        margin-left: 30px;
+        width: calc(100% - 30px);
+        min-height: auto;
+    }
+
+    .step-number {
+        left: -35px;
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+    }
+
+    .steps-container {
+        padding-left: 50px;
+    }
+
+    .platform-buttons {
+        gap: 1rem;
+        max-width: 100%;
+        margin: 1rem auto;
+    }
+
+    .platform-btn {
+        padding: 1rem;
+        min-height: 80px;
+        gap: 1rem;
+    }
+
+    .platform-btn-icon {
+        width: 36px;
+        height: 36px;
+        padding: 8px;
+    }
+
+    .platform-btn-title {
+        font-size: 1rem;
+    }
+
+    .platform-btn-description {
+        font-size: 0.8rem;
+    }
+
+    .platform-btn-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+        top: 0.5rem;
+        right: 0.5rem;
+    }
+
+    .install-steps {
+        padding: 1rem;
+    }
+
+    .install-steps-content {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .install-steps-list {
+        padding-left: 2rem;
+    }
+
+    .final-action {
+        flex: none;
+        width: 100%;
+        padding: 1.5rem;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .main-title {
+        font-size: 28px;
+    }
+
+    .main-title-subtitle {
+        font-size: 14px;
+    }
+
+    .step-header h2 {
+        font-size: 24px;
+    }
+
+    .step-header p {
+        font-size: 14px;
+    }
+
+    .platform-btn {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.5rem 1rem;
+    }
+
+    .platform-btn-content {
+        text-align: center;
+    }
+
+    .platform-btn-badge {
+        position: relative;
+        top: 0;
+        right: 0;
+        margin-top: 0.5rem;
+        display: inline-block;
+    }
+
+    .install-step-text {
+        font-size: 0.9rem;
+    }
+
+    .steps-container {
+        padding-left: 45px;
+    }
+
+    .step-number {
+        left: -30px;
+    }
+}
+
+/* Animation Optimizations */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) {
+    .platform-btn:hover {
+        transform: none;
+    }
+
+    .install-btn:hover {
+        transform: none;
+    }
+
+    .back-home-link:active {
+        background: rgba(255, 255, 255, 0.2);
+    }
+}
+
+/* Dark Mode Contrast Improvements */
+@media (prefers-color-scheme: dark) {
+    .platform-btn {
+        border-color: rgba(69, 168, 168, 0.4);
+    }
+
+    .install-steps {
+        border-color: rgba(69, 168, 168, 0.4);
+    }
+
+    .platform-btn-description {
+        color: rgba(255, 255, 255, 0.7);
+    }
+}
+
+/* High Contrast Mode */
+@media (forced-colors: active) {
+    .platform-btn {
+        border: 2px solid CanvasText;
+    }
+
+    .install-btn {
+        border: 2px solid ButtonText;
+    }
 }

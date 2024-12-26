@@ -1,12 +1,12 @@
 const CACHE_NAME = 'pronotif-v1';
 const ASSETS_TO_CACHE = [
-  '/Website/',
-  '/Website/download_page.html',
-  '/Website/scripts/download.js',
-  '/Website/styles/download-style.css',
-  '/Website/images/share_icon.png',
-  '/Website/images/share_icon_darkm.png',
-  '/Website/manifest.json'
+  '../',
+  '../download_page.html',
+  '../scripts/download.js',
+  '../styles/download-style.css',
+  '../images/Website/Icons/Dark/share_icon_darkm.png',
+  '../images/Website/Icons/Light/share_icon.png',
+  '../manifest.json'
 ];
 
 // Install event
@@ -14,7 +14,18 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        return cache.addAll(ASSETS_TO_CACHE);
+        console.log('Attempting to cache assets...');
+        return cache.addAll(ASSETS_TO_CACHE)
+          .then(() => {
+            console.log('Assets successfully cached !');
+          })
+          .catch(error => {
+            console.error('Cache addAll error:', error);
+            return Promise.reject(error);
+          });
+      })
+      .catch(error => {
+        console.error('Service Worker installation failed:', error);
       })
   );
 });
