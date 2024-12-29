@@ -35,7 +35,7 @@ const updateDeviceSpecificContent = () => {
 
     // Reset display
     if (iosSteps) iosSteps.style.display = 'none';
-    if (androidSteps) iosSteps.style.display = 'none';
+    if (androidSteps) androidSteps.style.display = 'none';
 
     if (isIos()) {
         if (iosSteps) {
@@ -51,8 +51,7 @@ const updateDeviceSpecificContent = () => {
                 installButton.style.display = 'block';
             }
         }
-    } else {
-        // Desktop view
+    } else if (isDesktop()) {
         installSteps.innerHTML = `
             <div class="pc-message">
                 <span class="device-icon">💻</span>
@@ -130,6 +129,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     updateDeviceSpecificContent();
+
+    if (window.innerWidth <= 768) {
+        const steps = document.querySelectorAll('.step');
+        
+        steps.forEach(step => {
+            step.addEventListener('click', () => {
+                const nextStep = step.nextElementSibling;
+                if (nextStep && nextStep.classList.contains('step')) {
+                    nextStep.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    }
 });
 
 console.log('[PWA] Starting PWA events');

@@ -946,59 +946,17 @@ body {
     box-shadow: 0 6px 20px var(--shadow);
 }
 
-.main-title.pc-mode {
+.main-title.h1 {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: var(--text-light);
 }
 
-.main-title.pc-mode p {
+.main-title p {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
     color: var(--text-light);
-}
-
-.device-icon {
-    font-size: 1.2em;
-    animation: bounce 2s infinite;
-}
-
-@keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-3px); }
-}
-
-.features a {
-    color: var(--primary);
-    text-decoration: none;
-}
-
-.features ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.features li {
-    margin-bottom: 0.5rem;
-    color: var(--feature_text);
-}
-
-footer {
-    background: var(--card-bg);
-    padding: 1rem;
-    text-align: center;
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    box-shadow: 0 -4px 15px var(--shadow);
-}
-
-footer p {
-    margin: 0;
-    color: var(--feature_text);
-    font-size: 0.9rem;
 }
 
 .pc-message {
@@ -1022,10 +980,8 @@ footer p {
 .pc-message .device-icon {
     font-size: 3rem;
     margin-bottom: 1rem;
-    display: block;
-    animation: float 3s ease-in-out infinite;
+    display: inline-block;
 }
-
 .pc-message p {
     font-size: 1.2rem;
     color: var(--text);
@@ -1048,11 +1004,6 @@ footer p {
     padding: 1rem;
     background: transparent;
     margin: 1rem 0;
-}
-
-@keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
 }
 
 .pwa-instructions .bento-box {
@@ -1178,103 +1129,78 @@ footer p {
 
     .step {
         position: relative;
-        margin-bottom: 30px;
-        padding-top: 40px; /* Espace pour le numÃ©ro d'Ã©tape */
-    }
-
-    .step-number {
-        position: absolute;
-        left: 50%; /* Centre le numÃ©ro */
-        top: 0;
-        transform: translateX(-50%);
-        width: 36px;
-        height: 36px;
-        font-size: 18px;
-        background: var(--primary);
-        color: white;
-        border: none;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        margin: 0 0 15px 0; /* Single smaller margin */
+        padding: 0;
+        width: 100%;
     }
 
     .step-content {
-        margin-left: 0;
+        margin: 0;
         width: 100%;
         padding: 20px;
         min-height: auto;
+        border-radius: 16px;
     }
 
-    .platform-buttons {
-        margin: 1rem 0;
+    .steps-container {
+        padding: 0;
+        margin: 0;
+        width: 100%;
     }
 
-    .platform-btn {
-        padding: 15px;
+    .step-number {
+        display: none;
     }
 
-    .step-header {
-        text-align: center;
-        margin-bottom: 20px;
+    .step-header::before {
+        content: "Étape 2";
+        display: block;
+        color: var(--primary);
+        font-weight: bold;
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
 
-    .step-header h2 {
-        font-size: 22px;
+    .step:nth-child(2) .step-header::before {
+        content: "Étape 1";
     }
 
-    .main-title-container {
-        height: auto;
-        min-height: 140px;
-        padding: 20px 15px;
+    .pwa-instructions {
+        width: 100%;
+        padding: 0;
     }
 
-    .back-home-link {
-        position: relative;
-        bottom: auto;
-        right: auto;
-        margin-top: 15px;
-        display: inline-block;
+    #ios-steps,
+    #android-steps,
+    .pc-message {
+        width: 100%;
+        padding: 0;
+        margin: 0;
     }
 
     .install-steps {
-        margin-top: 1rem;
-        padding: 15px;
+        width: 100%;
+        padding: 15px !important;
+        margin: 0 !important;
     }
 
-    /* AmÃ©lioration de la visibilitÃ© des Ã©tapes */
-    .step::after {
-        content: '';
-        position: absolute;
-        top: 36px; /* Hauteur du numÃ©ro d'Ã©tape */
-        left: 50%;
-        transform: translateX(-50%);
-        width: 2px;
-        height: 20px;
-        background: var(--primary-light);
+    .install-steps ol {
+        width: 100%;
+        padding-left: 25px;
     }
 
-    /* Ajustement des boutons de plateforme */
-    .platform-btn {
-        flex-direction: row;
-        align-items: center;
-        gap: 12px;
-        text-align: left;
-        padding: 12px;
+    .install-steps li {
+        width: 100%;
+        margin-bottom: 12px;
     }
 
-    .platform-btn-icon {
-        width: 36px;
-        height: 36px;
+    .pc-message p {
+        width: 100%;
+        margin: 10px 0;
     }
 
-    .platform-btn-content {
-        flex: 1;
-    }
-
-    .platform-btn-badge {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        font-size: 0.7rem;
-    }
 }
 
 @media screen and (max-width: 480px) {
@@ -1322,6 +1248,14 @@ footer p {
 
     .step-number {
         left: -30px;
+    }
+
+    .bento-container {
+        padding: 0.5rem;
+    }
+
+    .steps-container {
+        padding-left: 0;
     }
 }
 
@@ -1374,7 +1308,6 @@ footer p {
     }
 }
 
-/* Ajustements supplÃ©mentaires pour les trÃ¨s petits Ã©crans */
 @media screen and (max-width: 380px) {
     .bento-container {
         padding: 0.5rem;
