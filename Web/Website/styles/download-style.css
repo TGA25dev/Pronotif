@@ -1167,6 +1167,114 @@ footer p {
         width: 100%;
         padding: 1.5rem;
     }
+
+    .steps-container {
+        padding-left: 0; /* EnlÃ¨ve le padding pour la progress bar */
+    }
+
+    .progress-line {
+        display: none; /* Cache la progress bar verticale */
+    }
+
+    .step {
+        position: relative;
+        margin-bottom: 30px;
+        padding-top: 40px; /* Espace pour le numÃ©ro d'Ã©tape */
+    }
+
+    .step-number {
+        position: absolute;
+        left: 50%; /* Centre le numÃ©ro */
+        top: 0;
+        transform: translateX(-50%);
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+        background: var(--primary);
+        color: white;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .step-content {
+        margin-left: 0;
+        width: 100%;
+        padding: 20px;
+        min-height: auto;
+    }
+
+    .platform-buttons {
+        margin: 1rem 0;
+    }
+
+    .platform-btn {
+        padding: 15px;
+    }
+
+    .step-header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .step-header h2 {
+        font-size: 22px;
+    }
+
+    .main-title-container {
+        height: auto;
+        min-height: 140px;
+        padding: 20px 15px;
+    }
+
+    .back-home-link {
+        position: relative;
+        bottom: auto;
+        right: auto;
+        margin-top: 15px;
+        display: inline-block;
+    }
+
+    .install-steps {
+        margin-top: 1rem;
+        padding: 15px;
+    }
+
+    /* AmÃ©lioration de la visibilitÃ© des Ã©tapes */
+    .step::after {
+        content: '';
+        position: absolute;
+        top: 36px; /* Hauteur du numÃ©ro d'Ã©tape */
+        left: 50%;
+        transform: translateX(-50%);
+        width: 2px;
+        height: 20px;
+        background: var(--primary-light);
+    }
+
+    /* Ajustement des boutons de plateforme */
+    .platform-btn {
+        flex-direction: row;
+        align-items: center;
+        gap: 12px;
+        text-align: left;
+        padding: 12px;
+    }
+
+    .platform-btn-icon {
+        width: 36px;
+        height: 36px;
+    }
+
+    .platform-btn-content {
+        flex: 1;
+    }
+
+    .platform-btn-badge {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        font-size: 0.7rem;
+    }
 }
 
 @media screen and (max-width: 480px) {
@@ -1263,5 +1371,32 @@ footer p {
 
     .install-btn {
         border: 2px solid ButtonText;
+    }
+}
+
+/* Ajustements supplÃ©mentaires pour les trÃ¨s petits Ã©crans */
+@media screen and (max-width: 380px) {
+    .bento-container {
+        padding: 0.5rem;
+    }
+
+    .step-content {
+        padding: 15px;
+    }
+
+    .main-title {
+        font-size: 24px;
+    }
+
+    .main-title-subtitle {
+        font-size: 14px;
+    }
+
+    .platform-btn-title {
+        font-size: 0.9rem;
+    }
+
+    .platform-btn-description {
+        font-size: 0.75rem;
     }
 }

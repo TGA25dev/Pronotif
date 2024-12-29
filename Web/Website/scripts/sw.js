@@ -1,12 +1,12 @@
 const CACHE_NAME = 'pronotif-v1';
 const ASSETS_TO_CACHE = [
-  '../',
-  '../download_page.html',
-  '../scripts/download.js',
-  '../styles/download-style.css',
+  './',
+  './download_page.html',
+  './scripts/download.js',
+  './styles/download-style.css',
   '../images/Website/Icons/Dark/share_icon_darkm.png',
   '../images/Website/Icons/Light/share_icon.png',
-  '../manifest.json'
+  './manifest.json'
 ];
 
 // Install event

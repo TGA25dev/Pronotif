@@ -1,0 +1,26 @@
+{
+    "name": "Pronot'if",
+    "short_name": "Pronot'if",
+    "description": "Une notification avant chaque cours, quoi de plus simple ?",
+    "start_url": "../PWA/index.html",
+    "scope": "../PWA/",
+    "display": "standalone",
+    "orientation": "portrait",
+    "background_color": "#45a8a8",
+    "theme_color": "#45a8a8",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "../images/PWA/Assets/logo.jpg",
+            "sizes": "192x192",
+            "type": "image/jpg",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "../images/PWA/Assets/logo.jpg",
+            "sizes": "512x512",
+            "type": "image/jpg",
+            "purpose": "any maskable"
+        }
+    ]
+}

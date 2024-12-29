@@ -13,8 +13,65 @@ const isDesktop = () => {
 // Variables globales
 let deferredPrompt = null;
 
+const updateDeviceSpecificContent = () => {
+    const iosSteps = document.getElementById('ios-steps');
+    const androidSteps = document.getElementById('android-steps');
+    const installSteps = document.getElementById('installSteps');
+    const installButton = document.getElementById('installButton');
+
+    if (!installSteps) return;
+
+    console.log('Device detection:', {
+        isIos: isIos(),
+        isAndroid: isAndroid(),
+        isDesktop: isDesktop(),
+        deferredPrompt: !!deferredPrompt
+    });
+
+    // Always hide the install button first
+    if (installButton) {
+        installButton.style.display = 'none';
+    }
+
+    // Reset display
+    if (iosSteps) iosSteps.style.display = 'none';
+    if (androidSteps) iosSteps.style.display = 'none';
+
+    if (isIos()) {
+        if (iosSteps) {
+            iosSteps.style.display = 'block';
+            installSteps.style.display = 'block';
+        }
+    } else if (isAndroid()) {
+        if (androidSteps) {
+            androidSteps.style.display = 'block';
+            installSteps.style.display = 'block';
+            // Only show install button if we have the deferredPrompt
+            if (installButton && deferredPrompt) {
+                installButton.style.display = 'block';
+            }
+        }
+    } else {
+        // Desktop view
+        installSteps.innerHTML = `
+            <div class="pc-message">
+                <span class="device-icon">💻</span>
+                <p>L'application est conçue pour les appareils mobiles.</p>
+                <p class="secondary-text">Revenez sur cette page depuis votre téléphone !</p>
+            </div>
+        `;
+    }
+};
+
+window.addEventListener('beforeinstallprompt', (evt) => {
+    console.log('[PWA] BeforeInstallPrompt captured !');
+    evt.preventDefault();
+    deferredPrompt = evt;
+
+    updateDeviceSpecificContent();
+});
+
 document.addEventListener('DOMContentLoaded', () => {
-    // Sélection des éléments DOM
     const platformBtns = document.querySelectorAll('.platform-btn');
     const msStoreSteps = document.querySelector('.ms-store-steps');
     const directSteps = document.querySelector('.direct-steps');
@@ -25,60 +82,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const installButton = document.getElementById('installButton');
     const installSteps = document.getElementById('installSteps');
 
-    const updateDeviceSpecificContent = () => {
-        const iosSteps = document.getElementById('ios-steps');
-        const androidSteps = document.getElementById('android-steps');
-        const installSteps = document.getElementById('installSteps');
-        const installButton = document.getElementById('installButton');
-
-        if (!installSteps) return;
-
-        console.log('Device detection:', {
-            isIos: isIos(),
-            isAndroid: isAndroid(),
-            isDesktop: isDesktop(),
-            deferredPrompt: !!deferredPrompt
-        });
-
-        // Always hide the install button first
-        if (installButton) {
-            installButton.style.display = 'none';
-        }
-
-        // Reset display
-        if (iosSteps) iosSteps.style.display = 'none';
-        if (androidSteps) androidSteps.style.display = 'none';
-
-        if (isIos()) {
-            if (iosSteps) {
-                iosSteps.style.display = 'block';
-                installSteps.style.display = 'block';
-            }
-        } else if (isAndroid()) {
-            if (androidSteps) {
-                androidSteps.style.display = 'block';
-                installSteps.style.display = 'block';
-                // Only show install button if we have the deferredPrompt
-                if (installButton && deferredPrompt) {
-                    installButton.style.display = 'block';
-                }
-            }
-        } else {
-            // Desktop view
-            installSteps.innerHTML = `
-                <div class="pc-message">
-                    <span class="device-icon">💻</span>
-                    <p>L'application est conçue pour les appareils mobiles.</p>
-                    <p class="secondary-text">Revenez sur cette page depuis votre téléphone !</p>
-                </div>
-            `;
-        }
-    };
-
-    // Appeler immédiatement la fonction de détection
     updateDeviceSpecificContent();
 
-    // Initialisation des boutons de plateforme
+    // Platform buttons initialization
     if (platformBtns) {
         platformBtns.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -105,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (installButton) {
         installButton.addEventListener('click', async () => {
             if (!deferredPrompt) {
-                alert('Installation non disponible pour le moment. Assurez-vous que l\'application n\'est pas déjà installée.');
+                alert('Installation non disponible pour le moment. Assurez-vous que l\'application n\'est pas déja  installée.');
                 return;
             }
 
@@ -113,28 +119,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 deferredPrompt.prompt();
                 const choiceResult = await deferredPrompt.userChoice;
                 if (choiceResult.outcome === 'accepted') {
-                    console.log('[PWA] Installation acceptée');
+                    console.log('[PWA] Installation accepted !');
                 }
                 deferredPrompt = null;
             } catch (error) {
-                console.error('[PWA] Erreur d\'installation:', error);
+                console.error('[PWA] Installation error :', error);
                 alert('Une erreur est survenue lors de l\'installation.');
             }
         });
     }
 
-    // Initialisation
     updateDeviceSpecificContent();
 });
 
-// Événements globaux
-window.addEventListener('beforeinstallprompt', (evt) => {
-    evt.preventDefault();
-    deferredPrompt = evt;
-    console.log('[PWA] beforeinstallprompt event captured');
-    // Update the UI after capturing the prompt
-    updateDeviceSpecificContent();
-});
+console.log('[PWA] Starting PWA events');
 
 window.addEventListener('appinstalled', (evt) => {
     const androidSteps = document.getElementById('android-steps');
@@ -155,8 +153,15 @@ window.addEventListener('appinstalled', (evt) => {
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('scripts/sw.js')
-            .then(() => console.log('ServiceWorker enregistré'))
-            .catch(error => console.error('Erreur ServiceWorker:', error));
+            .then((registration) => {
+                console.log('Server worker succesfully saved : ', registration);
+                // Check if the service worker is active
+                if (registration.active) {
+                    console.log("ServiceWorker is active");
+                } else {
+                    console.log("ServiceWorker is not active");
+                }
+            })
+            .catch(error => console.error('ServiceWorker error:', error));
     });
 }
-
