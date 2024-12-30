@@ -409,7 +409,7 @@ body {
     position: absolute;
     top: 1rem;
     right: 1rem;
-    background: var(--primary);
+    background: rgba(255, 193, 7, 0.333);
     color: var(--text-light);
     font-size: 0.75rem;
     padding: 0.25rem 0.75rem;
