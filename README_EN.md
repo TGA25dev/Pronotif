@@ -1,3 +1,7 @@
+> [!IMPORTANT]
+>**Independent project** <br>
+>Pronot'if **is not affiliated** with Index Education or the **Pronote** application.   
+>It is an **independent** project, with no connection to the official Pronote services.
 
 > [!IMPORTANT]  
 > **Incomplete project!** <br>  
@@ -26,7 +30,6 @@ Notifies you on your phone 5 minutes before each class.
 - Notifies you 5 minutes before the start of every class with :
   - the classroom
   - the subject
-  - customizables emojis
   - and more !
 
 - Notifies you at lunchtime of day's menu
@@ -42,8 +45,7 @@ Notifies you on your phone 5 minutes before each class.
 - **Setup Assistant**
   - [x] Connection via Pronote 
   - [x] Connection via an ENT
-  - [ ] Connection with a QR code
-  - [ ] Emojis customization
+  - [x] Connection with a QR code
   - [x] Logging system
  
 - **Notification System** 
@@ -56,7 +58,7 @@ Notifies you on your phone 5 minutes before each class.
     - [x] Room name
     - [x] Clearer subject name
     - [x] Agreement between subject name and determiner
-    - [ ] Improvement of random emoji system
+    - [x] Improvement of random emoji system
     
 ## Screenshots <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Camera%20with%20Flash.png" alt="Camera with Flash" width="25" height="25" />
 

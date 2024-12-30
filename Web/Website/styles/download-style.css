@@ -1,0 +1,1335 @@
+:root {
+    --primary: #45a8a8;
+    --primary-light: #74d4d4;
+    --primary-dark: #317878;
+    --accent: #5ebfbf;
+    --background: #f0f9f9;
+    --card-bg: #ffffff;
+    --text: #2C3E50;
+    --feature-text: #707070;
+    --text-light: #ffffff;
+    --shadow: rgba(45, 168, 168, 0.1);
+    --button-primary: #45a8a8;
+    --button-hover: #317878;
+    --border-highlight: rgba(69, 168, 168, 0.2);
+    --gradient-primary: linear-gradient(135deg, var(--primary), var(--primary-dark));
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --primary: #45a8a8;
+        --primary-light: #74d4d474;
+        --primary-dark: #31787872;
+        --accent: #45a8a8;
+        --background: #1a1a1a;
+        --card-bg: #242424;
+        --text: #e0e0e0;
+        --feature-text: #A0A0A0;
+        --text-light: #ffffff;
+        --shadow: rgba(0, 0, 0, 0.2);
+        --button-primary: #45a8a8;
+        --button-hover: #317878;
+        --border-highlight: rgba(69, 168, 168, 0.3);
+        --gradient-primary: linear-gradient(135deg, #45a8a8 0%, #317878 100%);
+    }
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'FixelVariable', sans-serif;
+}
+
+body {
+    background: var(--background);
+    color: var(--text);
+    transition: background-color 0.3s, color 0.3s;
+    min-height: 100vh;
+    padding: 0;
+    margin: 0; 
+    width: 100vw;
+    overflow-x: hidden;
+}
+
+.bento-container {
+    width: 100%;
+    margin: 0;
+    padding: 2rem;
+    max-width: 100%;
+    gap: 2rem;
+}
+
+.bento-box {
+    background: var(--card-bg);
+    color: var(--text);
+    border-radius: 24px;
+    padding: 30px;
+    box-shadow: 0 4px 6px var(--shadow);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.main-title-box {
+    grid-column: span 3;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.main-title-box h1 {
+    font-size: 48px;
+    margin-bottom: 20px;
+    color: var(--text);
+}
+
+.main-title-box p {
+    font-size: 20px;
+    color: var(--feature-text);
+}
+
+.download-box {
+    grid-column: span 3;
+    text-align: center;
+    background: var(--gradient-primary);
+    color: white;
+}
+
+@media (min-width: 768px) {
+    .download-box {
+        grid-column: span 1;
+    }
+}
+
+.download-box h2 {
+    font-size: 24px;
+    margin-bottom: 15px;
+}
+
+.download-box p {
+    margin-bottom: 20px;
+}
+
+.download-btn {
+    background: white;
+    color: var(--primary-dark);
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.download-btn:hover {
+    transform: scale(1.05);
+}
+
+.learn-more-box, .main-feature-box, .secondary-feature-box {
+    grid-column: span 3;
+}
+
+@media (min-width: 768px) {
+    .learn-more-box, .main-feature-box, .secondary-feature-box {
+        grid-column: span 1;
+    }
+}
+
+.learn-more-btn, .support-project-btn {
+    background: #333;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.learn-more-btn:hover, .support-project-btn:hover {
+    background: #444;
+}
+
+.footer-box {
+    grid-column: span 3;
+    text-align: center;
+    color: var(--feature-text);
+}
+
+.footer-box a {
+    color: var(--primary-dark);
+    text-decoration: none;
+}
+
+.footer-box a:hover {
+    text-decoration: underline;
+}
+
+.progress-section {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    margin-top: 20px;
+}
+
+.progress-bar {
+    position: relative;
+    width: 100%;
+    margin: 0 auto;
+    padding-left: 60px;
+}
+
+.progress-line {
+    position: absolute;
+    left: 28px;
+    top: 40px;
+    height: calc(100% - 80px);
+    width: 4px;
+    background: var(--feature-text);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-line::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 0;
+    background: linear-gradient(180deg, 
+        var(--primary-light) 0%,
+        var(--primary) 100%
+    );
+    transition: height 1s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 10px var(--primary);
+}
+
+.progress-active .progress-line::before {
+    height: 100%;
+}
+
+.step-1.active ~ .progress-line::before {
+    height: 0;
+    opacity: 1;
+}
+
+.step-2.active ~ .progress-line::before {
+    height: 100%;
+    opacity: 1;
+}
+
+.step {
+    position: relative;
+    margin-bottom: 60px;
+    opacity: 0.5;
+    transition: opacity 0.5s ease;
+    width: 100%;
+}
+
+.step.active {
+    opacity: 1;
+}
+
+.step-number {
+    position: absolute;
+    left: -50px; 
+    top: 20px;
+    width: 40px;
+    height: 40px;
+    background: var(--card-bg);
+    border: 3px solid var(--feature-text);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--text);
+    z-index: 2;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 0 4px var(--background);
+}
+
+.step-number::after {
+    content: '';
+    position: absolute;
+    width: 52px;
+    height: 52px;
+    background: rgba(69, 168, 168, 0.1);
+    border-radius: 50%;
+    z-index: -1;
+    transition: transform 0.3s ease;
+}
+
+.step.active .step-number::after {
+    transform: scale(1.2);
+    background: rgba(69, 168, 168, 0.2);
+}
+
+.step.active .step-number {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    box-shadow: 0 0 0 4px var(--background),
+                0 4px 8px rgba(76, 175, 80, 0.3);
+    transform: scale(1.1);
+}
+
+.step-content {
+    background: var(--card-bg);
+    border-radius: 24px;
+    padding: 40px;
+    box-shadow: 0 4px 6px var(--shadow);
+    margin-left: 40px;
+    width: calc(100% - 40px);
+    max-width: none;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    height: auto;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+}
+
+.step.active .step-content {
+    border-color: var(--border-highlight);
+}
+
+.step-content h2 {
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+.platform-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 500px;
+    margin: 2rem auto;
+    transition: all 0.5s ease;
+    position: relative;
+}
+
+.platform-buttons.collapsed {
+    transform: scale(0.9);
+    opacity: 0.7;
+    margin-bottom: 1rem;
+}
+
+.platform-buttons.collapsed .platform-btn {
+    transform: scale(0.85);
+    pointer-events: none;
+}
+
+.platform-buttons.collapsed .platform-btn.active {
+    transform: scale(0.85);
+    pointer-events: auto;
+}
+
+.platform-btn {
+    position: relative;
+    background: var(--card-bg);
+    border: 2px solid var(--border-highlight);
+    border-radius: 16px;
+    padding: 1.5rem;
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.platform-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        135deg,
+        rgba(69, 168, 168, 0.1) 0%,
+        rgba(69, 168, 168, 0) 100%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.platform-btn:hover {
+    border-color: var(--primary);
+    box-shadow: 0 8px 20px var(--shadow);
+    opacity: 1;
+}
+
+.platform-btn:hover::before {
+    opacity: 1;
+}
+
+.platform-btn-icon {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    padding: 10px;
+    border-radius: 12px;
+    background: var(--primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.platform-btn-icon svg {
+    width: 100%;
+    height: 100%;
+    fill: var(--primary);
+}
+
+.platform-btn-content {
+    flex-grow: 1;
+    text-align: left;
+}
+
+.platform-btn-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.25rem;
+}
+
+.platform-btn-description {
+    font-size: 0.875rem;
+    color: var(--feature-text);
+}
+
+.platform-btn-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: var(--primary);
+    color: var(--text-light);
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.store-btn, .download-exe-btn {
+    background: var(--gradient-primary);
+    color: var(--text-light);
+    border: none;
+    border-radius: 16px;
+    padding: 15px 40px;
+    font-size: 18px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px var(--shadow);
+}
+
+.store-btn svg, .download-exe-btn svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
+
+.store-btn:hover, .download-exe-btn:hover {
+    box-shadow: 0 6px 20px var(--shadow);
+    background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
+}
+.platform-btn {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.platform-btn.active {
+    background: var(--primary);
+    color: var(--text-light);
+}
+
+.platform-btn.active .platform-btn-title,
+.platform-btn.active .platform-btn-description {
+    color: var(--text-light);
+}
+
+.platform-btn.active .platform-btn-icon {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.platform-btn.active .platform-btn-icon svg {
+    fill: var(--text-light);
+}
+
+.install-steps {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-top: 2rem;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.5s ease;
+    border: 2px solid var(--border-highlight);
+}
+
+.install-steps.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.install-steps-content {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+}
+
+.install-steps-list {
+    flex: 1;
+    position: relative;
+    padding-left: 3rem;
+}
+
+.install-steps-list::before {
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: 0;
+    height: 100%;
+    width: 2px;
+    background: var(--border-highlight);
+    border-radius: 1px;
+}
+
+.install-step {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.install-step::before {
+    content: '';
+    position: absolute;
+    left: -3rem;
+    top: 0.25rem;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--card-bg);
+    border: 2px solid var(--primary);
+    z-index: 1;
+}
+
+.install-step.active::before {
+    background: var(--primary);
+}
+
+.install-step-number {
+    font-size: 0.875rem;
+    color: var(--feature-text);
+    margin-bottom: 0.25rem;
+}
+
+.install-step-text {
+    font-size: 1rem;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+}
+
+.final-action {
+    flex: 0 0 300px;
+    background: var(--gradient-primary);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-light);
+}
+
+.final-action-title {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.final-action-btn {
+    width: 100%;
+    padding: 1rem;
+    border-radius: 12px;
+    border: none;
+    background: var(--text-light);
+    color: var(--primary);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.final-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.final-action-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.download-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.install-steps h2 {
+    font-size: 1.5rem;
+    margin: 0 0 1.5rem;
+    color: var(--text);
+}
+
+.install-steps p {
+    font-size: 16px;
+    color: var(--feature-text);
+}
+
+.install-steps ol {
+    padding-left: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.install-steps li {
+    margin-bottom: 0.8rem;
+    color: var(--text);
+}
+
+.install-steps button {
+    margin-top: 20px;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 12px;
+    background: var(--button-primary);
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.install-steps button:hover {
+    transform: scale(1.05);
+}
+
+.hidden {
+    display: none;
+}
+
+.install-steps.hidden {
+    display: none !important;
+}
+
+.pwa-instructions {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    flex-grow: 1;
+    min-height: auto;
+    width: 100%;
+    max-width: none;
+}
+
+.pwa-instructions iframe,
+.pwa-instructions .bento-box {
+    width: 100%;
+    height: auto;
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.pwa-instructions .install-steps {
+    height: auto;
+    background: var(--card-bg);
+    padding: 2rem;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.pwa-instructions .install-steps h2 {
+    margin: 0 0 1.5rem;
+    font-size: 1.5rem;
+    color: var(--text);
+}
+
+.pwa-instructions .install-steps ol {
+    padding-left: 1.5rem;
+    margin: 0 0 1.5rem;
+}
+
+.pwa-instructions .install-steps li {
+    margin-bottom: 0.8rem;
+    color: var(--text);
+}
+
+.pwa-instructions .install-btn {
+    margin-top: auto;
+    width: 100%;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: var(--text-light);
+    border: none;
+    padding: 1rem;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.pwa-instructions .install-btn:hover {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+    transform: translateY(-2px);
+}
+
+.pwa-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 15px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 2px 4px var(--shadow);
+}
+
+.step-marker {
+    background: var(--primary);
+    color: white;
+    min-width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 16px;
+    margin-top: 2px;
+}
+
+.pwa-step p {
+    font-size: 18px;
+    line-height: 1.4;
+    color: var(--text);
+}
+
+.pwa-demo-img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    margin-top: 40px;
+    box-shadow: 0 4px 6px var(--shadow);
+    width: 100%;
+    max-width: 400px;
+    margin: 20px auto 0;
+    display: block;
+}
+
+.steps-container {
+    position: relative;
+    padding: 0 0 0 60px;
+    padding-top: 20px;
+}
+
+.step-header {
+    margin-bottom: 30px;
+}
+
+.step-header h2 {
+    font-size: 32px;
+    margin-bottom: 8px;
+}
+
+.step-header p {
+    color: var(--f);
+    font-size: 18px;
+}
+
+.main-title {
+    font-size: 42px;
+    color: var(--text-light);
+    font-weight: bold;
+    margin: 0;
+    padding: 0;
+}
+
+.main-title-subtitle {
+    color: var(--text-light);
+    font-size: 18px;
+    opacity: 0.9;
+    max-width: 600px;
+    margin: 0;
+}
+
+.main-title-container {
+    width: 100%;
+    border-radius: 24px;
+    padding: 40px;
+    box-shadow: 0 4px 15px var(--shadow);
+    position: relative;
+    overflow: hidden;
+    background: 
+        radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.15) 1px, transparent 0) 0 0/20px 20px,
+        linear-gradient(135deg, var(--primary-light), var(--primary-dark));
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 15px;
+    padding-top: 40px;
+    margin-bottom: 1rem;
+    margin-top: 1rem;
+    max-width: none;
+    width: 100%;
+}
+
+.main-title-container::before {
+    content: '';
+    position: absolute;
+    top: -10%;
+    right: 5%;
+    width: 150px;
+    height: 150px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+    animation: float 10s ease-in-out infinite;
+    z-index: 1;
+}
+
+.main-title-container::after {
+    content: '';
+    position: absolute;
+    bottom: -10%;
+    left: 10%;
+    width: 100px;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    animation: float 8s ease-in-out infinite reverse;
+    z-index: 1;
+}
+
+.main-title, .main-title-subtitle {
+    position: relative;
+    z-index: 2;
+}
+
+.main-title-container .main-title-subtitle {
+    color: var(--text-light) !important;
+    font-size: 18px;
+    opacity: 0.9;
+    max-width: 600px;
+    margin: 0;
+}
+
+@keyframes float {
+    0% { transform: rotate(0deg); }
+    50% { transform: rotate(5deg) translateY(-10px); }
+    100% { transform: rotate(0deg); }
+}
+
+.nav-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-bottom: 20px;
+}
+
+.nav-link {
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 500;
+    padding: 8px 20px;
+    border-radius: 8px;
+    background: var(--background);
+    transition: all 0.3s ease;
+    border: 2px solid var(--primary);
+}
+
+.back-home-link {
+    z-index: 2;
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    color: var(--text-light);
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: background 0.3s ease, transform 0.3s ease;
+    display: inline-block;
+}
+
+.back-home-link:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+#main-content {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    text-align: center;
+}
+
+.bento-box {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 15px var(--shadow);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.bento-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px var(--shadow);
+}
+
+.install-box {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 15px var(--shadow);
+    max-width: 600px;
+    width: 100%;
+    margin: 1rem;
+}
+
+.install-box h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.install-box p {
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+
+.install-btn {
+    display: block;
+    width: 100%;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: var(--text-light);
+    border: none;
+    padding: 1rem;
+    border-radius: 24px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px var(--shadow);
+    font-family: "FixelVariable", sans-serif;
+}
+
+.install-btn:hover {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px var(--shadow);
+}
+
+.main-title.h1 {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: var(--text-light);
+}
+
+.main-title p {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--text-light);
+}
+
+.pc-message {
+    text-align: center;
+    padding: 2rem;
+    margin: 1rem auto;
+    max-width: 600px;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: none;
+    transform: none;
+}
+
+.pc-message:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.pc-message .device-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    display: inline-block;
+}
+.pc-message p {
+    font-size: 1.2rem;
+    color: var(--text);
+    margin: 0.5rem 0;
+}
+
+.pc-message .secondary-text {
+    font-size: 1rem;
+    color: var(--feature-text);
+    margin-top: 0.5rem;
+}
+
+#installSteps {
+    opacity: 1 !important;
+    display: block !important;
+    visibility: visible !important;
+}
+
+#ios-steps, #android-steps {
+    padding: 1rem;
+    background: transparent;
+    margin: 1rem 0;
+}
+
+.pwa-instructions .bento-box {
+    box-shadow: none;
+    background: transparent;
+    transform: none;
+}
+
+.pwa-instructions .bento-box:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.pwa-instructions .install-steps {
+    box-shadow: none;
+    border: none;
+    background: transparent;
+}
+
+/* Responsive Design System */
+@media screen and (max-width: 768px) {
+    .bento-container {
+        padding: 1rem;
+    }
+
+    .main-title-container {
+        height: 160px;
+        padding: 20px;
+    }
+
+    .main-title {
+        font-size: 32px;
+    }
+
+    .main-title-subtitle {
+        font-size: 16px;
+    }
+
+    .back-home-link {
+        bottom: 10px;
+        right: 10px;
+        font-size: 14px;
+        padding: 6px 12px;
+    }
+
+    .step-content {
+        padding: 20px;
+        margin-left: 30px;
+        width: calc(100% - 30px);
+        min-height: auto;
+    }
+
+    .step-number {
+        left: -35px;
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+    }
+
+    .steps-container {
+        padding-left: 50px;
+    }
+
+    .platform-buttons {
+        gap: 1rem;
+        max-width: 100%;
+        margin: 1rem auto;
+    }
+
+    .platform-btn {
+        padding: 1rem;
+        min-height: 80px;
+        gap: 1rem;
+    }
+
+    .platform-btn-icon {
+        width: 36px;
+        height: 36px;
+        padding: 8px;
+    }
+
+    .platform-btn-title {
+        font-size: 1rem;
+    }
+
+    .platform-btn-description {
+        font-size: 0.8rem;
+    }
+
+    .platform-btn-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+        top: 0.5rem;
+        right: 0.5rem;
+    }
+
+    .install-steps {
+        padding: 1rem;
+    }
+
+    .install-steps-content {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .install-steps-list {
+        padding-left: 2rem;
+    }
+
+    .final-action {
+        flex: none;
+        width: 100%;
+        padding: 1.5rem;
+    }
+
+    .steps-container {
+        padding-left: 0; /* EnlÃ¨ve le padding pour la progress bar */
+    }
+
+    .progress-line {
+        display: none; /* Cache la progress bar verticale */
+    }
+
+    .step {
+        position: relative;
+        margin: 0 0 15px 0; /* Single smaller margin */
+        padding: 0;
+        width: 100%;
+    }
+
+    .step-content {
+        margin: 0;
+        width: 100%;
+        padding: 20px;
+        min-height: auto;
+        border-radius: 16px;
+    }
+
+    .steps-container {
+        padding: 0;
+        margin: 0;
+        width: 100%;
+    }
+
+    .step-number {
+        display: none;
+    }
+
+    .step-header::before {
+        content: "Étape 2";
+        display: block;
+        color: var(--primary);
+        font-weight: bold;
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .step:nth-child(2) .step-header::before {
+        content: "Étape 1";
+    }
+
+    .pwa-instructions {
+        width: 100%;
+        padding: 0;
+    }
+
+    #ios-steps,
+    #android-steps,
+    .pc-message {
+        width: 100%;
+        padding: 0;
+        margin: 0;
+    }
+
+    .install-steps {
+        width: 100%;
+        padding: 15px !important;
+        margin: 0 !important;
+    }
+
+    .install-steps ol {
+        width: 100%;
+        padding-left: 25px;
+    }
+
+    .install-steps li {
+        width: 100%;
+        margin-bottom: 12px;
+    }
+
+    .pc-message p {
+        width: 100%;
+        margin: 10px 0;
+    }
+
+}
+
+@media screen and (max-width: 480px) {
+    .main-title {
+        font-size: 28px;
+    }
+
+    .main-title-subtitle {
+        font-size: 14px;
+    }
+
+    .step-header h2 {
+        font-size: 24px;
+    }
+
+    .step-header p {
+        font-size: 14px;
+    }
+
+    .platform-btn {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.5rem 1rem;
+    }
+
+    .platform-btn-content {
+        text-align: center;
+    }
+
+    .platform-btn-badge {
+        position: relative;
+        top: 0;
+        right: 0;
+        margin-top: 0.5rem;
+        display: inline-block;
+    }
+
+    .install-step-text {
+        font-size: 0.9rem;
+    }
+
+    .steps-container {
+        padding-left: 45px;
+    }
+
+    .step-number {
+        left: -30px;
+    }
+
+    .bento-container {
+        padding: 0.5rem;
+    }
+
+    .steps-container {
+        padding-left: 0;
+    }
+}
+
+/* Animation Optimizations */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) {
+    .platform-btn:hover {
+        transform: none;
+    }
+
+    .install-btn:hover {
+        transform: none;
+    }
+
+    .back-home-link:active {
+        background: rgba(255, 255, 255, 0.2);
+    }
+}
+
+/* Dark Mode Contrast Improvements */
+@media (prefers-color-scheme: dark) {
+    .platform-btn {
+        border-color: rgba(69, 168, 168, 0.4);
+    }
+
+    .install-steps {
+        border-color: rgba(69, 168, 168, 0.4);
+    }
+
+    .platform-btn-description {
+        color: rgba(255, 255, 255, 0.7);
+    }
+}
+
+/* High Contrast Mode */
+@media (forced-colors: active) {
+    .platform-btn {
+        border: 2px solid CanvasText;
+    }
+
+    .install-btn {
+        border: 2px solid ButtonText;
+    }
+}
+
+@media screen and (max-width: 380px) {
+    .bento-container {
+        padding: 0.5rem;
+    }
+
+    .step-content {
+        padding: 15px;
+    }
+
+    .main-title {
+        font-size: 24px;
+    }
+
+    .main-title-subtitle {
+        font-size: 14px;
+    }
+
+    .platform-btn-title {
+        font-size: 0.9rem;
+    }
+
+    .platform-btn-description {
+        font-size: 0.75rem;
+    }
+}

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Pronot'if - On est en quelle salle ?</title>
+        <meta name="description" content="On est en quelle salle ?">
+        <link rel="stylesheet" href="styles/index-style.css">
+        <link rel="preconnect" href="https://fonts.macpaw.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.macpaw.com/css?family=FixelVariable&family=FixelVariable@italic">
+    </head>
+    <body>
+        <div class="bento-container">
+            <div class="bento-box main-title-box">
+                <div class="title-content">
+                    <div class="carousel-container">
+                        <h1 class="carousel-text">On est en quelle salle ?</h1>
+                        <h1 class="carousel-text">Le cours est annulé ?</h1>
+                        <h1 class="carousel-text">On mange quoi ce midi ?</h1>
+                        <h1 class="carousel-text">J'ai fini mes devoirs pour demain ?</h1>
+                        <h1 class="carousel-text">On a cours de Français là ?</h1>
+                    </div>
+                    <p>Toutes les réponses à ces questions avec Pronot'if !</p>
+                </div>
+                <p class="footer-text">En continuant vous acceptez les <b><a href="https://safety.pronotif.tech/docs/terms-of-service">conditions d'utilisation</a></b> et la <b><a href="https://safety.pronotif.tech/docs/politique-de-confidentialite">politique de confidentialité</a></b>.</p>
+            </div>
+
+            <div class="bento-box download-box">
+                <div>
+                    <h2>Installer Pronot'if</h2>
+                    <p>Une notification avant chaque cours, quoi de plus simple ?</p>
+                </div>
+                <button class="download-btn" onclick="window.location.href='download_page.html'">C'est parti !</button>
+            </div>
+
+            <div class="bento-box learn-more-box">
+                <h2>En savoir +</h2>
+                <p>Vous voulez plus d'infos sur le fonctionnement de Pronot'if, l'équipe, vos données ?</p>
+                <img src="../images/Website/Assets/iphone.png" alt="En savoir plus">
+                <button class="learn-more-btn primary-btn">Découvrir Pronot'if</button>
+            </div>
+
+            <div class="bento-box main-feature-box">
+                <h2>Notifications en direct</h2>
+                <p>Recevez une notification avant chaque cours pour ne plus jamais être en retard.</p>
+                <img src="../notificaion.png" alt="Notification">
+            </div>
+
+            <div class="bento-box secondary-feature-box">
+                <h2>Rappels utiles</h2>
+                <p>Pronot'if vous rapelle de faire vos devoirs pour le lendemain.</p>
+                <img src="../homework.png" alt="Notification devoirs">
+            </div>
+
+            <div class="bento-box support-project-box">
+                <div>
+                    <h2>Vous voulez aider ?</h2>
+                    <p>Participez à l'amélioration de Pronot'if en faisant un don ou en contribuant sur GitHub !</p>
+                </div>
+                <button class="support-project-btn">Soutenir le projet</button>
+            </div>
+
+            <div class="bento-box footer-box">
+                <p>&copy; 2024 Pronot'if.<br>Le code de ce site est open-source.</p>
+            </div>
+        </div>
+
+        <script>
+            const carouselTexts = document.querySelectorAll('.carousel-text');
+            
+            function adjustFontSize() {
+            carouselTexts.forEach(text => {
+                const length = text.textContent.length;
+                if (window.innerWidth <= 768) {  // Only for mobile screens
+                    if (length > 30) {
+                        text.style.fontSize = '18px';
+                    } else if (length > 20) {
+                        text.style.fontSize = '21px';
+                    } else {
+                        text.style.fontSize = '26px';
+                    }
+                } else {
+                    text.style.fontSize = ''; // Reset font size for larger screens
+                }
+            });
+            }
+            
+            // Initial adjustment
+            adjustFontSize();
+            
+            // Adjust on window resize
+            window.addEventListener('resize', adjustFontSize);
+        </script>
+    </body>
+</html>

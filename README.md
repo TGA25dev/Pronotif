@@ -1,7 +1,7 @@
 > [!IMPORTANT]
->**Projet incomplet !** <br>
->Pronot'if est encore **en cours de développement**.<br>
->**Pour le moment la connexion ENT est resérvée aux établissements situés en Île-de-France !**
+>**Projet indépendant** <br>
+>Pronot'if **n'est pas affilié** à Index Education ni à l'application **Pronote**.  
+>Il s'agit d'un projet **indépendant**, sans lien avec les services officiels de Pronote.
 
 
 # Pronot'if <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Books.png" alt="Books" width="25" height="25" />
@@ -28,7 +28,6 @@ Vous notifie sur votre téléphone 5 minutes avant chaque cours.
 * Envoi une notification sur votre téléphone 5 minute avant chaque cours avec :
   - la salle
   - la matière
-  - des emojis personalisables
   - et plus encore !
 
 
@@ -46,8 +45,7 @@ Vous notifie sur votre téléphone 5 minutes avant chaque cours.
 - **Assistant de configuration**
   - [x] Connexion via Pronote
   - [x] Connexion via un ENT
-  - [ ] Connexion avec un qr code
-  - [ ] Personalisation des emojis
+  - [x] Connexion avec un qr code
   - [x] Systeme de logs
  
 - **Systeme de notifications** 
@@ -60,7 +58,7 @@ Vous notifie sur votre téléphone 5 minutes avant chaque cours.
     - [x] Nom de la salle
     - [x] Nom de matière plus clair
     - [x] Accord entre le nom de la matière et le déterminant
-    - [ ] Amélioration du système d'emojis aléatoires
+    - [x] Amélioration du système d'emojis aléatoires
     
 ## Screenshots <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Camera%20with%20Flash.png" alt="Camera with Flash" width="25" height="25" />
 
