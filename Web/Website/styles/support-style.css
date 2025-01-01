@@ -1,0 +1,630 @@
+:root {
+    --primary: #45a8a8;
+    --primary-light: #74d4d4;
+    --primary-dark: #317878;
+    --accent: #4B91F1;
+    --background: #f0f9f9;
+    --card-bg: #ffffff;
+    --text: #2C3E50;
+    --feature_text: #707070;
+    --text-light: #ffffff;
+    --shadow: rgba(45, 168, 168, 0.1);
+    --button-primary: #45a8a8;
+    --button-hover: #317878;
+    --github-button: rgba(255, 193, 7, 0.8);
+    --github-button-hover: rgba(255, 193, 7, 0.9);
+    --github-button-text: #2C3E50;
+    --gradient-start: rgba(255, 193, 7, 0.1);
+    --gradient-end: rgba(255, 193, 7, 0.02);
+    --merch-button: rgba(75, 145, 241, 0.25);
+    --merch-button-hover: rgba(75, 145, 241, 0.35);
+    --merch-button-text: var(--accent);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        /* Dark Mode Colors */
+        --primary: #45a8a8;
+        --primary-light: #74d4d474;
+        --primary-dark: #31787872;
+        --accent: #2f578f;
+        --background: #1a1a1a;
+        --card-bg: #242424;
+        --text: #e0e0e0;
+        --feature_text: #A0A0A0;
+        --text-light: #ffffff;
+        --shadow: rgba(0, 0, 0, 0.2);
+        --button-primary: #45a8a8;
+        --button-hover: #317878;
+        --github-button: rgba(255, 193, 7, 0.25);
+        --github-button-hover: rgba(255, 193, 7, 0.35);
+        --github-button-text: rgba(255, 193, 7, 0.9);
+        --gradient-start: rgba(255, 193, 7, 0.05);
+        --gradient-end: rgba(255, 193, 7, 0.01);
+        --merch-button: rgba(75, 145, 241, 0.15);
+        --merch-button-hover: rgba(75, 145, 241, 0.25);
+        --merch-button-text: #4B91F1;
+    }
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: "FixelVariable", sans-serif;
+    background: var(--background);
+    color: var(--text);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.bento-container {
+    display: grid;
+    gap: 1rem;
+    max-width: 98vw;
+    margin: 1rem auto 2rem auto;
+    padding: 0.5rem;
+}
+
+.bento-box {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 1.2rem;
+    box-shadow: 0 4px 15px var(--shadow);
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.bento-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px var(--shadow);
+}
+
+.support-main {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+}
+
+.support-main h1 {
+    color: var(--text);
+    margin-bottom: 1.5rem;
+    font-size: 2rem;
+}
+
+.support-main p {
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.support-main ul {
+    list-style-type: none;
+    margin-bottom: 2rem;
+}
+
+.support-main ul li {
+    margin-bottom: 0.8rem;
+    padding-left: 1.5rem;
+    position: relative;
+}
+
+.support-main ul li::before {
+    content: "•";
+    color: var(--primary);
+    position: absolute;
+    left: 0;
+}
+
+.button-container {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.github-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    background: var(--github-button);
+    color: var(--github-button-text);
+    padding: 1rem 2rem;
+    border-radius: 30px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.github-btn:hover {
+    background: var(--github-button-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px var(--github-button-hover);
+}
+
+.support-container {
+    min-height: 100%;
+    height: auto;
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+    overflow-y: auto;
+}
+
+.support-content {
+    max-width: 800px;
+    width: 100%;
+    text-align: center;
+}
+
+h1 {
+    font-size: 4rem;
+    margin-bottom: 2rem;
+    background: linear-gradient(135deg, var(--text), var(--feature_text));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+}
+
+.lead-text {
+    font-size: 1.4rem;
+    line-height: 1.6;
+    color: var(--text);
+    max-width: 700px;
+    margin-bottom: 0.5rem;
+    font-weight: 400;
+}
+
+.lead-text strong {
+    color: var(--primary);
+    font-weight: 600;
+    opacity: 0.9;
+}
+
+.lead-text:last-child {
+    font-size: 1.2rem;
+    opacity: 0.85;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    color: var(--feature_text);
+    max-width: 550px;
+    text-align: left;
+    margin-left: 0;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+}
+
+.header-content {
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.feature-item {
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.feature-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0;
+}
+
+.feature-item p {
+    color: var(--feature_text);
+    font-size: 1rem;
+}
+
+.github-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    background: var(--github-button);
+    color: var(--github-button-text);
+    padding: 1rem 2rem;
+    border-radius: 30px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.github-btn:hover {
+    background: var(--github-button-hover);
+    transform: translateY(-2px);
+}
+
+.github-btn svg {
+    transition: transform 0.3s ease;
+}
+
+.github-btn:hover svg {
+    transform: rotate(360deg);
+}
+
+.split-layout {
+    display: grid;
+    grid-template-columns: minmax(500px, 650px) 350px;
+    gap: 5rem;
+    max-width: 1400px;
+    width: 100%;
+    margin: 0;
+    margin-left: 2rem;
+    align-items: start;
+    height: auto;
+    transform: translateX(0);
+}
+
+.content-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    padding: 0;
+}
+
+.header-content {
+    margin-top: 0;
+}
+
+.buttons-container {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: -1rem;
+    margin-bottom: 0.5rem;
+}
+
+.github-btn, .merch-btn {
+    padding: 1.5rem 3rem;
+    font-size: 1.2rem;
+}
+
+.content-right {
+    position: sticky;
+    top: 2rem;
+    height: auto;
+    max-height: 550px;
+    background: var(--card-bg);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px var(--shadow);
+    margin-right: 0;
+    margin-left: 0;
+    width: 350px;
+}
+
+.content-right iframe {
+    border: none;
+    width: 100%;
+    height: 500px;
+    position: sticky;
+    top: 0;
+    overflow: hidden;
+    padding: 4px;
+    background: #f0f9f9;
+}
+
+.back-button {
+    align-self: flex-start;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.95rem;
+    margin-bottom: -1rem;
+    margin-top: -0.5rem;
+    opacity: 0.95;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    background: var(--card-bg);
+    color: var(--text);
+    border-radius: 14px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 12px var(--shadow);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.back-button:hover {
+    transform: translateX(-5px);
+    background: var(--github-button);
+    color: var(--github-button-text);
+    border-color: transparent;
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.2);
+}
+
+.back-button svg {
+    transition: transform 0.3s ease;
+    width: 22px;
+    height: 22px;
+}
+
+.back-button:hover svg {
+    transform: translateX(-3px);
+}
+
+.support-sections {
+    margin: 2rem 0;
+    display: grid;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.support-section {
+    opacity: 0;
+    transform: translateY(30px);
+    animation: featureAppear 0.6s ease-out forwards;
+}
+
+.support-section:nth-child(1) {
+    animation-delay: 0.3s;
+}
+
+.support-section:nth-child(2) {
+    animation-delay: 0.5s;
+}
+
+.support-section h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: var(--text);
+    background: linear-gradient(135deg, var(--text), var(--feature_text));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.support-section p {
+    margin-bottom: 1rem;
+    color: var(--feature_text);
+}
+
+.support-section ul {
+    list-style: none;
+    margin-left: 1rem;
+}
+
+.support-section ul li {
+    margin-bottom: 0.5rem;
+    position: relative;
+    padding-left: 1.5rem;
+    color: var(--feature_text);
+}
+
+.support-section ul li::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: var(--support-button);
+}
+
+.merch-btn {
+    background: var(--merch-button);
+    color: var(--merch-button-text);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 1.5rem 3rem;
+    border-radius: 30px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    font-size: 1.2rem;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 4px 15px var(--shadow);
+}
+
+.merch-btn:hover {
+    background: var(--merch-button-hover);
+    border-color: rgba(75, 145, 241, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(75, 145, 241, 0.15);
+}
+
+@media screen and (max-width: 1024px) {
+    .split-layout {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        padding: 1rem;
+        margin: 1rem auto;
+        max-width: 800px;
+        min-height: auto;
+    }
+
+    .content-right {
+        position: relative;
+        height: 450px;
+        margin: 1rem auto;
+    }
+
+    .support-container {
+        height: auto;
+        padding: 1rem;
+    }
+}
+
+@media screen and (min-width: 1441px) {
+    .split-layout {
+        grid-template-columns: minmax(600px, 750px) 400px;
+        gap: 6rem;
+        padding-right: 3rem;
+    }
+
+    .content-right {
+        width: 400px;
+    }
+
+    h1 {
+        font-size: 4.5rem;
+    }
+
+    .lead-text {
+        font-size: 1.5rem;
+        max-width: 800px;
+    }
+}
+
+@media screen and (max-width: 1440px) {
+    .split-layout {
+        grid-template-columns: minmax(500px, 650px) 350px;
+        gap: 4rem;
+    }
+}
+
+@media screen and (max-width: 1024px) {
+    .split-layout {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+        padding: 1rem;
+        margin: 0 auto;
+        max-width: 800px;
+    }
+
+    .content-left {
+        padding: 0 1rem;
+    }
+
+    h1 {
+        font-size: 3.5rem;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .support-container {
+        padding: 1rem;
+        min-height: auto;
+    }
+
+    .split-layout {
+        padding: 0.5rem;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .content-right {
+        position: static;
+        max-height: none;
+        overflow: visible;
+    }
+    .content-right iframe {
+        height: 580px;
+        width: 100%;
+    }
+
+    .support-container {
+        padding: 1rem;
+        height: auto;
+        min-height: 100vh;
+    }
+
+    .split-layout {
+        padding: 0.5rem;
+    }
+
+    .content-left {
+        padding: 0;
+    }
+
+    h1 {
+        font-size: 2.8rem;
+    }
+
+    .lead-text {
+        font-size: 1.1rem;
+    }
+
+    .lead-text:last-child {
+        font-size: 1rem;
+    }
+
+    .buttons-container {
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .github-btn, .merch-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .content-right {
+        position: static;
+        max-height: none;
+        overflow: visible;
+    }
+    .content-right iframe {
+        height: 580px;
+    }
+
+    .support-container {
+        padding: 0.5rem;
+    }
+
+    h1 {
+        font-size: 2.3rem;
+    }
+
+    .lead-text {
+        font-size: 1rem;
+    }
+
+    .lead-text:last-child {
+        font-size: 0.95rem;
+    }
+
+    .back-button {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .github-btn, .merch-btn {
+        padding: 1.2rem 2rem;
+        font-size: 1.1rem;
+    }
+}
+
+@media screen and (max-width: 360px) {
+    html, body {
+        overflow-x: hidden;
+    }
+    .support-container {
+        padding: 0.5rem;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    .buttons-container {
+        margin-top: -0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .github-btn, .merch-btn {
+        padding: 1rem 1.5rem;
+        font-size: 1rem;
+    }
+    .split-layout {
+        margin-left: 0;
+    }
+}
