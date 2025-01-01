@@ -4,9 +4,6 @@
 >Il s'agit d'un projet **indépendant**, sans lien avec les services officiels de Pronote.
 
 
-![logo à finir](logo.png)
-
-
 # Pronot'if <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Books.png" alt="Books" width="25" height="25" />
 
 Vous notifie sur votre téléphone 5 minutes avant chaque cours.
