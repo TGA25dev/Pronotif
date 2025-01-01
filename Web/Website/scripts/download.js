@@ -55,8 +55,8 @@ const updateDeviceSpecificContent = () => {
         installSteps.innerHTML = `
             <div class="pc-message">
                 <span class="device-icon">💻</span>
-                <p>L'application est conçue pour les appareils mobiles.</p>
-                <p class="secondary-text">Revenez sur cette page depuis votre téléphone !</p>
+                <p data-i18n="device-info">L'application est conçue pour les appareils mobiles.</p>
+                <p data-i18n="device-info2" class="secondary-text">Revenez sur cette page depuis votre téléphone !</p>
             </div>
         `;
     }
@@ -153,9 +153,9 @@ window.addEventListener('appinstalled', (evt) => {
         installTitle.style.display = 'none';
         androidSteps.innerHTML = `
             <div class="success-message">
-                <h2>Installation réussie !</h2>
-                <p>Merci d'avoir installé l'application ! 🎉</p>
-                <p class="secondary-text">Vous pouvez maintenant fermer cette fenêtre.</p>
+                <h2 data-i18n="success-message">Installation réussie !</h2>
+                <p data-i18n="success-message2">Merci d'avoir installé l'application ! 🎉</p>
+                <p data-i18n="success-message3" class="secondary-text">Vous pouvez maintenant fermer cette fenêtre.</p>
             </div>
         `;
     }
@@ -175,5 +175,106 @@ if ('serviceWorker' in navigator) {
                 }
             })
             .catch(error => console.error('ServiceWorker error:', error));
+    });
+}
+
+// Language handeling
+
+const translations = {
+    'fr': {
+        'title': "Installer Pronot'if",
+        'subtitle': "Vous y êtes presque !",
+        'setup': "Pronot'if Setup",
+        'setup_desc': "Le logiciel sur PC pour vous inscrire sur Pronot'if.",
+        'store': "Microsoft Store",
+        'store_desc': "Installation simple et sécurisée via le Store",
+        'direct': "Téléchargement Direct",
+        'direct_desc': "Téléchargez directement le fichier d'installation",
+        'step2': "Pronot'if Mobile",
+        'step2_desc': "Une fois la configuration effectuée, installez l'application mobile.",
+        'toggle_btn': "Change Language",
+        'back_home': "← Retour à l'accueil",
+
+        // Ios
+        'ios_step1': "Appuyez sur l'icône de partage",
+        'ios_step2': "Sélectionnez \"Sur l'écran d'accueil\"",
+        'ios_step3': "Appuyez sur \"Ajouter\"",
+        'ios_step4': "C'est tout ! ✨",
+        'ios_final': "Ouvrez ensuite l'appli 'Pronot'if'.",
+
+        // Android
+        'android_step1': "Appuyez sur le bouton \"Installer maintenant\" ci-dessous",
+        'android_step2': "Dans la fenêtre qui s'affiche, appuyez sur \"Installer\"",
+        'android_step3': "C'est tout ! ✨",
+        'android_final': "Ouvrez ensuite l'appli 'Pronot'if'.",
+        'install_button': "Installer maintenant",
+
+        // Pc
+        'device-info': "L'application est conçue pour les appareils mobiles.",
+        'device-info2': "Revenez sur cette page depuis votre téléphone !",
+
+        // Success message
+        'success-message': "Installation réussie !",
+        'success-message2': "Merci d'avoir installé l'application ! 🎉",
+        'success-message3': "Vous pouvez maintenant fermer cette fenêtre."
+    },
+    'en': {
+        'title': "Install Pronot'if",
+        'subtitle': "You're almost there!",
+        'setup': "Pronot'if Setup",
+        'setup_desc': "The PC software to register for Pronot'if.",
+        'store': "Microsoft Store",
+        'store_desc': "Simple and secure installation via the Store",
+        'direct': "Direct Download",
+        'direct_desc': "Download the installation file directly",
+        'step2': "Pronot'if Mobile",
+        'step2_desc': "Once setup is complete, install the mobile app.",
+        'toggle_btn': "Change Language",
+        'back_home': "← Back to home",
+
+        // Ios
+        'ios_step1': "Tap the share icon",
+        'ios_step2': "Select \"Add to Home Screen\"",
+        'ios_step3': "Tap \"Add\"",
+        'ios_step4': "That's it! ✨",
+        'ios_final': "Then open the 'Pronot'if' app.",
+
+        // Android
+        'android_step1': "Tap the \"Install now\" button below",
+        'android_step2': "In the popup that appears, tap \"Install\"",
+        'android_step3': "That's it! ✨",
+        'android_final': "Then open the 'Pronot'if' app.",
+        'install_button': "Install now",
+
+        // Pc
+        'device-info': "The app is designed for mobile devices.",
+        'device-info2': "Return to this page from your phone!",
+
+        // Success message
+        'success-message': "Installation successful!",
+        'success-message2': "Thank you for installing the app! 🎉",
+        'success-message3': "You can now close this window."
+    }
+};
+
+let currentLang = localStorage.getItem('lang') || 'fr';
+
+document.addEventListener("DOMContentLoaded", () => {
+    updateLanguage();
+});
+
+function toggleLanguage() {
+    currentLang = currentLang === 'fr' ? 'en' : 'fr';
+    localStorage.setItem('lang', currentLang);
+    updateLanguage();
+}
+
+function updateLanguage() {
+    const lang = translations[currentLang];
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (lang[key]) {
+            el.innerText = lang[key];
+        }
     });
 }

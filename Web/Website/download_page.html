@@ -9,6 +9,20 @@
             .main-title { font-size: 2em; color: #333; }
             .main-title-subtitle { font-size: 1.2em; color: #666; }
             .step-header p { font-size: 1em; color: #333; }
+            .lang-btn {
+                position: fixed;
+                bottom: 20px;
+                left: 90%;
+                transform: translateX(-10%);
+                padding: 10px 20px;
+                font-size: 1em;
+                background-color: #45a8a8;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                z-index: 1000;
+            }
         </style>
 
         <link rel="preload" href="styles/download-style.css?v0.1" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -40,95 +54,93 @@
         <link rel="manifest" href="manifest.json">
     
     </head>
-        <body>
-            <div class="bento-container">
-                <div class="main-title-section">
-                    <div class="main-title-container">
-                        <h1 class="main-title">Installer Pronot'if</h1>
-                        <p class="main-title-subtitle">Vous y êtes presque !</p>
-                        <a href="index.html" class="back-home-link">← Retour à l'accueil</a>
-                    </div>
+    <body>
+        <button class="lang-btn" onclick="toggleLanguage()" data-i18n="toggle_btn">Change Language</button>
+        <div class="bento-container">
+            <div class="main-title-section">
+                <div class="main-title-container">
+                    <h1 class="main-title" data-i18n="title">Installer Pronot'if</h1>
+                    <p class="main-title-subtitle" data-i18n="subtitle">Vous y êtes presque !</p>
+                    <a href="index.html" class="back-home-link" data-i18n="back_home">← Retour à l'accueil</a>
                 </div>
-    
-                <div class="progress-section">
-                    <div class="steps-container">
-                        <div class="progress-line"></div>
-                        <div class="step step-1 active">
-                            <div class="step-number">1</div>
-                            <div class="step-content">
-                                <div class="step-header">
-                                    <h2>Pronot'if Setup</h2>
-                                    <p>Le logiciel sur PC pour vous inscrire sur Pronot'if.</p>
-                                </div>
-                                <div class="platform-buttons">
-                                    <button class="platform-btn ms-store-btn">
-                                        <div class="platform-btn-icon">
-                                            <svg viewBox="0 0 24 24"><path d="M3 5.99h8v8H3V5.99zm9 0h8v8h-8V5.99zm-9 9h8v8H3v-8zm9 0h8v8h-8v-8z"/></svg>
-                                        </div>
-                                        <div class="platform-btn-content">
-                                            <div class="platform-btn-title">Microsoft Store</div>
-                                            <div class="platform-btn-description">Installation simple et sécurisée via le Store</div>
-                                        </div>
-                                        <span class="platform-btn-badge">Recommandé</span>
-                                    </button>
-    
-                                    <button class="platform-btn direct-btn">
-                                        <div class="platform-btn-icon">
-                                            <svg viewBox="0 0 24 24"><path d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
-                                        </div>
-                                        <div class="platform-btn-content">
-                                            <div class="platform-btn-title">Téléchargement Direct</div>
-                                            <div class="platform-btn-description">Téléchargez directement le fichier d'installation</div>
-                                        </div>
-                                    </button>
-                                </div>
+            </div>
+
+            <div class="progress-section">
+                <div class="steps-container">
+                    <div class="progress-line"></div>
+                    <div class="step step-1 active">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <div class="step-header">
+                                <h2 class="setup-header" data-i18n="setup">Pronot'if Setup</h2>
+                                <p class="setup-desc" data-i18n="setup_desc">Le logiciel sur PC pour vous inscrire sur Pronot'if.</p>
+                            </div>
+                            <div class="platform-buttons">
+                                <button class="platform-btn ms-store-btn">
+                                    <div class="platform-btn-icon">
+                                        <svg viewBox="0 0 24 24"><path d="M3 5.99h8v8H3V5.99zm9 0h8v8h-8V5.99zm-9 9h8v8H3v-8zm9 0h8v8h-8v-8z"/></svg>
+                                    </div>
+                                    <div class="platform-btn-content">
+                                        <div class="platform-btn-title" data-i18n="store">Microsoft Store</div>
+                                        <div class="platform-btn-description" data-i18n="store_desc">Installation simple et sécurisée via le Store</div>
+                                    </div>
+                                    <span class="platform-btn-badge">(En développement)</span>
+                                </button>
+
+                                <button class="platform-btn direct-btn">
+                                    <div class="platform-btn-icon">
+                                        <svg viewBox="0 0 24 24"><path d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+                                    </div>
+                                    <div class="platform-btn-content">
+                                        <div class="platform-btn-title" data-i18n="direct">Téléchargement Direct</div>
+                                        <div class="platform-btn-description" data-i18n="direct_desc">Téléchargez directement le fichier d'installation</div>
+                                    </div>
+                                </button>
                             </div>
                         </div>
-                        
-                        <div class="step step-2">
-                            <div class="step-number">2</div>
-                            <div class="step-content">
-                                <div class="step-header">
-                                    <h2>Pronot'if Mobile</h2>
-                                    <p>Une fois la configuration effectuée, installez l'application mobile.</p>
-                                </div>
-                                <div class="pwa-instructions">
-                                    <div class="bento-box install-steps" id="installSteps">
-                                        <h2>Comment faire ?</h2>
-                                        
-                                        <!-- iOS Installation Steps -->
-                                        <div id="ios-steps" style="display: none;">
-                                            <ol>
-                                                <li>Appuyez sur l'icône de partage <picture>
-                                                    <source srcset="../images/Website/Icons/Dark/share_icon_darkm.png" media="(prefers-color-scheme: dark)">
-                                                    <img src="../images/Website/Icons/Light/share_icon.png" alt="Partager" style="width: 24px; height: 24px; vertical-align: middle;">
-                                                </picture></li>
-                                                <li>Sélectionnez "<strong>Sur l'écran d'accueil</strong>"</li>
-                                                <li>Appuyez sur "<strong>Ajouter</strong>"</li>
-                                                <li>C'est tout ! ✨</li>
-                                            </ol>
-                                            <p>Ouvrez ensuite l'appli '<strong>Pronot'if</strong>'.<p>
-                                        </div>
-                            
-                                        <!-- Android Installation Steps -->
-                                        <div id="android-steps" style="display: none;">
-                                            <ol>
-                                                <li>Appuyez sur le bouton "<strong>Installer maintenant</strong>" ci-dessous</li>
-                                                <li>Dans la fenêtre qui s'affiche, appuyez sur "<strong>Installer</strong>"</li>
-                                                <li>C'est tout ! ✨</li>
-                                            </ol>
-                                            <p>Ouvrez ensuite l'appli '<strong>Pronot'if</strong>'.<p></p>
-                                        </div>
-                            
-                                        <button class="install-btn" id="installButton">Installer maintenant</button>
-                                    </div>
-                                </div>
+                    </div>
+                    
+                    <div class="step step-2">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <div class="step-header">
+                                <h2 class="step2-header" data-i18n="step2">Pronot'if Mobile</h2>
+                                <p class="step2-desc" data-i18n="step2_desc">Une fois la configuration effectuée, installez l'application mobile.</p>
                             </div>
+                            <div class="pwa-instructions">
+                                <div class="bento-box install-steps" id="installSteps">
+                                    <h2>Comment faire ?</h2>
+                                    <!-- iOS Installation Steps -->
+                                    <div id="ios-steps" style="display: none;">
+                                        <ol>
+                                            <li data-i18n="ios_step1">Appuyez sur l'icône de partage <picture>
+                                                <source srcset="../images/Website/Icons/Dark/share_icon_darkm.png" media="(prefers-color-scheme: dark)">
+                                                <img src="../images/Website/Icons/Light/share_icon.png" alt="Partager" style="width: 24px; height: 24px; vertical-align: middle;">
+                                            </picture></li>
+                                            <li data-i18n="ios_step2">Sélectionnez "<strong>Sur l'écran d'accueil</strong>"</li>
+                                            <li data-i18n="ios_step3">Appuyez sur "<strong>Ajouter</strong>"</li>
+                                            <li data-i18n="ios_step4">C'est tout ! ✨</li>
+                                        </ol>
+                                        <p data-i18n="ios_final">Ouvrez ensuite l'appli '<strong>Pronot'if</strong>'.</p>
+                                    </div>
+
+                                    <!-- Android Installation Steps -->
+                                    <div id="android-steps" style="display: none;">
+                                        <ol>
+                                            <li data-i18n="android_step1">Appuyez sur le bouton "<strong>Installer maintenant</strong>" ci-dessous</li>
+                                            <li data-i18n="android_step2">Dans la fenêtre qui s'affiche, appuyez sur "<strong>Installer</strong>"</li>
+                                            <li data-i18n="android_step3">C'est tout ! ✨</li>
+                                        </ol>
+                                        <p data-i18n="android_final">Ouvrez ensuite l'appli '<strong>Pronot'if</strong>'.</p>
+                                    </div>
+
+                                    <button class="install-btn" id="installButton" data-i18n="install_button">Installer maintenant</button>
+                                </div>
                         </div>
                     </div>
                 </div>
             </div>
-    
-            <script src="scripts/download.js?v0.6"></script>
-        </body>
+        </div>
+        <script src="scripts/download.js?v0.6"></script>
+    </body>
 </html>

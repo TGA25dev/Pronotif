@@ -3,8 +3,10 @@
 >Pronot'if **is not affiliated** with Index Education or the **Pronote** application.   
 >It is an **independent** project, with no connection to the official Pronote services.
 
-![logo à finir](logo.png)
-
+> [!IMPORTANT]  
+> **Incomplete project!** <br>  
+> Pronot'if is still **under development**.<br>  
+> **At the moment, the ENT login is only available for institutions located in Île-de-France!**
 
 # Pronot'if <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Books.png" alt="Books" width="25" height="25" />
 

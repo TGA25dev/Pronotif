@@ -495,6 +495,20 @@ a {
     word-wrap: break-word;
 }
 
+.github-icon {
+    margin-left: auto;
+    transition: transform 0.3s ease, fill 0.3s ease;
+    fill: var(--text);
+}
+
+.github-icon:hover {
+    transform: scale(1.1);
+    fill: var(--accent);
+}
+
+.github-link {
+    margin-left: auto; 
+}
 @media screen and (max-width: 768px) {
     .bento-container {
         display: flex;
@@ -589,7 +603,12 @@ a {
     }
 
     .footer-box {
-        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
         padding: 1rem;
+        backdrop-filter: blur(10px);
+        background: var(--card-bg);
+        border-top: 2px solid var(--shadow);
     }
 }
