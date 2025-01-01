@@ -12,6 +12,7 @@
     --button-primary: #45a8a8;
     --button-hover: #317878;
     --border-highlight: rgba(69, 168, 168, 0.2);
+    --in-progress: #ffc107cc;
     --gradient-primary: linear-gradient(135deg, var(--primary), var(--primary-dark));
 }
 
@@ -27,9 +28,10 @@
         --feature-text: #A0A0A0;
         --text-light: #ffffff;
         --shadow: rgba(0, 0, 0, 0.2);
-        --button-primary: #45a8a8;
-        --button-hover: #317878;
+        --button-primary: #45a8a880;
+        --button-hover: #31787855;
         --border-highlight: rgba(69, 168, 168, 0.3);
+        --in-progress: #ffc10755;
         --gradient-primary: linear-gradient(135deg, #45a8a8 0%, #317878 100%);
     }
 }
@@ -409,7 +411,7 @@ body {
     position: absolute;
     top: 1rem;
     right: 1rem;
-    background: rgba(255, 193, 7, 0.333);
+    background: var(--in-progress);
     color: var(--text-light);
     font-size: 0.75rem;
     padding: 0.25rem 0.75rem;
@@ -443,6 +445,36 @@ body {
     box-shadow: 0 6px 20px var(--shadow);
     background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
 }
+
+.lang-btn {
+    position: fixed;
+    bottom: 15px;
+    right: 15px;
+    padding: 6px 12px;
+    font-size: 0.9em;
+    background: var(--button-primary);
+    color: var(--text-light);
+    border: 2px solid var(--button-primary);
+    border-radius: 12px;
+    cursor: pointer;
+    z-index: 1000;
+    transition: background 0.2s ease-in-out, transform 0.2s ease-in-out;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-weight: 500;
+}
+
+.lang-btn::before {
+    content: '🌐';
+    font-size: 1.1em;
+}
+
+.lang-btn:hover {
+    background: var(--button-hover);
+    transform: scale(1.05);
+}
+
 .platform-btn {
     cursor: pointer;
     transition: all 0.3s ease;
@@ -1065,6 +1097,13 @@ body {
 
     .steps-container {
         padding-left: 50px;
+    }
+
+    .lang-btn {
+        bottom: 15px;
+        right: 15px;
+        padding: 10px 20px;
+        font-size: 0.85em;
     }
 
     .platform-buttons {

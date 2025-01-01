@@ -181,6 +181,7 @@ if ('serviceWorker' in navigator) {
 // Language handeling
 
 const translations = {
+    // French
     'fr': {
         'title': "Installer Pronot'if",
         'subtitle': "Vous y êtes presque !",
@@ -192,7 +193,8 @@ const translations = {
         'direct_desc': "Téléchargez directement le fichier d'installation",
         'step2': "Pronot'if Mobile",
         'step2_desc': "Une fois la configuration effectuée, installez l'application mobile.",
-        'toggle_btn': "Change Language",
+        'platform_btn_badge': "Prochainement...",
+        'toggle_btn': "Change language",
         'back_home': "← Retour à l'accueil",
 
         // Ios
@@ -218,6 +220,8 @@ const translations = {
         'success-message2': "Merci d'avoir installé l'application ! 🎉",
         'success-message3': "Vous pouvez maintenant fermer cette fenêtre."
     },
+
+    // English
     'en': {
         'title': "Install Pronot'if",
         'subtitle': "You're almost there!",
@@ -229,7 +233,8 @@ const translations = {
         'direct_desc': "Download the installation file directly",
         'step2': "Pronot'if Mobile",
         'step2_desc': "Once setup is complete, install the mobile app.",
-        'toggle_btn': "Change Language",
+        'platform_btn_badge': "Coming soon...",
+        'toggle_btn': "Changer la langue",
         'back_home': "← Back to home",
 
         // Ios
