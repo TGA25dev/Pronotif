@@ -69,7 +69,7 @@ Vous notifie sur votre téléphone 5 minutes avant chaque cours.
 
 ## Licence <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Page%20with%20Curl.png" alt="Page with Curl" width="25" height="25" />
 
-Ce projet est sous licence [CC BY-NC-ND 4.0](./LICENSE) mais utilise des services tiers comme mentionné plus tôt.
+Ce projet est sous licence [GNU AGPLv3](./LICENSE) mais utilise des services tiers comme mentionné plus tôt.
 
 #### [@TGA25](https://www.github.com/tga25-dev) 
 

@@ -68,6 +68,6 @@ Notifies you on your phone 5 minutes before each class.
 
 ## License <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Page%20with%20Curl.png" alt="Page with Curl" width="25" height="25" />
 
-This project is under [CC BY-NC 4.0](./LICENSE) license but uses third-party services as mentioned earlier.
+This project is under [GNU AGPLv3](./LICENSE) license but uses third-party services as mentioned earlier.
 
 #### [@TGA25](https://www.github.com/tga25-dev) 
