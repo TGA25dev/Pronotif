@@ -1756,7 +1756,7 @@ def check_if_first_time():
 
 #Create name label
 global author_name_label
-author_name_label = ctk.CTkLabel(root, text="Pronot'if Team | ©2024", font=default_subtitle_font, bg_color="transparent")
+author_name_label = ctk.CTkLabel(root, text="Pronot'if Team | ©2025", font=default_subtitle_font, bg_color="transparent")
 author_name_label.place(relx=0.67, rely=0.89)
 author_name_label.bind("<Button-1>", on_label_click)
 
