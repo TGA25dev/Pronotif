@@ -35,7 +35,7 @@ const updateDeviceSpecificContent = () => {
 
     // Reset display
     if (iosSteps) iosSteps.style.display = 'none';
-    if (androidSteps) androidSteps.style.display = 'none';
+    if (androidSteps) iosSteps.style.display = 'none';
 
     if (isIos()) {
         if (iosSteps) {
@@ -86,14 +86,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Platform buttons initialization
     if (platformBtns) {
         platformBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault(); // Prevent default action
                 platformBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 
                 if (btn.classList.contains('ms-store-btn')) {
                     // window.open('ms-windows-store://pdp/?productid=9999999', '_blank');
                 } else if (btn.classList.contains('direct-btn')) {
-                    window.location.href = "https://github.com/TGA25dev/Pronotif/releases/latest/download/Pronotif.Setup.v0.5.1.zip";
+                    warningModal.style.display = 'block';
                 }
 
                 if (progressContainer && step2) {
@@ -142,6 +143,63 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
+
+    const directBtn = document.querySelector('.direct-btn');
+    const warningModal = document.getElementById('warningModal');
+    const closeBtn = document.querySelector('.close-btn');
+    const confirmDownload = document.getElementById('confirmDownload');
+
+    function showModal() {
+        const scrollY = window.scrollY;
+        warningModal.style.display = 'block';
+        document.body.classList.add('modal-open');
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollY}px`;
+        document.body.style.width = '100%';
+    }
+
+    function hideModal() {
+        const scrollY = document.body.style.top;
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+        document.body.classList.remove('modal-open');
+        warningModal.style.display = 'none';
+    }
+
+    if (directBtn) {
+        directBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            showModal();
+        });
+    }
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            hideModal();
+        });
+    }
+
+    if (confirmDownload) {
+        confirmDownload.addEventListener('click', () => {
+            window.location.href = "https://github.com/TGA25dev/Pronotif/releases/latest/download/Pronotif.Setup.v0.5.1.zip";
+            hideModal();
+        });
+    }
+
+    window.addEventListener('click', (event) => {
+        if (event.target === warningModal) {
+            hideModal();
+        }
+    });
+
+    // Prevent scrolling on modal background when touching
+    warningModal.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+    }, { passive: false });
 });
 
 console.log('[PWA] Starting PWA events');
@@ -218,7 +276,13 @@ const translations = {
         // Success message
         'success-message': "Installation réussie !",
         'success-message2': "Merci d'avoir installé l'application ! 🎉",
-        'success-message3': "Vous pouvez maintenant fermer cette fenêtre."
+        'success-message3': "Vous pouvez maintenant fermer cette fenêtre.",
+
+        // Warning message
+        'warning_title': "Attention",
+        'warning_message': "L'application peut être signalée comme suspecte par votre antivirus car elle n'est pas encore certifiée. C'est normal et vous pouvez l'installer en toute confiance.",
+        'warning_message2': "Le code source est disponible publiquement sur GitHub",
+        'confirm_btn': "D'accord, je comprends"
     },
 
     // English
@@ -258,7 +322,13 @@ const translations = {
         // Success message
         'success-message': "Installation successful!",
         'success-message2': "Thank you for installing the app! 🎉",
-        'success-message3': "You can now close this window."
+        'success-message3': "You can now close this window.",
+
+        // Warning message
+        'warning_title': "Warning",
+        'warning_message': "The app may be flagged as suspicious by your antivirus because it is not yet certified. This is normal and you can safely install it.",
+        'warning_message2': "The source code is publicly available on GitHub",
+        'confirm_btn': "I understand"
     }
 };
 
