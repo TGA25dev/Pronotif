@@ -30,7 +30,7 @@
                     <h2>Installer Pronot'if</h2>
                     <p>Une notification avant chaque cours, quoi de plus simple ?</p>
                 </div>
-                <button class="download-btn" onclick="window.location.href='download_page.html'">C'est parti !</button>
+                <button class="download-btn" data-href="download_page">C'est parti !</button>
             </div>
 
             <div class="bento-box learn-more-box">
@@ -56,8 +56,7 @@
                 <div>
                     <h2>Vous voulez aider ?</h2>
                     <p>Participez à l'amélioration de Pronot'if en faisant un don ou en contribuant sur GitHub !</p>
-                </div>
-                <button class="support-project-btn" onclick="window.location.href='support_page.html'">Soutenir le projet</button>
+                </div> <button class="support-project-btn" data-href="support_page">Soutenir le projet</button>
             </div>
 
             <div class="bento-box footer-box">
@@ -69,31 +68,6 @@
                 </a>
             </div>
         </div>
-        <script>
-            const carouselTexts = document.querySelectorAll('.carousel-text');
-            
-            function adjustFontSize() {
-            carouselTexts.forEach(text => {
-                const length = text.textContent.length;
-                if (window.innerWidth <= 768) {  // Only for mobile screens
-                    if (length > 30) {
-                        text.style.fontSize = '18px';
-                    } else if (length > 20) {
-                        text.style.fontSize = '21px';
-                    } else {
-                        text.style.fontSize = '26px';
-                    }
-                } else {
-                    text.style.fontSize = ''; // Reset font size for larger screens
-                }
-            });
-            }
-            
-            // Initial adjustment
-            adjustFontSize();
-            
-            // Adjust on window resize
-            window.addEventListener('resize', adjustFontSize);
-        </script>
+        <script src="scripts/index.js"></script>
     </body>
 </html>

@@ -71,6 +71,9 @@ window.addEventListener('beforeinstallprompt', (evt) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize URL handling from shared config
+    config.initializeUrlHandling();
+    
     const platformBtns = document.querySelectorAll('.platform-btn');
     const msStoreSteps = document.querySelector('.ms-store-steps');
     const directSteps = document.querySelector('.direct-steps');

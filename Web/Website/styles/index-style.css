@@ -26,7 +26,7 @@
         --primary: #45a8a872;
         --primary-light: #74d4d474;
         --primary-dark: #31787872;
-        --accent: #2f578f;
+        --accent: #4B91F1;
         --background: #1a1a1a;
         --card-bg: #242424;
         --text: #e0e0e0;
@@ -509,6 +509,11 @@ a {
 .github-link {
     margin-left: auto; 
 }
+
+[data-href] {
+    cursor: pointer;
+}
+
 @media screen and (max-width: 768px) {
     .bento-container {
         display: flex;

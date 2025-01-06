@@ -438,6 +438,10 @@ h1 {
     box-shadow: 0 8px 25px rgba(75, 145, 241, 0.15);
 }
 
+[data-href] {
+    cursor: pointer;
+}
+
 @media screen and (max-width: 1024px) {
     .split-layout {
         grid-template-columns: 1fr;

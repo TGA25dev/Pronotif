@@ -1,21 +1,33 @@
 const CACHE_NAME = 'pronotif-pwa-v1';
 const ASSETS_TO_CACHE = [
-    './',
-    './index.html',
-    './styles/pwa-style.css',
-    './scripts/pwa.js',
-];
+    '/',
+    '/index.html',
+    '/styles/pwa-style.css',
+    '/scripts/pwa.js'
+].map(url => {
+    // Convert URLs to be relative to the Service Worker's location
+    return new URL(url, self.location.origin).pathname;
+});
 
 // Install event - Cache all static assets
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => {
-                console.log('[PWA] Caching app assets...');
-                return cache.addAll(ASSETS_TO_CACHE);
+                console.log('[PWA] Attempting to cache assets...');
+                // Cache each asset individually to handle failures gracefully
+                return Promise.all(
+                    ASSETS_TO_CACHE.map(url => {
+                        return cache.add(url).catch(error => {
+                            console.warn(`[PWA] Failed to cache ${url}:`, error);
+                            // Continue even if one asset fails to cache
+                            return Promise.resolve();
+                        });
+                    })
+                );
             })
             .then(() => {
-                console.log('[PWA] All assets cached successfully.');
+                console.log('[PWA] Assets cached successfully');
             })
             .catch(error => {
                 console.error('[PWA] Cache error:', error);
