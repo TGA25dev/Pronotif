@@ -4,9 +4,10 @@ from CTkMessagebox import CTkMessagebox
 from CTkToolTip import *
 from hPyT import *
 import tkinter as tk
+import qrcode
+import io
 import pyglet
 from pathlib import Path
-import winsound
 import pronotepy
 import requests
 from geopy.geocoders import Nominatim
@@ -23,8 +24,6 @@ import webbrowser
 import configparser
 import base64
 from win11toast import notify
-import shutil
-import subprocess
 import traceback
 import random
 from loguru import logger
@@ -66,8 +65,8 @@ info_icon_path = f"{script_directory}/Icons/Messagebox UI/info_icon.png"
 
 github_repo_name = "TGA25dev/Pronotif"
 version = "v0.5.1"
-app_session_id = str(uuid4())
-logger.debug(app_session_id)
+session_id = str(uuid4())
+logger.debug(session_id)
 
 sentry_sdk.init("https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992", 
                 enable_tracing=True,
@@ -76,7 +75,7 @@ sentry_sdk.init("https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.inge
                 release=version,
                 server_name="User-Machine")
 
-sentry_sdk.set_user({"id": app_session_id})
+sentry_sdk.set_user({"id": session_id})
 
 local_paths = {
     "config": os.path.join(script_directory, "Data", "config.ini"),
@@ -141,8 +140,8 @@ class ConfigData:
         #Main data
         self.pronote_url = None
         self.student_fullname = None
-        self.firstname = None
-        self.student_class = None
+        self.student_firstname = None
+        self.student_class_name = None
         self.user_password = None
         self.user_username = None
         self.ent_connexion = None
@@ -225,83 +224,113 @@ def get_timezone(true_city_geocode):
   timezone_str = tf.timezone_at(lng=true_city_geocode.longitude, lat=true_city_geocode.latitude)
   system_data.automatic_school_timezone = pytz.timezone(timezone_str)
 
+def app_final_closing():
+  root.config(cursor="watch")
+  final_app_close_button.configure(state="disabled", text_color="grey")
+  logger.debug("Setup has been fully completed ! Application will now close....")
+  logger.info("Made with ❤️ by the Pronot'if Team.")
+  time.sleep(1.5)
+  sys.exit(0)
 
-countdown_seconds = 35  # Define the countdown_seconds variable outside the function
+def show_config_data_qr_code():
+  # Prepare QR data
+  qr_config_data = {
+     "session_id": str(session_id),
+      "login_page_link": str(config_data.pronote_url),
+      "username": str(config_data.user_username),
+      "password": str(config_data.user_password),
+      "student_fullname": str(config_data.student_fullname),
+      "student_firstname": str(config_data.student_firstname),
+      "student_class": str(config_data.student_class_name),
+      "ent_used": str(config_data.ent_connexion),
+      "qr_code_login": str(config_data.qr_code_login),
+      "uuid": str(config_data.uuid),
+      "topic": str(config_data.topic_name),
+      "timezone": str(config_data.selected_timezone),
+      "notification_delay": str(config_data.notification_delay),
+      "lunch_times": str(config_data.lunch_times),
+      "evening_menu": str(config_data.evening_menu),
+      "unfinished_homework_reminder": str(config_data.unfinished_homework_reminder),
+      "get_bag_ready_reminder": str(config_data.get_bag_ready_reminder),
+  }
+  qr_config_data_json = json.dumps(qr_config_data)
 
-def update_countdown():
-    global countdown_seconds  # Declare that you're using the global variable
-
-    if countdown_seconds > 0:
-        closing_countdown_label.configure(text=f"Fermeture dans {countdown_seconds}s...")
-        countdown_seconds -= 1
-        root.after(1000, update_countdown)  # Schedule the update_countdown function to run after 1 second
-    else:
-        root.destroy()  # Close the window or take any other action when the countdown reaches 0
-
-def find_export_dir():  
-  box = CTkMessagebox(title="Ziper le dossier ?", font=default_messagebox_font, message=f"Souhaitez-vous ziper le dossier du bot pour alléger son poid ?", icon=question_icon_path, option_1="Oui", option_2="Non",cancel_button=None ,cancel_button_color="light grey", justify="center", master=root, width=350, height=10, corner_radius=20)
-  box.info._text_label.configure(wraplength=450)
-
-  response = box.get()
-
-  if response == "Non":
-    subprocess.Popen(f'explorer {os.path.realpath(f"{script_directory}/Bot Files")}')
-
-  else:
-    logger.debug("Ziping folder...")
-
-    shutil.make_archive(f"{script_directory}/Bot Files", 'zip', f"{script_directory}/Bot Files")
-    
-    logger.debug("Folder has been ziped succesfully !")
-    shutil.rmtree(f"{script_directory}/Bot Files")
-    subprocess.Popen(f'explorer {os.path.realpath(f"{script_directory}")}')
-    
-  find_dir_button.configure(state="disabled", text_color="grey")
-
-  global closing_countdown_label
-  closing_countdown_label = CTkLabel(root, text="Fermeture...", font=default_subtitle_font)
-  closing_countdown_label.place(relx=0.16, rely=0.95, anchor="center")
-
+  download_page_qr_img_label.place_forget()
+  final_2nd_step.place_forget()
+  show_config_qr_code_button.place_forget()
   close_button.place_forget()
+  
+  main_text.configure(text="Voici votre QR Code de configuration,\nscannez le dans l'application mobile.", font=default_config_step_font)
+  main_text.place(relx=0.3, rely=0.3, anchor="center")
 
-  winsound.PlaySound("SystemExclamation", winsound.SND_ALIAS)
-  window_flash.flash(root, 5, 500)
+  warning_text_label = ctk.CTkLabel(master=root, text="Ne partagez jamais ce QR Code,\nil contient des informations sensibles !", font=(default_font_name, 12, "underline"))
+  warning_text_label.place(relx=0.3, rely=0.6, anchor="center")
 
-  # Start the countdown
+  global final_app_close_button
+  final_app_close_button = ctk.CTkButton(master=root, text="Terminer", font=default_items_font, command=app_final_closing, corner_radius=10)
+  final_app_close_button.place(relx=0.31, rely=0.8, anchor="center")
+  
+  # Create a QR code object
+  config_data_qr = qrcode.QRCode(
+      version=1,
+      error_correction=qrcode.constants.ERROR_CORRECT_L,
+      box_size=10,  
+      border=4,
+  )
+  config_data_qr.add_data(qr_config_data_json)
+  config_data_qr.make(fit=True)
 
-  update_countdown()
+  # Convert QR code to image
+  img_bytes = io.BytesIO()
+  config_data_qr.make_image(fill_color="black", back_color="white").save(img_bytes, format="PNG")
+  img_bytes.seek(0)
+  pil_img = Image.open(img_bytes)
 
+  # Convert the PIL image to a CTkImage
+  img_tk = CTkImage(light_image=pil_img, size=(150, 150))
+
+  # Place QR code on the right
+  config_qr_label = ctk.CTkLabel(master=root, image=img_tk, text="")
+  config_qr_label.image = img_tk
+  config_qr_label.place(relx=0.79, rely=0.5, anchor="center")
+
+   
 
 def final_step():
-  logger.debug("All steps have been succesfully completed !")
+  logger.info("All steps have been succesfully completed !")
   tabview.pack_forget()
 
-  main_text.place(relx=0.5, rely=0.3, anchor="center")
-  main_text.configure(text="Vous avez terminé la configuration de Pronot'if !\n\nCliquez sur le boutton ci-dessous pour trouver le dossier\nde votre bot.", font=default_config_step_font)
+  main_text.configure(text="1. Scannez ce QR Code depuis votre smartphone\npour installer l'application mobile !", font=default_config_step_font)
+  main_text.place(relx=0.5, rely=0.15, anchor="center")
 
-  global find_dir_button
-  find_dir_button = CTkButton(root,font=default_items_font , text="Trouver", command=find_export_dir)
-  find_dir_button.place(relx=0.5, rely=0.65, anchor="center")
+  global download_page_qr
+  download_page_qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=1)
+  download_page_qr.add_data("https://pronotif.tech/download_page.html")
+  download_page_qr.make(fit=True)
 
-  bot_files_folder = os.path.exists(f"{script_directory}/Bot Files")
-  bot_files_zip_folder = os.path.isfile(f"{script_directory}/Bot Files.zip")
- 
-  if bot_files_folder:
-    shutil.rmtree(f"{script_directory}/Bot Files")
+  img_bytes = io.BytesIO()
+  download_page_qr.make_image(fill_color="black", back_color="white").save(img_bytes, format="PNG")
+  img_bytes.seek(0)
+  pil_img = Image.open(img_bytes)
 
-  elif bot_files_zip_folder:
-    os.remove(f"{script_directory}/Bot Files.zip")
+  # Convert the PIL image to a CTkImage
+  download_page_qr_img_tk = CTkImage(light_image=pil_img, size=(75, 75))
 
-  os.mkdir(f"{script_directory}/Bot Files")
-  os.mkdir(f"{script_directory}/Bot Files/Data")
+  # Place QR code
+  global download_page_qr_img_label
+  download_page_qr_img_label = ctk.CTkLabel(master=root, image=download_page_qr_img_tk, text="")
+  download_page_qr_img_label.image = download_page_qr_img_tk
+  download_page_qr_img_label.place(relx=0.5, rely=0.45, anchor="center")
 
-  shutil.copy(f"{script_directory}/requirements.txt", f"{script_directory}/Bot Files/requirements.txt")
-  shutil.copy(f"{script_directory}/pronotif_main_system.py", f"{script_directory}/Bot Files/pronotif_main_system.py")
-  shutil.copy(f"{script_directory}/Data/{config_file_name}", f"{script_directory}/Bot Files/Data/{config_file_name}")
-  shutil.copy(f"{script_directory}/Data/ent_data.json", f"{script_directory}/Bot Files/Data/ent_data.json")
-  shutil.copy(f"{script_directory}/Data/pronote_password.env", f"{script_directory}/Bot Files/Data/pronote_password.env")
-  shutil.copy(f"{script_directory}/Data/pronote_username.env", f"{script_directory}/Bot Files/Data/pronote_username.env")
+  global final_2nd_step
+  final_2nd_step = ctk.CTkLabel(master=root, text="2. Ensuite, suivez les instructions dans l'application.", font=default_config_step_font)
+  final_2nd_step.place(relx=0.5, rely=0.73, anchor="center")
 
+  global show_config_qr_code_button
+  show_config_qr_code_button = ctk.CTkButton(master=root, text="Afficher le QR Code de configuratin", font=default_items_font, command=show_config_data_qr_code, corner_radius=10)
+  show_config_qr_code_button.place(relx=0.5, rely=0.85, anchor="center")
+
+  show_config_data_qr_code_tooltip = CTkToolTip(show_config_qr_code_button, message="Ne cliquez pas ici avant d'avoir installé l'application !", delay=0, alpha=0.8, wraplength=450, justify="center", font=default_subtitle_font)	
 
 steps = ['config_tab1_approved', 'config_tab2_approved', 'config_tab3_approved', 'config_tab4_approved']
 
@@ -364,7 +393,7 @@ def config_steps():
 
   # Modify a key in the INI file
   config['Global']['student_fullname'] = config_data.student_fullname
-  config['Global']['student_firstname'] = config_data.user_first_name
+  config['Global']['student_firstname'] = config_data.student_firstname
   config['Global']['student_class'] = config_data.student_class_name
 
 
@@ -388,7 +417,7 @@ def config_steps():
   global config_tab_step1_text
   current_hour = datetime.datetime.now().hour
   greeting = "Bonjour" if 6 <= current_hour < 18 else "Bonsoir"
-  config_tab_step1_text = ctk.CTkLabel(master=tabview.tab("1. ntfy"), font=default_config_step_font ,text=f"{greeting} {config_data.user_first_name} !\nEnregistrez ici le nom de votre topic ntfy.")
+  config_tab_step1_text = ctk.CTkLabel(master=tabview.tab("1. ntfy"), font=default_config_step_font ,text=f"{greeting} {config_data.student_firstname} !\nEnregistrez ici le nom de votre topic ntfy.")
   config_tab_step1_text.place(relx=0.5, rely=0.2, anchor="center")
 
   global ntfy_topic_name_entry
@@ -561,6 +590,7 @@ def config_steps():
   def save_notifications_settings():
     unfinished_homework_reminder_switch.configure(state="disabled", text_color="grey", button_color="grey")
     get_bag_ready_reminder_switch.configure(state="disabled", text_color="grey", button_color="grey")
+    save_button_notifications.configure(state="disabled", text_color="grey")
 
     check_important_file_existence(wanted_file_type="config")
     reminders_info_label.configure(text="Vos paramètres ont bien été enregistrés !")
@@ -595,8 +625,8 @@ def config_steps():
       config.unfinished_homework_reminder = unfinished_homework_reminder_switch_var.get()
       config.get_bag_ready_reminder = get_bag_ready_reminder_switch_var.get()
 
-      logger.debug(f"Unfinished homework reminder has been set to {config.unfinished_homework_reminder}")
-      logger.debug(f"Get bag ready reminder has been set to {config.get_bag_ready_reminder}")
+      #logger.debug(f"Unfinished homework reminder has been set to {config.unfinished_homework_reminder}")
+      #logger.debug(f"Get bag ready reminder has been set to {config.get_bag_ready_reminder}")
       save_notifications_settings()
      
   config_tab_step3_text = ctk.CTkLabel(master=tabview.tab("3. Notifications"), text="Paramètres de notifications", font=default_config_step_font)
@@ -614,8 +644,9 @@ def config_steps():
   reminders_info_label.place(relx=0.5, rely=0.69, anchor="center")
 
   # Add a save button
-  save_button = ctk.CTkButton(master=tabview.tab("3. Notifications"), font=default_items_font ,text="Enregistrer", command=save_notifications_selection, corner_radius=10, width=135, height=23)
-  save_button.place(relx=0.5, rely=0.92, anchor="center")
+  global save_button_notifications
+  save_button_notifications = ctk.CTkButton(master=tabview.tab("3. Notifications"), font=default_items_font ,text="Enregistrer", command=save_notifications_selection, corner_radius=10, width=135, height=23)
+  save_button_notifications.place(relx=0.5, rely=0.92, anchor="center")
 
   #TAB 4 ADVANCED
 
@@ -652,38 +683,39 @@ def config_steps():
           combo_menu.place_forget()
 
   def save_selection():
-      global selected_timezone
-      if switch_var.get() == "off":
-          selected_option = combo_menu.get()
-          if selected_option == "":
-              logger.error("Value cannot be None !")
-              box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Vous devez choisir une valeur du menu avant de valider !", icon=warning_icon_path, option_1="Réessayer", master=root, width=350, height=10, corner_radius=20, sound=True)
-              box.info._text_label.configure(wraplength=450)
-          else:
-              if selected_option == "UTC":
-                  config_data.selected_timezone = "UTC"
-              else:
-                  sign = selected_option[3]
-                  offset = selected_option[4:]
-  
-                  # Invert the sign for the Etc/GMT format
-                  if sign == '+':
-                      etc_gmt_offset = f"-{offset}"
-                  elif sign == '-':
-                      etc_gmt_offset = f"+{offset}"
-  
-                  config_data.selected_timezone = f"Etc/GMT{etc_gmt_offset}"
-                  logger.debug(f"New timezone has been selected : {selected_timezone}")
+    global selected_timezone
+    if switch_var.get() == "off":
+      selected_option = combo_menu.get()
+      if selected_option == "":
+        logger.error("Value cannot be None !")
+        box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Vous devez choisir une valeur du menu avant de valider !", icon=warning_icon_path, option_1="Réessayer", master=root, width=350, height=10, corner_radius=20, sound=True)
+        box.info._text_label.configure(wraplength=450)
+        return
       else:
-          config_data.selected_timezone = system_data.automatic_school_timezone  # Use the automatic timezone
-          logger.debug("Default timezone has been selected !")
+        if selected_option == "UTC":
+          config_data.selected_timezone = "UTC"
+        else:
+          sign = selected_option[3]
+          offset = selected_option[4:]
 
-      # Extract just the number from the string
-      delay = int(notification_delay_menu.get().split()[0])
-      config_data.notification_delay = delay
-      logger.debug(f"Notification delay set to {delay} minutes")
-          
-      set_config_file_advanced()
+          # Invert the sign for the Etc/GMT format
+          if sign == '+':
+            etc_gmt_offset = f"-{offset}"
+          elif sign == '-':
+            etc_gmt_offset = f"+{offset}"
+
+          config_data.selected_timezone = f"Etc/GMT{etc_gmt_offset}"
+          logger.debug(f"New timezone has been selected : {selected_timezone}")
+    else:
+      config_data.selected_timezone = system_data.automatic_school_timezone  # Use the automatic timezone
+      logger.debug("Default timezone has been selected !")
+
+    # Extract just the number from the string
+    delay = int(notification_delay_menu.get().split()[0])
+    config_data.notification_delay = delay
+    logger.debug(f"Notification delay set to {delay} minutes")
+      
+    set_config_file_advanced()
   
   config_tab_step4_text = ctk.CTkLabel(master=tabview.tab("4. Avancé"), text="Fuseau horaire", font=default_config_step_font)
   config_tab_step4_text.place(relx=0.2, rely=0.1, anchor="center")
@@ -700,7 +732,7 @@ def config_steps():
   combo_menu.place_forget()  # Initially hidden
 
   # Add notification delay selection
-  notification_delay_label = ctk.CTkLabel(master=tabview.tab("4. Avancé"), text="Délai avant envoi", font=default_items_font)
+  notification_delay_label = ctk.CTkLabel(master=tabview.tab("4. Avancé"), text="Délai avant envoi", font=default_config_step_font)
   notification_delay_label.place(relx=0.2, rely=0.47, anchor="center")
 
   # Create notification delay dropdown menu
@@ -796,7 +828,7 @@ def save_credentials():
           config_data.user_password = password
 
           names = config_data.student_fullname.strip().split() if config_data.student_fullname.strip() else []
-          config_data.user_first_name = names[1] if len(names) > 1 else None
+          config_data.student_firstname = names[1] if len(names) > 1 else None
 
           root.config(cursor="arrow")
 
@@ -824,7 +856,7 @@ def save_credentials():
 
       except (pronotepy.CryptoError, pronotepy.ENTLoginError):
          logger.warning("Wrong credentials !")
-         box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Vos identifiants de connexion semblent incorrects...", icon=warning_icon_path, option_1="Réessayer",master=root, width=300, height=10, corner_radius=20,sound=True)
+         box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Vos identifiants de connexion semblent incorrects...", icon=warning_icon_path, option_1="Réessayer",master=root, width=350, height=10, corner_radius=20,sound=True)
          box.info._text_label.configure(wraplength=450)
          password_entry.delete(0, 'end')
          root.config(cursor="arrow")   
@@ -919,7 +951,7 @@ def qr_code_login_process():
          config_data.user_password = client.password
 
          names = config_data.student_fullname.strip().split() if config_data.student_fullname.strip() else []
-         config_data.user_first_name = names[1] if len(names) > 1 else None
+         config_data.student_firstname = names[1] if len(names) > 1 else None
 
          root.config(cursor="arrow")
 
