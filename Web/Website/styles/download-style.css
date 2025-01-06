@@ -1456,15 +1456,6 @@ body.modal-open {
     .steps-container {
         padding-left: 0;
     }
-
-    .modal-content {
-        margin: 2vh auto;
-        padding: 20px;
-    }
-
-    .warning-body {
-        padding: 15px;
-    }
 }
 
 /* Animation Optimizations */

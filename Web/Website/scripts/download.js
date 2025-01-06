@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 btn.classList.add('active');
                 
                 if (btn.classList.contains('ms-store-btn')) {
-                    // window.open('ms-windows-store://pdp/?productid=9999999', '_blank');
+                    //window.open('ms-windows-store://pdp/?productid=9999999', '_blank');
                 } else if (btn.classList.contains('direct-btn')) {
                     warningModal.style.display = 'block';
                 }
