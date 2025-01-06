@@ -22,9 +22,9 @@ import json
 class DefaultTimeout(TimeoutSauce):
     def __init__(self, *args, **kwargs):
         if kwargs['connect'] is None:
-            kwargs['connect'] = 5  # 5 seconds connection timeout
+            kwargs['connect'] = 10  # 10 seconds connection timeout
         if kwargs['read'] is None:
-            kwargs['read'] = 5  # 5 seconds read timeout
+            kwargs['read'] = 15  # 15 seconds read timeout
         super(DefaultTimeout, self).__init__(*args, **kwargs)
 
 requests.adapters.TimeoutSauce = DefaultTimeout
@@ -99,8 +99,8 @@ printed_message = False
 class_check_print_flag = False
 menu_check_print_flag = False
 
-max_retries = 3
-retry_delay = 5
+max_retries = 5
+retry_delay = 3
 
 # Adding custom colors and format to the logger
 logger.remove()  # Remove any existing handlers
@@ -196,6 +196,22 @@ async def check_session(client):
                     sentry_sdk.capture_exception(e)
                     sys.exit(1)
 
+async def retry_with_backoff(func, *args, max_attempts=5):
+    for attempt in range(max_attempts):
+        try:
+            return await func(*args)
+        except (requests.exceptions.ReadTimeout, 
+                requests.exceptions.ConnectTimeout, 
+                requests.exceptions.ConnectionError) as e:
+            if attempt == max_attempts - 1:
+                raise
+            wait_time = retry_delay * (2 ** attempt)  # Exponential backoff
+            logger.warning(f"Network error: {e}. Retrying in {wait_time} seconds... (Attempt {attempt + 1}/{max_attempts})")
+            await asyncio.sleep(wait_time)
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            raise
+
 async def pronote_main_checks_loop():
   await check_internet_connexion()
   if internet_connected is False:
@@ -209,7 +225,7 @@ async def pronote_main_checks_loop():
   next_minute = (now + timedelta(minutes=1)).replace(second=0, microsecond=0)
   wait_time = (next_minute - now).total_seconds()
   logger.warning(f"Waiting for {round(wait_time, 1)} seconds until system start...")
-  await asyncio.sleep(wait_time)
+  #await asyncio.sleep(wait_time)
   logger.debug(f"System started ! ({datetime.datetime.now(timezone).strftime('%H:%M:%S')})")
 
   global client
@@ -233,24 +249,15 @@ async def pronote_main_checks_loop():
       today = datetime.date.today()
       #other_day = today + datetime.timedelta(days=3)  # For testing purposes
       
-      for attempt in range(max_retries):
-          try:
-            lesson_checker = client.lessons(date_from=today)  # CHANGE TO FAKE OR REAL !!
-            break
-          except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError) as e:
-            if attempt < max_retries - 1:
-              logger.warning(f"Connection timeout during lesson check (attempt {attempt + 1}/{max_retries}). Retrying in {retry_delay} seconds...")
-              await asyncio.sleep(retry_delay * (2 ** attempt))
-            else:
-              logger.error(f"Failed to check lessons after {max_retries} attempts")
-              sentry_sdk.capture_exception(e)
-              lesson_checker = []  # List is empty for fallback
+      async def fetch_lessons():
+        return client.lessons(date_from=today)
 
-          except Exception as e:
-            logger.error(f"Unexpected error checking lessons: {e}")
-            sentry_sdk.capture_exception(e)
-            lesson_checker = []
-            break
+      try:
+        lesson_checker = await retry_with_backoff(fetch_lessons)
+      except Exception as e:
+        logger.error(f"Failed to fetch lessons after all retries: {e}")
+        sentry_sdk.capture_exception(e)
+        lesson_checker = []
 
       if not lesson_checker:
         if not class_check_print_flag:
@@ -268,7 +275,7 @@ async def pronote_main_checks_loop():
         lessons_by_time = {}
         for lesson in lesson_checker:
             start_time = lesson.start.strftime("%H:%M")
-            if start_time not in lessons_by_time:
+            if (start_time not in lessons_by_time):
                 lessons_by_time[start_time] = []
             lessons_by_time[start_time].append(lesson)
 
@@ -412,24 +419,15 @@ async def pronote_main_checks_loop():
       today = datetime.date.today()
       global menus
   
-      for attempt in range(max_retries):
-        try:
-          menus = client.menus(date_from=today)
-          break
-        except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError) as e:
-          if attempt < max_retries - 1:
-            logger.warning(f"Connection timeout during menu check (attempt {attempt + 1}/{max_retries}). Retrying in {retry_delay} seconds...")
-            await asyncio.sleep(retry_delay * (2 ** attempt))
-          else:
-            logger.error(f"Failed to check menu after {max_retries} attempts")
-            sentry_sdk.capture_exception(e)
-            menus = []  # List is empty for fallback
+      async def fetch_menus():
+        return client.menus(date_from=today)
 
-        except Exception as e:
-          logger.error(f"Unexpected error checking menu: {e}")
-          sentry_sdk.capture_exception(e)
-          menus = []
-          break
+      try:
+        menus = await retry_with_backoff(fetch_menus)
+      except Exception as e:
+        logger.error(f"Failed to fetch menus after all retries: {e}")
+        sentry_sdk.capture_exception(e)
+        menus = []
 
       if menus:
         current_time = datetime.datetime.now(timezone).time()
