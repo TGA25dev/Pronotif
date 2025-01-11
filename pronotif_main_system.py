@@ -106,6 +106,11 @@ logger.remove()  # Remove any existing handlers
 logger.add(sys.stdout, level="DEBUG")  # Log to console
 logger.add("notif_system_logs.log", level="DEBUG", rotation="500 MB")  # Log to file with rotation
 
+# Add these variables at the top with other global variables
+class_message_printed_today = False
+menu_message_printed_today = False
+last_check_date = None
+
 # Global exception handler
 def handle_exception(exc_type, exc_value, exc_traceback):
   if issubclass(exc_type, KeyboardInterrupt):
@@ -217,7 +222,7 @@ async def pronote_main_checks_loop():
     wait_time = (next_minute - now).total_seconds()
 
     logger.info(f"Waiting for {round(wait_time, 1)} seconds until system start...")
-    await asyncio.sleep(wait_time)
+    #await asyncio.sleep(wait_time)
     logger.debug(f"System started ! ({datetime.datetime.now(timezone).strftime('%H:%M:%S')})")
 
     global client
@@ -237,6 +242,15 @@ async def pronote_main_checks_loop():
       async def lesson_check():
         try:
           global class_check_print_flag
+          global class_message_printed_today
+          global last_check_date
+
+          today = datetime.date.today()
+          
+          # Reset the flag if it's a new day
+          if last_check_date != today:
+              class_message_printed_today = False
+              last_check_date = today
 
           today = datetime.date.today()
           #other_day = today + datetime.timedelta(days=3)  # For testing purposes
@@ -253,8 +267,9 @@ async def pronote_main_checks_loop():
             lesson_checker = []
 
           if not lesson_checker:
-            if not class_check_print_flag:
+            if not class_message_printed_today:
               logger.info("There is probably no class today !")
+              class_message_printed_today = True
 
           elif lesson_checker:
             current_time = datetime.datetime.now(timezone).strftime("%H:%M")
@@ -407,6 +422,16 @@ async def pronote_main_checks_loop():
 
       async def menu_food_check():
         try:
+          global menu_message_printed_today
+          global last_check_date
+
+          today = datetime.date.today()
+          
+          # Reset the flag if it's a new day
+          if last_check_date != today:
+              menu_message_printed_today = False
+              last_check_date = today
+
           today = datetime.date.today()
           global menus
       
@@ -444,7 +469,9 @@ async def pronote_main_checks_loop():
               await food_notif_send_system()
           else:
             if not menus:
-              logger.info("There is no menu defined for today !")
+              if not menu_message_printed_today:
+                logger.info("There is no menu defined for today !")
+                menu_message_printed_today = True
 
         except Exception as e:
             logger.error(f"Error in menu check: {e}")
