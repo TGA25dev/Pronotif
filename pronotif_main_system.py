@@ -196,7 +196,7 @@ async def retry_with_backoff(func, *args, max_attempts=5):
         try:
             result = await func(*args)
             
-            # If previously reported a timeout and now it succeeded, mark it as resolved
+            # If previously reported a timeout and now succeeded, mark it as resolved
             if timeout_incident_id:
                 with sentry_sdk.new_scope() as scope:
                     scope.set_tag("status", "resolved")
@@ -204,7 +204,11 @@ async def retry_with_backoff(func, *args, max_attempts=5):
                         f"Timeout resolved for {func.__name__} after {attempt} retries",
                         level="info"
                     )
-            logger.success(f"Function {func.__name__} succeeded after {attempt + 1} attempts !")
+                logger.success(f"Function {func.__name__} recovered after {attempt} retries")
+            # Only log success if it's not the first attempt
+            elif attempt > 0:
+                logger.success(f"Function {func.__name__} succeeded after {attempt} retries")
+            
             return result
             
         except (requests.exceptions.ReadTimeout, 
@@ -268,7 +272,7 @@ async def pronote_main_checks_loop():
     wait_time = (next_minute - now).total_seconds()
 
     logger.info(f"Waiting for {round(wait_time, 1)} seconds until system start...")
-    #await asyncio.sleep(wait_time)
+    await asyncio.sleep(wait_time)
     logger.debug(f"System started ! ({datetime.datetime.now(timezone).strftime('%H:%M:%S')})")
 
     global client
