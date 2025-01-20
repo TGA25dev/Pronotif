@@ -111,6 +111,9 @@ class_message_printed_today = False
 menu_message_printed_today = False
 last_check_date = None
 
+# Add after imports
+import random
+
 # Global exception handler
 def handle_exception(exc_type, exc_value, exc_traceback):
   if issubclass(exc_type, KeyboardInterrupt):
@@ -187,24 +190,67 @@ async def check_session(client):
         handle_error_with_relogin(e)
 
 async def retry_with_backoff(func, *args, max_attempts=5):
+    timeout_incident_id = None
+    
     for attempt in range(max_attempts):
         try:
-            return await func(*args)
+            result = await func(*args)
+            
+            # If previously reported a timeout and now it succeeded, mark it as resolved
+            if timeout_incident_id:
+                with sentry_sdk.new_scope() as scope:
+                    scope.set_tag("status", "resolved")
+                    sentry_sdk.capture_message(
+                        f"Timeout resolved for {func.__name__} after {attempt} retries",
+                        level="info"
+                    )
+            logger.success(f"Function {func.__name__} succeeded after {attempt + 1} attempts !")
+            return result
+            
         except (requests.exceptions.ReadTimeout, 
                 requests.exceptions.ConnectTimeout, 
                 requests.exceptions.ConnectionError) as e:
             
-            if attempt == max_attempts - 1:
-                raise
+            wait_time = retry_delay * (2 ** attempt)
             
-            wait_time = retry_delay * (2 ** attempt)  # Exponential backoff
+            # On first timeout, create an incident in Sentry
+            if attempt == 0:
+                with sentry_sdk.new_scope() as scope:
+                    scope.set_tag("error_type", "timeout")
+                    scope.set_tag("function", func.__name__)
+                    scope.set_tag("status", "ongoing")
+                    timeout_incident_id = sentry_sdk.capture_message(
+                        f"Timeout occurred in {func.__name__}",
+                        level="error"
+                    )
+            
+            if attempt == max_attempts - 1:
+                # Update the incident to show all retries failed
+                with sentry_sdk.new_scope() as scope:
+                    scope.set_tag("error_type", "timeout")
+                    scope.set_tag("function", func.__name__)
+                    scope.set_tag("status", "failed")
+                    scope.set_tag("total_retries", str(max_attempts))
+                    sentry_sdk.capture_message(
+                        f"All retry attempts failed for {func.__name__}",
+                        level="error"
+                    )
+                    
+                if func.__name__ == 'fetch_lessons':
+                    return []
+                elif func.__name__ == 'fetch_menus':
+                    return []
+                else:
+                    return None
+            
             logger.warning(f"Network error: {e}. Retrying in {wait_time} seconds... (Attempt {attempt + 1}/{max_attempts})")
             await asyncio.sleep(wait_time)
 
         except Exception as e:
             logger.error(f"Error in {func.__name__}: {e}")
+            sentry_sdk.capture_exception(e)
             if not handle_error_with_relogin(e):
-                sys.exit(1)
+                return [] if func.__name__ in ['fetch_lessons', 'fetch_menus'] else None
             raise
 
 async def pronote_main_checks_loop():
@@ -663,8 +709,6 @@ async def pronote_main_checks_loop():
               logger.info(reminder_message)
 
           if current_time.hour == 18 and current_time.minute == 15 and unfinished_homework_reminder == "True" and class_tomorrow:
-              logger.debug(tomorrow_date)
-              
               homeworks = client.homework(tomorrow_date, tomorrow_date)
               reminder_type = "homework"
 
