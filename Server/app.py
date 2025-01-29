@@ -26,9 +26,9 @@ logger.addHandler(file_handler)
 
 # MySQL Connection Pool
 connection_pool = pooling.MySQLConnectionPool(
-    pool_name="main_pool",
-    pool_size=5,
-    pool_reset_session=True,
+    pool_name=os.getenv('DB_POOL_NAME'),
+    pool_size=int(os.getenv('DB_POOL_SIZE')),
+    pool_reset_session=os.getenv('DB_POOL_RESET_SESSION'),
     host=os.getenv('DB_HOST'),
     user=os.getenv('DB_USER'),
     password=os.getenv('DB_PASSWORD'),
@@ -47,7 +47,7 @@ redis_connection = redis.Redis(
 limiter = Limiter(
     get_remote_address,
     app=app,
-    storage_uri="redis://localhost:6379"
+    storage_uri=f"redis://{os.getenv('REDIS_HOST')}:{int(os.getenv('LIMITER_PORT'))}"
 )
 
 
@@ -68,56 +68,14 @@ def page_not_found(error):
     logger.warning(f"Page not found: {error}")
     return jsonify({'error': 'Page not found'}), 404
 
-def update_last_request_time(app_id):
-    connection = connection_pool.get_connection()
-    cursor = connection.cursor()
-    try:
-        update_query = "UPDATE pronotif_setup_auth SET last_request_time = %s WHERE app_id = %s"
-        cursor.execute(update_query, (datetime.now(), app_id))
-        connection.commit()
-        logger.info(f"Last request time updated for app_id: {app_id}")
-    except mysql.connector.Error as err:
-        logger.error(f"Error updating last request time: {err}")
-    finally:
-        cursor.close()
-        connection.close()
-
-def update_status(app_id, status):
-    connection = connection_pool.get_connection()
-    cursor = connection.cursor()
-    try:
-        update_query = "UPDATE pronotif_setup_auth SET status = %s WHERE app_id = %s"
-        cursor.execute(update_query, (status, app_id))
-        connection.commit()
-        logger.info(f"Status updated to {status} for app_id: {app_id}")
-    except mysql.connector.Error as err:
-        logger.error(f"Error updating status: {err}")
-    finally:
-        cursor.close()
-        connection.close()
-
-def update_timestamp(app_id):
-    connection = connection_pool.get_connection()
-    cursor = connection.cursor()
-    try:
-        update_query = "UPDATE pronotif_setup_auth SET updated_at = %s WHERE app_id = %s"
-        cursor.execute(update_query, (datetime.now(), app_id))
-        connection.commit()
-        logger.info(f"Timestamp updated for app_id: {app_id}")
-    except mysql.connector.Error as err:
-        logger.error(f"Error updating timestamp: {err}")
-    finally:
-        cursor.close()
-        connection.close()
-
 # API Endpoints
 
-@app.route('/test', methods=['GET'])
+@app.route('/ping', methods=['GET'])
 @limiter.limit("10 per minute")
 def test_endpoint():
     client_ip = request.remote_addr
-    logger.info(f"{client_ip} Test endpoint succesfully triggered !")
-    return jsonify({"message": "This is a GET request to the /test_endpoint"}), 200
+    logger.info(f"{client_ip} Pong !")
+    return jsonify({"message": "Pong !"}), 200
 
 # Use Redis to store the state instead of a dictionary
 def get_state():
@@ -149,4 +107,4 @@ def get_visibility_state():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=os.getenv('MAIN_PORT'))
+    app.run(host=os.getenv('HOST'), port=os.getenv('MAIN_PORT'))
