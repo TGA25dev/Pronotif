@@ -39,4 +39,25 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeUrlHandling();
     adjustFontSize();
     window.addEventListener('resize', adjustFontSize);
+
+    document.getElementById('discoverBtn').addEventListener('click', () => {
+        const modal = document.getElementById('comingSoonModal');
+        modal.classList.add('show');
+    });
+
+    document.querySelector('.close-modal').addEventListener('click', () => {
+        const modal = document.getElementById('comingSoonModal');
+        modal.classList.remove('show');
+    });
+
+    document.querySelector('.modal-btn').addEventListener('click', () => {
+        const modal = document.getElementById('comingSoonModal');
+        modal.classList.remove('show');
+    });
+
+    document.getElementById('comingSoonModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('comingSoonModal')) {
+            e.target.classList.remove('show');
+        }
+    });
 });
