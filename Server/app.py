@@ -4,10 +4,13 @@ from mysql.connector import pooling
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 import redis
 from dotenv import load_dotenv
 import os
+import secrets
+import threading
+import time
 
 # Load environment variables
 load_dotenv()
@@ -36,6 +39,7 @@ connection_pool = pooling.MySQLConnectionPool(
 )
 
 authcode = os.getenv('AUTHCODE')
+auth_table_name = os.getenv('DB_AUTH_TABLE_NAME')
 
 # Flask-Limiter and Redis Configuration
 redis_connection = redis.Redis(
@@ -103,8 +107,111 @@ def toggle_visibility():
 def get_visibility_state():
     return jsonify({"enabled": get_state()}), 200
 
+#Setup Endpoints
+
+@app.route("/v1/setup/session", methods=["POST"])
+@limiter.limit(str(os.getenv('SESSION_SETUP_LIMIT')) + " per minute")
+def generate_session():
+    try:
+        # Generate session ID and a temporary token
+        session_id = secrets.token_urlsafe(16)
+        token = secrets.token_urlsafe(32)
+        
+        current_time = datetime.now()
+        expiry_minutes = int(os.getenv('SESSION_EXPIRY_M'))
+        expiry_seconds = int(os.getenv('SESSION_EXPIRY_S'))
+
+        data = {
+            "session_id": session_id,
+            "token": token,
+            "created_at": current_time,
+            "expires_at": current_time + timedelta(minutes=expiry_minutes),
+            "used": False,
+        }
+
+        # Store the session in Redis
+        try:
+            redis_connection.setex(
+                f"session:{session_id}",
+                expiry_seconds,
+                token
+            )
+
+        except redis.RedisError as e:
+            logger.error(f"Redis error: {e}")
+            return jsonify({"error": "Session storage failed"}), 500
+
+        # Store in DB
+        connection = connection_pool.get_connection()
+        cursor = connection.cursor()
+        try:
+            cursor.execute(
+                f"INSERT INTO {auth_table_name} (session_id, token, created_at, expires_at, used) VALUES (%s, %s, %s, %s, %s)",
+                (session_id, token, data['created_at'], data['expires_at'], data['used'])
+            )
+            connection.commit()
+            logger.info(f"Session created: {session_id}")
+
+        except mysql.connector.Error as err:
+            logger.error(f"MySQL error: {err}")
+            return jsonify({"error": "Operation failed"}), 500
+        
+        finally:
+            cursor.close()
+            connection.close()
+
+        return jsonify({
+            "session_id": session_id,
+            "token": token,
+            "message": "Session generated successfully!",
+            "status": 200
+        })
+
+    except Exception as e:
+        logger.error(f"Unexpected error in generate_session: {e}")
+        return jsonify({"error": "Internal server error"}), 500
+
+# Background tasks
+def cleanup_auth_sessions():
+    while True:
+        try:
+            connection = connection_pool.get_connection()
+            cursor = connection.cursor()
+            current_time = datetime.now()
+
+            # Delete only expired and inactive sessions
+            delete_query = f"""
+                DELETE FROM {auth_table_name} 
+                WHERE expires_at <= %s 
+                AND used = FALSE
+            """
+            
+            cursor.execute(delete_query, (current_time,))
+            deleted_count = cursor.rowcount
+            
+            if deleted_count > 0:
+                connection.commit()
+                logger.info(f"Cleaned up {deleted_count} expired and inactive sessions")
+            
+        except mysql.connector.Error as err:
+            logger.error(f"MySQL error in cleanup task: {err}")
+
+        except Exception as e:
+            logger.error(f"Unexpected error in cleanup task: {e}")
+
+        finally:
+            if 'cursor' in locals():
+                cursor.close()
+            if 'connection' in locals():
+                connection.close()
+            time.sleep(600)
+
+def start_background_tasks():
+    session_cleanup_thread = threading.Thread(target=cleanup_auth_sessions, daemon=True)
+    session_cleanup_thread.start()
+
 #App Endpoints
 
-
 if __name__ == '__main__':
+    start_background_tasks()
     app.run(host=os.getenv('HOST'), port=os.getenv('MAIN_PORT'))
