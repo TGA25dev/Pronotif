@@ -65,8 +65,6 @@ info_icon_path = f"{script_directory}/Icons/Messagebox UI/info_icon.png"
 
 github_repo_name = "TGA25dev/Pronotif"
 version = "v0.5.1"
-session_id = str(uuid4())
-logger.debug(session_id)
 
 sentry_sdk.init("https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992", 
                 enable_tracing=True,
@@ -74,8 +72,6 @@ sentry_sdk.init("https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.inge
                 environment="production",
                 release=version,
                 server_name="User-Machine")
-
-sentry_sdk.set_user({"id": session_id})
 
 local_paths = {
     "config": os.path.join(script_directory, "Data", "config.ini"),
@@ -233,9 +229,44 @@ def app_final_closing():
   sys.exit(0)
 
 def show_config_data_qr_code():
-  # Prepare QR data
-  qr_config_data = {
-     "session_id": str(session_id),
+  #Get a session id
+  response = None
+  try:
+    response = requests.post("https://api.pronotif.tech/v1/setup/session")
+    if response.status_code == 200:
+      session_id = response.json()["session_id"]
+      token = session_id = response.json()["token"]
+      logger.debug(f"New session created with ID: {session_id}")
+    else:
+      logger.error(f"Failed to create session. Status code: {response.status_code}")
+      sentry_sdk.capture_exception(Exception(f"Failed to create session. Status code: {response.status_code}"))
+      session_id = None
+
+  except Exception as e:
+    logger.error(f"Failed to create session. Error: {e}")
+
+    if "getaddrinfo failed" not in str(e):
+      sentry_sdk.capture_exception(e)
+
+    session_id = None
+
+  if session_id is None:
+    if response and (response.text or response.status_code is not None):
+      box = CTkMessagebox(title=f"{response.status_code}: {response.text}", font=default_messagebox_font, message="Une erreur est survenue !\nVerifiez que vous êtes connecté à Internet.", icon=warning_icon_path, option_1="Annuler", option_2="Réessayer", master=root, width=350, height=10, corner_radius=20, sound=True)
+    else:
+      box = CTkMessagebox(title=f"Erreur !", font=default_messagebox_font, message="Une erreur est survenue !\nVerifiez que vous êtes connecté à Internet.", icon=warning_icon_path, option_1="Annuler", option_2="Réessayer", master=root, width=350, height=10, corner_radius=20, sound=True)
+    box.info._text_label.configure(wraplength=450)
+
+    response = box.get()
+    if response == "Réessayer":
+      show_config_data_qr_code()
+
+  elif session_id:  
+    logger.success(session_id)
+    # Prepare QR data
+    qr_config_data = {
+      "session_id": str(session_id),
+      "token": str(token),
       "login_page_link": str(config_data.pronote_url),
       "username": str(config_data.user_username),
       "password": str(config_data.user_password),
@@ -252,47 +283,47 @@ def show_config_data_qr_code():
       "evening_menu": str(config_data.evening_menu),
       "unfinished_homework_reminder": str(config_data.unfinished_homework_reminder),
       "get_bag_ready_reminder": str(config_data.get_bag_ready_reminder),
-  }
-  qr_config_data_json = json.dumps(qr_config_data)
+    }
+    qr_config_data_json = json.dumps(qr_config_data)
 
-  download_page_qr_img_label.place_forget()
-  final_2nd_step.place_forget()
-  show_config_qr_code_button.place_forget()
-  close_button.place_forget()
-  
-  main_text.configure(text="Voici votre QR Code de configuration,\nscannez le dans l'application mobile.", font=default_config_step_font)
-  main_text.place(relx=0.3, rely=0.3, anchor="center")
+    download_page_qr_img_label.place_forget()
+    final_2nd_step.place_forget()
+    show_config_qr_code_button.place_forget()
+    close_button.place_forget()
+    
+    main_text.configure(text="Voici votre QR Code de configuration,\nscannez le dans l'application mobile.", font=default_config_step_font)
+    main_text.place(relx=0.3, rely=0.3, anchor="center")
 
-  warning_text_label = ctk.CTkLabel(master=root, text="Ne partagez jamais ce QR Code,\nil contient des informations sensibles !", font=(default_font_name, 12, "underline"))
-  warning_text_label.place(relx=0.3, rely=0.6, anchor="center")
+    warning_text_label = ctk.CTkLabel(master=root, text="Ne partagez jamais ce QR Code,\nil contient des informations sensibles !", font=(default_font_name, 12, "underline"))
+    warning_text_label.place(relx=0.3, rely=0.6, anchor="center")
 
-  global final_app_close_button
-  final_app_close_button = ctk.CTkButton(master=root, text="Terminer", font=default_items_font, command=app_final_closing, corner_radius=10)
-  final_app_close_button.place(relx=0.31, rely=0.8, anchor="center")
-  
-  # Create a QR code object
-  config_data_qr = qrcode.QRCode(
-      version=1,
-      error_correction=qrcode.constants.ERROR_CORRECT_L,
-      box_size=10,  
-      border=4,
-  )
-  config_data_qr.add_data(qr_config_data_json)
-  config_data_qr.make(fit=True)
+    global final_app_close_button
+    final_app_close_button = ctk.CTkButton(master=root, text="Terminer", font=default_items_font, command=app_final_closing, corner_radius=10)
+    final_app_close_button.place(relx=0.31, rely=0.8, anchor="center")
+    
+    # Create a QR code object
+    config_data_qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,  
+        border=4,
+    )
+    config_data_qr.add_data(qr_config_data_json)
+    config_data_qr.make(fit=True)
 
-  # Convert QR code to image
-  img_bytes = io.BytesIO()
-  config_data_qr.make_image(fill_color="black", back_color="white").save(img_bytes, format="PNG")
-  img_bytes.seek(0)
-  pil_img = Image.open(img_bytes)
+    # Convert QR code to image
+    img_bytes = io.BytesIO()
+    config_data_qr.make_image(fill_color="black", back_color="white").save(img_bytes, format="PNG")
+    img_bytes.seek(0)
+    pil_img = Image.open(img_bytes)
 
-  # Convert the PIL image to a CTkImage
-  img_tk = CTkImage(light_image=pil_img, size=(150, 150))
+    # Convert the PIL image to a CTkImage
+    img_tk = CTkImage(light_image=pil_img, size=(150, 150))
 
-  # Place QR code on the right
-  config_qr_label = ctk.CTkLabel(master=root, image=img_tk, text="")
-  config_qr_label.image = img_tk
-  config_qr_label.place(relx=0.79, rely=0.5, anchor="center")
+    # Place QR code on the right
+    config_qr_label = ctk.CTkLabel(master=root, image=img_tk, text="")
+    config_qr_label.image = img_tk
+    config_qr_label.place(relx=0.79, rely=0.5, anchor="center")
 
    
 
