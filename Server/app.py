@@ -109,9 +109,11 @@ def get_visibility_state():
 
 #Setup Endpoints
 
-@app.route("/v1/setup/session", methods=["POST"])
+@app.route("/v1/setup/session", methods=["POST", "HEAD"])
 @limiter.limit(str(os.getenv('SESSION_SETUP_LIMIT')) + " per minute")
 def generate_session():
+    if request.method == "HEAD":
+        return jsonify({"message": ""}), 200
     try:
         # Generate session ID and a temporary token
         session_id = secrets.token_urlsafe(16)
