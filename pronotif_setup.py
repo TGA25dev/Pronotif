@@ -1810,7 +1810,7 @@ def check_if_first_time():
     logger.info("Initial Startup !")
     box = CTkMessagebox(title="Premiere fois ici ?", font=default_messagebox_font, message=f"On dirait que vous n'avez jamais utilisé Pronot'if...\n\nLisez la documentation pour mieux comprendre comment vous en servir.", icon=info_icon_path, option_1="D'accord", cancel_button=None ,cancel_button_color="light grey", justify="center", master=root, width=450, height=10, corner_radius=20)
     box.info._text_label.configure(wraplength=450)
-    webbrowser.open_new_tab("https://github.com/TGA25dev/Pronotif/wiki/Accueil")
+    webbrowser.open_new_tab("https://docs.pronotif.tech")
     os.remove(f"{script_directory}/first_use.txt")
 
   else:
