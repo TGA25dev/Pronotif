@@ -54,6 +54,7 @@ limiter = Limiter(
     storage_uri=f"redis://{os.getenv('REDIS_HOST')}:{int(os.getenv('LIMITER_PORT'))}"
 )
 
+initialized = False
 
 @app.errorhandler(500)
 def internal_error(error):
@@ -212,8 +213,12 @@ def start_background_tasks():
     session_cleanup_thread = threading.Thread(target=cleanup_auth_sessions, daemon=True)
     session_cleanup_thread.start()
 
-#App Endpoints
+@app.before_request
+def initialize():
+    global initialized
+    if not initialized:
+        start_background_tasks()
+        initialized = True
 
 if __name__ == '__main__':
-    start_background_tasks()
     app.run(host=os.getenv('HOST'), port=os.getenv('MAIN_PORT'))
