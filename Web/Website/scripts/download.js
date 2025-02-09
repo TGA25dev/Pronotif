@@ -239,120 +239,97 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// Language handeling
+// Language handling
+let translations = {};
+let currentLang = localStorage.getItem('language') || 'fr'; // Changed from 'lang' to 'language'
 
-const translations = {
-    // French
-    'fr': {
-        'title': "Installer Pronot'if",
-        'subtitle': "Vous y êtes presque !",
-        'setup': "Pronot'if Setup",
-        'setup_desc': "Le logiciel sur PC pour vous inscrire sur Pronot'if.",
-        'store': "Microsoft Store",
-        'store_desc': "Installation simple et sécurisée via le Store",
-        'direct': "Téléchargement Direct",
-        'direct_desc': "Téléchargez directement le fichier d'installation",
-        'step2': "Pronot'if Mobile",
-        'step2_desc': "Une fois la configuration effectuée, installez l'application mobile.",
-        'platform_btn_badge': "Prochainement...",
-        'toggle_btn': "Change language",
-        'back_home': "← Retour à l'accueil",
-
-        // Ios
-        'ios_step1': "Appuyez sur l'icône de partage",
-        'ios_step2': "Sélectionnez \"Sur l'écran d'accueil\"",
-        'ios_step3': "Appuyez sur \"Ajouter\"",
-        'ios_step4': "C'est tout ! ✨",
-        'ios_final': "Ouvrez ensuite l'appli 'Pronot'if'.",
-
-        // Android
-        'android_step1': "Appuyez sur le bouton \"Installer maintenant\" ci-dessous",
-        'android_step2': "Dans la fenêtre qui s'affiche, appuyez sur \"Installer\"",
-        'android_step3': "C'est tout ! ✨",
-        'android_final': "Ouvrez ensuite l'appli 'Pronot'if'.",
-        'install_button': "Installer maintenant",
-
-        // Pc
-        'device-info': "L'application est conçue pour les appareils mobiles.",
-        'device-info2': "Revenez sur cette page depuis votre téléphone !",
-
-        // Success message
-        'success-message': "Installation réussie !",
-        'success-message2': "Merci d'avoir installé l'application ! 🎉",
-        'success-message3': "Vous pouvez maintenant fermer cette fenêtre.",
-
-        // Warning message
-        'warning_title': "Attention",
-        'warning_message': "L'application peut être signalée comme suspecte par votre antivirus car elle n'est pas encore certifiée. C'est normal et vous pouvez l'installer en toute confiance.",
-        'warning_message2': "Le code source est disponible publiquement sur GitHub",
-        'confirm_btn': "D'accord, je comprends"
-    },
-
-    // English
-    'en': {
-        'title': "Install Pronot'if",
-        'subtitle': "You're almost there!",
-        'setup': "Pronot'if Setup",
-        'setup_desc': "The PC software to register for Pronot'if.",
-        'store': "Microsoft Store",
-        'store_desc': "Simple and secure installation via the Store",
-        'direct': "Direct Download",
-        'direct_desc': "Download the installation file directly",
-        'step2': "Pronot'if Mobile",
-        'step2_desc': "Once setup is complete, install the mobile app.",
-        'platform_btn_badge': "Coming soon...",
-        'toggle_btn': "Changer la langue",
-        'back_home': "← Back to home",
-
-        // Ios
-        'ios_step1': "Tap the share icon",
-        'ios_step2': "Select \"Add to Home Screen\"",
-        'ios_step3': "Tap \"Add\"",
-        'ios_step4': "That's it! ✨",
-        'ios_final': "Then open the 'Pronot'if' app.",
-
-        // Android
-        'android_step1': "Tap the \"Install now\" button below",
-        'android_step2': "In the popup that appears, tap \"Install\"",
-        'android_step3': "That's it! ✨",
-        'android_final': "Then open the 'Pronot'if' app.",
-        'install_button': "Install now",
-
-        // Pc
-        'device-info': "The app is designed for mobile devices.",
-        'device-info2': "Return to this page from your phone!",
-
-        // Success message
-        'success-message': "Installation successful!",
-        'success-message2': "Thank you for installing the app! 🎉",
-        'success-message3': "You can now close this window.",
-
-        // Warning message
-        'warning_title': "Warning",
-        'warning_message': "The app may be flagged as suspicious by your antivirus because it is not yet certified. This is normal and you can safely install it.",
-        'warning_message2': "The source code is publicly available on GitHub",
-        'confirm_btn': "I understand"
+async function loadTranslations(lang) {
+    try {
+        const response = await fetch(`langs/${lang}.json`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        translations[lang] = await response.json();
+        return translations[lang];
+    } catch (error) {
+        console.error('Error loading translations:', error);
+        return null;
     }
-};
-
-let currentLang = localStorage.getItem('lang') || 'fr';
-
-document.addEventListener("DOMContentLoaded", () => {
-    updateLanguage();
-});
-
-function toggleLanguage() {
-    currentLang = currentLang === 'fr' ? 'en' : 'fr';
-    localStorage.setItem('lang', currentLang);
-    updateLanguage();
 }
 
-function updateLanguage() {
-    const lang = translations[currentLang];
+async function updateLanguage(lang) {
+    if (!translations[lang]) {
+        const newTranslations = await loadTranslations(lang);
+        if (!newTranslations) return;
+    }
+    
+    const currentTranslations = translations[lang];
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
-        if (lang[key]) {
-            el.innerText = lang[key];
+        if (currentTranslations && currentTranslations[key]) {
+            if (el.tagName.toLowerCase() === 'input' && el.type === 'submit') {
+                el.value = currentTranslations[key];
+            } else {
+                el.textContent = currentTranslations[key];
+            }
         }
     });
 }
+
+// Remove old toggleLanguage function since we're using the dropdown now
+
+// Language switcher functionality
+const languageToggle = document.querySelector('.language-toggle');
+const languageDropdown = document.querySelector('.language-dropdown');
+const languageOptions = document.querySelectorAll('.language-option');
+const activeLang = document.querySelector('.active-lang');
+
+function updateSelectedLanguage(lang) {
+    document.querySelectorAll('.language-option').forEach(option => {
+        if (option.dataset.lang === lang) {
+            option.classList.add('selected');
+        } else {
+            option.classList.remove('selected');
+        }
+    });
+    activeLang.textContent = lang.toUpperCase();
+}
+
+languageToggle?.addEventListener('click', () => {
+    languageDropdown.classList.toggle('show');
+});
+
+languageOptions?.forEach(option => {
+    option.addEventListener('click', async () => {
+        const lang = option.dataset.lang;
+        
+        document.documentElement.lang = lang;
+        localStorage.setItem('language', lang);
+        currentLang = lang;
+        
+        await updateLanguage(lang);
+        updateSelectedLanguage(lang);
+        
+        setTimeout(() => {
+            languageDropdown.classList.remove('show');
+        }, 150);
+    });
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.language-switcher')) {
+        languageDropdown?.classList.remove('show');
+    }
+});
+
+// Initialize language on page load
+document.addEventListener("DOMContentLoaded", async () => {
+    const savedLanguage = localStorage.getItem('language') || 'fr';
+    document.documentElement.lang = savedLanguage;
+    if (activeLang) {
+        activeLang.textContent = savedLanguage.toUpperCase();
+        updateSelectedLanguage(savedLanguage);
+    }
+    await updateLanguage(savedLanguage);
+    
+    // ...rest of existing DOMContentLoaded code...
+});

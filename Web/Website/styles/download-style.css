@@ -453,33 +453,114 @@ body {
     background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
 }
 
-.lang-btn {
+.language-switcher {
     position: fixed;
-    bottom: 15px;
-    right: 15px;
-    padding: 6px 12px;
-    font-size: 0.9em;
-    background: var(--button-primary);
-    color: var(--text-light);
-    border: 2px solid var(--button-primary);
-    border-radius: 12px;
-    cursor: pointer;
+    bottom: 20px;
+    right: 20px;
     z-index: 1000;
-    transition: background 0.2s ease-in-out, transform 0.2s ease-in-out;
+    width: auto;
+    font-family: 'FixelVariable', sans-serif;
+}
+
+.language-toggle {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 8px 16px;
+    border-radius: 50px;
+    cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.language-toggle:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.active-lang {
     font-weight: 500;
+    font-size: 14px;
 }
 
-.lang-btn::before {
-    content: '🌐';
-    font-size: 1.1em;
+.globe-icon {
+    fill: currentColor;
 }
 
-.lang-btn:hover {
-    background: var(--button-hover);
-    transform: scale(1.05);
+.language-dropdown {
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 8px;
+    display: none;
+    min-width: 150px;
+}
+
+.language-dropdown.show {
+    display: block;
+    animation: fadeIn 0.2s ease;
+}
+
+.language-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.language-option:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.lang-text {
+    font-size: 14px;
+}
+
+.lang-code {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+.lang-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.checkmark {
+    fill: currentColor;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.2s ease;
+}
+
+.language-option.selected .checkmark {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.language-option:not(.selected) .checkmark {
+    display: none;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .platform-btn {
@@ -1080,7 +1161,7 @@ body {
     z-index: 9999;
     left: 0;
     top: 0;
-    width: 100%;
+    width: 120%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(5px);
@@ -1233,7 +1314,7 @@ body.modal-open {
     transform: scale(1.1);
 }
 
-/* Responsive Design System */
+/* Responsive Design */
 @media screen and (max-width: 768px) {
     .bento-container {
         padding: 1rem;
@@ -1275,13 +1356,6 @@ body.modal-open {
 
     .steps-container {
         padding-left: 50px;
-    }
-
-    .lang-btn {
-        bottom: 15px;
-        right: 15px;
-        padding: 10px 20px;
-        font-size: 0.85em;
     }
 
     .platform-buttons {

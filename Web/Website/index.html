@@ -10,57 +10,103 @@
         <link rel="stylesheet" href="https://fonts.macpaw.com/css?family=FixelVariable&family=FixelVariable@italic">
     </head>
     <body>
+        <div class="language-switcher">
+            <div class="language-toggle">
+                <span class="active-lang">FR</span>
+                <svg class="globe-icon" viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                </svg>
+            </div>
+            <div class="language-dropdown">
+                <div class="language-option" data-lang="fr">
+                    <div class="lang-info">
+                        <span class="lang-text">Français</span>
+                        <span class="lang-code">FR</span>
+                    </div>
+                    <svg class="checkmark" viewBox="0 0 24 24" width="16" height="16">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                    </svg>
+                </div>
+                <div class="language-option" data-lang="en">
+                    <div class="lang-info">
+                        <span class="lang-text">English</span>
+                        <span class="lang-code">EN</span>
+                    </div>
+                    <svg class="checkmark" viewBox="0 0 24 24" width="16" height="16">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                    </svg>
+                </div>
+                <div class="language-option" data-lang="es">
+                    <div class="lang-info">
+                        <span class="lang-text">Español</span>
+                        <span class="lang-code">ES</span>
+                    </div>
+                    <svg class="checkmark" viewBox="0 0 24 24" width="16" height="16">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
         <div class="bento-container">
             <div class="bento-box main-title-box">
                 <div class="title-content">
                     <div class="carousel-container">
-                        <h1 class="carousel-text">On est en quelle salle ?</h1>
-                        <h1 class="carousel-text">Le cours est annulé ?</h1>
-                        <h1 class="carousel-text">On mange quoi ce midi ?</h1>
-                        <h1 class="carousel-text">J'ai fini mes devoirs pour demain ?</h1>
-                        <h1 class="carousel-text">On a cours de Français là ?</h1>
+                        <h1 class="carousel-text" data-i18n="carousel-text1">On est en quelle salle ?</h1>
+                        <h1 class="carousel-text" data-i18n="carousel-text2">Le cours est annulé ?</h1>
+                        <h1 class="carousel-text" data-i18n="carousel-text3">On mange quoi ce midi ?</h1>
+                        <h1 class="carousel-text" data-i18n="carousel-text4">J'ai fini mes devoirs ?</h1>
+                        <h1 class="carousel-text" data-i18n="carousel-text5">On a cours de Français là ?</h1>
                     </div>
-                    <p>Toutes les réponses à ces questions avec Pronot'if !</p>
+                    <p data-i18n="carousel-subtitle">Toutes les réponses à ces questions avec Pronot'if !</p>
                 </div>
-                <p class="footer-text">En continuant vous acceptez les <b><a href="https://safety.pronotif.tech/docs/terms-of-service">conditions d'utilisation</a></b> et la <b><a href="https://safety.pronotif.tech/docs/politique-de-confidentialite">politique de confidentialité</a></b>.</p>
+                <p class="footer-text">
+                    <span data-i18n="conditions-text-start">En continuant vous acceptez les</span>
+                    <b><a href="https://safety.pronotif.tech/docs/terms-of-service" data-i18n="terms-link">conditions d'utilisation</a></b>
+                    <span data-i18n="conditions-text-and">et</span>
+                    <b><a href="https://safety.pronotif.tech/docs/politique-de-confidentialite" data-i18n="privacy-link">la politique de confidentialité</a></b>.
+                </p>
             </div>
 
             <div class="bento-box download-box">
                 <div>
-                    <h2>Installer Pronot'if</h2>
-                    <p>Une notification avant chaque cours, quoi de plus simple ?</p>
+                    <h2 data-i18n="download-box-title">Installer Pronot'if</h2>
+                    <p data-i18n="download-box-desc">Une notification avant chaque cours, quoi de plus simple ?</p>
                 </div>
-                <button class="download-btn" data-href="download_page">C'est parti !</button>
+                <button data-i18n="download-box-btn" class="download-btn" data-href="download_page">C'est parti !</button>
             </div>
 
             <div class="bento-box learn-more-box">
-                <h2>En savoir +</h2>
-                <p>Vous voulez plus d'infos sur le fonctionnement de Pronot'if, l'équipe, vos données ?</p>
+                <h2 data-i18n="learn-more-box-title">En savoir +</h2>
+                <p data-i18n="learn-more-box-desc">Vous voulez plus d'infos sur le fonctionnement de Pronot'if, l'équipe, vos données ?</p>
                 <img src="https://drive.pronotif.tech/u/OWcDuT.png" alt="En savoir plus">
-                <button class="learn-more-btn" id="discoverBtn">Découvrir Pronot'if</button>
+                <button data-i18n="learn-more-box-btn" class="learn-more-btn" id="discoverBtn">Découvrir Pronot'if</button>
             </div>
 
             <div class="bento-box main-feature-box">
-                <h2>Notifications en direct</h2>
-                <p>Recevez une notification avant chaque cours pour ne plus jamais être en retard.</p>
+                <h2 data-i18n="main-feature-title">Notifications en direct</h2>
+                <p data-i18n="main-feature-desc">Recevez une notification avant chaque cours pour ne plus jamais être en retard.</p>
                 <img src="https://drive.pronotif.tech/u/wc9nsB.png" alt="Notification devoirs" width="500">
             </div>
 
             <div class="bento-box secondary-feature-box">
-                <h2>Rappels utiles</h2>
-                <p>Pronot'if vous rappelle de faire vos devoirs pour le lendemain.</p>
+                <h2 data-i18n="secondary-feature-title">Rappels utiles</h2>
+                <p data-i18n="secondary-feature-desc">Pronot'if vous rappelle de faire vos devoirs pour le lendemain.</p>
                 <img src="../homework.png" alt="Notification devoirs">
             </div>
 
             <div class="bento-box support-project-box">
                 <div>
-                    <h2>Vous voulez aider ?</h2>
-                    <p>Participez à l'amélioration de Pronot'if en faisant un don ou en contribuant sur GitHub !</p>
-                </div> <button class="support-project-btn" data-href="support_page">Soutenir le projet</button>
+                    <h2 data-i18n="support-project-title">Vous voulez aider ?</h2>
+                    <p data-i18n="support-project-desc">Participez à l'amélioration de Pronot'if en faisant un don ou en contribuant sur GitHub !</p>
+                </div> <button data-i18n="support-project-btn" class="support-project-btn" data-href="support_page">Soutenir le projet</button>
             </div>
 
             <div class="bento-box footer-box">
-                <p>&copy; 2025 Pronot'if.<br>Le code de ce site est open-source.</p>
+                <p>
+                    <span class="copyright">© 2025 Pronot'if</span>
+                    <br>
+                    <span class="footer-text" data-i18n="footer"></span>
+                </p>
                 <a href="https://github.com/TGA25dev/Pronotif" target="_blank" aria-label="GitHub Repository" class="github-link">
                     <svg class="github-icon" viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
                         <path d="M12 0.5C5.6 0.5 0.5 5.6 0.5 12c0 5.1 3.3 9.4 7.9 10.9 0.6 0.1 0.9-0.3 0.9-0.7v-2.6c-3.4 0.7-4.1-1.4-4.1-1.4-0.5-1.2-1.1-1.6-1.1-1.6-0.9-0.6 0.1-0.6 0.1-0.6 1 0.1 1.5 1 1.5 1 0.9 1.5 2.4 1.1 3 0.8 0.1-0.6 0.4-1.1 0.7-1.4-2.7-0.3-5.5-1.3-5.5-5.8 0-1.3 0.5-2.4 1.2-3.3-0.1-0.3-0.5-1.5 0.1-3 0 0 1-0.3 3.3 1.2 1-0.3 2.1-0.4 3.2-0.4 1.1 0 2.2 0.1 3.2 0.4 2.3-1.5 3.3-1.2 3.3-1.2 0.6 1.5 0.2 2.7 0.1 3 0.8 0.9 1.2 2 1.2 3.3 0 4.6-2.8 5.5-5.5 5.8 0.4 0.3 0.7 1 0.7 2v3c0 0.4 0.3 0.8 0.9 0.7 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.6 18.4 0.5 12 0.5z"/>
@@ -71,9 +117,9 @@
         <div class="modal" id="comingSoonModal">
             <div class="modal-content">
                 <span class="close-modal">&times;</span>
-                <h2>🚧 En construction</h2>
-                <p>Cette page arrive bientôt...</p>
-                <button class="modal-btn">Compris !</button>
+                <h2 data-i18n="coming-soon-modal-title">🚧 En construction</h2>
+                <p data-i18n="coming-soon-modal-desc">Cette page arrive bientôt...</p>
+                <button data-i18n="coming-soon-modal-btn" class="modal-btn">Compris !</button>
             </div>
         </div>
         <script src="scripts/index.js?v0.1"></script>
