@@ -14,6 +14,12 @@
     --border-highlight: rgba(69, 168, 168, 0.2);
     --in-progress: #ffc107cc;
     --gradient-primary: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    --lang-background: rgba(69, 168, 168, 0.1);
+    --lang-button-bg: rgba(69, 168, 168, 0.15);
+    --lang-button-border: rgba(69, 168, 168, 0.2);
+    --lang-button-hover: rgba(69, 168, 168, 0.25);
+    --lang-dropdown-bg: var(--card-bg);
+    --lang-option-hover: rgba(69, 168, 168, 0.1);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -33,6 +39,13 @@
         --border-highlight: rgba(69, 168, 168, 0.3);
         --in-progress: #ffc10755;
         --gradient-primary: linear-gradient(135deg, #45a8a8 0%, #317878 100%);
+        --download-shadow: #20b2aa33;
+        --lang-background: #ffffff33;
+        --lang-button-bg: rgba(255, 255, 255, 0.1);
+        --lang-button-border: rgba(255, 255, 255, 0.1);
+        --lang-button-hover: rgba(255, 255, 255, 0.2);
+        --lang-dropdown-bg: rgba(0, 0, 0, 0.4);
+        --lang-option-hover: rgba(255, 255, 255, 0.1);
     }
 }
 
@@ -463,29 +476,22 @@ body {
 }
 
 .language-toggle {
-    background: rgba(255, 255, 255, 0.2);
+    font-weight: 500;
+    background: var(--lang-button-bg);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 8px 16px;
+    border: 1px solid var(--lang-button-border);
+    padding: 10px 22px;
     border-radius: 50px;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 8px;
     transition: all 0.3s ease;
+    color: var(--text);
 }
 
 .language-toggle:hover {
-    background: rgba(255, 255, 255, 0.3);
-}
-
-.active-lang {
-    font-weight: 500;
-    font-size: 14px;
-}
-
-.globe-icon {
-    fill: currentColor;
+    background: var(--lang-button-hover);
 }
 
 .language-dropdown {
@@ -493,9 +499,10 @@ body {
     bottom: 100%;
     right: 0;
     margin-bottom: 8px;
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--lang-dropdown-bg);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--lang-button-border);
+    box-shadow: 0 4px 15px var(--shadow);
     border-radius: 12px;
     padding: 8px;
     display: none;
@@ -518,7 +525,7 @@ body {
 }
 
 .language-option:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--lang-option-hover);
 }
 
 .lang-text {

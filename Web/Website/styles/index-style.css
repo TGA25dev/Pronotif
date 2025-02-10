@@ -18,6 +18,12 @@
     --download-gradient-start: #20B2AA;
     --download-gradient-end: #2A8B84;
     --download-shadow: rgba(32, 178, 171, 0.653);
+    --lang-background: rgba(69, 168, 168, 0.1);
+    --lang-button-bg: rgba(69, 168, 168, 0.15);
+    --lang-button-border: rgba(69, 168, 168, 0.2);
+    --lang-button-hover: rgba(69, 168, 168, 0.25);
+    --lang-dropdown-bg: var(--card-bg);
+    --lang-option-hover: rgba(69, 168, 168, 0.1);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -40,7 +46,13 @@
         --support-button-text: #e0e0e0;
         --download-gradient-start: #2A8B8480;
         --download-gradient-end: #20B2AA80;
-        --download-shadow: rgba(32, 178, 170, 0.2);
+        --download-shadow: #20b2aa33;
+        --lang-background: #ffffff33;
+        --lang-button-bg: rgba(255, 255, 255, 0.1);
+        --lang-button-border: rgba(255, 255, 255, 0.1);
+        --lang-button-hover: rgba(255, 255, 255, 0.2);
+        --lang-dropdown-bg: rgba(0, 0, 0, 0.4);
+        --lang-option-hover: rgba(255, 255, 255, 0.1);
     }
 }
 
@@ -519,29 +531,22 @@ a {
 }
 
 .language-toggle {
-    background: rgba(255, 255, 255, 0.2);
+    font-weight: 500;
+    background: var(--lang-button-bg);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 8px 16px;
+    border: 1px solid var(--lang-button-border);
+    padding: 10px 22px;
     border-radius: 50px;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 8px;
     transition: all 0.3s ease;
+    color: var(--text);
 }
 
 .language-toggle:hover {
-    background: rgba(255, 255, 255, 0.3);
-}
-
-.active-lang {
-    font-weight: 500;
-    font-size: 14px;
-}
-
-.globe-icon {
-    fill: currentColor;
+    background: var(--lang-button-hover);
 }
 
 .language-dropdown {
@@ -549,9 +554,10 @@ a {
     bottom: 100%;
     right: 0;
     margin-bottom: 8px;
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--lang-dropdown-bg);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--lang-button-border);
+    box-shadow: 0 4px 15px var(--shadow);
     border-radius: 12px;
     padding: 8px;
     display: none;
@@ -574,7 +580,7 @@ a {
 }
 
 .language-option:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--lang-option-hover);
 }
 
 .lang-text {
@@ -763,13 +769,6 @@ a {
         margin-bottom: 0.5rem;
     }
 
-    .lang-btn {
-        bottom: 15px;
-        right: 15px;
-        padding: 10px 20px;
-        font-size: 0.85em;
-    }
-
     .modal-content {
         max-width: 300px;
         padding: 2rem;
@@ -850,11 +849,4 @@ a {
         background: var(--card-bg);
         border-top: 2px solid var(--shadow);
     }
-}
-
-/* Dark theme adjustments */
-[data-theme="dark"] .language-toggle,
-[data-theme="dark"] .language-dropdown {
-    background: rgba(0, 0, 0, 0.2);
-    border-color: rgba(255, 255, 255, 0.1);
 }
