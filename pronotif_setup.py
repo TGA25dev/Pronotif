@@ -235,7 +235,7 @@ def show_config_data_qr_code():
     response = requests.post("https://api.pronotif.tech/v1/setup/session")
     if response.status_code == 200:
       session_id = response.json()["session_id"]
-      token = session_id = response.json()["token"]
+      token = response.json()["token"]
       logger.debug(f"New session created with ID: {session_id}")
     else:
       logger.error(f"Failed to create session. Status code: {response.status_code}")
@@ -268,21 +268,21 @@ def show_config_data_qr_code():
       "session_id": str(session_id),
       "token": str(token),
       "login_page_link": str(config_data.pronote_url),
-      "username": str(config_data.user_username),
-      "password": str(config_data.user_password),
+      "student_username": str(config_data.user_username),
+      "student_password": str(config_data.user_password),
       "student_fullname": str(config_data.student_fullname),
       "student_firstname": str(config_data.student_firstname),
       "student_class": str(config_data.student_class_name),
-      "ent_used": str(config_data.ent_connexion),
-      "qr_code_login": str(config_data.qr_code_login),
+      "ent_used": "1" if config_data.ent_connexion else "0",
+      "qr_code_login": "1" if config_data.qr_code_login else "0",
       "uuid": str(config_data.uuid),
-      "topic": str(config_data.topic_name),
+      "topic_name": str(config_data.topic_name),
       "timezone": str(config_data.selected_timezone),
       "notification_delay": str(config_data.notification_delay),
       "lunch_times": str(config_data.lunch_times),
-      "evening_menu": str(config_data.evening_menu),
-      "unfinished_homework_reminder": str(config_data.unfinished_homework_reminder),
-      "get_bag_ready_reminder": str(config_data.get_bag_ready_reminder),
+      "evening_menu": "1" if config_data.evening_menu else "0",
+      "unfinished_homework_reminder": "1" if config_data.unfinished_homework_reminder else "0",
+      "get_bag_ready_reminder": "1" if config_data.get_bag_ready_reminder else "0"
     }
     qr_config_data_json = json.dumps(qr_config_data)
 
