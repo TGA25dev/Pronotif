@@ -40,26 +40,36 @@ document.addEventListener('DOMContentLoaded', () => {
     adjustFontSize();
     window.addEventListener('resize', adjustFontSize);
 
-    document.getElementById('discoverBtn').addEventListener('click', () => {
-        const modal = document.getElementById('comingSoonModal');
-        modal.classList.add('show');
-    });
+    const discoverBtn = document.getElementById('discoverBtn');
+    const comingSoonModal = document.getElementById('comingSoonModal');
+    const closeModal = document.querySelector('.close-modal');
+    const modalBtn = document.querySelector('.modal-btn');
 
-    document.querySelector('.close-modal').addEventListener('click', () => {
-        const modal = document.getElementById('comingSoonModal');
-        modal.classList.remove('show');
-    });
+    if (discoverBtn && comingSoonModal) {
+        discoverBtn.addEventListener('click', () => {
+            comingSoonModal.classList.add('show');
+        });
+    }
 
-    document.querySelector('.modal-btn').addEventListener('click', () => {
-        const modal = document.getElementById('comingSoonModal');
-        modal.classList.remove('show');
-    });
+    if (closeModal && comingSoonModal) {
+        closeModal.addEventListener('click', () => {
+            comingSoonModal.classList.remove('show');
+        });
+    }
 
-    document.getElementById('comingSoonModal').addEventListener('click', (e) => {
-        if (e.target === document.getElementById('comingSoonModal')) {
-            e.target.classList.remove('show');
-        }
-    });
+    if (modalBtn && comingSoonModal) {
+        modalBtn.addEventListener('click', () => {
+            comingSoonModal.classList.remove('show');
+        });
+    }
+
+    if (comingSoonModal) {
+        comingSoonModal.addEventListener('click', (e) => {
+            if (e.target === comingSoonModal) {
+                e.target.classList.remove('show');
+            }
+        });
+    }
 });
 
 // Language handling
@@ -118,29 +128,35 @@ const languageDropdown = document.querySelector('.language-dropdown');
 const languageOptions = document.querySelectorAll('.language-option');
 const activeLang = document.querySelector('.active-lang');
 
-languageToggle.addEventListener('click', () => {
-    languageDropdown.classList.toggle('show');
-});
-
-languageOptions.forEach(option => {
-    option.addEventListener('click', async () => {
-        const lang = option.dataset.lang;
-        
-        // Change language
-        document.documentElement.lang = lang;
-        localStorage.setItem('language', lang);
-        currentLang = lang;
-        
-        // Update UI
-        await updateLanguage(lang);
-        updateSelectedLanguage(lang);
-        
-        // Hide dropdown with a small delay
-        setTimeout(() => {
-            languageDropdown.classList.remove('show');
-        }, 150);
+if (languageToggle && languageDropdown) {
+    languageToggle.addEventListener('click', () => {
+        languageDropdown.classList.toggle('show');
     });
-});
+}
+
+if (languageOptions) {
+    languageOptions.forEach(option => {
+        option.addEventListener('click', async () => {
+            const lang = option.dataset.lang;
+            
+            // Change language
+            document.documentElement.lang = lang;
+            localStorage.setItem('language', lang);
+            currentLang = lang;
+            
+            // Update UI
+            await updateLanguage(lang);
+            updateSelectedLanguage(lang);
+            
+            // Hide dropdown with a small delay
+            setTimeout(() => {
+                if (languageDropdown) {
+                    languageDropdown.classList.remove('show');
+                }
+            }, 150);
+        });
+    });
+}
 
 // Close dropdown when clicking outside
 document.addEventListener('click', (e) => {
