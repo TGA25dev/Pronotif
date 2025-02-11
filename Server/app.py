@@ -17,21 +17,50 @@ import bleach
 import json
 from flask_cors import CORS
 from flask_talisman import Talisman
+import hashlib
 
 load_dotenv()
 
+def validate_env_vars():
+    required_vars = {
+        'DB_HOST': str,
+        'DB_USER': str,
+        'DB_PASSWORD': str,
+        'DB_NAME': str,
+        'REDIS_HOST': str,
+        'REDIS_PORT': int,
+        'CORS_ORIGINS': str,
+        'SESSION_EXPIRY_M': int,
+        'SESSION_EXPIRY_S': int
+    }
+    
+    for var, type_ in required_vars.items():
+        value = os.getenv(var)
+        if not value:
+            raise ValueError(f"Missing required environment variable: {var}")
+        try:
+            type_(value)
+        except ValueError:
+            raise ValueError(f"Invalid type for {var}, expected {type_.__name__}")
+
+try:
+    validate_env_vars()
+except ValueError as e:
+    print(f"Environment validation failed: {e}")
+    exit(1)
+
 app = Flask(__name__)
 # Parse CORS settings
-cors_origins = os.getenv('CORS_ORIGINS').split(', ')
-cors_methods = os.getenv('CORS_METHODS').split(', ')
-cors_headers = os.getenv('CORS_HEADERS').split(', ')
-cors_credentials = os.getenv('CORS_CREDENTIALS').lower() == 'true'
+cors_origins = [origin.strip() for origin in os.getenv('CORS_ORIGINS', '').split(',')]
+cors_methods = [method.strip() for method in os.getenv('CORS_METHODS', '').split(',')]
+cors_headers = [header.strip() for header in os.getenv('CORS_HEADERS', '').split(',')]
+cors_credentials = os.getenv('CORS_CREDENTIALS', 'false').lower() == 'true'
 
 CORS(app, 
      resources={r"/*": {
          "origins": cors_origins,
          "methods": cors_methods,
-         "allow_headers": cors_headers,
+         "headers": cors_headers,
          "supports_credentials": cors_credentials
      }}
 )
@@ -203,25 +232,55 @@ def generate_session():
 
 def validate_lunch_times(lunch_times):
     expected_days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-    time_format = '%H:%M'
     
-    if not isinstance(lunch_times, dict):
-        return False
+    logger.debug(f"Validating lunch_times: {lunch_times}")
     
-    if set(lunch_times.keys()) != set(expected_days):
-        return False
-        
-    try:
-        for time_str in lunch_times.values():
-            datetime.strptime(time_str, time_format)
-        return True
-    except ValueError:
-        return False
+    # Handle the exact string format being received
+    if isinstance(lunch_times, str):
+        try:
+            # First, evaluate the string to convert None to null
+            lunch_times = lunch_times.replace("None", "null")
+            lunch_times = lunch_times.replace("'", '"')
+            lunch_times_dict = json.loads(lunch_times)
+            logger.debug(f"Parsed lunch_times to: {lunch_times_dict}")
+            return isinstance(lunch_times_dict, dict) and all(day in lunch_times_dict for day in expected_days)
+        except Exception as e:
+            logger.error(f"Failed to parse lunch_times: {e}")
+            return False
+    
+    return False
+
+def generate_user_hash(payload):
+    """Generate a unique hash for user identification"""
+    # Combine critical fields that identify a unique user
+    unique_string = f"{payload['login_page_link']}:{payload['student_username']}:{payload['student_class']}:{payload['student_fullname']}"
+    return hashlib.sha256(unique_string.encode()).hexdigest()
+
+def deactivate_previous_registrations(cursor, user_hash):
+    """Deactivate any existing registrations for this user"""
+    update_query = f"""
+        UPDATE {student_table_name}
+        SET is_active = FALSE
+        WHERE user_hash = %s AND is_active = TRUE
+    """
+    cursor.execute(update_query, (user_hash,))
 
 @app.route("/v1/app/qrscan", methods=["POST", "HEAD"])
-@limiter.limit(str(os.getenv('SESSION_SETUP_LIMIT')) + " per minute")
+@limiter.limit(str(os.getenv('QR_CODE_SCAN_LIMIT')) + " per minute")
 def process_qr_code():
-    
+
+    if request.method == "OPTIONS":  # Handle preflight request
+        response = jsonify({"message": "CORS preflight successful"})
+        response.headers["Access-Control-Allow-Origin"] = "*"  # Your frontend domain
+        response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        return response
+
+    # Handling actual POST request
+    if not request.is_json:
+        return jsonify({"error": "Content-Type must be application/json"}), 400
+
     if request.method == "HEAD":
         return jsonify({"message": ""}), 200
         
@@ -234,7 +293,7 @@ def process_qr_code():
         if not data:
             return jsonify({"error": "Missing request data"}), 400
 
-        # Define required fields
+        # Define required fields in the new QR payload
         required_fields = [
             "session_id", "token", "login_page_link", "student_username", "student_password",
             "student_fullname", "student_firstname", "student_class",
@@ -243,21 +302,21 @@ def process_qr_code():
             "unfinished_homework_reminder", "get_bag_ready_reminder"
         ]
         
-        # Validate all string fields
+        # First validate all string fields
         for field in required_fields:
             if field not in data:
                 return jsonify({"error": f"Missing {field}"}), 400
             if not isinstance(data[field], str):
                 return jsonify({"error": f"Invalid {field} type, expected string"}), 400
 
-        # Validate lunch_times
+        # Validate lunch_times separately
         if 'lunch_times' not in data:
             return jsonify({"error": "Missing lunch_times"}), 400
         
         if not validate_lunch_times(data['lunch_times']):
             return jsonify({"error": "Invalid lunch_times format"}), 400
 
-        # Rate limit per session
+        # Rate limit per session remains
         rate_key = f"qrscan_rate:{data['session_id']}"
         if redis_connection.exists(rate_key):
             return jsonify({"error": "Too many attempts for this session"}), 429
@@ -273,34 +332,56 @@ def process_qr_code():
         for key in required_fields:
             sanitized_payload[key] = bleach.clean(data[key])
         
-        # Handle lunch times
-        sanitized_payload['monday_lunch'] = bleach.clean(data['lunch_times']['Monday'])
-        sanitized_payload['tuesday_lunch'] = bleach.clean(data['lunch_times']['Tuesday'])
-        sanitized_payload['wednesday_lunch'] = bleach.clean(data['lunch_times']['Wednesday'])
-        sanitized_payload['thursday_lunch'] = bleach.clean(data['lunch_times']['Thursday'])
-        sanitized_payload['friday_lunch'] = bleach.clean(data['lunch_times']['Friday'])
+        # Parse lunch_times from string to dict
+        try:
+            lunch_times = data['lunch_times'].replace("None", "null")
+            lunch_times = lunch_times.replace("'", '"')
+            lunch_times_dict = json.loads(lunch_times)
+            
+            # Sanitize lunch times - handle null/None values
+            for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']:
+                day_key = day.lower() + '_lunch'
+                value = lunch_times_dict.get(day)
+                sanitized_payload[day_key] = bleach.clean(str(value)) if value is not None else None
+
+        except Exception as e:
+            logger.error(f"Error processing lunch_times: {e}")
+            return jsonify({"error": "Invalid lunch_times format"}), 400
 
         logger.debug(sanitized_payload)
 
-        # Store the data
+        app_session_id = secrets.token_urlsafe(16)
+        app_token = secrets.token_urlsafe(32)
+
+        # Generate user hash
+        user_hash = generate_user_hash(sanitized_payload)
+
+        timestamp = datetime.now()
+
+        # Store the data in the student table
         connection = connection_pool.get_connection()
         cursor = connection.cursor()
         try:
+            # Deactivate previous registrations
+            deactivate_previous_registrations(cursor, user_hash)
+
             insert_query = f"""
                 INSERT INTO {student_table_name} (
-                    session_id, login_page_link, student_username, student_password,
+                    app_session_id, app_token, login_page_link, student_username, student_password,
                     student_fullname, student_firstname, student_class,
                     ent_used, qr_code_login, uuid, topic_name, timezone,
                     notification_delay, evening_menu,
                     unfinished_homework_reminder, get_bag_ready_reminder,
-                    monday_lunch, tuesday_lunch, wednesday_lunch, thursday_lunch, friday_lunch
+                    monday_lunch, tuesday_lunch, wednesday_lunch, thursday_lunch, friday_lunch,
+                    user_hash, is_active, timestamp
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
                 )
             """
             
             cursor.execute(insert_query, (
-                sanitized_payload['session_id'],
+                app_session_id,
+                app_token,
                 sanitized_payload['login_page_link'],
                 sanitized_payload['student_username'],
                 sanitized_payload['student_password'],
@@ -320,11 +401,13 @@ def process_qr_code():
                 sanitized_payload['tuesday_lunch'],
                 sanitized_payload['wednesday_lunch'],
                 sanitized_payload['thursday_lunch'],
-                sanitized_payload['friday_lunch']
+                sanitized_payload['friday_lunch'],
+                user_hash,
+                1,  # is_active as integer 1 instead of TRUE
+                timestamp
             ))
-            connection.commit()
 
-            # Mark the session as used
+            # Mark the session as used in auth table
             update_query = f"UPDATE {auth_table_name} SET used = TRUE WHERE session_id = %s"
             cursor.execute(update_query, (sanitized_payload['session_id'],))
             connection.commit()
@@ -383,9 +466,44 @@ def cleanup_auth_sessions():
                 connection.close()
             time.sleep(600)
 
+def cleanup_inactive_students():
+    while True:
+        try:
+            connection = connection_pool.get_connection()
+            cursor = connection.cursor()
+
+            # Delete inactive student records
+            delete_query = f"""
+                DELETE FROM {student_table_name} 
+                WHERE is_active = 0
+            """
+            
+            cursor.execute(delete_query)
+            deleted_count = cursor.rowcount
+            
+            if deleted_count > 0:
+                connection.commit()
+                logger.info(f"Cleaned up {deleted_count} inactive student records")
+            
+        except mysql.connector.Error as err:
+            logger.error(f"MySQL error in student cleanup task: {err}")
+
+        except Exception as e:
+            logger.error(f"Unexpected error in student cleanup task: {e}")
+
+        finally:
+            if 'cursor' in locals():
+                cursor.close()
+            if 'connection' in locals():
+                connection.close()
+            time.sleep(3600)  # Run every hour
+
 def start_background_tasks():
     session_cleanup_thread = threading.Thread(target=cleanup_auth_sessions, daemon=True)
+    student_cleanup_thread = threading.Thread(target=cleanup_inactive_students, daemon=True)
+    
     session_cleanup_thread.start()
+    student_cleanup_thread.start()
 
 @app.before_request
 def initialize():
