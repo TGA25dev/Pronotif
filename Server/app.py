@@ -18,6 +18,15 @@ import json
 from flask_cors import CORS
 from flask_talisman import Talisman
 import hashlib
+import sentry_sdk
+
+version = "v0.7"
+sentry_sdk.init("https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992", 
+                enable_tracing=True,
+                traces_sample_rate=1.0,
+                environment="production",
+                release=version,
+                server_name="Server")
 
 load_dotenv()
 
@@ -114,12 +123,18 @@ initialized = False
 
 @app.errorhandler(500)
 def internal_error(error):
+    sentry_sdk.capture_exception(error)
     logger.critical(f"Internal Server Error: {error}")
     return jsonify({'error': 'An internal error occurred'}), 500
 
 
 @app.errorhandler(429)
 def ratelimit_error(error):
+    sentry_sdk.set_context("rate_limit", {
+        "ip": request.remote_addr,
+        "endpoint": request.endpoint
+    })
+    sentry_sdk.capture_message("Rate limit exceeded", level="warning")
     logger.warning(f"Rate limit exceeded: {error}")
     return jsonify({'error': 'Rate limit exceeded'}), 429
 
@@ -169,66 +184,71 @@ def get_visibility_state():
 @app.route("/v1/setup/session", methods=["POST", "HEAD"])
 @limiter.limit(str(os.getenv('SESSION_SETUP_LIMIT')) + " per minute")
 def generate_session():
-    if request.method == "HEAD":
-        return jsonify({"message": ""}), 200
-    try:
-        # Generate session ID and a temporary token
-        session_id = secrets.token_urlsafe(16)
-        token = secrets.token_urlsafe(32)
-        
-        current_time = datetime.now()
-        expiry_minutes = int(os.getenv('SESSION_EXPIRY_M'))
-        expiry_seconds = int(os.getenv('SESSION_EXPIRY_S'))
-
-        data = {
-            "session_id": session_id,
-            "token": token,
-            "created_at": current_time,
-            "expires_at": current_time + timedelta(minutes=expiry_minutes),
-            "used": False,
-        }
-
-        # Store the session in Redis
+    with sentry_sdk.start_transaction(op="http.server", name="generate_session"):
+        if request.method == "HEAD":
+            return jsonify({"message": ""}), 200
         try:
-            redis_connection.setex(
-                f"session:{session_id}",
-                expiry_seconds,
-                token
-            )
+            # Generate session ID and a temporary token
+            session_id = secrets.token_urlsafe(16)
+            token = secrets.token_urlsafe(32)
+            
+            current_time = datetime.now()
+            expiry_minutes = int(os.getenv('SESSION_EXPIRY_M'))
+            expiry_seconds = int(os.getenv('SESSION_EXPIRY_S'))
 
-        except redis.RedisError as e:
-            logger.error(f"Redis error: {e}")
-            return jsonify({"error": "Session storage failed"}), 500
+            data = {
+                "session_id": session_id,
+                "token": token,
+                "created_at": current_time,
+                "expires_at": current_time + timedelta(minutes=expiry_minutes),
+                "used": False,
+            }
 
-        # Store in DB
-        connection = connection_pool.get_connection()
-        cursor = connection.cursor()
-        try:
-            cursor.execute(
-                f"INSERT INTO {auth_table_name} (session_id, token, created_at, expires_at, used) VALUES (%s, %s, %s, %s, %s)",
-                (session_id, token, data['created_at'], data['expires_at'], data['used'])
-            )
-            connection.commit()
-            logger.info(f"Session created: {session_id}")
+            # Store the session in Redis
+            try:
+                with sentry_sdk.start_span(op="redis.set", description="Store session in Redis"):
+                    redis_connection.setex(
+                        f"session:{session_id}",
+                        expiry_seconds,
+                        token
+                    )
 
-        except mysql.connector.Error as err:
-            logger.error(f"MySQL error: {err}")
-            return jsonify({"error": "Operation failed"}), 500
-        
-        finally:
-            cursor.close()
-            connection.close()
+            except redis.RedisError as e:
+                logger.error(f"Redis error: {e}")
+                return jsonify({"error": "Session storage failed"}), 500
 
-        return jsonify({
-            "session_id": session_id,
-            "token": token,
-            "message": "Session generated successfully!",
-            "status": 200
-        })
+            # Store in DB
+            connection = connection_pool.get_connection()
+            cursor = connection.cursor()
+            try:
+                with sentry_sdk.start_span(op="db.query", description="Store session in MySQL"):
+                    cursor.execute(
+                        f"INSERT INTO {auth_table_name} (session_id, token, created_at, expires_at, used) VALUES (%s, %s, %s, %s, %s)",
+                        (session_id, token, data['created_at'], data['expires_at'], data['used'])
+                    )
+                    connection.commit()
+                    logger.info(f"Session created: {session_id}")
 
-    except Exception as e:
-        logger.error(f"Unexpected error in generate_session: {e}")
-        return jsonify({"error": "Internal server error"}), 500
+            except mysql.connector.Error as err:
+                sentry_sdk.capture_exception(err)
+                logger.error(f"MySQL error: {err}")
+                return jsonify({"error": "Operation failed"}), 500
+            
+            finally:
+                cursor.close()
+                connection.close()
+
+            return jsonify({
+                "session_id": session_id,
+                "token": token,
+                "message": "Session generated successfully!",
+                "status": 200
+            })
+
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            logger.error(f"Unexpected error in generate_session: {e}")
+            return jsonify({"error": "Internal server error"}), 500
 
 def validate_lunch_times(lunch_times):
     expected_days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
@@ -268,195 +288,190 @@ def deactivate_previous_registrations(cursor, user_hash):
 @app.route("/v1/app/qrscan", methods=["POST", "HEAD"])
 @limiter.limit(str(os.getenv('QR_CODE_SCAN_LIMIT')) + " per minute")
 def process_qr_code():
+    # Add transaction for this endpoint
+    with sentry_sdk.start_transaction(op="http.server", name="process_qr_code"):
+        if request.method == "HEAD":
+            return jsonify({"message": ""}), 200
 
-    if request.method == "OPTIONS":  # Handle preflight request
-        response = jsonify({"message": "CORS preflight successful"})
-        response.headers["Access-Control-Allow-Origin"] = "*"  # Your frontend domain
-        response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-        return response
+        if not request.is_json:
+            return jsonify({"error": "Content-Type must be application/json"}), 400
 
-    # Handling actual POST request
-    if not request.is_json:
-        return jsonify({"error": "Content-Type must be application/json"}), 400
-
-    if request.method == "HEAD":
-        return jsonify({"message": ""}), 200
-        
-    if not request.is_json:
-        return jsonify({"error": "Content-Type must be application/json"}), 400
-
-    try:
-        request.timeout = 30
-        data = request.get_json()
-        if not data:
-            return jsonify({"error": "Missing request data"}), 400
-
-        # Define required fields in the new QR payload
-        required_fields = [
-            "session_id", "token", "login_page_link", "student_username", "student_password",
-            "student_fullname", "student_firstname", "student_class",
-            "ent_used", "qr_code_login", "uuid", "topic_name", "timezone",
-            "notification_delay", "evening_menu",
-            "unfinished_homework_reminder", "get_bag_ready_reminder"
-        ]
-        
-        # First validate all string fields
-        for field in required_fields:
-            if field not in data:
-                return jsonify({"error": f"Missing {field}"}), 400
-            if not isinstance(data[field], str):
-                return jsonify({"error": f"Invalid {field} type, expected string"}), 400
-
-        # Validate lunch_times separately
-        if 'lunch_times' not in data:
-            return jsonify({"error": "Missing lunch_times"}), 400
-        
-        if not validate_lunch_times(data['lunch_times']):
-            return jsonify({"error": "Invalid lunch_times format"}), 400
-
-        # Rate limit per session remains
-        rate_key = f"qrscan_rate:{data['session_id']}"
-        if redis_connection.exists(rate_key):
-            return jsonify({"error": "Too many attempts for this session"}), 429
-        redis_connection.setex(rate_key, 60, 1)
-
-        # Validate session and token
-        stored_token = redis_connection.get(f"session:{data['session_id']}")
-        if not stored_token or stored_token.decode('utf-8') != data['token']:
-            return jsonify({"error": "Invalid or expired session"}), 401
-
-        # Sanitize all incoming string fields
-        sanitized_payload = {}
-        for key in required_fields:
-            sanitized_payload[key] = bleach.clean(data[key])
-        
-        # Parse lunch_times from string to dict
         try:
-            lunch_times = data['lunch_times'].replace("None", "null")
-            lunch_times = lunch_times.replace("'", '"')
-            lunch_times_dict = json.loads(lunch_times)
+            request.timeout = 30
+            data = request.get_json()
+            if not data:
+                return jsonify({"error": "Missing request data"}), 400
+
+            # Define required fields
+            required_fields = [
+                "session_id", "token", "login_page_link", "student_username", "student_password",
+                "student_fullname", "student_firstname", "student_class",
+                "ent_used", "qr_code_login", "uuid", "topic_name", "timezone",
+                "notification_delay", "evening_menu",
+                "unfinished_homework_reminder", "get_bag_ready_reminder"
+            ]
             
-            # Sanitize lunch times - handle null/None values
-            for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']:
-                day_key = day.lower() + '_lunch'
-                value = lunch_times_dict.get(day)
-                sanitized_payload[day_key] = bleach.clean(str(value)) if value is not None else None
+            # Validate all string fields
+            for field in required_fields:
+                if field not in data:
+                    return jsonify({"error": f"Missing {field}"}), 400
+                if not isinstance(data[field], str):
+                    return jsonify({"error": f"Invalid {field} type, expected string"}), 400
+
+            # Validate lunch_times
+            if 'lunch_times' not in data:
+                return jsonify({"error": "Missing lunch_times"}), 400
+            
+            if not validate_lunch_times(data['lunch_times']):
+                return jsonify({"error": "Invalid lunch_times format"}), 400
+
+            # Rate limit per session
+            rate_key = f"qrscan_rate:{data['session_id']}"
+            if redis_connection.exists(rate_key):
+                return jsonify({"error": "Too many attempts for this session"}), 429
+            redis_connection.setex(rate_key, 60, 1)
+
+            # Validate session and token
+            stored_token = redis_connection.get(f"session:{data['session_id']}")
+            if not stored_token or stored_token.decode('utf-8') != data['token']:
+                return jsonify({"error": "Invalid or expired session"}), 401
+
+            # Sanitize all incoming string fields
+            sanitized_payload = {}
+            for key in required_fields:
+                sanitized_payload[key] = bleach.clean(data[key])
+            
+            # Parse lunch_times
+            try:
+                lunch_times = data['lunch_times'].replace("None", "null")
+                lunch_times = lunch_times.replace("'", '"')
+                lunch_times_dict = json.loads(lunch_times)
+                
+                # Sanitize lunch times
+                for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']:
+                    day_key = day.lower() + '_lunch'
+                    value = lunch_times_dict.get(day)
+                    sanitized_payload[day_key] = bleach.clean(str(value)) if value is not None else None
+
+            except Exception as e:
+                logger.error(f"Error processing lunch_times: {e}")
+                return jsonify({"error": "Invalid lunch_times format"}), 400
+
+            logger.debug(sanitized_payload)
+
+            app_session_id = secrets.token_urlsafe(16)
+            app_token = secrets.token_urlsafe(32)
+
+            # Generate user hash
+            user_hash = generate_user_hash(sanitized_payload)
+
+            timestamp = datetime.now()
+
+            # Store the data
+            connection = connection_pool.get_connection()
+            cursor = connection.cursor()
+            try:
+                # Deactivate previous registration
+                deactivate_previous_registrations(cursor, user_hash)
+
+                with sentry_sdk.start_span(op="db.query", description="Store student data"):
+                    insert_query = f"""
+                        INSERT INTO {student_table_name} (
+                            app_session_id, app_token, login_page_link, student_username, student_password,
+                            student_fullname, student_firstname, student_class,
+                            ent_used, qr_code_login, uuid, topic_name, timezone,
+                            notification_delay, evening_menu,
+                            unfinished_homework_reminder, get_bag_ready_reminder,
+                            monday_lunch, tuesday_lunch, wednesday_lunch, thursday_lunch, friday_lunch,
+                            user_hash, is_active, timestamp
+                        ) VALUES (
+                            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                        )
+                    """
+                    
+                    cursor.execute(insert_query, (
+                        app_session_id,
+                        app_token,
+                        sanitized_payload['login_page_link'],
+                        sanitized_payload['student_username'],
+                        sanitized_payload['student_password'],
+                        sanitized_payload['student_fullname'],
+                        sanitized_payload['student_firstname'], 
+                        sanitized_payload['student_class'],
+                        sanitized_payload['ent_used'],
+                        sanitized_payload['qr_code_login'],
+                        sanitized_payload['uuid'],
+                        sanitized_payload['topic_name'],
+                        sanitized_payload['timezone'],
+                        sanitized_payload['notification_delay'],
+                        sanitized_payload['evening_menu'],
+                        sanitized_payload['unfinished_homework_reminder'],
+                        sanitized_payload['get_bag_ready_reminder'],
+                        sanitized_payload['monday_lunch'],
+                        sanitized_payload['tuesday_lunch'],
+                        sanitized_payload['wednesday_lunch'],
+                        sanitized_payload['thursday_lunch'],
+                        sanitized_payload['friday_lunch'],
+                        user_hash,
+                        1,  # is_active
+                        timestamp
+                    ))
+
+                    # Mark the session as used
+                    update_query = f"UPDATE {auth_table_name} SET used = TRUE WHERE session_id = %s"
+                    cursor.execute(update_query, (sanitized_payload['session_id'],))
+                    connection.commit()
+
+                    logger.info(f"Student data stored for session: {sanitized_payload['session_id']}")
+
+            except mysql.connector.Error as err:
+                sentry_sdk.capture_exception(err)
+                logger.error(f"MySQL error: {err}")
+                return jsonify({"error": "Failed to store student data"}), 500
+
+            finally:
+                cursor.close()
+                connection.close()
+
+            return jsonify({
+                "message": "QR payload processed successfully",
+                "status": 200
+            })
 
         except Exception as e:
-            logger.error(f"Error processing lunch_times: {e}")
-            return jsonify({"error": "Invalid lunch_times format"}), 400
-
-        logger.debug(sanitized_payload)
-
-        app_session_id = secrets.token_urlsafe(16)
-        app_token = secrets.token_urlsafe(32)
-
-        # Generate user hash
-        user_hash = generate_user_hash(sanitized_payload)
-
-        timestamp = datetime.now()
-
-        # Store the data in the student table
-        connection = connection_pool.get_connection()
-        cursor = connection.cursor()
-        try:
-            # Deactivate previous registrations
-            deactivate_previous_registrations(cursor, user_hash)
-
-            insert_query = f"""
-                INSERT INTO {student_table_name} (
-                    app_session_id, app_token, login_page_link, student_username, student_password,
-                    student_fullname, student_firstname, student_class,
-                    ent_used, qr_code_login, uuid, topic_name, timezone,
-                    notification_delay, evening_menu,
-                    unfinished_homework_reminder, get_bag_ready_reminder,
-                    monday_lunch, tuesday_lunch, wednesday_lunch, thursday_lunch, friday_lunch,
-                    user_hash, is_active, timestamp
-                ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-                )
-            """
-            
-            cursor.execute(insert_query, (
-                app_session_id,
-                app_token,
-                sanitized_payload['login_page_link'],
-                sanitized_payload['student_username'],
-                sanitized_payload['student_password'],
-                sanitized_payload['student_fullname'],
-                sanitized_payload['student_firstname'], 
-                sanitized_payload['student_class'],
-                sanitized_payload['ent_used'],
-                sanitized_payload['qr_code_login'],
-                sanitized_payload['uuid'],
-                sanitized_payload['topic_name'],
-                sanitized_payload['timezone'],
-                sanitized_payload['notification_delay'],
-                sanitized_payload['evening_menu'],
-                sanitized_payload['unfinished_homework_reminder'],
-                sanitized_payload['get_bag_ready_reminder'],
-                sanitized_payload['monday_lunch'],
-                sanitized_payload['tuesday_lunch'],
-                sanitized_payload['wednesday_lunch'],
-                sanitized_payload['thursday_lunch'],
-                sanitized_payload['friday_lunch'],
-                user_hash,
-                1,  # is_active as integer 1 instead of TRUE
-                timestamp
-            ))
-
-            # Mark the session as used in auth table
-            update_query = f"UPDATE {auth_table_name} SET used = TRUE WHERE session_id = %s"
-            cursor.execute(update_query, (sanitized_payload['session_id'],))
-            connection.commit()
-
-            logger.info(f"Student data stored for session: {sanitized_payload['session_id']}")
-
-        except mysql.connector.Error as err:
-            logger.error(f"MySQL error: {err}")
-            return jsonify({"error": "Failed to store student data"}), 500
-
-        finally:
-            cursor.close()
-            connection.close()
-
-        return jsonify({
-            "message": "QR payload processed successfully",
-            "status": 200
-        })
-
-    except Exception as e:
-        logger.error(f"Unexpected error in process_qr_code: {e}")
-        return jsonify({"error": "Internal server error"}), 500
+            sentry_sdk.capture_exception(e)
+            logger.error(f"Unexpected error in process_qr_code: {e}")
+            return jsonify({"error": "Internal server error"}), 500
 
 # Background tasks
 def cleanup_auth_sessions():
     while True:
         try:
-            connection = connection_pool.get_connection()
-            cursor = connection.cursor()
-            current_time = datetime.now()
+            with sentry_sdk.start_transaction(op="background_task", name="cleanup_auth_sessions") as transaction:
+                connection = connection_pool.get_connection()
+                cursor = connection.cursor()
+                current_time = datetime.now()
 
-            # Delete only expired and inactive sessions
-            delete_query = f"""
-                DELETE FROM {auth_table_name} 
-                WHERE expires_at <= %s 
-                AND used = FALSE
-            """
-            
-            cursor.execute(delete_query, (current_time,))
-            deleted_count = cursor.rowcount
-            
-            if deleted_count > 0:
-                connection.commit()
-                logger.info(f"Cleaned up {deleted_count} expired and inactive sessions")
-            
+                with sentry_sdk.start_span(description="Delete expired sessions"):
+                    delete_query = f"""
+                        DELETE FROM {auth_table_name} 
+                        WHERE expires_at <= %s 
+                        AND used = FALSE
+                    """
+                    
+                    cursor.execute(delete_query, (current_time,))
+                    deleted_count = cursor.rowcount
+                    
+                    if deleted_count > 0:
+                        connection.commit()
+                        logger.info(f"Cleaned up {deleted_count} expired and inactive sessions")
+                
         except mysql.connector.Error as err:
+            sentry_sdk.capture_exception(err)
             logger.error(f"MySQL error in cleanup task: {err}")
 
         except Exception as e:
+            sentry_sdk.capture_exception(e)
             logger.error(f"Unexpected error in cleanup task: {e}")
 
         finally:
@@ -469,26 +484,29 @@ def cleanup_auth_sessions():
 def cleanup_inactive_students():
     while True:
         try:
-            connection = connection_pool.get_connection()
-            cursor = connection.cursor()
+            with sentry_sdk.start_transaction(op="background_task", name="cleanup_inactive_students") as transaction:
+                connection = connection_pool.get_connection()
+                cursor = connection.cursor()
 
-            # Delete inactive student records
-            delete_query = f"""
-                DELETE FROM {student_table_name} 
-                WHERE is_active = 0
-            """
-            
-            cursor.execute(delete_query)
-            deleted_count = cursor.rowcount
-            
-            if deleted_count > 0:
-                connection.commit()
-                logger.info(f"Cleaned up {deleted_count} inactive student records")
+                with sentry_sdk.start_span(description="Delete inactive students"):
+                    delete_query = f"""
+                        DELETE FROM {student_table_name} 
+                        WHERE is_active = 0
+                    """
+                    
+                    cursor.execute(delete_query)
+                    deleted_count = cursor.rowcount
+                    
+                    if deleted_count > 0:
+                        connection.commit()
+                        logger.info(f"Cleaned up {deleted_count} inactive student records")
             
         except mysql.connector.Error as err:
+            sentry_sdk.capture_exception(err)
             logger.error(f"MySQL error in student cleanup task: {err}")
 
         except Exception as e:
+            sentry_sdk.capture_exception(e)
             logger.error(f"Unexpected error in student cleanup task: {e}")
 
         finally:
