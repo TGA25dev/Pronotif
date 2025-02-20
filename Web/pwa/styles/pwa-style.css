@@ -1,13 +1,384 @@
-body {
-    font-family: FixelVariable, sans-serif;
-    text-align: center;
-    margin: 0;
-    padding: 0;
+:root {
+    --primary: #45a8a8;
+    --primary-dark: #3a8f8f;
+    --primary-light: #e6f7f7;
+    --background: #f8fafc;
+    --card-bg: #ffffff;
+    --text: #0f172a;
+    --text-light: #64748b;
+    --success: #22c55e;
+    --error: #ef4444;
+    --error-bg: #fee2e2;
+    --error-text: #ef4444;
 }
 
-#reader {
-    margin: 20px auto;
-    width: 300px;
-    height: 300px;
-    border: 1px solid #ccc;
+@media (prefers-color-scheme: dark) {
+    :root {
+        --background: #0f172a;
+        --card-bg: transparent;
+        --text: #f8fafc;
+        --text-light: #94a3b8;
+        --primary-light: rgba(69, 168, 168, 0.15);
+    }
+
+    body::before {
+        opacity: 0.2;
+        background-image: radial-gradient(var(--primary) 2px, transparent 1.5px);
+    }
+
+    body::after {
+        opacity: 0.05;
+    }
+
+    .help-button {
+        background: rgba(30, 41, 59, 0.8);
+        border-color: rgba(69, 168, 168, 0.1);
+    }
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    font-family: 'FixelVariable', sans-serif;
+    background-color: var(--background);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    padding: 1rem;
+    position: relative;
+}
+
+body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 40vh;
+    background-image: radial-gradient(var(--primary) 2px, transparent 1.2px);
+    background-size: 24px 24px;
+    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.25), transparent);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.25), transparent);
+    pointer-events: none;
+}
+
+body::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 120px;
+    background-image: 
+        repeating-linear-gradient(
+            45deg,
+            var(--primary) 0 2px,
+            transparent 2px 8px
+        ),
+        repeating-linear-gradient(
+            -45deg,
+            var(--primary) 0 2px,
+            transparent 2px 8px
+        );
+    background-size: 24px 24px;
+    mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.05), transparent);
+    -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.05), transparent);
+    pointer-events: none;
+    opacity: 0.2;
+}
+
+.container {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 1;
+    min-height: 100%;
+    max-height: 100%;
+}
+
+.card {
+    background: transparent;
+    padding: 1rem 1rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.card-header {
+    text-align: center;
+    margin-top: 0;
+}
+
+h1 {
+    font-size: 3.5rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
+    color: var(--text-light);
+    font-size: 1rem;
+}
+
+.primary-button {
+    font-family: "FixelVariable", sans-serif;
+    padding: 1.25rem;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 1rem;
+    font-size: 1.125rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    transition: all 0.2s ease;
+    margin: auto 0;
+}
+
+.primary-button:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.camera-view {
+    overflow: hidden;
+    width: 100%;
+    height: 18rem;
+    border-radius: 1rem;
+    display: none;
+    border: 2px solid var(--primary-light);
+    transition: all 0.3s ease;
+    object-fit: cover;
+}
+
+.camera-view.active {
+    display: block;
+}
+
+.canvas {
+    display: none;
+}
+
+.feedback-message {
+    margin-top: 1.25rem;
+    text-align: center;
+    font-size: 0.875rem;
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+    display: none;
+    animation: slideIn 0.3s ease;
+}
+
+.feedback-message.error {
+    background: var(--error-bg);
+    color: var(--error-text);
+    display: block;
+}
+
+.feedback-message.info {
+    background: var(--primary-light);
+    color: var(--primary);
+    display: block;
+}
+
+.feedback-message.success {
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--success);
+    display: block;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.spinner {
+    display: none;
+    width: 2.5rem;
+    height: 2.5rem;
+    margin: 1.5rem auto;
+    border: 3px solid var(--primary-light);
+    border-right-color: var(--primary);
+    border-radius: 50%;
+}
+
+.help-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    padding: 1rem;
+    background: var(--card-bg);
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 8px rgba(69, 168, 168, 0.1);
+    border: 2px solid rgba(69, 168, 168, 0.1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    margin: 1rem 0;
+    position: relative;
+    bottom: 0;
+    margin-bottom: 0.5rem;
+}
+
+.help-button:hover {
+    color: var(--primary);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(69, 168, 168, 0.15);
+}
+
+.infos-qr {
+    display: none;
+    padding: 0.5rem;
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin-top: 1rem;
+}
+
+.orientation-warning {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--background);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.warning-emoji {
+    font-size: 48px;
+    line-height: 1;
+}
+
+.orientation-warning p {
+    color: var(--text);
+    font-size: 1.1rem;
+    max-width: 300px;
+}
+.device-error {
+    font-weight: 500;
+    color: var(--error-text);
+    background: var(--error-bg);
+    padding: 1rem;
+    height: 10%;
+    border-radius: 0.75rem;
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.app-version {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    text-align: center;
+    padding: 0.5rem;
+    opacity: 0.8;
+    position: relative;
+    margin-bottom: 4rem;
+}
+
+.error-message {
+    background: var(--error-bg);
+    color: var(--error-text);
+    padding: 1.25rem;
+    border-radius: 1rem;
+    text-align: center;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    animation: slideIn 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.settings-button {
+    font-family: "FixelVariable", sans-serif;
+    background: var(--error-text);
+    color: white;
+    border: none;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin: 0 auto;
+    width: fit-content;
+}
+
+.settings-button:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media screen and (max-height: 667px) {
+    .camera-view {
+        margin-top: 1rem;
+        height: 16rem;
+    }
+    
+    .feedback-message {
+        margin-top: 0.5rem;
+        padding: 0.5rem;
+    }
+    
+    .spinner {
+        margin: 0.5rem auto;
+    }
+}
+
+@media (orientation: landscape) {
+    .orientation-warning {
+        display: flex;
+    }
+
+    .container {
+        display: none;
+    }
 }
