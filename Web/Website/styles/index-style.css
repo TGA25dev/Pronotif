@@ -849,65 +849,6 @@ a {
         background: var(--card-bg);
         border-top: 2px solid var(--shadow);
     }
-
-    .status-notification {
-        right: 0;
-        left: 0;
-        bottom: 0;
-        margin: 0;
-        width: 100%;
-        border-radius: 8px 8px 0 0;
-        padding: 15px;
-        flex-direction: column;
-        transform: translateY(100%);
-    }
-    
-    .status-notification.visible {
-        transform: translateY(0);
-    }
-    
-    .status-content {
-        margin-bottom: 12px;
-        width: 100%;
-    }
-    
-    .status-description {
-        font-size: 12px;
-        margin-right: 20px;
-    }
-    
-    .status-link {
-        margin-left: 0;
-        padding: 8px 12px;
-        font-size: 13px;
-        width: 100%;
-        text-align: center;
-        margin-bottom: 5px;
-    }
-    
-    .status-close {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        font-size: 22px;
-        margin-left: 0;
-    }
-    
-    .status-type-label {
-        font-size: 10px;
-        padding: 3px 6px;
-        margin-bottom: 8px;
-    }
-    
-    .status-time {
-        margin-top: 6px;
-        font-size: 10px;
-    }
-    
-    .status-icon {
-        font-size: 18px;
-        margin-top: 0;
-    }
 }
 
 /* Status notification*/
@@ -1040,4 +981,66 @@ a {
 
 .status-time svg {
     opacity: 0.7;
+}
+
+@media screen and (max-width: 768px) {
+
+    .status-notification {
+        right: 0;
+        left: 0;
+        bottom: 0;
+        margin: 0;
+        width: 100%;
+        border-radius: 8px 8px 0 0;
+        padding: 15px;
+        flex-direction: column;
+        transform: translateY(100%);
+    }
+    
+    .status-notification.visible {
+        transform: translateY(0);
+    }
+    
+    .status-content {
+        margin-bottom: 12px;
+        width: 100%;
+    }
+    
+    .status-description {
+        font-size: 12px;
+        margin-right: 20px;
+    }
+    
+    .status-link {
+        margin-left: 0;
+        padding: 8px 12px;
+        font-size: 13px;
+        width: 100%;
+        text-align: center;
+        margin-bottom: 5px;
+    }
+    
+    .status-close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 22px;
+        margin-left: 0;
+    }
+    
+    .status-type-label {
+        font-size: 10px;
+        padding: 3px 6px;
+        margin-bottom: 8px;
+    }
+    
+    .status-time {
+        margin-top: 6px;
+        font-size: 10px;
+    }
+    
+    .status-icon {
+        font-size: 18px;
+        margin-top: 0;
+    }
 }
