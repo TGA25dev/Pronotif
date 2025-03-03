@@ -51,6 +51,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const maintenances = data.scheduled_maintenances.filter(maintenance => 
                 maintenance.status !== 'completed');
             
+            // Check for components with issues
+            const componentsWithIssues = data.components.filter(component => 
+                component.status !== 'operational');
+            
             if (incidents.length > 0) {
                 // Show most recent incident
                 const latestIncident = incidents[0];
@@ -63,6 +67,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (localStorage.getItem(`dismissed_${nextMaintenance.id}`) !== 'true') {
                     showNotification(nextMaintenance, 'maintenance');
                 }
+            } else if (componentsWithIssues.length > 0) {
+                // Show component issues when there's no active incident
+                showComponentIssues(componentsWithIssues);
             } else {
                 // All clear, hide notification
                 statusNotification.style.display = 'none';
@@ -206,5 +213,79 @@ document.addEventListener('DOMContentLoaded', function() {
                 minute: '2-digit'
             })}`;
         }
+    }
+
+    function showComponentIssues(components) {
+        // Clear previous classes
+        statusNotification.classList.remove('incident', 'maintenance-planned', 'maintenance-ongoing', 'component-issues');
+        statusNotification.classList.add('component-issues');
+        
+        // Determine severity
+        let severityClass = 'performance';
+        let icon = '⚠️';
+        
+        // Check for the most severe status
+        if (components.some(c => c.status === 'major_outage')) {
+            severityClass = 'major-outage';
+            icon = '❌';
+        } else if (components.some(c => c.status === 'partial_outage')) {
+            severityClass = 'partial-outage';
+            icon = '⚠️';
+        } else if (components.some(c => c.status === 'degraded_performance')) {
+            severityClass = 'degraded';
+            icon = '⚠️';
+        }
+        
+        // Generate notification ID from component names
+        const componentIds = components.map(c => c.id).join('-');
+        const notificationId = `components-${componentIds}`;
+        
+        // Check if dismissed
+        if (localStorage.getItem(`dismissed_${notificationId}`) === 'true') {
+            return;
+        }
+        
+        const statusLabels = {
+            'degraded_performance': 'Performances dégradées',
+            'partial_outage': 'Panne partielle',
+            'major_outage': 'Panne majeure'
+        };
+
+        // Create component list
+        let componentListHtml = '';
+        components.forEach(component => {
+            const status = statusLabels[component.status] || component.status;
+            componentListHtml += `<div class="component-status ${component.status}">
+                <strong>${component.name}</strong>: ${status}
+            </div>`;
+        });
+        
+        // Update notification content
+        statusIcon.textContent = icon;
+        statusMessage.innerHTML = `
+            <span class="status-type-label component-${severityClass}">Incident en cours</span>
+            <div class="status-content-wrapper">
+            <strong>Dysfonctionnement de certains éléments</strong>
+            <p class="status-description">
+                ${componentListHtml}
+            </p>
+            <div class="status-time">
+                <svg viewBox="0 0 24 24" width="12" height="12">
+                <path fill="currentColor" d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+                <path fill="currentColor" d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+                </svg> 
+                Maintenant
+            </div>
+            </div>
+        `;
+        
+        // Store the notification ID for dismissal
+        statusNotification.dataset.incidentId = notificationId;
+        
+        // Animation
+        statusNotification.style.display = 'flex';
+        setTimeout(() => {
+            statusNotification.classList.add('visible');
+        }, 10);
     }
 });

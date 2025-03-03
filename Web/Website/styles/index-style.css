@@ -937,6 +937,44 @@ a {
     background-color: #0dcaf0;
 }
 
+.status-notification.component-issues {
+    border-color: #f0ad4e;
+}
+
+.status-type-label.component-degraded {
+    background-color: #f0ad4e;
+}
+
+.status-type-label.component-partial-outage {
+    background-color: #fc9403;
+}
+
+.status-type-label.component-major-outage {
+    background-color: #d9534f;
+}
+
+.component-status {
+    display: block;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.component-status:last-child {
+    border-bottom: none;
+}
+
+.component-status.degraded_performance {
+    color: #f0ad4e;
+}
+
+.component-status.partial_outage {
+    color: #fc9403;
+}
+
+.component-status.major_outage {
+    color: #d9534f;
+}
+
 .status-link {
     color: var(--primary, #0d6efd);
     text-decoration: none;
