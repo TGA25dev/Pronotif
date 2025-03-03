@@ -849,4 +849,195 @@ a {
         background: var(--card-bg);
         border-top: 2px solid var(--shadow);
     }
+
+    .status-notification {
+        right: 0;
+        left: 0;
+        bottom: 0;
+        margin: 0;
+        width: 100%;
+        border-radius: 8px 8px 0 0;
+        padding: 15px;
+        flex-direction: column;
+        transform: translateY(100%);
+    }
+    
+    .status-notification.visible {
+        transform: translateY(0);
+    }
+    
+    .status-content {
+        margin-bottom: 12px;
+        width: 100%;
+    }
+    
+    .status-description {
+        font-size: 12px;
+        margin-right: 20px;
+    }
+    
+    .status-link {
+        margin-left: 0;
+        padding: 8px 12px;
+        font-size: 13px;
+        width: 100%;
+        text-align: center;
+        margin-bottom: 5px;
+    }
+    
+    .status-close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 22px;
+        margin-left: 0;
+    }
+    
+    .status-type-label {
+        font-size: 10px;
+        padding: 3px 6px;
+        margin-bottom: 8px;
+    }
+    
+    .status-time {
+        margin-top: 6px;
+        font-size: 10px;
+    }
+    
+    .status-icon {
+        font-size: 18px;
+        margin-top: 0;
+    }
+}
+
+/* Status notification*/
+.status-notification {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 50%;
+    margin-bottom: 10px;
+    margin-left: 10px;
+    border-radius: 8px;
+    background-color: var(--card-bg, #f8f9fa);
+    border-top: 3px solid #ffc107;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    z-index: 1000;
+    font-size: 14px;
+    box-shadow: 0 -4px 15px rgba(0,0,0,0.15);
+    transform: translateY(100%);
+    transition: transform 0.3s ease-out;
+    opacity: 0.95;
+}
+
+.status-notification.visible {
+    transform: translateY(0);
+}
+
+.status-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    flex: 1;
+}
+
+.status-icon {
+    font-size: 20px;
+    margin-top: 2px;
+}
+
+.status-content-wrapper {
+    flex: 1;
+}
+
+.status-description {
+    margin: 5px 0 0;
+    opacity: 0.85;
+    line-height: 1.4;
+    font-size: 13px;
+}
+
+.status-type-label {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    color: white;
+}
+
+.status-notification.incident {
+    border-color: #dc3545;
+}
+
+.status-notification.maintenance-ongoing {
+    border-color: #fd7e14;
+}
+
+.status-notification.maintenance-planned {
+    border-color: #0dcaf0;
+}
+
+.status-type-label.incident {
+    background-color: #dc3545;
+}
+
+.status-type-label.maintenance-ongoing {
+    background-color: #fd7e14;
+}
+
+.status-type-label.maintenance-planned {
+    background-color: #0dcaf0;
+}
+
+.status-link {
+    color: var(--primary, #0d6efd);
+    text-decoration: none;
+    font-weight: 500;
+    margin-left: 15px;
+    white-space: nowrap;
+    padding: 6px 12px;
+    border: 1px solid var(--primary, #0d6efd);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.status-link:hover {
+    background-color: var(--primary, #0d6efd);
+    color: white;
+    text-decoration: none;
+}
+
+.status-close {
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    padding: 0 5px;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+    margin-left: 10px;
+}
+
+.status-close:hover {
+    opacity: 1;
+}
+
+.status-time {
+    font-size: 11px;
+    color: var(--text-secondary, #6c757d);
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.status-time svg {
+    opacity: 0.7;
 }

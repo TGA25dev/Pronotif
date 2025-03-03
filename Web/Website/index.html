@@ -122,6 +122,15 @@
                 <button data-i18n="coming-soon-modal-btn" class="modal-btn">Compris !</button>
             </div>
         </div>
+        <div class="status-notification" id="statusNotification" style="display: none;">
+            <div class="status-content">
+                <span class="status-icon" id="statusIcon">⚠️</span>
+                <span class="status-message" id="statusMessage"></span>
+            </div>
+            <a href="https://status.pronotif.tech" target="_blank" class="status-link" data-i18n="status-more">Plus de détails</a>
+            <button class="status-close" id="closeStatus">&times;</button>
+        </div>
         <script src="scripts/index.js?v0.1"></script>
+        <script src="scripts/status_checker.js"></script>
     </body>
 </html>
