@@ -3,7 +3,10 @@ const ASSETS_TO_CACHE = [
     './',
     './index.htm',
     './styles/pwa-style.css',
-    './scripts/pwa.js'
+    './styles/fonts.css',
+    './fonts/FixelVariable.ttf',
+    './fonts/FixelVariableItalic.ttf',
+    './scripts/pwa.js',
 ].map(url => {
     
     return new URL(url, self.location).pathname;
