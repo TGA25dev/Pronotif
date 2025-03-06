@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pronotif-pwa-v1';
+const CACHE_NAME = 'pronotif-pwa-v2';
 const ASSETS_TO_CACHE = [
     './',
     './index.htm',
@@ -7,10 +7,8 @@ const ASSETS_TO_CACHE = [
     './fonts/FixelVariable.ttf',
     './fonts/FixelVariableItalic.ttf',
     './scripts/pwa.js',
-].map(url => {
-    
-    return new URL(url, self.location).pathname;
-});
+    './scripts/jsQR.js'
+];
 
 // Install event - Cache all static assets
 self.addEventListener('install', (event) => {
@@ -18,12 +16,10 @@ self.addEventListener('install', (event) => {
         caches.open(CACHE_NAME)
             .then((cache) => {
                 console.log('[PWA] Attempting to cache assets...');
-                // Cache each asset individually
                 return Promise.all(
                     ASSETS_TO_CACHE.map(url => {
                         return cache.add(url).catch(error => {
                             console.warn(`[PWA] Failed to cache ${url}:`, error);
-                            // Continue even if one asset fails to cache
                             return Promise.resolve();
                         });
                     })
@@ -31,43 +27,39 @@ self.addEventListener('install', (event) => {
             })
             .then(() => {
                 console.log('[PWA] Assets cached successfully');
-            })
-            .catch(error => {
-                console.error('[PWA] Cache error:', error);
+                return self.skipWaiting(); // Take control immediately
             })
     );
 });
 
-// Activate event - Clean up old caches
-self.addEventListener('activate', (event) => {
-    event.waitUntil(
-        caches.keys().then((cacheNames) => {
-            return Promise.all(
-                cacheNames
-                    .filter((name) => name.startsWith('pronotif-pwa-') && name !== CACHE_NAME)
-                    .map((name) => {
-                        console.log('[PWA] Removing old cache:', name);
-                        return caches.delete(name);
-                    })
-            );
-        })
-    );
-});
-
-// Fetch event - Network first, falling back to cache
 self.addEventListener('fetch', (event) => {
     event.respondWith(
-        fetch(event.request)
-            .catch(() => {
-                return caches.match(event.request)
+        caches.match(event.request)
+            .then(cachedResponse => {
+                if (cachedResponse) {
+                    return cachedResponse;
+                }
+                return fetch(event.request)
                     .then(response => {
-                        if (response) {
+                        // Don't cache if response is not ok or is a browser-extension request
+                        if (!response.ok || event.request.url.startsWith('chrome-extension://')) {
                             return response;
                         }
-                        // If the request fails and it's not in cache, try matching without the base path
-                        const url = new URL(event.request.url);
-                        const path = url.pathname.replace(/^\/Web\/pwa/, '');
-                        return caches.match(new Request(path));
+                        
+                        // Cache successful font responses
+                        if (event.request.url.includes('/fonts/')) {
+                            const responseToCache = response.clone();
+                            caches.open(CACHE_NAME)
+                                .then(cache => cache.put(event.request, responseToCache));
+                        }
+                        return response;
+                    })
+                    .catch(() => {
+                        // Offline fallback
+                        if (event.request.mode === 'navigate') {
+                            return caches.match('./index.htm');
+                        }
+                        return new Response('Content not available offline');
                     });
             })
     );
