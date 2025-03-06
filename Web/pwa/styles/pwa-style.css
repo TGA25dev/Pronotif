@@ -1,4 +1,5 @@
 :root {
+    /* Colors */
     --primary: #45a8a8;
     --primary-dark: #3a8f8f;
     --primary-light: #e6f7f7;
@@ -10,6 +11,19 @@
     --error: #ef4444;
     --error-bg: #fee2e2;
     --error-text: #ef4444;
+    
+    /* Spacing variables */
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 1rem;
+    --spacing-md: 1.5rem;
+    --spacing-lg: 2rem;
+    --spacing-xl: 2rem;
+    
+    /* Dynamic sizes */
+    --container-width: min(420px, 95vw);
+    --camera-height: min(15rem, 50vh);
+    --header-size: clamp(3.5rem, 10vw, 5rem);
+    --subtitle-size: clamp(1.1rem, 4vw, 1.4rem);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -28,11 +42,6 @@
 
     body::after {
         opacity: 0.05;
-    }
-
-    .help-button {
-        background: rgba(30, 41, 59, 0.8);
-        border-color: rgba(69, 168, 168, 0.1);
     }
 }
 
@@ -99,46 +108,56 @@ body::after {
     opacity: 0.2;
 }
 
+.main-container {
+    margin-top: 3rem;
+}
+
 .container {
-    width: 100%;
-    max-width: 420px;
+    width: var(--container-width);
+    max-width: 100%;
+    margin: 0 auto;
+    padding: var(--spacing-sm);
     display: flex;
     flex-direction: column;
     position: relative;
     z-index: 1;
-    min-height: 100%;
-    max-height: 100%;
+    height: 100%;
+    max-height: 100vh;
 }
 
 .card {
     background: transparent;
-    padding: 1rem 1rem;
+    padding: var(--spacing-sm);
     display: flex;
     flex-direction: column;
     flex: 1;
     min-height: 0;
     overflow-y: auto;
+    margin-bottom: auto;
 }
 
 .card-header {
     text-align: center;
     margin-top: 0;
+    margin-bottom: var(--spacing-xl);
 }
 
 h1 {
-    font-size: 3.5rem;
+    font-size: var(--header-size);
+    line-height: 1.2;
+    margin-bottom: var(--spacing-xs);
     font-weight: 600;
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
     letter-spacing: -0.02em;
-    margin-bottom: 0.5rem;
 }
 
 .subtitle {
     color: var(--text-light);
-    font-size: 1rem;
+    font-size: var(--subtitle-size);
+    line-height: 1.3;
 }
 
 .primary-button {
@@ -167,12 +186,13 @@ h1 {
 .camera-view {
     overflow: hidden;
     width: 100%;
-    height: 18rem;
+    height: var(--camera-height);
     border-radius: 1rem;
     display: none;
     border: 2px solid var(--primary-light);
     transition: all 0.3s ease;
     object-fit: cover;
+    margin: 0;
 }
 
 .camera-view.active {
@@ -240,17 +260,19 @@ h1 {
     text-decoration: none;
     font-size: 0.9rem;
     transition: all 0.2s ease;
-    padding: 1rem;
+    padding: var(--spacing-sm);
     background: var(--card-bg);
     border-radius: 0.75rem;
     box-shadow: 0 2px 8px rgba(69, 168, 168, 0.1);
     border: 2px solid rgba(69, 168, 168, 0.1);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    margin: 1rem 0;
+    margin-top: 0;
+    margin-bottom: 1rem;
     position: relative;
-    bottom: 0;
-    margin-bottom: 0.5rem;
+    width: min(19rem, 90vw);
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .help-button:hover {
@@ -266,6 +288,8 @@ h1 {
     font-size: 0.9rem;
     color: var(--text-light);
     margin-top: 1rem;
+    margin-bottom: 0rem;
+    width: 100%;
 }
 
 .orientation-warning {
@@ -310,7 +334,7 @@ h1 {
     padding: 0.5rem;
     opacity: 0.8;
     position: relative;
-    margin-bottom: 4rem;
+    margin-bottom: 0rem;
 }
 
 .error-message {
@@ -325,6 +349,8 @@ h1 {
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    margin-bottom: 2rem;
+    margin-top: 0;
 }
 
 .settings-button {
@@ -358,18 +384,55 @@ h1 {
 }
 
 @media screen and (max-height: 667px) {
-    .camera-view {
-        margin-top: 1rem;
-        height: 16rem;
+    :root {
+        --spacing-md: 1rem;
+        --spacing-lg: 1.5rem;
+        --camera-height: min(13rem, 35vh);
+        --header-size: clamp(2.2rem, 7vw, 3rem);
+        --subtitle-size: clamp(0.9rem, 2.5vw, 1rem);
+    }
+
+    .card {
+        padding: var(--spacing-xs);
     }
     
     .feedback-message {
-        margin-top: 0.5rem;
-        padding: 0.5rem;
+        margin-top: var(--spacing-xs);
+        padding: var(--spacing-xs);
     }
     
     .spinner {
         margin: 0.5rem auto;
+    }
+
+    .card-header {
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .subtitle {
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .camera-view {
+        height: min(14rem, 35vh);
+    }
+}
+
+@media screen and (max-height: 568px) {
+    :root {
+        --spacing-sm: 0.5rem;
+        --spacing-md: 0.75rem;
+        --spacing-xl: 1.5rem;
+        --camera-height: min(11rem, 30vh);
+    }
+
+    .primary-button {
+        padding: 0.75rem;
+        font-size: 1rem;
+    }
+
+    .card-header {
+        margin-bottom: var(--spacing-lg);
     }
 }
 
@@ -380,5 +443,15 @@ h1 {
 
     .container {
         display: none;
+    }
+}
+
+/* Notched phones */
+@supports (padding: env(safe-area-inset-top)) {
+    .container {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
     }
 }
