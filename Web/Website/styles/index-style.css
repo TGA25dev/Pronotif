@@ -1019,6 +1019,31 @@ a {
 
 .status-time svg {
     opacity: 0.7;
+    width: 12px;
+    height: 12px;
+    min-width: 12px;
+}
+
+.status-update-indicator {
+    font-size: 14px;
+    margin: 0 6px;
+    color: var(--text-secondary, #6c757d);
+    vertical-align: middle;
+    opacity: 0.7;
+}
+
+.status-title-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 5px;
+}
+
+.status-update-time {
+    font-size: 10px;
+    color: var(--text-secondary, #6c757d);
+    margin-left: 0.2rem;
 }
 
 @media screen and (max-width: 768px) {
@@ -1043,7 +1068,12 @@ a {
         margin-bottom: 12px;
         width: 100%;
     }
-    
+
+    .status-title-row {
+        gap: 6px;
+        margin-right: 20px; /
+    }
+
     .status-description {
         font-size: 12px;
         margin-right: 20px;
@@ -1074,11 +1104,15 @@ a {
     
     .status-time {
         margin-top: 6px;
-        font-size: 10px;
+        font-size: 13px;
     }
     
     .status-icon {
         font-size: 18px;
         margin-top: 0;
+    }
+
+    .status-update-time {
+        font-size: 10px;
     }
 }
