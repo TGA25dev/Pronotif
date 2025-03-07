@@ -4,10 +4,27 @@
     <title>Pronot'if est hors ligne !</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#2563eb">
-    <link rel="preload" href="fonts/FixelVariable.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="preload" href="fonts/FixelVariableItalic.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="stylesheet" href="styles/fonts.css">
     <link rel="stylesheet" href="styles/offline.css">
+
+    <style>
+        /* Fallback font styles inline to ensure they're available offline */
+        @font-face {
+            font-family: 'FixelVariable';
+            src: url('fonts/FixelVariable.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+        
+        @font-face {
+            font-family: 'FixelVariableItalic';
+            src: url('fonts/FixelVariableItalic.ttf') format('truetype');
+            font-weight: normal;
+            font-style: italic;
+            font-display: swap;
+        }
+    </style>
+
 </head>
 
 <body>
@@ -19,7 +36,7 @@
                 <p class="subtitle">Malheureusement, Pronot'if n'est pas utilisable hors ligne...</p>
             </div>
             <div class="offline-card-content">
-                <p class="content">Vérifiez que vous êtes connecté à Internet.</p>
+                <p class="content">Vérifiez que vous êtes connecté à Internet et réessayez.</p>
                 <button class="retry-btn" onclick="window.location.reload()">Réessayer</button>
             </div>
         </div>
