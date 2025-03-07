@@ -57,7 +57,7 @@ self.addEventListener('fetch', (event) => {
                     .catch(() => {
                         // Offline fallback
                         if (event.request.mode === 'navigate') {
-                            return caches.match('./index.htm');
+                            return caches.match('./offline.htm');
                         }
                         return new Response('Content not available offline');
                     });

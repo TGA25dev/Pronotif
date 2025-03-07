@@ -1,0 +1,133 @@
+:root {
+    --primary: #45a8a8;
+    --primary-light: #74d4d4;
+    --primary-dark: #317878;
+    --background: #f0f9f9;
+    --card-bg: #ffffff;
+    --text: #2C3E50;
+    --shadow: rgba(45, 168, 168, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --primary: #45a8a872;
+        --primary-light: #74d4d474;
+        --primary-dark: #31787872;
+        --background: #1a1a1a;
+        --card-bg: #242424;
+        --text: #e0e0e0;
+        --shadow: rgba(0, 0, 0, 0.2);
+    }
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: "FixelVariable", sans-serif;
+    background: var(--background);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.offline-container {
+    padding: 1rem;
+    width: 100%;
+    max-width: 400px;
+}
+
+.offline-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 2rem 1.5rem;
+    box-shadow: 0 4px 15px var(--shadow);
+    text-align: center;
+    animation: fadeIn 0.5s ease;
+}
+
+.offline-icon {
+    font-size: 4rem;
+    animation: float 3s ease-in-out infinite;
+}
+
+.offline-icon a {
+    display: inline-block;
+    min-width: 60px;
+    min-height: 60px;
+    padding: 5px;
+    line-height: 1;
+    position: relative;
+}
+
+.offline-icon a:active {
+    opacity: 0.8;
+}
+
+.title {
+    font-size: 1.75rem;
+    margin: 0 0 0.5rem;
+    color: var(--primary);
+}
+
+.subtitle {
+    font-size: 1rem;
+    margin: 0 0 1.5rem;
+    opacity: 0.8;
+}
+
+.content {
+    margin-bottom: 1.5rem;
+    color: var(--text);
+    opacity: 0.7;
+}
+
+.retry-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 0.8rem 2rem;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: "FixelVariable", sans-serif;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-height: 44px;
+    min-width: 44px;
+    margin: 0.5rem 0;
+}
+
+.retry-btn:hover, .retry-btn:active {
+    background: var(--primary-dark);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-4px);
+    }
+}
+
+@media (min-width: 375px) {
+    .offline-card {
+        padding: 2.5rem 2rem;
+    }
+    
+    .title {
+        font-size: 1.8rem;
+    }
+}
