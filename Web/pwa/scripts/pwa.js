@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Service Worker Registration
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register("sw.js").catch(console.error);
+        navigator.serviceWorker.register("sw.js?v0.2").catch(console.error);
     }
 
     // Camera Permission

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pronotif-pwa-v5'; // Increment version number
+const CACHE_NAME = 'pronotif-pwa-v5';
 const ASSETS_TO_CACHE = [
     './',
     './index.htm',
