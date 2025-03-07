@@ -9,7 +9,8 @@ const ASSETS_TO_CACHE = [
     './fonts/FixelVariable.ttf',
     './fonts/FixelVariableItalic.ttf',
     './scripts/pwa.js',
-    './scripts/jsQR.js'
+    './scripts/jsQR.js',
+    './sw.js',
 ];
 
 // Install event - Cache all static assets
