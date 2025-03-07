@@ -42,7 +42,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Service Worker Registration
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register("sw.js?v0.2").catch(console.error);
+        // First unregister any existing service worker
+        navigator.serviceWorker.getRegistrations().then(async registrations => {
+            for (const registration of registrations) {
+                await registration.unregister();
+            }
+            
+            // Then register the new one with cache busting
+            const swUrl = `sw.js?cache=${Date.now()}`;
+            navigator.serviceWorker.register(swUrl, {
+                scope: './',
+                updateViaCache: 'none'
+            }).then(registration => {
+                // Force immediate check for updates
+                registration.update();
+                
+                // Listen for new service worker installation
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed') {
+                            // Force the new service worker to activate
+                            newWorker.postMessage({type: 'SKIP_WAITING'});
+                        }
+                    });
+                });
+            });
+        }).catch(console.error);
     }
 
     // Camera Permission
