@@ -1,4 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
+
+    // Offline check on page load
+    function checkOnlineStatus() {
+        if (!navigator.onLine) {
+            // If we're offline according to navigator.onLine, redirect to offline page
+            window.location.href = 'offline.htm';
+        }
+    }
+    
+    // Check immediately on load
+    checkOnlineStatus();
+    
+    //Listen for network status changes
+    window.addEventListener('offline', checkOnlineStatus);
+
     function isImageTooDark(imageData) {
         const data = imageData.data;
         let brightness = 0;

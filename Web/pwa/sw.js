@@ -66,7 +66,20 @@ self.addEventListener('activate', (event) => {
 
 // Helper function to check if we're actually online
 function isOnline() {
-    return navigator.onLine;
+    // Try to make a lightweight HEAD request to detect real connectivity
+    return new Promise(resolve => {
+        // Use Date.now() to prevent caching
+        fetch('https://api.pronotif.tech/ping?' + Date.now(), { 
+            method: 'HEAD',
+            mode: 'no-cors',
+            cache: 'no-store'
+        })
+        .then(() => resolve(true))
+        .catch(() => resolve(false));
+    }).catch(() => {
+        // Fallback to navigator.onLine if the fetch fails
+        return navigator.onLine;
+    });
 }
 
 // Helper function to check if a request is for a font file
@@ -144,14 +157,17 @@ self.addEventListener('fetch', (event) => {
     if (event.request.mode === 'navigate') {
         event.respondWith(
             (async () => {
+                // Use the improved isOnline function
+                const online = await isOnline();
+                
                 // Check if we're online first
-                if (!isOnline()) {
+                if (!online) {
                     console.log('[PWA] Offline detected, showing offline page');
                     const offlineResponse = await caches.match('./offline.htm');
                     if (offlineResponse) {
                         return offlineResponse;
                     }
-                }
+                }    
                 
                 // Try network first, fall back to offline page
                 try {
