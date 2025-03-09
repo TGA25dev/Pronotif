@@ -2,12 +2,15 @@
 <html lang="fr">
     <head>
         <meta charset="UTF-8">
+        <title>Pronot'if Mobile</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta name="theme-color" content="#2563eb">
+        <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f8fafc"> <!-- Light mode -->
+        <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0f172a"> <!-- Dark mode -->
+        <meta name="theme-color" content="#45a8a8"> <!-- Fallback color -->
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black translucent">
         <meta name="apple-mobile-web-app-title" content="Pronot'if Mobile">
-        <title>Pronot'if Mobile</title>
+        <link rel="manifest" href="../Website/manifest.json">
         <link rel="preload" href="fonts/FixelVariable.ttf" as="font" type="font/ttf" crossorigin>
         <link rel="preload" href="fonts/FixelVariableItalic.ttf" as="font" type="font/ttf" crossorigin>
         <link rel="stylesheet" href="styles/fonts.css">

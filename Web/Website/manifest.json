@@ -7,8 +7,6 @@
     "id": "/pwa/index.htm",
     "display": "standalone",
     "orientation": "portrait",
-    "background_color": "#45a8a8",
-    "theme_color": "#45a8a8",
     "prefer_related_applications": false,
     "icons": [
         {
