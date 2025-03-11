@@ -14,6 +14,60 @@ document.addEventListener('DOMContentLoaded', () => {
     //Listen for network status changes
     window.addEventListener('offline', checkOnlineStatus);
 
+    // Check if a session exists
+    checkExistingSession();
+
+    function checkExistingSession() {
+        // Checkif online
+        if (!navigator.onLine) {
+            console.log('Device is offline, skipping session refresh');
+            return; // Exit the function early - no need to try refreshing when offline
+        }
+
+        const hasVisitedBefore = localStorage.getItem('has_visited_app');
+
+        if (!hasVisitedBefore) {
+            console.log("First visit, skipping session refresh");
+            localStorage.setItem('has_visited_app', 'true');
+            return;
+
+        }
+        
+        // Show loading indicator
+        const spinner = document.getElementById('spinner');
+        if (spinner) spinner.style.display = 'block';
+        
+        // Try to refresh the authentication using existing cookies
+        fetch('https://api.pronotif.tech/v1/app/auth/refresh', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include', // Sends cookies with request
+            signal: AbortSignal.timeout(2000)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Auth failed with status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Session refresh successful');
+            // Show dashboard view (cookies are already set by the server)
+            showDashboard();
+        })
+        .catch(error => {
+            console.log('No valid session found or session refresh failed:', error.message);
+            
+            // User will stay on the initial view to scan a QR code
+        })
+        .finally(() => {
+            // Hide loading indicator
+            if (spinner) spinner.style.display = 'none';
+        });
+    }
+
     function isImageTooDark(imageData) {
         const data = imageData.data;
         let brightness = 0;
@@ -84,6 +138,44 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             });
         }).catch(console.error);
+    }
+
+    // Show dashboard
+    function showDashboard() {
+        document.querySelectorAll('.view').forEach(view => { //Hide all views
+            view.classList.add('hidden');
+        });
+
+        document.getElementById(`dashboardView`).classList.remove('hidden'); //Show the dashboard view
+        
+        //TODO Au debut programme utilise ces données, à chaque ouverture il prend ces données fait une requete 'auth' et récupère des nouveaux app_session_id et app_token
+
+                // Now show dashboard
+        setTimeout(() => {
+            initializeDashboard();
+        }, 1000);
+    }
+
+    // Dashboard initialization
+    function initializeDashboard() {
+        fetch("https://api.pronotif.tech/v1/app/fetch", {
+            method: 'GET',
+            headers: { 
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include', // Send cookies
+            signal: AbortSignal.timeout(2000)
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Dashboard data:', data);
+        })
+
+        .catch(error => {
+            console.error('Dashboard data fetch failed:', error);
+            
+            showFeedback('Unable to load dashboard. Please try again.', 'error');
+        })
     }
 
     // Camera Permission
@@ -227,7 +319,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                 fetch('https://api.pronotif.tech/v1/app/qrscan', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify(mappedData)
+                                    body: JSON.stringify(mappedData),
+                                    signal: AbortSignal.timeout(2000)
+                                    
                                 })
                                 .then(async response => {
                                     if (!response.ok) {
@@ -253,19 +347,17 @@ document.addEventListener('DOMContentLoaded', () => {
                                     }
                                     return response.json();
                                 })
-                                .then(apiResponse => {
+                                .then(apiResponse => { // Succesfully logged in 
                                     spinner.style.display = 'none';
                                     document.body.style.opacity = '1';
-                                    showFeedback('Vous êtes mantenant connecté ! 🥳', 'success');
                                     console.log('QR scan API response:', apiResponse);
+
                                     setTimeout(() => {
                                         isProcessing = false;
                                         cameraView.classList.remove('loading');
                                         hideFeedback();
+                                        showDashboard();
                                     }, 3000);
-                                    cameraView.style.display = 'none';
-                                    infosQR.style.display = 'none';
-                                    
                                 })
                                 .catch(error => {
                                     console.error('Error:', error);
