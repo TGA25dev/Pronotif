@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pronotif-pwa-v13';
+const CACHE_NAME = 'pronotif-pwa-v14';
 
 // Add this at the very top to force update
 self.addEventListener('message', (event) => {
@@ -19,7 +19,7 @@ const ASSETS_TO_CACHE = [
     './scripts/pwa.js',
     './scripts/jsQR.js',
     './sw.js',
-    '../Website/manifest.json',
+    '../manifest.json',
 ];
 
 // Install event - Cache all static assets
