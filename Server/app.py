@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, make_response, request, jsonify
 import mysql.connector
 from mysql.connector import pooling
 from flask_limiter import Limiter
@@ -147,7 +147,7 @@ def page_not_found(error):
 # API Endpoints
 
 @app.route('/ping', methods=['GET'])
-@limiter.limit("10 per minute")
+@limiter.limit("50 per minute")
 def test_endpoint():
     client_ip = request.remote_addr
     logger.info(f"{client_ip} Pong !")
@@ -433,15 +433,191 @@ def process_qr_code():
                 cursor.close()
                 connection.close()
 
-            return jsonify({
-                "message": "QR payload processed successfully",
-                "status": 200
-            })
+            # Set HTTP-only cookies
+            response = make_response(jsonify({"message": "Authentication successful", "status": 200}))
+
+            # Set secure HTTP-only cookies
+            response.set_cookie(
+                'app_session_id', 
+                app_session_id,
+                httponly=True,
+                secure=True,  # Only sent over HTTPS
+                samesite='Lax',
+                max_age=60*60*24*30,  # 30 days expiration
+                #domain="pronotif.tech"
+
+            )
+            
+            response.set_cookie(
+                'app_token', 
+                app_token,
+                httponly=True,
+                secure=True,
+                samesite='Lax',
+                max_age=60*60*24*30,
+                #domain="pronotif.tech"
+            )
+            
+            return response
 
         except Exception as e:
             sentry_sdk.capture_exception(e)
             logger.error(f"Unexpected error in process_qr_code: {e}")
             return jsonify({"error": "Internal server error"}), 500
+
+
+@app.route('/v1/app/auth/refresh', methods=['POST', 'HEAD'])
+@limiter.limit(str(os.getenv('REFRESH_CRED_LIMIT')) + " per minute")
+def refresh_credentials():
+
+    if request.method == "HEAD":
+            return jsonify({"message": ""}), 200
+    
+    # Get cookies
+    app_session_id = request.cookies.get('app_session_id')
+    app_token = request.cookies.get('app_token')
+    
+    if not app_session_id or not app_token:
+        logger.warning("!! Missing required parameters !!")
+        return jsonify({"error": "Authentication required"}), 401
+    
+    with sentry_sdk.start_transaction(op="http.server", name="refresh_credentials"):
+        try:
+            # Sanitize inputs
+            app_session_id = bleach.clean(app_session_id)
+            app_token = bleach.clean(app_token)
+
+
+            connection = connection_pool.get_connection()
+            cursor = connection.cursor(dictionary=True)
+
+            query = f"""
+                SELECT *
+                FROM {student_table_name}
+                WHERE app_session_id = %s AND app_token = %s 
+                AND is_active = 1
+            """
+            cursor.execute(query, (app_session_id, app_token))
+            result = cursor.fetchone()
+
+            if not result:
+                logger.warning(f"!!! Failed auth attempt: {app_session_id} !!!")
+                return jsonify({"error": "Invalid credentials"}), 401
+
+            # Success - create new tokens and update database
+            new_app_session_id = secrets.token_urlsafe(16)
+            new_app_token = secrets.token_urlsafe(32)
+            
+            # Update the database with new tokens
+            update_query = f"""
+                UPDATE {student_table_name}
+                SET app_session_id = %s, app_token = %s, timestamp = NOW()
+                WHERE app_session_id = %s AND app_token = %s
+            """
+            cursor.execute(update_query, (
+                new_app_session_id, new_app_token, app_session_id, app_token
+            ))
+            connection.commit()
+
+            # Log the refresh event with context
+            logger.info(f"Credentials refreshed for user: {result['app_session_id']}")
+            
+            # Return response with new secure cookies
+            response = make_response(jsonify({
+                "message": "Authentication refreshed", 
+                "status": 200
+            }))
+            
+            # Set new secure cookies
+            response.set_cookie(
+                'app_session_id', 
+                new_app_session_id,
+                httponly=True, 
+                secure=True, 
+                samesite='Lax',
+                max_age=60*60*24*30,
+                #domain="pronotif.tech"
+            )
+            response.set_cookie(
+                'app_token', 
+                new_app_token,
+                httponly=True, 
+                secure=True, 
+                samesite='Lax',
+                max_age=60*60*24*30,
+                #domain="pronotif.tech"
+            )
+            
+            # Add security headers
+            response.headers['Cache-Control'] = 'no-store'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['X-Content-Type-Options'] = 'nosniff'
+            
+            return response
+
+        except mysql.connector.Error as err:
+            sentry_sdk.capture_exception(err)
+            logger.error(f"Error: {err}")
+            return jsonify({"error": "Internal server error"}), 500    
+            
+@app.route("/v1/app/fetch", methods=["GET"])
+@limiter.limit(str(os.getenv('FETCH_DATA_LIMIT')) + " per minute")
+def fetch_student_data():
+
+    app_session_id = request.cookies.get('app_session_id')
+    app_token = request.cookies.get('app_token')
+
+    if not app_session_id or not app_token:
+        return jsonify({"error": "Authentication required"}), 401
+    
+    else:
+        with sentry_sdk.start_transaction(op="http.server", name="fetch_student_data"):
+            try:
+                # Sanitize inputs
+                app_session_id = bleach.clean(app_session_id)
+                app_token = bleach.clean(app_token)
+
+                connection = connection_pool.get_connection()
+                cursor = connection.cursor(dictionary=True)
+
+                try:
+                    with sentry_sdk.start_span(op="db.query", description="Fetch student data"):
+                        query = f"""
+                            SELECT  student_fullname, student_firstname, student_class
+                            FROM {student_table_name}
+                            WHERE app_session_id = %s AND app_token = %s AND is_active = TRUE
+                        """
+                        cursor.execute(query, (app_session_id, app_token))
+                        result = cursor.fetchone()
+
+                        if not result:
+                            logger.warning(f"!! Failed authentification attempt: {app_session_id} !!")
+                            return jsonify({"error": "Invalid credentials or inactive account"}), 401
+
+                        logger.info(f"Student data fetched for session: {app_session_id}")   
+
+                        response = jsonify({
+                            "data": result, 
+                            "status": 200
+                        })
+                        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+                        response.headers['Pragma'] = 'no-cache'
+                        response.headers['X-Content-Type-Options'] = 'nosniff'
+                        return response
+
+                except mysql.connector.Error as err:
+                    sentry_sdk.capture_exception(err)
+                    logger.error(f"MySQL error: {err}")
+                    return jsonify({"error": "Internal server error"}), 500
+
+                finally:
+                    cursor.close()
+                    connection.close()
+
+            except Exception as e:
+                sentry_sdk.capture_exception(e)
+                logger.error(f"Unexpected error in fetch_student_data: {e}")
+                return jsonify({"error": "Internal server error"}), 500
 
 # Background tasks
 def cleanup_auth_sessions():
