@@ -41,10 +41,11 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch('https://api.pronotif.tech/v1/app/auth/refresh', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
             },
             credentials: 'include', // Sends cookies with request
-            signal: AbortSignal.timeout(2000)
+            signal: AbortSignal.timeout(2000),
+            cache: 'no-store' // Prevent caching
         })
         .then(response => {
             if (!response.ok) {
@@ -320,7 +321,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify(mappedData),
+                                    credentials: 'include',
                                     signal: AbortSignal.timeout(2000)
+
                                     
                                 })
                                 .then(async response => {
@@ -351,6 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     spinner.style.display = 'none';
                                     document.body.style.opacity = '1';
                                     console.log('QR scan API response:', apiResponse);
+                                    console.log('Cookies after scan:', document.cookie);
 
                                     setTimeout(() => {
                                         isProcessing = false;
