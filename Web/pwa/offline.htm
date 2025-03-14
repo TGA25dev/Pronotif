@@ -31,6 +31,28 @@
         }
     </style>
 
+    <script>
+        // Check online status immediately when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add event listener for when device comes back online
+            window.addEventListener('online', function() {
+                console.log('Device is back online, redirecting to home page');
+                navigateToHomePage();
+            });
+            
+            // Check if already online when offline page loads (happens sometimes)
+            if (navigator.onLine) {
+                console.log('Already online when offline page loaded, redirecting after short delay');
+                setTimeout(navigateToHomePage, 1000);
+            }
+        });
+        
+        function navigateToHomePage() {
+            // Force reload bypassing cache (important for iOS)
+            window.location.href = './index.htm?t=' + new Date().getTime();
+        }
+    </script>
+
 </head>
 
 <body>
@@ -43,7 +65,7 @@
             </div>
             <div class="offline-card-content">
                 <p class="content">Vérifiez que vous êtes connecté à Internet et réessayez.</p>
-                <button class="retry-btn" onclick="window.location.reload()">Réessayer</button>
+                <button class="retry-btn" onclick="navigateToHomePage()">Réessayer</button>
             </div>
         </div>
     </div>
