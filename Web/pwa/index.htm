@@ -14,7 +14,7 @@
         <link rel="preload" href="fonts/FixelVariable.ttf" as="font" type="font/ttf" crossorigin>
         <link rel="preload" href="fonts/FixelVariableItalic.ttf" as="font" type="font/ttf" crossorigin>
         <link rel="stylesheet" href="styles/fonts.css">
-        <link rel="stylesheet" href="styles/pwa-style.css?25602560">
+        <link rel="stylesheet" href="styles/pwa-style.css?807969">
         <script src="scripts/jsQR.js"></script>
     </head>
     <body>
@@ -60,7 +60,32 @@
                     </a>
                     <span class="app-version">v0.8 beta 🐛</span>
                 </div>
-            </div>  
+            </div>
+
+            <span id="debugTrigger" class="debug-trigger"></span>
+
+            <!-- Debug Panel (hidden by default) -->
+            <div id="debugPanel" class="debug-panel hidden">
+                <div class="debug-header">
+                    <h2>Mode développeur</h2>
+                    <button id="closeDebug" class="close-debug">×</button>
+                </div>
+                <div class="debug-content">
+                    <div class="debug-section">
+                        <h3>Infos sur l'appareil</h3>
+                        <div id="deviceInfo" class="debug-info"></div>
+                    </div>
+                </div>    
+                <div class="debug-section">
+                    <h3>Logs</h3>
+                    <div id="logContainer" class="log-container"></div>
+                </div>
+                <div class="debug-actions">
+                    <button id="copyLogs" class="debug-button">Copier les logs</button>
+                    <button id="clearLogs" class="debug-button">Vider les logs</button>
+                </div>
+            </div>
+        </div>    
             
             <div id="dashboardView" class="view hidden">
             <!--- Dashboard Page-->
@@ -68,6 +93,6 @@
                 <button class="allow-notif-button" id="allowNotifButton">Activer les notifications</button>
             </div>
         </div>    
-        <script type="module" src="scripts/pwa.js?25602560"></script>
+        <script type="module" src="scripts/pwa.js?890380970"></script>
     </body>
 </html>

@@ -435,6 +435,38 @@ h1 {
     text-align: center;
 }
 
+.debug-trigger {
+    color: red;
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    z-index: 1000;
+    background: transparent;
+}
+
+.debug-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    background: var(--background);
+    border-left: 2px solid var(--primary);
+    z-index: 1000;
+    overflow-y: auto;
+    transition: transform 0.3s ease;
+    transform: translateX(100%);
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
+}
+
+
+.debug-panel.visible {
+    transform: translateX(0);
+}
+
 .app-version {
     font-size: 0.75rem;
     color: var(--text-light);
@@ -443,6 +475,107 @@ h1 {
     opacity: 0.8;
     position: relative;
     margin-bottom: 0rem;
+}
+
+.debug-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    border-bottom: 1px solid var(--primary-light);
+    position: sticky;
+    top: 0;
+    background: var(--background);
+    z-index: 2;
+}
+
+.debug-header h2 {
+    margin: 0;
+    color: var(--primary);
+    font-size: 1.2rem;
+}
+
+.close-debug {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text);
+    cursor: pointer;
+}
+
+.debug-content {
+    padding: 1rem;
+}
+
+.debug-section {
+    margin-bottom: 1.5rem;
+}
+
+.debug-section h3 {
+    margin-bottom: 0.5rem;
+    color: var(--text);
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.debug-info {
+    background: var(--card-bg);
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text);
+    border: 1px solid var(--primary-light);
+    white-space: pre-wrap;
+}
+
+.log-container {
+    background: var(--card-bg);
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.8rem;
+    font-family: monospace;
+    color: var(--text);
+    border: 1px solid var(--primary-light);
+    height: 300px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+}
+
+.debug-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.debug-button {
+    font-family: "FixelVariable", sans-serif;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    flex: 1;
+}
+
+.log-entry {
+    margin-bottom: 0.25rem;
+    line-height: 1.3;
+    border-bottom: 1px solid var(--primary-light);
+    padding-bottom: 0.25rem;
+}
+
+.log-entry.error {
+    color: var(--error-text);
+}
+
+.log-entry.warn {
+    color: #f59e0b;
+}
+
+.log-entry.info {
+    color: var(--primary);
 }
 
 .error-message {
@@ -459,25 +592,6 @@ h1 {
     gap: 1rem;
     margin-bottom: 2rem;
     margin-top: 0;
-}
-
-.settings-button {
-    font-family: "FixelVariable", sans-serif;
-    background: var(--error-text);
-    color: white;
-    border: none;
-    border-radius: 0.75rem;
-    padding: 0.75rem 1.25rem;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    margin: 0 auto;
-    width: fit-content;
-}
-
-.settings-button:hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
 }
 
 @keyframes slideIn {

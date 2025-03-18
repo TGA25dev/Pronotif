@@ -1,34 +1,332 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js';
 import { getMessaging, getToken } from 'https://www.gstatic.com/firebasejs/10.9.0/firebase-messaging.js';
 
+// Custom debug logger
+const originalConsole = {
+    log: console.log.bind(console),
+    error: console.error.bind(console),
+    warn: console.warn.bind(console),
+    info: console.info.bind(console)
+};
+
+const debugLogger = {
+    logs: [],
+    maxLogs: 100,
+    
+    formatTime() {
+        const now = new Date();
+        return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}.${now.getMilliseconds().toString().padStart(3, '0')}`;
+    },
+    
+    formatMessage(message) {
+        if (message === undefined) return 'undefined';
+        if (message === null) return 'null';
+        if (typeof message === 'object') {
+            try {
+                return JSON.stringify(message, null, 2);
+            } catch (e) {
+                return String(message);
+            }
+        }
+        return String(message);
+    },
+    
+    log(message, ...args) {
+        const logEntry = {
+            time: this.formatTime(),
+            type: 'log',
+            message: this.formatMessage(message),
+            args: args.map(arg => this.formatMessage(arg))
+        };
+        this.logs.push(logEntry);
+        this.trimLogs();
+        originalConsole.log(`[${logEntry.time}]`, message, ...args);
+        this.updateDebugPanel();
+    },
+    
+    error(message, ...args) {
+        const logEntry = {
+            time: this.formatTime(),
+            type: 'error',
+            message: this.formatMessage(message),
+            args: args.map(arg => this.formatMessage(arg))
+        };
+        this.logs.push(logEntry);
+        this.trimLogs();
+        originalConsole.error(`[${logEntry.time}]`, message, ...args);
+        this.updateDebugPanel();
+    },
+    
+    warn(message, ...args) {
+        const logEntry = {
+            time: this.formatTime(),
+            type: 'warn',
+            message: typeof message === 'object' ? JSON.stringify(message) : message,
+            args: args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : arg)
+        };
+        this.logs.push(logEntry);
+        this.trimLogs();
+        originalConsole.warn(`[${logEntry.time}]`, message, ...args);
+        this.updateDebugPanel();
+    },
+    
+    info(message, ...args) {
+        const logEntry = {
+            time: this.formatTime(),
+            type: 'info',
+            message: typeof message === 'object' ? JSON.stringify(message) : message,
+            args: args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : arg)
+        };
+        this.logs.push(logEntry);
+        this.trimLogs();
+        originalConsole.info(`[${logEntry.time}]`, message, ...args);
+        this.updateDebugPanel();
+    },
+    
+    trimLogs() {
+        if (this.logs.length > this.maxLogs) {
+            this.logs = this.logs.slice(-this.maxLogs);
+        }
+    },
+    
+    clear() {
+        this.logs = [];
+        this.updateDebugPanel();
+    },
+    
+    updateDebugPanel() {
+        const logContainer = document.getElementById('logContainer');
+        if (!logContainer) return;
+        
+        logContainer.innerHTML = '';
+        this.logs.forEach(log => {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${log.type}`;
+            entry.textContent = `[${log.time}] ${log.type.toUpperCase()}: ${log.message} ${log.args.length ? log.args.join(' ') : ''}`;
+            logContainer.appendChild(entry);
+        });
+        
+        // Auto scroll to bottom
+        logContainer.scrollTop = logContainer.scrollHeight;
+    },
+    
+    getDeviceInfo() {
+        const APP_VERSION = '0.8.0';
+        const API_VERSION = 'v1';
+        const API_BASE_URL = 'https://api.pronotif.tech';
+        const VAPID_KEY = 'BMwPi20UcpJRPkeiE1ktEjuv2tNPHhMmc1M-xvIWXSuAEVmU0ct96APLCXDl51f_iWevhdrewii6No6QJ3OYcgY';
+        
+        const info = {
+            app: {
+                version: APP_VERSION,
+                buildTime: new Date().toISOString(),
+                debug: true,
+                api: {
+                    version: API_VERSION,
+                    baseUrl: API_BASE_URL,
+                    status: navigator.onLine ? 'connected' : 'offline'
+                }
+            },
+            fcm: {
+                vapidKey: `${VAPID_KEY.substring(0, 10)}...`,
+                token: localStorage.getItem('fcmToken') || 'Not set',
+                permission: Notification.permission,
+                available: 'Notification' in window,
+                serviceWorker: 'serviceWorker' in navigator,
+                messaging: typeof firebase !== 'undefined' && firebase.messaging ? 'available' : 'not initialized'
+            },
+            device: {
+                platform: /iPhone|iPad|iPod/.test(navigator.userAgent) ? 'iOS' : 
+                         /Android/.test(navigator.userAgent) ? 'Android' : 'other',
+                screen: {
+                    width: window.innerWidth,
+                    height: window.innerHeight,
+                    dpr: window.devicePixelRatio,
+                    orientation: window.screen.orientation?.type || 'unknown'
+                },
+                features: {
+                    serviceWorker: 'serviceWorker' in navigator,
+                    notifications: 'Notification' in window,
+                    camera: 'mediaDevices' in navigator,
+                    storage: 'storage' in navigator && 'estimate' in navigator.storage
+                }
+            },
+            connection: navigator.connection ? {
+                type: navigator.connection.effectiveType,
+                speed: `${navigator.connection.downlink}Mbps`,
+                saveData: navigator.connection.saveData
+            } : 'Not available',
+            storage: {
+                quota: 'Checking...',
+                usage: 'Checking...'
+            }
+        };
+
+        // Add FCM token age if available
+        const tokenTimestamp = localStorage.getItem('fcmTokenTimestamp');
+        if (tokenTimestamp) {
+            const age = Math.round((Date.now() - parseInt(tokenTimestamp)) / 1000 / 60);
+            info.fcm.tokenAge = `${age} minutes`;
+        }
+
+        // Add service worker status
+        if (navigator.serviceWorker) {
+            navigator.serviceWorker.ready.then(registration => {
+                info.fcm.swState = registration.active ? registration.active.state : 'no active worker';
+                const deviceInfoEl = document.getElementById('deviceInfo');
+                if (deviceInfoEl) {
+                    deviceInfoEl.innerText = JSON.stringify(info, null, 2);
+                }
+            });
+        }
+        
+        // Update storage info if available
+        if (info.device.features.storage) {
+            navigator.storage.estimate().then(({usage, quota}) => {
+                info.storage = {
+                    quota: `${Math.round(quota / 1024 / 1024)} MB`,
+                    usage: `${Math.round(usage / 1024 / 1024)} MB`,
+                    percentage: `${Math.round((usage / quota) * 100)}%`
+                };
+                
+                const deviceInfoEl = document.getElementById('deviceInfo');
+                if (deviceInfoEl) {
+                    deviceInfoEl.innerText = JSON.stringify(info, null, 2);
+                }
+            });
+        }
+        
+        return info;
+    }
+};
+
+// Override console methods to capture logs
+console.log = function(message, ...args) {
+    if (message instanceof Error) {
+        message = {
+            message: message.message,
+            stack: message.stack
+        };
+    }
+    debugLogger.log(message, ...args);
+};
+
+console.error = function(message, ...args) {
+    if (message instanceof Error) {
+        message = {
+            message: message.message,
+            stack: message.stack
+        };
+    }
+    debugLogger.error(message, ...args);
+};
+
+console.warn = function(message, ...args) {
+    debugLogger.warn(message, ...args);
+};
+
+console.info = function(message, ...args) {
+    debugLogger.info(message, ...args);
+};
+
+// Add network error interceptor
+const originalFetch = window.fetch;
+window.fetch = async function(...args) {
+    const startTime = Date.now();
+    try {
+        const response = await originalFetch(...args);
+        const endTime = Date.now();
+        
+        console.info(`[Network] ${args[0]} - ${response.status} (${endTime - startTime}ms)`);
+        
+        if (!response.ok) {
+            console.error(`[Network Error] ${args[0]} - ${response.status} ${response.statusText}`);
+        }
+        return response;
+    } catch (error) {
+        console.error('[Network Error]', {
+            url: args[0],
+            error: error.message,
+            stack: error.stack
+        });
+        throw error;
+    }
+};
+
+// Add service worker message logging
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', event => {
+        console.info('[ServiceWorker]', event.data);
+    });
+    
+    // Log service worker registration events
+    navigator.serviceWorker.getRegistrations().then(async registrations => {
+        for (const registration of registrations) {
+            await registration.unregister();
+            console.info('[ServiceWorker] Unregistered existing worker');
+        }
+        
+        const swUrl = `sw.js?cache=${Date.now()}`;
+        navigator.serviceWorker.register(swUrl, {
+            scope: './',
+            updateViaCache: 'none'
+        }).then(registration => {
+            console.info('[ServiceWorker] New worker registered');
+            registration.update();
+            
+            registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                console.info('[ServiceWorker] Update found, installing...');
+                
+                newWorker.addEventListener('statechange', () => {
+                    console.info('[ServiceWorker] Worker state:', newWorker.state);
+                    if (newWorker.state === 'installed') {
+                        newWorker.postMessage({type: 'SKIP_WAITING'});
+                    }
+                });
+            });
+        }).catch(error => {
+            console.error('[ServiceWorker] Registration failed:', error);
+        });
+    }).catch(error => {
+        console.error('[ServiceWorker] Registration error:', error);
+    });
+}
+
 async function initializeFirebase() {
     try {
-      // Only provide config to authenticated users
-      const response = await fetch('https://api.pronotif.tech/v1/app/firebase-config', {
-        credentials: 'include', // Send authentication cookies
-        cache: 'no-store' // Prevent caching
-      });
-      
-      if (!response.ok) throw new Error('Authentication required');
-      
-      const firebaseConfig = await response.json();
-      console.log('Firebase config has bee loaded !');
-      
-      // Validate config has required field=
-      const requiredFields = ['apiKey', 'authDomain', 'projectId', 'messagingSenderId', 'appId'];
-      for (const field of requiredFields) {
-        if (!firebaseConfig[field]) {
-          throw new Error(`Missing or null Firebase config value: "${field}"`);
+        const response = await fetch('https://api.pronotif.tech/v1/app/firebase-config', {
+            credentials: 'include',
+            cache: 'no-store'
+        });
+        
+        if (!response.ok) {
+            const error = new Error('Authentication required');
+            error.status = response.status;
+            throw error;
         }
-      }
-      
-      return initializeApp(firebaseConfig);
+        
+        const firebaseConfig = await response.json();
+        console.log('Firebase config loaded successfully');
+        
+        // Validate config has required fields
+        const requiredFields = ['apiKey', 'authDomain', 'projectId', 'messagingSenderId', 'appId'];
+        for (const field of requiredFields) {
+            if (!firebaseConfig[field]) {
+                throw new Error(`Missing Firebase config value: "${field}"`);
+            }
+        }
+        
+        return initializeApp(firebaseConfig);
     } catch (error) {
-      console.error('Failed to initialize Firebase:', error);
-      return null; 
+        console.error('Failed to initialize Firebase:', {
+            message: error.message,
+            status: error.status,
+            stack: error.stack
+        });
+        return null;
     }
-  }
-
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Initialize Firebase
@@ -45,6 +343,76 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error("Firebase initialization failed - notifications will not work");
     }
     
+    // Setup debug mode
+    let tapCount = 0;
+    const debugTrigger = document.getElementById('debugTrigger');
+    const debugPanel = document.getElementById('debugPanel');
+    const closeDebug = document.getElementById('closeDebug');
+    const copyLogs = document.getElementById('copyLogs');
+    const clearLogs = document.getElementById('clearLogs');
+    const appVersionEl = document.querySelector('.app-version');
+    
+    // Initialize device info
+    const deviceInfo = document.getElementById('deviceInfo');
+    if (deviceInfo) {
+        deviceInfo.innerText = JSON.stringify(debugLogger.getDeviceInfo(), null, 2);
+    }
+    
+    // Secret trigger: tap app version 5 times quickly
+    if (appVersionEl) {
+        appVersionEl.addEventListener('click', (e) => {
+            e.preventDefault();
+            tapCount++;
+            
+            if (tapCount === 1) {
+                setTimeout(() => {
+                    tapCount = 0;
+                }, 3000);
+            }
+            
+            if (tapCount >= 5) {
+                tapCount = 0;
+                toggleDebugPanel();
+            }
+        });
+    }
+    
+    function toggleDebugPanel() {
+        debugPanel.classList.toggle('hidden');
+        debugPanel.classList.toggle('visible');
+        debugLogger.updateDebugPanel();
+    }
+    
+    if (closeDebug) {
+        closeDebug.addEventListener('click', toggleDebugPanel);
+    }
+    
+    if (copyLogs) {
+        copyLogs.addEventListener('click', () => {
+            const logText = debugLogger.logs.map(log => 
+                `[${log.time}] ${log.type.toUpperCase()}: ${log.message} ${log.args.join(' ')}`
+            ).join('\n');
+            
+            navigator.clipboard.writeText(logText)
+                .then(() => {
+                    console.info('Logs copied to clipboard');
+                    copyLogs.textContent = 'Copied!';
+                    setTimeout(() => {
+                        copyLogs.textContent = 'Copy Logs';
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error('Failed to copy logs:', err);
+                });
+        });
+    }
+    
+    if (clearLogs) {
+        clearLogs.addEventListener('click', () => {
+            debugLogger.clear();
+            console.info('Logs cleared');
+        });
+    }
 
     // Global functions
     function showFeedback(message, type) {
@@ -111,14 +479,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const welcomeGreeting = document.getElementById('welcomeGreeting');
     const allowNotifButton = document.getElementById('allowNotifButton');
 
+    // Update checkExistingSession with better error handling
     function checkExistingSession() {
-        // If offline, show login
         if (!navigator.onLine) {
+            console.warn('[Auth] Device is offline, showing login view');
             setTimeout(() => showLoginView(), 1000);
             return;
         }
-
-        // Try to refresh auth
+    
+        console.info('[Auth] Checking session...');
         fetch('https://api.pronotif.tech/v1/app/auth/refresh', {
             method: 'POST',
             headers: {
@@ -130,14 +499,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         })
         .then(response => {
             if (!response.ok) {
-                throw new Error('Invalid or unexistent session, showing login view...');
+                throw new Error(`Auth refresh failed: ${response.status} ${response.statusText}`);
             }
             return response.json();
         })
         .then(() => {
+            console.info('[Auth] Session refreshed successfully');
             setTimeout(() => showDashboard(), 1000);
         })
-        .catch(() => {
+        .catch(error => {
+            console.warn('[Auth] Session check failed:', error.message);
             setTimeout(() => showLoginView(), 1000);
         });
     }
@@ -669,29 +1040,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Send FCM token to server
-    function sendFCMTokenToServer(token) {
-        fetch('https://api.pronotif.tech/v1/app/fcm-token', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                fcm_token: token
-            }),
-            credentials: 'include'
+    async function sendFCMTokenToServer(token) {
+        try {
+            const response = await fetch('https://api.pronotif.tech/v1/app/fcm-token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fcm_token: token }),
+                credentials: 'include'
+            });
             
-        })
-        .then(response => response.json())
-        .then(data => {
+            const data = await response.json();
             if (data.status === 200) {
                 console.log('FCM token saved on server successfully');
+                localStorage.setItem('fcmToken', token);
+                localStorage.setItem('fcmTokenTimestamp', Date.now().toString());
+                // Update debug panel
+                const deviceInfoEl = document.getElementById('deviceInfo');
+                if (deviceInfoEl) {
+                    deviceInfoEl.innerText = JSON.stringify(debugLogger.getDeviceInfo(), null, 2);
+                }
             } else {
                 console.error('Failed to save FCM token on server:', data.error);
             }
-        })
-        .catch(error => {
+        } catch (error) {
             console.error('Error sending FCM token to server:', error);
-        });
+        }
     }
 
     // Handle FCM token registration when notifications are enabled
