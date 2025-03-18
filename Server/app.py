@@ -17,6 +17,7 @@ from flask_cors import CORS
 from flask_talisman import Talisman
 import hashlib
 import sentry_sdk
+from contextlib import contextmanager
 
 version = "v0.7"
 sentry_sdk.init("https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992", 
@@ -97,7 +98,11 @@ connection_pool = pooling.MySQLConnectionPool(
     host=os.getenv('DB_HOST'),
     user=os.getenv('DB_USER'),
     password=os.getenv('DB_PASSWORD'),
-    database=os.getenv('DB_NAME')
+    database=os.getenv('DB_NAME'),
+    connect_timeout=10, 
+    get_warnings=True,
+    connection_timeout=5,
+    autocommit=True  
 )
 
 authcode = os.getenv('AUTHCODE')
@@ -372,51 +377,50 @@ def get_firebase_config():
             app_token = bleach.clean(app_token)
             
             # Verify the session
-            connection = connection_pool.get_connection()
-            cursor = connection.cursor(dictionary=True)
-            
-            try:
-                with sentry_sdk.start_span(op="db.query", description="Verify user authentication"):
-                    query = f"""
-                        SELECT COUNT(*) as count
-                        FROM {student_table_name}
-                        WHERE app_session_id = %s AND app_token = %s AND is_active = TRUE
-                    """
-                    cursor.execute(query, (app_session_id, app_token))
-                    result = cursor.fetchone()
+            with get_db_connection() as connection:
+                cursor = connection.cursor(dictionary=True)
+                
+                try:
+                    with sentry_sdk.start_span(op="db.query", description="Verify user authentication"):
+                        query = f"""
+                            SELECT COUNT(*) as count
+                            FROM {student_table_name}
+                            WHERE app_session_id = %s AND app_token = %s AND is_active = TRUE
+                        """
+                        cursor.execute(query, (app_session_id, app_token))
+                        result = cursor.fetchone()
+                        
+                        if not result or result['count'] == 0:
+                            logger.warning(f"!!Firebase config access attempt with invalid credentials: {app_session_id}!!")
+                            return jsonify({"error": "Invalid credentials"}), 401
                     
-                    if not result or result['count'] == 0:
-                        logger.warning(f"!!Firebase config access attempt with invalid credentials: {app_session_id}!!")
-                        return jsonify({"error": "Invalid credentials"}), 401
-                    
-                # User is authenticated, return Firebase config
-                firebase_config = {
-                    "apiKey": os.getenv('FB_API_KEY'),
-                    "authDomain": os.getenv('FB_AUTH_DOMAIN'),
-                    "projectId": os.getenv('FB_PROJECT_ID'),
-                    "storageBucket": os.getenv('FB_STORAGE_BUCKET'),
-                    "messagingSenderId": os.getenv('FB_MESSAGING_SENDER_ID'),
-                    "appId": os.getenv('FB_APP_ID')
-                }
+                        # User is authenticated, return Firebase config
+                        firebase_config = {
+                            "apiKey": os.getenv('FB_API_KEY'),
+                            "authDomain": os.getenv('FB_AUTH_DOMAIN'),
+                            "projectId": os.getenv('FB_PROJECT_ID'),
+                            "storageBucket": os.getenv('FB_STORAGE_BUCKET'),
+                            "messagingSenderId": os.getenv('FB_MESSAGING_SENDER_ID'),
+                            "appId": os.getenv('FB_APP_ID')
+                        }
+                        
+                        # Log the successful access
+                        logger.info(f"Firebase config provided to authenticated user: {app_session_id}")
+                        
+                        # Return the config
+                        response = jsonify(firebase_config)
+                        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+                        response.headers['Pragma'] = 'no-cache'
+                        response.headers['X-Content-Type-Options'] = 'nosniff'
+                        return response
                 
-                # Log the successful access
-                logger.info(f"Firebase config provided to authenticated user: {app_session_id}")
+                except mysql.connector.Error as err:
+                    sentry_sdk.capture_exception(err)
+                    logger.error(f"MySQL error in firebase config endpoint: {err}")
+                    return jsonify({"error": "Internal server error"}), 500
                 
-                # Return the config
-                response = jsonify(firebase_config)
-                response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
-                response.headers['Pragma'] = 'no-cache'
-                response.headers['X-Content-Type-Options'] = 'nosniff'
-                return response
-                
-            except mysql.connector.Error as err:
-                sentry_sdk.capture_exception(err)
-                logger.error(f"MySQL error in firebase config endpoint: {err}")
-                return jsonify({"error": "Internal server error"}), 500
-                
-            finally:
-                cursor.close()
-                connection.close()
+                finally:
+                    cursor.close()
                 
         except Exception as e:
             sentry_sdk.capture_exception(e)
@@ -838,12 +842,44 @@ def cleanup_inactive_students():
                 connection.close()
             time.sleep(3600)  # Run every hour
 
+def monitor_pool():
+    while True:
+        try:
+            pool_name = os.getenv('DB_POOL_NAME')
+            if hasattr(connection_pool, '_cnx_queue'):
+                available = connection_pool._cnx_queue.qsize()
+                total = int(os.getenv('DB_POOL_SIZE', '32'))
+                used = total - available
+                logger.info(f"Connection pool status - Used: {used}, Available: {available}, Total: {total}")
+        except Exception as e:
+            logger.error(f"Pool monitoring error: {e}")
+        time.sleep(30)  # Monitor every 30 seconds
+
 def start_background_tasks():
     session_cleanup_thread = threading.Thread(target=cleanup_auth_sessions, daemon=True)
     student_cleanup_thread = threading.Thread(target=cleanup_inactive_students, daemon=True)
+    pool_monitor_thread = threading.Thread(target=monitor_pool, daemon=True)
     
     session_cleanup_thread.start()
     student_cleanup_thread.start()
+    pool_monitor_thread.start()
+
+@contextmanager
+def get_db_connection():
+    connection = None
+    try:
+        connection = connection_pool.get_connection()
+        yield connection
+    except mysql.connector.Error as err:
+        sentry_sdk.capture_exception(err)
+        logger.error(f"Database connection error: {err}")
+        raise
+    finally:
+        if connection:
+            try:
+                connection.close()
+            except Exception as e:
+                logger.error(f"Error closing connection: {e}")
 
 @app.before_request
 def initialize():
