@@ -14,7 +14,7 @@
         <link rel="preload" href="fonts/FixelVariable.ttf" as="font" type="font/ttf" crossorigin>
         <link rel="preload" href="fonts/FixelVariableItalic.ttf" as="font" type="font/ttf" crossorigin>
         <link rel="stylesheet" href="styles/fonts.css">
-        <link rel="stylesheet" href="styles/pwa-style.css?v0.5">
+        <link rel="stylesheet" href="styles/pwa-style.css?25602560">
         <script src="scripts/jsQR.js"></script>
     </head>
     <body>
@@ -23,6 +23,12 @@
             <p>Veuillez utiliser votre téléphone en mode portrait pour accéder à Pronot'if.</p>
         </div>
         <div class="main-container">
+            <div id="loadingView" class="view">
+                <div class="loading-container">
+                    <div class="spinner-large"></div>
+                    <p class="loading-text">Chargement en cours...</p>
+                </div>
+            </div>    
             <div id="loginView" class="view">
                 <div class="container">
                     <div class="card">
@@ -58,9 +64,10 @@
             
             <div id="dashboardView" class="view hidden">
             <!--- Dashboard Page-->
-                <p>TEST</p>
-            </div>  
+                <p class="welcome-greeting" id="welcomeGreeting">Veuillez patienter...</p>
+                <button class="allow-notif-button" id="allowNotifButton">Activer les notifications</button>
+            </div>
         </div>    
-        <script src="scripts/pwa.js?v0.4"></script>
+        <script type="module" src="scripts/pwa.js?25602560"></script>
     </body>
 </html>

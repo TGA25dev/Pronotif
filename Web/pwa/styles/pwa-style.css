@@ -22,7 +22,7 @@
     /* Dynamic sizes */
     --container-width: min(420px, 95vw);
     --camera-height: min(15rem, 50vh);
-    --header-size: clamp(3.5rem, 10vw, 5rem);
+    --header-size: clamp(6rem, 14vw, 7rem);
     --subtitle-size: clamp(1.1rem, 4vw, 1.4rem);
 }
 
@@ -112,6 +112,41 @@ body::after {
     margin-top: 3rem;
 }
 
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease forwards;
+}
+
+.fade-out {
+    animation: fadeOut 0.4s ease forwards;
+}
+
+.animating-out {
+    pointer-events: none;
+    z-index: 5;
+}
+
 .container {
     width: var(--container-width);
     max-width: 100%;
@@ -123,6 +158,7 @@ body::after {
     z-index: 1;
     height: 100%;
     max-height: 100vh;
+    animation: fadeIn 0.5s ease 0.2s backwards;
 }
 
 .card {
@@ -242,14 +278,76 @@ h1 {
     }
 }
 
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    margin: auto;
+    animation: fadeIn 0.5s ease 0.2s backwards;
+}
+
+.loading-text {
+    margin-top: 1.5rem;
+    color: var(--text-light);
+    font-size: 1.1rem;
+    text-align: center;
+    width: 100%;
+}
+
 .spinner {
-    display: none;
     width: 2.5rem;
     height: 2.5rem;
     margin: 1.5rem auto;
     border: 3px solid var(--primary-light);
     border-right-color: var(--primary);
     border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.spinner-large {
+    width: 4rem;
+    height: 4rem;
+    border: 4px solid var(--primary-light);
+    border-right-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.camera-view.loading {
+    position: relative;
+}
+
+.camera-view.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 5;
 }
 
 .help-button {
@@ -279,6 +377,16 @@ h1 {
     color: var(--primary);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(69, 168, 168, 0.15);
+}
+
+.button-disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: var(--text-light);
+}
+
+.button-disabled:hover {
+    background-color: var(--text-light);
 }
 
 .infos-qr {
@@ -386,6 +494,8 @@ h1 {
 .view {
     width: 100%;
     height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .hidden {
@@ -410,10 +520,6 @@ h1 {
         padding: var(--spacing-xs);
     }
     
-    .spinner {
-        margin: 0.5rem auto;
-    }
-
     .card-header {
         margin-bottom: var(--spacing-xl);
     }

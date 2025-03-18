@@ -1,11 +1,98 @@
-const CACHE_NAME = 'pronotif-pwa-v14';
+// Import Firebase scripts
+importScripts('https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.9.0/firebase-messaging-compat.js');
 
-// Add this at the very top to force update
+const CACHE_NAME = 'pronotif-pwa-v20';
+
+// Global variable to store Firebase Messaging instance
+let messaging = null;
+let firebaseInitialized = false;
+
+
 self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
       self.skipWaiting();
+    } else if (event.data && event.data.type === 'FIREBASE_CONFIG') {
+      const firebaseConfig = event.data.config;
+      
+      try {
+        // Only initialize Firebase once
+        if (!firebaseInitialized) {
+          // Initialize Firebase with the received config
+          firebase.initializeApp(firebaseConfig);
+          messaging = firebase.messaging();
+          
+          // Set up background message handler
+          messaging.onBackgroundMessage((payload) => {
+            console.log('[sw.js] Received background message ', payload);
+            
+            // Just log the payload for debugging
+            console.log('[sw.js] Background message payload:', payload);
+          });
+          
+          firebaseInitialized = true;
+          console.log('[Service Worker] Firebase Messaging initialized successfully');
+        }
+      } catch (error) {
+        console.error('[Service Worker] Error initializing Firebase:', error);
+      }
     }
-  });
+});
+
+self.addEventListener('push', function(event) {
+  // This will be called when a push notification is received
+  console.log('[Service Worker] Push Received:', event);
+  
+  // If we have payload data, create notification
+  if (event.data) {
+    try {
+      const payload = event.data.json();
+      console.log('[Service Worker] Push payload:', payload);
+      
+      // Avoid showing notification if it's just a data message
+      // and we're on iOS (FCM will handle the notification display)
+      const isIOSDevice = /iPhone|iPad|iPod/.test(self.navigator?.userAgent || '');
+      const isDataOnlyMessage = !payload.notification && payload.data;
+      
+      if (isIOSDevice && isDataOnlyMessage) {
+        console.log('[Service Worker] Skipping notification on iOS for data-only message');
+        return;
+      }
+      
+      const title = payload.notification?.title || 'Pronot\'if';
+      const options = {
+        body: payload.notification?.body || 'Nouvelle notification',
+        icon: '/Web/images/pwa/assets/icon-192x192.png',
+        tag: 'pronotif-notification', // Add tag to prevent duplicates
+        renotify: false,              // Don't notify again for same tag
+        ...payload.notification
+      };
+      
+      event.waitUntil(
+        clients.openWindow(event.notification.data?.deep_link || 'https://pronotif.tech/pwa/index.htm')
+      );
+    } catch (error) {
+      console.error('[Service Worker] Error handling push event:', error);
+    }
+  }
+});
+
+self.addEventListener('pushsubscriptionchange', function(event) {
+  console.log('[Service Worker] Push subscription change event received');
+  // (Re-subscribe the user to push notifications)
+});
+
+self.addEventListener('notificationclick', function(event) {
+  console.log('[Service Worker] Notification click received:', event);
+
+  // Close the notification
+  event.notification.close();
+
+  // Handle notification click
+  event.waitUntil(
+    clients.openWindow(event.notification.data?.deep_link || 'https://pronotif.tech/pwa/index.htm')
+  );
+});
 
 const ASSETS_TO_CACHE = [
     './',

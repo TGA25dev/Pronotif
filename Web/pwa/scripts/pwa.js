@@ -1,71 +1,278 @@
-document.addEventListener('DOMContentLoaded', () => {
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js';
+import { getMessaging, getToken } from 'https://www.gstatic.com/firebasejs/10.9.0/firebase-messaging.js';
 
-    // Offline check on page load
-    function checkOnlineStatus() {
-        if (!navigator.onLine) {
-            // If we're offline according to navigator.onLine, redirect to offline page
-            window.location.href = 'offline.htm';
+async function initializeFirebase() {
+    try {
+      // Only provide config to authenticated users
+      const response = await fetch('https://api.pronotif.tech/v1/app/firebase-config', {
+        credentials: 'include', // Send authentication cookies
+        cache: 'no-store' // Prevent caching
+      });
+      
+      if (!response.ok) throw new Error('Authentication required');
+      
+      const firebaseConfig = await response.json();
+      console.log('Firebase config has bee loaded !');
+      
+      // Validate config has required field=
+      const requiredFields = ['apiKey', 'authDomain', 'projectId', 'messagingSenderId', 'appId'];
+      for (const field of requiredFields) {
+        if (!firebaseConfig[field]) {
+          throw new Error(`Missing or null Firebase config value: "${field}"`);
         }
+      }
+      
+      return initializeApp(firebaseConfig);
+    } catch (error) {
+      console.error('Failed to initialize Firebase:', error);
+      return null; 
+    }
+  }
+
+
+document.addEventListener('DOMContentLoaded', async () => {
+    // Initialize Firebase
+    const app = await initializeFirebase();
+    let messaging = null;
+    
+    if (app) {
+        try {
+            messaging = getMessaging(app);
+        } catch (error) {
+            console.error("Failed to initialize messaging:", error);
+        }
+    } else {
+        console.error("Firebase initialization failed - notifications will not work");
     }
     
-    // Check immediately on load
-    checkOnlineStatus();
-    
-    //Listen for network status changes
-    window.addEventListener('offline', checkOnlineStatus);
 
-    // Check if a session exists
-    checkExistingSession();
+    // Global functions
+    function showFeedback(message, type) {
+        const feedbackEl = document.getElementById('feedbackMessage');
+        if (!feedbackEl) return;
+        
+        feedbackEl.innerHTML = message;
+        feedbackEl.className = 'feedback-message';
+        feedbackEl.classList.add(type);
+        feedbackEl.style.display = 'block';
+    }
+
+    function hideFeedback() {
+        const feedbackEl = document.getElementById('feedbackMessage');
+        if (feedbackEl) feedbackEl.style.display = 'none';
+    }
+    
+    // Function to show login view
+    function showLoginView() {
+        return new Promise((resolve) => {
+            // Hide all views except loading
+            document.querySelectorAll('.view:not(#loadingView)').forEach(view => {
+                view.classList.add('hidden');
+            });
+    
+            const loadingView = document.getElementById('loadingView');
+            const loginView = document.getElementById('loginView');
+            const spinner = document.getElementById('spinner');
+    
+            if (loadingView) {
+                // First make it absolute positioned but still visible
+                loadingView.classList.add('animating-out'); 
+                // Then add the fade-out animation
+                loadingView.classList.add('fade-out');
+                
+                setTimeout(() => {
+                    // After animation completes, actually hide it
+                    loadingView.classList.add('hidden');
+                    loadingView.classList.remove('animating-out');
+                    if (loginView) {
+                        loginView.classList.remove('hidden');
+                        loginView.classList.add('fade-in');
+                    }
+                    if (spinner) spinner.style.display = 'none';
+                    resolve();
+                }, 400);
+            } else {
+                // If no loading view, show login immediately
+                if (loginView) {
+                    loginView.classList.remove('hidden');
+                    loginView.classList.add('fade-in');
+                }
+                if (spinner) spinner.style.display = 'none';
+                resolve();
+            }
+        });
+    }
+    // Initialize DOM elements
+    const cameraButton = document.getElementById('cameraButton');
+    const cameraView = document.getElementById('cameraView');
+    const feedbackMessage = document.getElementById('feedbackMessage');
+    const spinner = document.getElementById('spinner');
+    const infosQR = document.getElementById('infosQR');
+    const welcomeGreeting = document.getElementById('welcomeGreeting');
+    const allowNotifButton = document.getElementById('allowNotifButton');
 
     function checkExistingSession() {
-        // Checkif online
+        // If offline, show login
         if (!navigator.onLine) {
-            console.log('Device is offline, skipping session refresh');
-            return; // Exit the function early - no need to try refreshing when offline
-        }
-
-        const hasVisitedBefore = localStorage.getItem('has_visited_app');
-
-        if (!hasVisitedBefore) {
-            console.log("First visit, skipping session refresh");
-            localStorage.setItem('has_visited_app', 'true');
+            setTimeout(() => showLoginView(), 1000);
             return;
-
         }
-        
-        // Show loading indicator
-        const spinner = document.getElementById('spinner');
-        if (spinner) spinner.style.display = 'block';
-        
-        // Try to refresh the authentication using existing cookies
+
+        // Try to refresh auth
         fetch('https://api.pronotif.tech/v1/app/auth/refresh', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            credentials: 'include', // Sends cookies with request
+            credentials: 'include',
             signal: AbortSignal.timeout(2000),
-            cache: 'no-store' // Prevent caching
+            cache: 'no-store'
         })
         .then(response => {
             if (!response.ok) {
-                throw new Error(`Auth failed with status: ${response.status}`);
+                throw new Error('Invalid or unexistent session, showing login view...');
             }
             return response.json();
         })
-        .then(data => {
-            console.log('Session refresh successful');
-            // Show dashboard view (cookies are already set by the server)
-            showDashboard();
+        .then(() => {
+            setTimeout(() => showDashboard(), 1000);
         })
-        .catch(error => {
-            console.log('No valid session found or session refresh failed:', error.message);
+        .catch(() => {
+            setTimeout(() => showLoginView(), 1000);
+        });
+    }
+
+    async function fetchFirebaseConfig() {
+        const response = await fetch('https://api.pronotif.tech/v1/app/firebase-config', {
+            credentials: 'include',
+            cache: 'no-store'
+        });
+        
+        if (!response.ok) throw new Error('Failed to get Firebase config');
+        return response.json();
+    }
+
+    async function checkNotifEnabled() {
+        if (!('Notification' in window)) {
+            console.warn('This browser does not support notifications !');
+            allowNotifButton.style.display = 'none';
+            return false;
+        }
+        if (Notification.permission === 'granted') {
+            allowNotifButton.style.display = 'none';
             
-            // User will stay on the initial view to scan a QR code
-        })
-        .finally(() => {
-            // Hide loading indicator
-            if (spinner) spinner.style.display = 'none';
+            try {
+                if (!app) return false;
+
+                // Get the Firebase config
+                const firebaseConfig = await fetchFirebaseConfig();
+                
+                // Wait for service worker to be fully registered and active
+                const swRegistration = await navigator.serviceWorker.ready;
+                
+                // Pass Firebase config to service worker
+                swRegistration.active.postMessage({
+                    type: 'FIREBASE_CONFIG',
+                    config: firebaseConfig
+                });
+                
+                console.log('[PWA] Firebase config sent to service worker');
+                
+                // Wait a moment for the service worker to process the config
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                const messaging = getMessaging(app);
+                const vapidKey = 'BMwPi20UcpJRPkeiE1ktEjuv2tNPHhMmc1M-xvIWXSuAEVmU0ct96APLCXDl51f_iWevhdrewii6No6QJ3OYcgY';
+                
+                // Get the token
+                const currentToken = await getToken(messaging, { 
+                    vapidKey, 
+                    serviceWorkerRegistration: swRegistration 
+                });
+    
+                if (currentToken) {
+                    console.log('FCM Registration Token:', currentToken);
+                    sendFCMTokenToServer(currentToken);
+                    return true;
+                } else {
+                    console.warn('No registration token available');
+                    return false;
+                }
+                
+            } catch (error) {
+                console.error('Error getting FCM token:', error);
+                return false;
+            }
+        }    
+
+        if (Notification.permission !== 'denied' || Notification.permission === 'default') {
+            allowNotifButton.style.display = 'block';
+        }
+
+        console.log('Notification permission:', Notification.permission);
+        return false;
+    }
+
+    // Show only loading view initially
+    document.querySelectorAll('.view').forEach(view => {
+        view.classList.add('hidden');
+    });
+    document.getElementById('loadingView').classList.remove('hidden');
+    
+    // check session
+    checkExistingSession();
+
+    // Check for notifications permission
+    checkNotifEnabled();
+
+    // Ntification permission button
+    if (allowNotifButton) {
+        allowNotifButton.addEventListener('click', async () => {
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                console.log('Notification permission granted!');
+                allowNotifButton.style.display = 'none';
+                
+                try {
+                    // Get the Firebase config
+                    const firebaseConfig = await fetchFirebaseConfig();
+                    
+                    // Wait for service worker to be fully registered and active
+                    const swRegistration = await navigator.serviceWorker.ready;
+                    
+                    // Pass Firebase config to service worker
+                    swRegistration.active.postMessage({
+                        type: 'FIREBASE_CONFIG',
+                        config: firebaseConfig
+                    });
+                    
+                    console.log('[PWA] Firebase config sent to service worker');
+                    
+                    // Wait a moment for the service worker to process the config
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    const messaging = getMessaging(app);
+                    const vapidKey = 'BMwPi20UcpJRPkeiE1ktEjuv2tNPHhMmc1M-xvIWXSuAEVmU0ct96APLCXDl51f_iWevhdrewii6No6QJ3OYcgY';
+                    
+                    // Get the token
+                    const currentToken = await getToken(messaging, { 
+                        vapidKey, 
+                        serviceWorkerRegistration: swRegistration 
+                    });
+                    
+                    if (currentToken) {
+                        console.log('FCM Registration Token:', currentToken);
+                        sendFCMTokenToServer(currentToken);
+                    } else {
+                        console.warn('No registration token available');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error getting FCM token after permission granted:', error);
+                }
+            } else {
+                console.log('Notification permission denied');
+            }
         });
     }
 
@@ -102,13 +309,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('The device is not mobile, stopping PWA initialization.');
         return;
     }
-
-    // Initialize DOM elements
-    const cameraButton = document.getElementById('cameraButton');
-    const cameraView = document.getElementById('cameraView');
-    const feedbackMessage = document.getElementById('feedbackMessage');
-    const spinner = document.getElementById('spinner');
-    const infosQR = document.getElementById('infosQR');
 
     // Service Worker Registration
     if ('serviceWorker' in navigator) {
@@ -148,13 +348,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         document.getElementById(`dashboardView`).classList.remove('hidden'); //Show the dashboard view
+        // Hide the spinner when showing dashboard
+        const spinner = document.getElementById('spinner');
+        if (spinner) spinner.style.display = 'none';
         
-        //TODO Au debut programme utilise ces données, à chaque ouverture il prend ces données fait une requete 'auth' et récupère des nouveaux app_session_id et app_token
-
-                // Now show dashboard
-        setTimeout(() => {
-            initializeDashboard();
-        }, 1000);
+        // Show dashboard
+        initializeDashboard();
     }
 
     // Dashboard initialization
@@ -170,13 +369,19 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(response => response.json())
         .then(data => {
             console.log('Dashboard data:', data);
-        })
 
+            const studentFirstName = data.data?.student_firstname;
+            const welcomeElement = document.getElementById('welcomeGreeting');
+            
+            // Update the welcome message
+            if (welcomeElement && studentFirstName) {
+                welcomeElement.textContent = `Bonjour ${studentFirstName} !`;
+            }
+        })
         .catch(error => {
             console.error('Dashboard data fetch failed:', error);
-            
             showFeedback('Unable to load dashboard. Please try again.', 'error');
-        })
+        });
     }
 
     // Camera Permission
@@ -311,11 +516,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
                                 isProcessing = true;
                                 cameraView.classList.add('loading');
-                                spinner.style.display = 'block';
+                                
+                                // Create overlay with spinner
+                                const overlay = document.createElement('div');
+                                overlay.className = 'overlay';
+                                const loadingSpinner = document.createElement('div');
+                                loadingSpinner.className = 'spinner-large';
+                                overlay.appendChild(loadingSpinner);
+                                document.body.appendChild(overlay);
+                                
                                 document.body.style.opacity = '0.7';
                                 showFeedback('QR code detected, processing...', 'info');
 
-                                console.log('Sending data to API:', mappedData);
+                                console.log('Sending data to API...');
 
                                 fetch('https://api.pronotif.tech/v1/app/qrscan', {
                                     method: 'POST',
@@ -350,13 +563,15 @@ document.addEventListener('DOMContentLoaded', () => {
                                     }
                                     return response.json();
                                 })
-                                .then(apiResponse => { // Succesfully logged in 
-                                    spinner.style.display = 'none';
-                                    document.body.style.opacity = '1';
+                                .then(apiResponse => { // Successfully logged in 
                                     console.log('QR scan API response:', apiResponse);
-                                    console.log('Cookies after scan:', document.cookie);
-
+                                    
                                     setTimeout(() => {
+                                        // Remove overlay
+                                        const overlay = document.querySelector('.overlay');
+                                        if (overlay) overlay.remove();
+                                        
+                                        document.body.style.opacity = '1';
                                         isProcessing = false;
                                         cameraView.classList.remove('loading');
                                         hideFeedback();
@@ -367,6 +582,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                     console.error('Error:', error);
                                     document.body.style.opacity = '1';
                                     showFeedback(error.message || 'Error processing QR code. Please try again.', 'error');
+                                    
+                                    // Remove overlay
+                                    const overlay = document.querySelector('.overlay');
+                                    if (overlay) overlay.remove();
+                                    
                                     setTimeout(() => {
                                         isProcessing = false;
                                         cameraView.classList.remove('loading');
@@ -392,21 +612,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     requestAnimationFrame(scan);
                 };
-
-                function showFeedback(message, type) {
-                    if (!feedbackMessage) return;
-                    feedbackMessage.innerHTML = message;
-                    // Reset all classes first
-                    feedbackMessage.className = 'feedback-message';
-                    // Add the specific type class
-                    feedbackMessage.classList.add(type);
-                    feedbackMessage.style.display = 'block';
-                }
-
-                function hideFeedback() {
-                    if (!feedbackMessage) return;
-                    feedbackMessage.style.display = 'none';
-                }
 
                 scan();
             }
@@ -462,4 +667,79 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
+    // Send FCM token to server
+    function sendFCMTokenToServer(token) {
+        fetch('https://api.pronotif.tech/v1/app/fcm-token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                fcm_token: token
+            }),
+            credentials: 'include'
+            
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 200) {
+                console.log('FCM token saved on server successfully');
+            } else {
+                console.error('Failed to save FCM token on server:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error sending FCM token to server:', error);
+        });
+    }
+
+    // Handle FCM token registration when notifications are enabled
+    async function registerFCMToken() {
+        if (!app || !messaging) {
+            console.error('Firebase not initialized');
+            return null;
+        }
+
+        try {
+            const swRegistration = await navigator.serviceWorker.ready;
+            const vapidKey = 'BMwPi20UcpJRPkeiE1ktEjuv2tNPHhMmc1M-xvIWXSuAEVmU0ct96APLCXDl51f_iWevhdrewii6No6QJ3OYcgY';
+            
+            const currentToken = await getToken(messaging, { 
+                vapidKey, 
+                serviceWorkerRegistration: swRegistration 
+            });
+
+            if (currentToken) {
+                console.log('FCM token acquired');
+                localStorage.setItem('fcmToken', currentToken);
+                await sendFCMTokenToServer(currentToken);
+                return currentToken;
+            } else {
+                console.warn('No FCM token available');
+                return null;
+            }
+        } catch (error) {
+            console.error('Error getting FCM token:', error);
+            return null;
+        }
+    }
+
+    // Set up a listener for service worker messages about token refresh
+    if (navigator.serviceWorker) {
+        navigator.serviceWorker.addEventListener('message', event => {
+            if (event.data && event.data.type === 'TOKEN_REFRESH') {
+                console.log('Token refresh event received');
+                if (app) {  // Check if Firebase app exists before proceeding
+                    registerFCMToken().then(token => {
+                        if (token) {
+                            sendFCMTokenToServer(token);
+                        }
+                    });
+                } else {
+                    console.warn('Cannot refresh token: Firebase not initialized');
+                }
+            }
+        });
+    }
 });
