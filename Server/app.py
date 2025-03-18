@@ -11,8 +11,6 @@ import os
 import secrets
 import threading
 import time
-from jsonschema import validate
-from jsonschema.exceptions import ValidationError
 import bleach
 import json
 from flask_cors import CORS
@@ -149,41 +147,19 @@ def page_not_found(error):
 @app.route('/ping', methods=['GET'])
 @limiter.limit("50 per minute")
 def test_endpoint():
+    """Ping endpoint to test server availability"""
     client_ip = request.remote_addr
     logger.info(f"{client_ip} Pong !")
     return jsonify({"message": "Pong !"}), 200
-
-# Use Redis to store the state instead of a dictionary
-def get_state():
-    state = redis_connection.get('visibility_state')
-    return bool(state and state.decode('utf-8') == 'True')
-
-def set_state(enabled):
-    redis_connection.set('visibility_state', str(enabled))
-
-@app.route('/emc', methods=['GET'])
-def toggle_visibility():
-    if 'enable' in request.args:
-        set_state(True)
-        logger.info("Visibility state enabled")
-        return jsonify({"status": "enabled"}), 200
-    
-    elif 'disable' in request.args:
-        set_state(False)
-        logger.info("Visibility state disabled")
-        return jsonify({"status": "disabled"}), 200
-    else:
-        return jsonify({"error": "Invalid action"}), 400
-
-@app.route('/state', methods=['GET'])
-def get_visibility_state():
-    return jsonify({"enabled": get_state()}), 200
 
 #Setup Endpoints
 
 @app.route("/v1/setup/session", methods=["POST", "HEAD"])
 @limiter.limit(str(os.getenv('SESSION_SETUP_LIMIT')) + " per minute")
 def generate_session():
+    """
+    Endpoint to generate a new temporary session for the setup app
+    """
     with sentry_sdk.start_transaction(op="http.server", name="generate_session"):
         if request.method == "HEAD":
             return jsonify({"message": ""}), 200
@@ -285,10 +261,174 @@ def deactivate_previous_registrations(cursor, user_hash):
     """
     cursor.execute(update_query, (user_hash,))
 
+@app.route("/v1/app/fcm-token", methods=["POST", "HEAD"])
+@limiter.limit(str(os.getenv('FCM_TOKEN_LIMIT', '10')) + " per minute")
+def save_fcm_token():
+    """
+    Endpoint to receive and store Firebase Cloud Messaging token for a user
+    """
+    if request.method == "HEAD":
+        return jsonify({"message": ""}), 200
+    
+    with sentry_sdk.start_transaction(op="http.server", name="save_fcm_token"):
+        try:
+            # Get auth cookies
+            app_session_id = request.cookies.get('app_session_id')
+            app_token = request.cookies.get('app_token')
+            
+            if not app_session_id or not app_token:
+                logger.warning("FCM token update denied - missing authentication")
+                return jsonify({"error": "Authentication required"}), 401
+            
+            # Verify request contains json
+            if not request.is_json:
+                return jsonify({"error": "Content-Type must be application/json"}), 400
+            
+            data = request.get_json()
+            if not data or 'fcm_token' not in data:
+                return jsonify({"error": "Missing FCM token in request body"}), 400
+            
+            # Sanitize inputs
+            app_session_id = bleach.clean(app_session_id)
+            app_token = bleach.clean(app_token)
+            fcm_token = bleach.clean(data['fcm_token'])
+            
+            if not fcm_token or len(fcm_token) < 20:
+                return jsonify({"error": "Invalid FCM token format"}), 400
+            
+            # Verify the session and store the token
+            connection = connection_pool.get_connection()
+            cursor = connection.cursor(dictionary=True)
+            
+            try:
+                with sentry_sdk.start_span(op="db.query", description="Verify user and store FCM token"):
+                    # First check if user exists
+                    query = f"""
+                        SELECT app_session_id FROM {student_table_name}
+                        WHERE app_session_id = %s AND app_token = %s AND is_active = TRUE
+                    """
+                    cursor.execute(query, (app_session_id, app_token))
+                    result = cursor.fetchone()
+                    
+                    if not result:
+                        logger.warning(f"FCM token update attempt with invalid credentials: {app_session_id}")
+                        return jsonify({"error": "Invalid credentials"}), 401
+                    
+                    # Update the user record with the FCM token
+                    update_query = f"""
+                        UPDATE {student_table_name}
+                        SET fcm_token = %s, token_updated_at = NOW()
+                        WHERE app_session_id = %s AND app_token = %s AND is_active = TRUE
+                    """
+                    cursor.execute(update_query, (fcm_token, app_session_id, app_token))
+                    connection.commit()
+                    
+                    if cursor.rowcount > 0:
+                        logger.info(f"FCM token updated for user: {app_session_id}")
+                        return jsonify({
+                            "message": "FCM token saved successfully",
+                            "status": 200
+                        })
+                    else:
+                        logger.error(f"Failed to update FCM token for user: {app_session_id}")
+                        return jsonify({"error": "Failed to save FCM token"}), 500
+                
+            except mysql.connector.Error as err:
+                sentry_sdk.capture_exception(err)
+                logger.error(f"MySQL error in FCM token endpoint: {err}")
+                return jsonify({"error": "Internal server error"}), 500
+                
+            finally:
+                cursor.close()
+                connection.close()
+                
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            logger.error(f"Unexpected error in FCM token endpoint: {e}")
+            return jsonify({"error": "Internal server error"}), 500
+
+@app.route("/v1/app/firebase-config", methods=["GET"])
+@limiter.limit(str(os.getenv('FIREBASE_CONFIG_LIMIT', '10')) + " per minute")
+def get_firebase_config():
+    """
+    Send the Firebase configuration to the authenticated user
+    """
+
+    if request.method == "HEAD":
+        return jsonify({"message": ""}), 200
+    
+    with sentry_sdk.start_transaction(op="http.server", name="get_firebase_config"):
+        try:
+            # Get auth cookies
+            app_session_id = request.cookies.get('app_session_id')
+            app_token = request.cookies.get('app_token')
+            
+            if not app_session_id or not app_token:
+                logger.warning("!!Firebase config access denied - missing authentication!!")
+                return jsonify({"error": "Authentication required"}), 401
+            
+            # Sanitize inputs
+            app_session_id = bleach.clean(app_session_id)
+            app_token = bleach.clean(app_token)
+            
+            # Verify the session
+            connection = connection_pool.get_connection()
+            cursor = connection.cursor(dictionary=True)
+            
+            try:
+                with sentry_sdk.start_span(op="db.query", description="Verify user authentication"):
+                    query = f"""
+                        SELECT COUNT(*) as count
+                        FROM {student_table_name}
+                        WHERE app_session_id = %s AND app_token = %s AND is_active = TRUE
+                    """
+                    cursor.execute(query, (app_session_id, app_token))
+                    result = cursor.fetchone()
+                    
+                    if not result or result['count'] == 0:
+                        logger.warning(f"!!Firebase config access attempt with invalid credentials: {app_session_id}!!")
+                        return jsonify({"error": "Invalid credentials"}), 401
+                    
+                # User is authenticated, return Firebase config
+                firebase_config = {
+                    "apiKey": os.getenv('FB_API_KEY'),
+                    "authDomain": os.getenv('FB_AUTH_DOMAIN'),
+                    "projectId": os.getenv('FB_PROJECT_ID'),
+                    "storageBucket": os.getenv('FB_STORAGE_BUCKET'),
+                    "messagingSenderId": os.getenv('FB_MESSAGING_SENDER_ID'),
+                    "appId": os.getenv('FB_APP_ID')
+                }
+                
+                # Log the successful access
+                logger.info(f"Firebase config provided to authenticated user: {app_session_id}")
+                
+                # Return the config
+                response = jsonify(firebase_config)
+                response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+                response.headers['Pragma'] = 'no-cache'
+                response.headers['X-Content-Type-Options'] = 'nosniff'
+                return response
+                
+            except mysql.connector.Error as err:
+                sentry_sdk.capture_exception(err)
+                logger.error(f"MySQL error in firebase config endpoint: {err}")
+                return jsonify({"error": "Internal server error"}), 500
+                
+            finally:
+                cursor.close()
+                connection.close()
+                
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            logger.error(f"Unexpected error in firebase config endpoint: {e}")
+            return jsonify({"error": "Internal server error"}), 500
+
 @app.route("/v1/app/qrscan", methods=["POST", "HEAD"])
 @limiter.limit(str(os.getenv('QR_CODE_SCAN_LIMIT')) + " per minute")
 def process_qr_code():
-    # Add transaction for this endpoint
+    """
+    Process the data received from the QR code scan
+    """
     with sentry_sdk.start_transaction(op="http.server", name="process_qr_code"):
         if request.method == "HEAD":
             return jsonify({"message": ""}), 200
@@ -469,6 +609,9 @@ def process_qr_code():
 @app.route('/v1/app/auth/refresh', methods=['POST', 'HEAD'])
 @limiter.limit(str(os.getenv('REFRESH_CRED_LIMIT')) + " per minute")
 def refresh_credentials():
+    """
+    Refresh the authentication tokens for the user
+    """
 
     if request.method == "HEAD":
             return jsonify({"message": ""}), 200
@@ -563,6 +706,9 @@ def refresh_credentials():
 @app.route("/v1/app/fetch", methods=["GET"])
 @limiter.limit(str(os.getenv('FETCH_DATA_LIMIT')) + " per minute")
 def fetch_student_data():
+    """
+    Fetch and return the student data for the authenticated user
+    """
 
     app_session_id = request.cookies.get('app_session_id')
     app_token = request.cookies.get('app_token')
