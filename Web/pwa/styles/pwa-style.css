@@ -22,7 +22,7 @@
     /* Dynamic sizes */
     --container-width: min(420px, 95vw);
     --camera-height: min(15rem, 50vh);
-    --header-size: clamp(6rem, 14vw, 7rem);
+    --header-size: clamp(3.5rem, 15vw, 7rem);
     --subtitle-size: clamp(1.1rem, 4vw, 1.4rem);
 }
 
@@ -76,6 +76,21 @@ body::before {
     left: 0;
     right: 0;
     height: 40vh;
+    pointer-events: none;
+}
+
+#loginView {
+    position: relative;
+    padding-top: 3rem; /* Added padding to maintain spacing */
+}
+
+#loginView::before {
+    content: '';
+    position: fixed; /* Changed from absolute to fixed */
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 40vh;
     background-image: radial-gradient(var(--primary) 2px, transparent 1.2px);
     background-size: 24px 24px;
     mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.25), transparent);
@@ -83,7 +98,7 @@ body::before {
     pointer-events: none;
 }
 
-body::after {
+#loginView::after {
     content: '';
     position: absolute;
     bottom: 0;
@@ -109,7 +124,7 @@ body::after {
 }
 
 .main-container {
-    margin-top: 3rem;
+    margin-top: 0; /* Changed from 3rem to 0 */
 }
 
 @keyframes fadeIn {
