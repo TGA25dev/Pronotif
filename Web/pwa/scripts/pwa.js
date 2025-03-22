@@ -21,6 +21,13 @@ const debugLogger = {
     formatMessage(message) {
         if (message === undefined) return 'undefined';
         if (message === null) return 'null';
+        
+        // Better error handling
+        if (message instanceof Error || 
+           (typeof message === 'object' && message.message && message.stack)) {
+            return `Error: ${message.message}\n${message.stack || ''}`;
+        }
+        
         if (typeof message === 'object') {
             try {
                 return JSON.stringify(message, null, 2);
@@ -252,46 +259,6 @@ window.fetch = async function(...args) {
         throw error;
     }
 };
-
-// Add service worker message logging
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.addEventListener('message', event => {
-        console.info('[ServiceWorker]', event.data);
-    });
-    
-    // Log service worker registration events
-    navigator.serviceWorker.getRegistrations().then(async registrations => {
-        for (const registration of registrations) {
-            await registration.unregister();
-            console.info('[ServiceWorker] Unregistered existing worker');
-        }
-        
-        const swUrl = `sw.js?cache=${Date.now()}`;
-        navigator.serviceWorker.register(swUrl, {
-            scope: './',
-            updateViaCache: 'none'
-        }).then(registration => {
-            console.info('[ServiceWorker] New worker registered');
-            registration.update();
-            
-            registration.addEventListener('updatefound', () => {
-                const newWorker = registration.installing;
-                console.info('[ServiceWorker] Update found, installing...');
-                
-                newWorker.addEventListener('statechange', () => {
-                    console.info('[ServiceWorker] Worker state:', newWorker.state);
-                    if (newWorker.state === 'installed') {
-                        newWorker.postMessage({type: 'SKIP_WAITING'});
-                    }
-                });
-            });
-        }).catch(error => {
-            console.error('[ServiceWorker] Registration failed:', error);
-        });
-    }).catch(error => {
-        console.error('[ServiceWorker] Registration error:', error);
-    });
-}
 
 async function initializeFirebase() {
     try {
@@ -600,6 +567,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (allowNotifButton) {
         allowNotifButton.addEventListener('click', async () => {
             const permission = await Notification.requestPermission();
+            console.info("Requesting notification permission...");
             if (permission === 'granted') {
                 console.log('Notification permission granted!');
                 allowNotifButton.style.display = 'none';
@@ -683,48 +651,82 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Service Worker Registration
     if ('serviceWorker' in navigator) {
-        // First unregister any existing service worker
-        navigator.serviceWorker.getRegistrations().then(async registrations => {
-            for (const registration of registrations) {
-                await registration.unregister();
-            }
+        // Register the service worker with version control instead of timestamp
+        const SW_VERSION = '1.0.0'; // Manually update this when you make significant changes
+        const swUrl = `sw.js?v=${SW_VERSION}`;
+        
+        navigator.serviceWorker.register(swUrl, {
+            scope: './'
+        }).then(registration => {
+            console.log('[PWA] Service worker registered');
             
-            // Then register the new one with cache busting
-            const swUrl = `sw.js?cache=${Date.now()}`;
-            navigator.serviceWorker.register(swUrl, {
-                scope: './',
-                updateViaCache: 'none'
-            }).then(registration => {
-                // Force immediate check for updates
-                registration.update();
+            // Check for updates but don't force them
+            registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                console.log('[PWA] New service worker installing');
                 
-                // Listen for new service worker installation
-                registration.addEventListener('updatefound', () => {
-                    const newWorker = registration.installing;
-                    newWorker.addEventListener('statechange', () => {
-                        if (newWorker.state === 'installed') {
-                            // Force the new service worker to activate
-                            newWorker.postMessage({type: 'SKIP_WAITING'});
-                        }
-                    });
+                newWorker.addEventListener('statechange', () => {
+                    console.log('[PWA] Service worker state:', newWorker.state);
+                    
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        // New service worker available, but let's not force activation immediately
+                        console.log('[PWA] New service worker available. Refresh to update.');
+                        // add toast message for new update ?
+                    }
                 });
             });
-        }).catch(console.error);
+        }).catch(error => {
+            console.error('[PWA] Service worker registration failed:', error);
+        });
     }
 
     // Show dashboard
     function showDashboard() {
-        document.querySelectorAll('.view').forEach(view => { //Hide all views
-            view.classList.add('hidden');
-        });
-
-        document.getElementById(`dashboardView`).classList.remove('hidden'); //Show the dashboard view
+        console.log('[UI] Starting dashboard transition');
         // Hide the spinner when showing dashboard
         const spinner = document.getElementById('spinner');
         if (spinner) spinner.style.display = 'none';
-        
-        // Show dashboard
-        initializeDashboard();
+        // Get the login view and loading view
+        const loginView = document.getElementById('loginView');
+        const loadingView = document.getElementById('loadingView');
+
+        if (dashboardView) {
+            dashboardView.classList.add('hidden');
+            dashboardView.classList.remove('fade-in');
+        }
+
+        if (loginView && !loginView.classList.contains('hidden')) {
+            loginView.classList.add('animating-out');
+            loginView.classList.add('fade-out');
+            console.log('[UI] Fading out login view');
+        }
+
+        if (loadingView && !loadingView.classList.contains('hidden')) {
+            loadingView.classList.add('animating-out');
+            loadingView.classList.add('fade-out');
+            console.log('[UI] Fading out loading view');
+        }
+
+        setTimeout(() => {
+            console.log('[UI] Animation complete, showing dashboard');
+            
+            // Hide all views
+            document.querySelectorAll('.view').forEach(view => {
+                view.classList.add('hidden');
+                view.classList.remove('animating-out');
+                view.classList.remove('fade-out');
+                view.classList.remove('fade-in');
+            });
+            
+            // Show dashboard with animation
+            if (dashboardView) {
+                dashboardView.classList.remove('hidden');
+                dashboardView.classList.add('fade-in');
+            }
+            
+            // Start loading dashboard data
+            initializeDashboard();
+        }, 400);
     }
 
     // Dashboard initialization
@@ -758,6 +760,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Camera Permission
     cameraButton.addEventListener('click', async () => {
         try {
+            console.info('Requesting camera access...');
             // Try back camera first
             const constraints = {
                 video: {
@@ -771,6 +774,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             let stream;
             try {
                 stream = await navigator.mediaDevices.getUserMedia(constraints); //Get the stream (camera)
+                console.log('Camera access granted!');
                 const errorDiv = document.querySelector('.camera-error');
                 if (errorDiv) errorDiv.remove();
 
@@ -788,11 +792,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Start QR code scanning
             function startQRScanning() {
+                console.log('Starting QR code scanning...');
                 const canvasElement = document.getElementById('canvas');
                 const ctx = canvasElement.getContext('2d', { willReadFrequently: true });
                 let isProcessing = false;
                 let lastScanTime = 0;
-                const scanInterval = 250;
+                const scanInterval = 100;
 
                 const scan = () => {
                     const now = Date.now();
