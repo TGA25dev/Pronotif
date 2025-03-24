@@ -3,17 +3,12 @@
 >Pronot'if **is not affiliated** with Index Education or the **Pronote** application.   
 >It is an **independent** project, with no connection to the official Pronote services.
 
-> [!IMPORTANT]  
-> **Incomplete project!** <br>  
-> Pronot'if is still **under development**.<br>  
-> **At the moment, the ENT login is only available for institutions located in Île-de-France!**
-
 # Pronot'if <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Books.png" alt="Books" width="25" height="25" />
 
 Notifies you on your phone 5 minutes before each class.
 
-[![Licence](https://img.shields.io/github/license/Ileriayo/markdown-badges?style=for-the-badge)](./LICENSE)
-![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+[![Licence](https://img.shields.io/github/license/tga25dev/pronotif?style=for-the-badge&logo=github&logoColor=white)](./LICENSE)
+
 [![wakatime](https://wakatime.com/badge/github/TGA25dev/Pronotif.svg?style=for-the-badge)](https://wakatime.com/badge/github/TGA25dev/Pronotif)
 
 [**Français**](README.md) | [LICENSE](LICENSE)
@@ -34,7 +29,7 @@ Notifies you on your phone 5 minutes before each class.
 
 - Notifies you at lunchtime of day's menu
 
-#### This project uses the Pronote api from [bain3](https://github.com/bain3/pronotepy) and also [ntfy](https://ntfy.sh/) to send the notifications.
+#### This project uses the Pronote api from [bain3](https://github.com/bain3/pronotepy) and also it's own app(pwa) with Firebase Cloud Messaging to send the notifications.
 
 ## Instalation <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Hammer%20and%20Wrench.png" alt="Hammer and Wrench" width="25" height="25" />
 
@@ -50,9 +45,8 @@ Notifies you on your phone 5 minutes before each class.
  
 - **Notification System** 
   - **Global**
-    - [ ] Cloud hosting
-    - [ ] User database
-    - [ ] Weekly summary *(overall average, new grades)*
+    - [x] Cloud hosting
+    - [x] User database
 
   - **Notification Content (courses)**
     - [x] Room name

@@ -8,8 +8,8 @@
 
 Vous notifie sur votre téléphone 5 minutes avant chaque cours.
 
-[![Licence](https://img.shields.io/github/license/Ileriayo/markdown-badges?style=for-the-badge)](./LICENSE)
-![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+[![Licence](https://img.shields.io/github/license/tga25dev/pronotif?style=for-the-badge&logo=github&logoColor=white)](./LICENSE)
+
 [![wakatime](https://wakatime.com/badge/github/TGA25dev/Pronotif.svg?style=for-the-badge)](https://wakatime.com/badge/github/TGA25dev/Pronotif)
 
 [**English**](README_EN.md) | [LICENCE](LICENSE)
@@ -33,7 +33,7 @@ Vous notifie sur votre téléphone 5 minutes avant chaque cours.
 
 * Vous informe à l'heure du dejeuner du menu du jour
 
-#### Ce projet utilise l'api Pronote de [bain3](https://github.com/bain3/pronotepy) ainsi que [ntfy](https://ntfy.sh/) pour l'envoi des notifications.
+#### Ce projet utilise l'api Pronote de [bain3](https://github.com/bain3/pronotepy) ainsi que sa propre application (pwa) avec Firebase Cloud Messaging pour l'envoi des notifications.
 
 
 ## Installation <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Hammer%20and%20Wrench.png" alt="Hammer and Wrench" width="25" height="25" />
@@ -50,9 +50,8 @@ Vous notifie sur votre téléphone 5 minutes avant chaque cours.
  
 - **Systeme de notifications** 
   - **Global**
-    - [ ] Hébérgement cloud
-    - [ ] Base de données utilisateurs
-    - [ ] Récapitulatif de la semaine *(moyenne générale, nouvelles notes)*
+    - [x] Hébérgement cloud
+    - [x] Base de données utilisateurs
 
   - **Contenu des notifications (cours)**
     - [x] Nom de la salle
