@@ -23,7 +23,7 @@ version = "v0.7"
 sentry_sdk.init("https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992", 
                 enable_tracing=True,
                 traces_sample_rate=1.0,
-                environment="production",
+                environment="dev",
                 release=version,
                 server_name="Server")
 
@@ -91,19 +91,20 @@ file_handler.setFormatter(file_formatter)
 logger.addHandler(file_handler)
 
 # MySQL Connection Pool
-connection_pool = pooling.MySQLConnectionPool(
-    pool_name=os.getenv('DB_POOL_NAME'),
-    pool_size=int(os.getenv('DB_POOL_SIZE')),
-    pool_reset_session=os.getenv('DB_POOL_RESET_SESSION'),
-    host=os.getenv('DB_HOST'),
-    user=os.getenv('DB_USER'),
-    password=os.getenv('DB_PASSWORD'),
-    database=os.getenv('DB_NAME'),
-    connect_timeout=10, 
-    get_warnings=True,
-    connection_timeout=5,
-    autocommit=True  
-)
+default_connection_pool_settings ={
+    "pool_name": os.getenv('DB_POOL_NAME'),
+    "pool_size": int(os.getenv('DB_POOL_SIZE')),
+    "pool_reset_session": os.getenv('DB_POOL_RESET_SESSION'),
+    "host": os.getenv('DB_HOST'),
+    "user": os.getenv('DB_USER'),
+    "password": os.getenv('DB_PASSWORD'),
+    "database": os.getenv('DB_NAME'),
+    "connect_timeout": 10,
+    "get_warnings": True,
+    "autocommit": True,
+    "connection_timeout": 5
+}
+connection_pool = pooling.MySQLConnectionPool(**default_connection_pool_settings)
 
 authcode = os.getenv('AUTHCODE')
 auth_table_name = os.getenv('DB_AUTH_TABLE_NAME')
@@ -199,32 +200,31 @@ def generate_session():
                 return jsonify({"error": "Session storage failed"}), 500
 
             # Store in DB
-            connection = connection_pool.get_connection()
-            cursor = connection.cursor()
-            try:
+            with get_db_connection() as connection:
                 with sentry_sdk.start_span(op="db.query", description="Store session in MySQL"):
-                    cursor.execute(
-                        f"INSERT INTO {auth_table_name} (session_id, token, created_at, expires_at, used) VALUES (%s, %s, %s, %s, %s)",
-                        (session_id, token, data['created_at'], data['expires_at'], data['used'])
-                    )
-                    connection.commit()
-                    logger.info(f"Session created: {session_id}")
+                    try:
+                        cursor = connection.cursor()
+                        try:
+                            cursor.execute(
+                                f"INSERT INTO {auth_table_name} (session_id, token, created_at, expires_at, used) VALUES (%s, %s, %s, %s, %s)",
+                                (session_id, token, data['created_at'], data['expires_at'], data['used'])
+                            )
+                            connection.commit()
+                            logger.info(f"Session created: {session_id}")
+                            
+                            return jsonify({
+                                "session_id": session_id,
+                                "token": token,
+                                "message": "Session generated successfully!",
+                                "status": 200
+                            })
+                        finally:
+                            cursor.close()
 
-            except mysql.connector.Error as err:
-                sentry_sdk.capture_exception(err)
-                logger.error(f"MySQL error: {err}")
-                return jsonify({"error": "Operation failed"}), 500
-            
-            finally:
-                cursor.close()
-                connection.close()
-
-            return jsonify({
-                "session_id": session_id,
-                "token": token,
-                "message": "Session generated successfully!",
-                "status": 200
-            })
+                    except mysql.connector.Error as err:
+                        sentry_sdk.capture_exception(err)
+                        logger.error(f"MySQL error: {err}")
+                        return jsonify({"error": "Operation failed"}), 500
 
         except Exception as e:
             sentry_sdk.capture_exception(e)
@@ -302,50 +302,48 @@ def save_fcm_token():
                 return jsonify({"error": "Invalid FCM token format"}), 400
             
             # Verify the session and store the token
-            connection = connection_pool.get_connection()
-            cursor = connection.cursor(dictionary=True)
-            
-            try:
-                with sentry_sdk.start_span(op="db.query", description="Verify user and store FCM token"):
-                    # First check if user exists
-                    query = f"""
-                        SELECT app_session_id FROM {student_table_name}
-                        WHERE app_session_id = %s AND app_token = %s AND is_active = TRUE
-                    """
-                    cursor.execute(query, (app_session_id, app_token))
-                    result = cursor.fetchone()
-                    
-                    if not result:
-                        logger.warning(f"FCM token update attempt with invalid credentials: {app_session_id}")
-                        return jsonify({"error": "Invalid credentials"}), 401
-                    
-                    # Update the user record with the FCM token
-                    update_query = f"""
-                        UPDATE {student_table_name}
-                        SET fcm_token = %s, token_updated_at = NOW()
-                        WHERE app_session_id = %s AND app_token = %s AND is_active = TRUE
-                    """
-                    cursor.execute(update_query, (fcm_token, app_session_id, app_token))
-                    connection.commit()
-                    
-                    if cursor.rowcount > 0:
-                        logger.info(f"FCM token updated for user: {app_session_id}")
-                        return jsonify({
-                            "message": "FCM token saved successfully",
-                            "status": 200
-                        })
-                    else:
-                        logger.error(f"Failed to update FCM token for user: {app_session_id}")
-                        return jsonify({"error": "Failed to save FCM token"}), 500
+            with get_db_connection() as connection:
+                cursor = connection.cursor(dictionary=True)
+                try:
+                    with sentry_sdk.start_span(op="db.query", description="Verify user and store FCM token"):
+                        # First check if user exists
+                        query = f"""
+                            SELECT app_session_id FROM {student_table_name}
+                            WHERE app_session_id = %s AND app_token = %s AND is_active = TRUE
+                        """
+                        cursor.execute(query, (app_session_id, app_token))
+                        result = cursor.fetchone()
+                        
+                        if not result:
+                            logger.warning(f"FCM token update attempt with invalid credentials: {app_session_id}")
+                            return jsonify({"error": "Invalid credentials"}), 401
+                        
+                        # Update the user record with the FCM token
+                        update_query = f"""
+                            UPDATE {student_table_name}
+                            SET fcm_token = %s, token_updated_at = NOW()
+                            WHERE app_session_id = %s AND app_token = %s AND is_active = TRUE
+                        """
+                        cursor.execute(update_query, (fcm_token, app_session_id, app_token))
+                        connection.commit()
+                        
+                        if cursor.rowcount > 0:
+                            logger.info(f"FCM token updated for user: {app_session_id}")
+                            return jsonify({
+                                "message": "FCM token saved successfully",
+                                "status": 200
+                            })
+                        else:
+                            logger.error(f"Failed to update FCM token for user: {app_session_id}")
+                            return jsonify({"error": "Failed to save FCM token"}), 500
                 
-            except mysql.connector.Error as err:
-                sentry_sdk.capture_exception(err)
-                logger.error(f"MySQL error in FCM token endpoint: {err}")
-                return jsonify({"error": "Internal server error"}), 500
+                except mysql.connector.Error as err:
+                    sentry_sdk.capture_exception(err)
+                    logger.error(f"MySQL error in FCM token endpoint: {err}")
+                    return jsonify({"error": "Internal server error"}), 500
                 
-            finally:
-                cursor.close()
-                connection.close()
+                finally:
+                    cursor.close()
                 
         except Exception as e:
             sentry_sdk.capture_exception(e)
@@ -379,10 +377,11 @@ def get_firebase_config():
             # Verify the session
             with get_db_connection() as connection:
                 cursor = connection.cursor(dictionary=True)
-                
                 try:
                     with sentry_sdk.start_span(op="db.query", description="Verify user authentication"):
                         query = f"""
+                            SELECT COUNT(*) as count
+                            FROM {student_table_name}
                             SELECT COUNT(*) as count
                             FROM {student_table_name}
                             WHERE app_session_id = %s AND app_token = %s AND is_active = TRUE
@@ -512,97 +511,97 @@ def process_qr_code():
             timestamp = datetime.now()
 
             # Store the data
-            connection = connection_pool.get_connection()
-            cursor = connection.cursor()
-            try:
-                # Deactivate previous registration
-                deactivate_previous_registrations(cursor, user_hash)
+            with get_db_connection() as connection:
+                cursor = connection.cursor()
 
-                with sentry_sdk.start_span(op="db.query", description="Store student data"):
-                    insert_query = f"""
-                        INSERT INTO {student_table_name} (
-                            app_session_id, app_token, login_page_link, student_username, student_password,
-                            student_fullname, student_firstname, student_class,
-                            ent_used, qr_code_login, uuid, topic_name, timezone,
-                            notification_delay, evening_menu,
-                            unfinished_homework_reminder, get_bag_ready_reminder,
-                            monday_lunch, tuesday_lunch, wednesday_lunch, thursday_lunch, friday_lunch,
-                            user_hash, is_active, timestamp
-                        ) VALUES (
-                            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-                        )
-                    """
-                    
-                    cursor.execute(insert_query, (
-                        app_session_id,
-                        app_token,
-                        sanitized_payload['login_page_link'],
-                        sanitized_payload['student_username'],
-                        sanitized_payload['student_password'],
-                        sanitized_payload['student_fullname'],
-                        sanitized_payload['student_firstname'], 
-                        sanitized_payload['student_class'],
-                        sanitized_payload['ent_used'],
-                        sanitized_payload['qr_code_login'],
-                        sanitized_payload['uuid'],
-                        sanitized_payload['topic_name'],
-                        sanitized_payload['timezone'],
-                        sanitized_payload['notification_delay'],
-                        sanitized_payload['evening_menu'],
-                        sanitized_payload['unfinished_homework_reminder'],
-                        sanitized_payload['get_bag_ready_reminder'],
-                        sanitized_payload['monday_lunch'],
-                        sanitized_payload['tuesday_lunch'],
-                        sanitized_payload['wednesday_lunch'],
-                        sanitized_payload['thursday_lunch'],
-                        sanitized_payload['friday_lunch'],
-                        user_hash,
-                        1,  # is_active
-                        timestamp
-                    ))
+                try:
+                    # Deactivate previous registration
+                    deactivate_previous_registrations(cursor, user_hash)
 
-                    # Mark the session as used
-                    update_query = f"UPDATE {auth_table_name} SET used = TRUE WHERE session_id = %s"
-                    cursor.execute(update_query, (sanitized_payload['session_id'],))
-                    connection.commit()
+                    with sentry_sdk.start_span(op="db.query", description="Store student data"):
+                        insert_query = f"""
+                            INSERT INTO {student_table_name} (
+                                app_session_id, app_token, login_page_link, student_username, student_password,
+                                student_fullname, student_firstname, student_class,
+                                ent_used, qr_code_login, uuid, topic_name, timezone,
+                                notification_delay, evening_menu,
+                                unfinished_homework_reminder, get_bag_ready_reminder,
+                                monday_lunch, tuesday_lunch, wednesday_lunch, thursday_lunch, friday_lunch,
+                                user_hash, is_active, timestamp
+                            ) VALUES (
+                                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                            )
+                        """
+                        
+                        cursor.execute(insert_query, (
+                            app_session_id,
+                            app_token,
+                            sanitized_payload['login_page_link'],
+                            sanitized_payload['student_username'],
+                            sanitized_payload['student_password'],
+                            sanitized_payload['student_fullname'],
+                            sanitized_payload['student_firstname'], 
+                            sanitized_payload['student_class'],
+                            sanitized_payload['ent_used'],
+                            sanitized_payload['qr_code_login'],
+                            sanitized_payload['uuid'],
+                            sanitized_payload['topic_name'],
+                            sanitized_payload['timezone'],
+                            sanitized_payload['notification_delay'],
+                            sanitized_payload['evening_menu'],
+                            sanitized_payload['unfinished_homework_reminder'],
+                            sanitized_payload['get_bag_ready_reminder'],
+                            sanitized_payload['monday_lunch'],
+                            sanitized_payload['tuesday_lunch'],
+                            sanitized_payload['wednesday_lunch'],
+                            sanitized_payload['thursday_lunch'],
+                            sanitized_payload['friday_lunch'],
+                            user_hash,
+                            1,  # is_active
+                            timestamp
+                        ))
 
-                    logger.info(f"Student data stored for session: {sanitized_payload['session_id']}")
+                        # Mark the session as used
+                        update_query = f"UPDATE {auth_table_name} SET used = TRUE WHERE session_id = %s"
+                        cursor.execute(update_query, (sanitized_payload['session_id'],))
+                        connection.commit()
 
-            except mysql.connector.Error as err:
-                sentry_sdk.capture_exception(err)
-                logger.error(f"MySQL error: {err}")
-                return jsonify({"error": "Failed to store student data"}), 500
+                        logger.info(f"Student data stored for session: {sanitized_payload['session_id']}")
 
-            finally:
-                cursor.close()
-                connection.close()
+                except mysql.connector.Error as err:
+                    sentry_sdk.capture_exception(err)
+                    logger.error(f"MySQL error: {err}")
+                    return jsonify({"error": "Failed to store student data"}), 500
 
-            # Set HTTP-only cookies
-            response = make_response(jsonify({"message": "Authentication successful", "status": 200}))
+                finally:
+                    cursor.close()
 
-            # Set secure HTTP-only cookies
-            response.set_cookie(
-                'app_session_id', 
-                app_session_id,
-                httponly=True,
-                secure=True,  # Only sent over HTTPS
-                samesite='Lax',
-                max_age=60*60*24*30,  # 30 days expiration
-                #domain="pronotif.tech"
+                # Set HTTP-only cookies
+                response = make_response(jsonify({"message": "Authentication successful", "status": 200}))
 
-            )
-            
-            response.set_cookie(
-                'app_token', 
-                app_token,
-                httponly=True,
-                secure=True,
-                samesite='Lax',
-                max_age=60*60*24*30,
-                #domain="pronotif.tech"
-            )
-            
-            return response
+                # Set secure HTTP-only cookies
+                response.set_cookie(
+                    'app_session_id', 
+                    app_session_id,
+                    httponly=True,
+                    secure=True,  # Only sent over HTTPS
+                    samesite='Lax',
+                    max_age=60*60*24*30,  # 30 days expiration
+                    #domain="pronotif.tech"
+
+                )
+                
+                response.set_cookie(
+                    'app_token', 
+                    app_token,
+                    httponly=True,
+                    secure=True,
+                    samesite='Lax',
+                    max_age=60*60*24*30,
+                    #domain="pronotif.tech"
+                )
+                
+                return response
 
         except Exception as e:
             sentry_sdk.capture_exception(e)
@@ -635,72 +634,72 @@ def refresh_credentials():
             app_token = bleach.clean(app_token)
 
 
-            connection = connection_pool.get_connection()
-            cursor = connection.cursor(dictionary=True)
+            with get_db_connection() as connection:
+                cursor = connection.cursor(dictionary=True)
 
-            query = f"""
-                SELECT *
-                FROM {student_table_name}
-                WHERE app_session_id = %s AND app_token = %s 
-                AND is_active = 1
-            """
-            cursor.execute(query, (app_session_id, app_token))
-            result = cursor.fetchone()
+                query = f"""
+                    SELECT *
+                    FROM {student_table_name}
+                    WHERE app_session_id = %s AND app_token = %s 
+                    AND is_active = 1
+                """
+                cursor.execute(query, (app_session_id, app_token))
+                result = cursor.fetchone()
 
-            if not result:
-                logger.warning(f"!!! Failed auth attempt: {app_session_id} !!!")
-                return jsonify({"error": "Invalid credentials"}), 401
+                if not result:
+                    logger.warning(f"!!! Failed auth attempt: {app_session_id} !!!")
+                    return jsonify({"error": "Invalid credentials"}), 401
 
-            # Success - create new tokens and update database
-            new_app_session_id = secrets.token_urlsafe(16)
-            new_app_token = secrets.token_urlsafe(32)
-            
-            # Update the database with new tokens
-            update_query = f"""
-                UPDATE {student_table_name}
-                SET app_session_id = %s, app_token = %s, timestamp = NOW()
-                WHERE app_session_id = %s AND app_token = %s
-            """
-            cursor.execute(update_query, (
-                new_app_session_id, new_app_token, app_session_id, app_token
-            ))
-            connection.commit()
+                # Success - create new tokens and update database
+                new_app_session_id = secrets.token_urlsafe(16)
+                new_app_token = secrets.token_urlsafe(32)
+                
+                # Update the database with new tokens
+                update_query = f"""
+                    UPDATE {student_table_name}
+                    SET app_session_id = %s, app_token = %s, timestamp = NOW()
+                    WHERE app_session_id = %s AND app_token = %s
+                """
+                cursor.execute(update_query, (
+                    new_app_session_id, new_app_token, app_session_id, app_token
+                ))
+                connection.commit()
 
-            # Log the refresh event with context
-            logger.info(f"Credentials refreshed for user: {result['app_session_id']}")
-            
-            # Return response with new secure cookies
-            response = make_response(jsonify({
-                "message": "Authentication refreshed", 
-                "status": 200
-            }))
-            
-            # Set new secure cookies
-            response.set_cookie(
-                'app_session_id', 
-                new_app_session_id,
-                httponly=True, 
-                secure=True, 
-                samesite='Lax',
-                max_age=60*60*24*30,
-                #domain="pronotif.tech"
-            )
-            response.set_cookie(
-                'app_token', 
-                new_app_token,
-                httponly=True, 
-                secure=True, 
-                samesite='Lax',
-                max_age=60*60*24*30,
-                #domain="pronotif.tech"
-            )
-            
-            # Add security headers
-            response.headers['Cache-Control'] = 'no-store'
-            response.headers['Pragma'] = 'no-cache'
-            response.headers['X-Content-Type-Options'] = 'nosniff'
-            
-            return response
+                # Log the refresh event with context
+                logger.info(f"Credentials refreshed for user: {result['app_session_id']}")
+                
+                # Return response with new secure cookies
+                response = make_response(jsonify({
+                    "message": "Authentication refreshed", 
+                    "status": 200
+                }))
+                
+                # Set new secure cookies
+                response.set_cookie(
+                    'app_session_id', 
+                    new_app_session_id,
+                    httponly=True, 
+                    secure=True, 
+                    samesite='Lax',
+                    max_age=60*60*24*30,
+                    #domain="pronotif.tech"
+                )
+                response.set_cookie(
+                    'app_token', 
+                    new_app_token,
+                    httponly=True, 
+                    secure=True, 
+                    samesite='Lax',
+                    max_age=60*60*24*30,
+                    #domain="pronotif.tech"
+                )
+                
+                # Add security headers
+                response.headers['Cache-Control'] = 'no-store'
+                response.headers['Pragma'] = 'no-cache'
+                response.headers['X-Content-Type-Options'] = 'nosniff'
+                
+                return response
 
         except mysql.connector.Error as err:
             sentry_sdk.capture_exception(err)
@@ -727,42 +726,41 @@ def fetch_student_data():
                 app_session_id = bleach.clean(app_session_id)
                 app_token = bleach.clean(app_token)
 
-                connection = connection_pool.get_connection()
-                cursor = connection.cursor(dictionary=True)
+                with get_db_connection() as connection:
+                    cursor = connection.cursor(dictionary=True)
 
-                try:
-                    with sentry_sdk.start_span(op="db.query", description="Fetch student data"):
-                        query = f"""
-                            SELECT  student_fullname, student_firstname, student_class
-                            FROM {student_table_name}
-                            WHERE app_session_id = %s AND app_token = %s AND is_active = TRUE
-                        """
-                        cursor.execute(query, (app_session_id, app_token))
-                        result = cursor.fetchone()
+                    try:
+                        with sentry_sdk.start_span(op="db.query", description="Fetch student data"):
+                            query = f"""
+                                SELECT  student_fullname, student_firstname, student_class
+                                FROM {student_table_name}
+                                WHERE app_session_id = %s AND app_token = %s AND is_active = TRUE
+                            """
+                            cursor.execute(query, (app_session_id, app_token))
+                            result = cursor.fetchone()
 
-                        if not result:
-                            logger.warning(f"!! Failed authentification attempt: {app_session_id} !!")
-                            return jsonify({"error": "Invalid credentials or inactive account"}), 401
+                            if not result:
+                                logger.warning(f"!! Failed authentification attempt: {app_session_id} !!")
+                                return jsonify({"error": "Invalid credentials or inactive account"}), 401
 
-                        logger.info(f"Student data fetched for session: {app_session_id}")   
+                            logger.info(f"Student data fetched for session: {app_session_id}")   
 
-                        response = jsonify({
-                            "data": result, 
-                            "status": 200
-                        })
-                        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
-                        response.headers['Pragma'] = 'no-cache'
-                        response.headers['X-Content-Type-Options'] = 'nosniff'
-                        return response
+                            response = jsonify({
+                                "data": result, 
+                                "status": 200
+                            })
+                            response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+                            response.headers['Pragma'] = 'no-cache'
+                            response.headers['X-Content-Type-Options'] = 'nosniff'
+                            return response
 
-                except mysql.connector.Error as err:
-                    sentry_sdk.capture_exception(err)
-                    logger.error(f"MySQL error: {err}")
-                    return jsonify({"error": "Internal server error"}), 500
+                    except mysql.connector.Error as err:
+                        sentry_sdk.capture_exception(err)
+                        logger.error(f"MySQL error: {err}")
+                        return jsonify({"error": "Internal server error"}), 500
 
-                finally:
-                    cursor.close()
-                    connection.close()
+                    finally:
+                        cursor.close()
 
             except Exception as e:
                 sentry_sdk.capture_exception(e)
@@ -774,23 +772,23 @@ def cleanup_auth_sessions():
     while True:
         try:
             with sentry_sdk.start_transaction(op="background_task", name="cleanup_auth_sessions") as transaction:
-                connection = connection_pool.get_connection()
-                cursor = connection.cursor()
-                current_time = datetime.now()
+                with get_db_connection() as connection:
+                    cursor = connection.cursor()
+                    current_time = datetime.now()
 
-                with sentry_sdk.start_span(description="Delete expired sessions"):
-                    delete_query = f"""
-                        DELETE FROM {auth_table_name} 
-                        WHERE expires_at <= %s 
-                        AND used = FALSE
-                    """
-                    
-                    cursor.execute(delete_query, (current_time,))
-                    deleted_count = cursor.rowcount
-                    
-                    if deleted_count > 0:
-                        connection.commit()
-                        logger.info(f"Cleaned up {deleted_count} expired and inactive sessions")
+                    with sentry_sdk.start_span(description="Delete expired sessions"):
+                        delete_query = f"""
+                            DELETE FROM {auth_table_name} 
+                            WHERE expires_at <= %s 
+                            AND used = FALSE
+                        """
+                        
+                        cursor.execute(delete_query, (current_time,))
+                        deleted_count = cursor.rowcount
+                        
+                        if deleted_count > 0:
+                            connection.commit()
+                            logger.info(f"Cleaned up {deleted_count} expired and inactive sessions")
                 
         except mysql.connector.Error as err:
             sentry_sdk.capture_exception(err)
@@ -801,31 +799,28 @@ def cleanup_auth_sessions():
             logger.error(f"Unexpected error in cleanup task: {e}")
 
         finally:
-            if 'cursor' in locals():
-                cursor.close()
-            if 'connection' in locals():
-                connection.close()
-            time.sleep(600)
+            cursor.close()
+            time.sleep(600) # every 10 minutes
 
 def cleanup_inactive_students():
     while True:
         try:
             with sentry_sdk.start_transaction(op="background_task", name="cleanup_inactive_students") as transaction:
-                connection = connection_pool.get_connection()
-                cursor = connection.cursor()
+                with get_db_connection() as connection:
+                    cursor = connection.cursor()
 
-                with sentry_sdk.start_span(description="Delete inactive students"):
-                    delete_query = f"""
-                        DELETE FROM {student_table_name} 
-                        WHERE is_active = 0
-                    """
-                    
-                    cursor.execute(delete_query)
-                    deleted_count = cursor.rowcount
-                    
-                    if deleted_count > 0:
-                        connection.commit()
-                        logger.info(f"Cleaned up {deleted_count} inactive student records")
+                    with sentry_sdk.start_span(description="Delete inactive students"):
+                        delete_query = f"""
+                            DELETE FROM {student_table_name} 
+                            WHERE is_active = 0
+                        """
+                        
+                        cursor.execute(delete_query)
+                        deleted_count = cursor.rowcount
+                        
+                        if deleted_count > 0:
+                            connection.commit()
+                            logger.info(f"Cleaned up {deleted_count} inactive student records")
             
         except mysql.connector.Error as err:
             sentry_sdk.capture_exception(err)
@@ -836,24 +831,48 @@ def cleanup_inactive_students():
             logger.error(f"Unexpected error in student cleanup task: {e}")
 
         finally:
-            if 'cursor' in locals():
-                cursor.close()
-            if 'connection' in locals():
-                connection.close()
-            time.sleep(3600)  # Run every hour
+            cursor.close()
+            time.sleep(3600)  # every hour
 
 def monitor_pool():
+    last_used = 0
     while True:
         try:
-            pool_name = os.getenv('DB_POOL_NAME')
             if hasattr(connection_pool, '_cnx_queue'):
                 available = connection_pool._cnx_queue.qsize()
-                total = int(os.getenv('DB_POOL_SIZE', '32'))
+                total = int(os.getenv('DB_POOL_SIZE'))
                 used = total - available
-                logger.info(f"Connection pool status - Used: {used}, Available: {available}, Total: {total}")
+                
+                # Potential connection leak
+                if used > last_used + 3:  # Sudden increase in used connections
+                    logger.warning(f"Potential connection leak detected! Used connections jumped from {last_used} to {used}")
+                    sentry_sdk.capture_message(f"Potential connection leak detected! Used connections jumped from {last_used} to {used}")
+                
+                last_used = used
+                #logger.info(f"Connection pool status - Used: {used}, Available: {available}, Total: {total}") # Uncomment for debugging
+                
+                # Alert on low available connections
+                if available < total * 0.2:  # 20% threshold
+                    logger.warning(f"Connection pool running low!! Only {available} connections available !!")
+                    sentry_sdk.capture_message(f"Connection pool running low! Only {available} connections available")
+
         except Exception as e:
             logger.error(f"Pool monitoring error: {e}")
-        time.sleep(30)  # Monitor every 30 seconds
+            sentry_sdk.capture_exception(e)
+        time.sleep(30)
+
+def reset_connection_pool():
+    global connection_pool
+    logger.warning("Attempting to reset connection pool")
+    try:
+        # Create new pool
+        connection_pool = pooling.MySQLConnectionPool(**default_connection_pool_settings)
+        logger.info("Connection pool successfully reset")
+
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        logger.critical(f"Failed to reset connection pool: {e}")
+        sentry_sdk.capture_exception(e)      
 
 def start_background_tasks():
     session_cleanup_thread = threading.Thread(target=cleanup_auth_sessions, daemon=True)
@@ -873,6 +892,7 @@ def get_db_connection():
     except mysql.connector.Error as err:
         sentry_sdk.capture_exception(err)
         logger.error(f"Database connection error: {err}")
+        sentry_sdk.capture_exception(err)
         raise
     finally:
         if connection:
@@ -880,6 +900,7 @@ def get_db_connection():
                 connection.close()
             except Exception as e:
                 logger.error(f"Error closing connection: {e}")
+                sentry_sdk.capture_exception(e)
 
 @app.before_request
 def initialize():
