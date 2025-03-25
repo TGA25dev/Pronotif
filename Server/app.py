@@ -382,8 +382,6 @@ def get_firebase_config():
                         query = f"""
                             SELECT COUNT(*) as count
                             FROM {student_table_name}
-                            SELECT COUNT(*) as count
-                            FROM {student_table_name}
                             WHERE app_session_id = %s AND app_token = %s AND is_active = TRUE
                         """
                         cursor.execute(query, (app_session_id, app_token))
