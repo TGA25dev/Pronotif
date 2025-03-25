@@ -23,7 +23,7 @@ version = "v0.7"
 sentry_sdk.init("https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992", 
                 enable_tracing=True,
                 traces_sample_rate=1.0,
-                environment="dev",
+                environment="production",
                 release=version,
                 server_name="Server")
 
@@ -151,7 +151,7 @@ def page_not_found(error):
 # API Endpoints
 
 @app.route('/ping', methods=['GET'])
-@limiter.limit("50 per minute")
+@limiter.limit(str(os.getenv('SESSION_SETUP_LIMIT')) + "per minute")
 def test_endpoint():
     """Ping endpoint to test server availability"""
     client_ip = request.remote_addr
@@ -266,8 +266,59 @@ def deactivate_previous_registrations(cursor, user_hash):
     """
     cursor.execute(update_query, (user_hash,))
 
+@app.route("/v1/app/revoke-fcm-token", methods=["POST", "HEAD"])    
+@limiter.limit(str(os.getenv('REVOKE_FCM_TOKEN_LIMIT')) + " per minute")
+def revoke_fcm_token():
+    """
+    Revoke the Firebase Cloud Messaging token for the authenticated user
+    """
+
+    if request.method == "HEAD":
+        return jsonify({"message": ""}), 200
+
+    with sentry_sdk.start_transaction(op="http.server", name="revoke_fcm_token"):
+        try:
+            app_session_id = request.cookies.get('app_session_id')
+            app_token = request.cookies.get('app_token')
+
+            if not app_session_id or not app_token:
+                logger.warning("FCM token revocation denied - missing authentication")
+                return jsonify({"error": "Authentication required"}), 401
+
+            with get_db_connection() as connection:
+                cursor = connection.cursor(dictionary=True)
+                try:
+                    with sentry_sdk.start_span(op="db.query", description="Revoke FCM token"):
+                        query = f"""
+                            UPDATE {student_table_name}
+                            SET fcm_token = NULL
+                            WHERE app_session_id = %s AND app_token = %s AND is_active = TRUE
+                        """
+                        cursor.execute(query, (app_session_id, app_token))
+                        connection.commit()
+
+                        if cursor.rowcount > 0:
+                            logger.info(f"FCM token revoked for user: {app_session_id}")
+                            return jsonify({"message": "FCM token revoked", "status": 200})
+                        else:
+                            logger.error(f"Failed to revoke FCM token for user: {app_session_id}")
+                            return jsonify({"error": "Failed to revoke FCM token"}), 500
+                        
+                except mysql.connector.Error as err:
+                    sentry_sdk.capture_exception(err)
+                    logger.error(f"MySQL error in FCM token revocation: {err}")
+                    return jsonify({"error": "Internal server error"}), 500
+                
+                finally:
+                    cursor.close()
+                
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            logger.error(f"Unexpected error in FCM token revocation: {e}")
+            return jsonify({"error": "Internal server error"}), 500                
+
 @app.route("/v1/app/fcm-token", methods=["POST", "HEAD"])
-@limiter.limit(str(os.getenv('FCM_TOKEN_LIMIT', '10')) + " per minute")
+@limiter.limit(str(os.getenv('FCM_TOKEN_LIMIT')) + " per minute")
 def save_fcm_token():
     """
     Endpoint to receive and store Firebase Cloud Messaging token for a user
