@@ -296,6 +296,11 @@ async function initializeFirebase() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+
+    if (!localStorage.getItem('notificationPermission')) {
+        localStorage.setItem('notificationPermission', Notification.permission);
+    }
+
     // Initialize Firebase
     const app = await initializeFirebase();
     let messaging = null;
@@ -750,11 +755,72 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (welcomeElement && studentFirstName) {
                 welcomeElement.textContent = `Bonjour ${studentFirstName} !`;
             }
+            
+            // Check if notification permission was revoked
+            checkNotificationPermissionChange();
         })
         .catch(error => {
             console.error('Dashboard data fetch failed:', error);
             showFeedback('Unable to load dashboard. Please try again.', 'error');
         });
+    }
+    
+    // Check if notification permission has change
+    function checkNotificationPermissionChange() {
+        const currentPermission = Notification.permission;
+        const storedPermission = localStorage.getItem('notificationPermission');
+        
+        // Update stored permission
+        localStorage.setItem('notificationPermission', currentPermission);
+        
+        // If permission was previously granted but is now denied or default (revoked)
+        if (storedPermission === 'granted' && currentPermission !== 'granted') {
+            console.log('[Notifications] Permission was revoked, removing FCM token');
+            revokeFCMToken();
+        }
+        
+        // Update notification button visibility
+        if (allowNotifButton) {
+            if (currentPermission === 'granted') {
+                allowNotifButton.style.display = 'none';
+            } else if (currentPermission === 'default') {
+                allowNotifButton.style.display = 'block';
+            }
+        }
+    }
+    
+    // Revoke FCM token on the server
+    async function revokeFCMToken() {
+        const token = localStorage.getItem('fcmToken');
+        if (!token) {
+            console.log('[Notifications] No token to revoke');
+            return;
+        }
+        
+        try {
+            const response = await fetch('https://api.pronotif.tech/v1/app/revoke-fcm-token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fcm_token: token }),
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                console.log('[Notifications] FCM token revoked successfully');
+                localStorage.removeItem('fcmToken');
+                localStorage.removeItem('fcmTokenTimestamp');
+                
+                // Update debug panel
+                const deviceInfoEl = document.getElementById('deviceInfo');
+                if (deviceInfoEl) {
+                    deviceInfoEl.innerText = JSON.stringify(debugLogger.getDeviceInfo(), null, 2);
+                }
+            } else {
+                console.error('[Notifications] Failed to revoke FCM token:', response.status);
+            }
+        } catch (error) {
+            console.error('[Notifications] Error revoking FCM token:', error);
+        }
     }
 
     // Camera Permission
