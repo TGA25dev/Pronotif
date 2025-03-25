@@ -115,7 +115,11 @@ last_check_date = None
 import random
 
 # Global exception handler
-def handle_exception(exc_type, exc_value, exc_traceback):
+def handle_exception(exc_type:str, exc_value:str, exc_traceback:str) -> None:
+  """
+  Handle uncaught exceptions send them to sentry and log them to the logger
+  """
+
   if issubclass(exc_type, KeyboardInterrupt):
     sys.__excepthook__(exc_type, exc_value, exc_traceback)
     return
@@ -127,7 +131,11 @@ def handle_exception(exc_type, exc_value, exc_traceback):
 
 sys.excepthook = handle_exception
 
-def handle_error_with_relogin(e):
+def handle_error_with_relogin(e:str) -> bool:
+    """
+    Handle errors by attempting to relogin and return True if successful, False otherwise"
+    """
+
     logger.error(f"Critical error occurred: {e}\nAttempting to relogin...")
     global client
     try:
@@ -151,7 +159,11 @@ def handle_error_with_relogin(e):
         return False
 
 internet_connected = None
-async def check_internet_connexion():
+async def check_internet_connexion() -> bool:
+  """
+  Check if the internet connexion is available
+  """
+
   url = "http://www.google.com"
   timeout = 5
   global internet_connected
@@ -162,7 +174,11 @@ async def check_internet_connexion():
     internet_connected = False
 
 first_login = True    
-async def check_session(client):
+async def check_session(client:pronotepy.Client) -> None:
+    """
+    Check if the session has expired and refresh it if necessary
+    """
+
     global first_login
     if first_login: # Skip session check on first login
         first_login = False 
@@ -189,7 +205,11 @@ async def check_session(client):
         logger.error(f"Session check failed: {e}")
         handle_error_with_relogin(e)
 
-async def retry_with_backoff(func, *args, max_attempts=5):
+async def retry_with_backoff(func, *args, max_attempts=5) -> None:
+    """
+    Retry a function with exponential backoff
+    """
+
     timeout_incident_id = None
     
     for attempt in range(max_attempts):
@@ -258,6 +278,10 @@ async def retry_with_backoff(func, *args, max_attempts=5):
             raise
 
 async def pronote_main_checks_loop():
+  """
+  Main loop for checking lessons, menus, and reminders
+  """
+
   try:
     await check_internet_connexion()
     if internet_connected is False:
@@ -289,7 +313,11 @@ async def pronote_main_checks_loop():
         set_key(f"{script_directory}/Data/pronote_password.env", 'Password', client.password) # Update the password in the .env file for future connexions
         logger.debug(f"New token password generated !")
 
-      async def lesson_check():
+      async def lesson_check() :
+        """
+        Check for upcoming lessons and send notifications
+        """
+
         try:
           global class_check_print_flag
           global class_message_printed_today
@@ -305,7 +333,11 @@ async def pronote_main_checks_loop():
           today = datetime.date.today()
           #other_day = today + datetime.timedelta(days=3)  # For testing purposes
           
-          async def fetch_lessons():
+          async def fetch_lessons() -> list:
+            """
+            Fetch lessons from the server
+            """
+
             return client.lessons(date_from=today)
 
           try:
@@ -371,7 +403,11 @@ async def pronote_main_checks_loop():
                     lower_cap_subject_name = subject[0].capitalize() + subject[1:].lower()
 
                     # Normalize function to simplify comparison
-                    def normalize(text):
+                    def normalize(text:str) -> str:
+                      """
+                      Normalize a text string for comparison
+                      """
+                      
                       return text.lower().replace(' ', '').replace('-', '').replace('.', '').replace('é', 'e')
 
                     # Create a dictionary of normalized short names to emojis
@@ -416,7 +452,11 @@ async def pronote_main_checks_loop():
                     else:
                       extra_space = ""
 
-                    async def send_class_canceled_message_via_ntfy(message):
+                    async def send_class_canceled_message_via_ntfy(message:str) -> int:
+                      """
+                      Send a message to the notification system when a class is canceled
+                      """
+
                       try:
                         topic = topic_name
                         url = f"https://ntfy.sh/{topic}"
@@ -452,7 +492,11 @@ async def pronote_main_checks_loop():
             logger.error(f"Error in lesson check: {e}")
             handle_error_with_relogin(e)
 
-      async def send_class_info_notification_via_ntfy(message):
+      async def send_class_info_notification_via_ntfy(message:str) -> int:
+        """
+        Send a message to the notification system with the class information
+        """
+        
         try:
           topic = topic_name
           url = f"https://ntfy.sh/{topic}"
@@ -471,6 +515,10 @@ async def pronote_main_checks_loop():
                 sys.exit(1)
 
       async def menu_food_check():
+        """
+        Check for upcoming menus and send notifications
+        """
+
         try:
           global menu_message_printed_today
           global last_check_date
@@ -485,7 +533,11 @@ async def pronote_main_checks_loop():
           today = datetime.date.today()
           global menus
       
-          async def fetch_menus():
+          async def fetch_menus() -> list:
+            """
+            Fetch menus from the server
+            """
+
             return client.menus(date_from=today)
 
           try:
@@ -527,9 +579,18 @@ async def pronote_main_checks_loop():
             logger.error(f"Error in menu check: {e}")
             handle_error_with_relogin(e)
 
-      async def food_notif_send_system():
-          def format_menu(menu_items):
-              def extract_relevant_item(item_string):
+      async def food_notif_send_system() -> None:
+          """
+          Send food menu notifications
+          """
+          def format_menu(menu_items:pronotepy.Menu) -> dict:
+              """
+              Format the menu items for notification
+              """
+              def extract_relevant_item(item_string:list) -> str: #(parameter could alose be str)
+                  """
+                  Extract the relevant item from a string or list of items
+                  """
                   # Handle both string and list inputs
                   if isinstance(item_string, str):
                       items = [elem.strip() for elem in item_string.split(',')]
@@ -539,7 +600,11 @@ async def pronote_main_checks_loop():
                       items = []
 
                   # Heuristique pour déterminer le plat principal
-                  def is_main_dish(item):
+                  def is_main_dish(item:str) -> bool:
+                      """
+                      Determine if an item is a main dish
+                      """
+
                       # Exclure les éléments contenant certains mots-clés ou étant très courts
                       if len(item.split()) <= 2:  # Généralement, les plats principaux ont peu de mots
                           return True
@@ -562,7 +627,11 @@ async def pronote_main_checks_loop():
                   # Si aucun plat principal n'est détecté, renvoyer tout pour éviter des pertes de données
                   return ', '.join(main_dishes) if main_dishes else ', '.join(items)
 
-              def get_menu_items(items):
+              def get_menu_items(items:pronotepy.Menu.Food) -> str:
+                  """
+                  Get the menu items for a category
+                  """
+
                   if not items:
                       return ''
                   # Appliquer l'extraction aux chaînes de chaque catégorie
@@ -613,7 +682,11 @@ async def pronote_main_checks_loop():
                   else:
                       logger.warning(f"Incomplete dinner menu for {menu.date}. Skipping notification.")
 
-      async def send_food_menu_notification_via_ntfy(message, dinner_time):
+      async def send_food_menu_notification_via_ntfy(message:str, dinner_time:bool) -> int:
+        """
+        Send a message to the notification system with the food menu
+        """
+
         try:
           food_tags_emojis = ["plate_with_cutlery", "fork_and_knife", "clock7" if dinner_time else "clock3"]
           food_tags_random_emojis = random.choice(food_tags_emojis)
@@ -631,7 +704,11 @@ async def pronote_main_checks_loop():
           if not handle_error_with_relogin(e):
               sys.exit(1)     
 
-      async def send_reminder_notification_via_ntfy(message, reminder_type):
+      async def send_reminder_notification_via_ntfy(message:str, reminder_type:str) -> int:
+        """
+        Send a message to the notification system with the reminder
+        """
+
         try:
           topic = topic_name
           url = f"https://ntfy.sh/{topic}"
@@ -667,7 +744,11 @@ async def pronote_main_checks_loop():
             if not handle_error_with_relogin(e):
                 sys.exit(1)
 
-      async def check_reminder_notifications():
+      async def check_reminder_notifications() -> None:
+        """
+        Check for reminders and send notifications
+        """
+        
         try:
           global reminder_type
           global reminder_message

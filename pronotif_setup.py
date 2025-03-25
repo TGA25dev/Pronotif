@@ -100,19 +100,22 @@ if hasattr(sys, "stdout") and sys.stdout is not None:
 logger.add("setup_wizard_logs.log", level="DEBUG", rotation="500 MB")
 
 # Global exception handler
-def handle_exception(exc_type, exc_value, exc_traceback):
-    if issubclass(exc_type, KeyboardInterrupt):
-        # Handle KeyboardInterrupt gracefully
-        sys.__excepthook__(exc_type, exc_value, exc_traceback)
-        return
+def handle_exception(exc_type:str, exc_value:str, exc_traceback:str) -> None:
+  """
+  Handle uncaught exceptions log them and send them to Sentry.
+  """
+  if issubclass(exc_type, KeyboardInterrupt):
+      # Handle KeyboardInterrupt gracefully
+      sys.__excepthook__(exc_type, exc_value, exc_traceback)
+      return
 
-    # Send exception to Sentry
-    sentry_sdk.capture_exception((exc_type, exc_value, exc_traceback))
+  # Send exception to Sentry
+  sentry_sdk.capture_exception((exc_type, exc_value, exc_traceback))
 
-    logger.critical(
-        f"Uncaught exception: {exc_value}\n"
-        f"Traceback: {''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))}"
-    )
+  logger.critical(
+      f"Uncaught exception: {exc_value}\n"
+      f"Traceback: {''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))}"
+  )
 
 # Set the global exception handler
 sys.excepthook = handle_exception
@@ -165,7 +168,11 @@ config_data = ConfigData()
 
 #wanted file type can be : ico, config, ent_data, pronote_password or pronote_username
 
-def check_important_file_existence(wanted_file_type):
+def check_important_file_existence(wanted_file_type:str) -> None:
+  """
+  Check if the file exists in the local directory. If not, download it from the GitHub repo or create it.
+  """
+
   github_file_path = None
   file_path = None
 
@@ -215,12 +222,19 @@ def check_important_file_existence(wanted_file_type):
   else:
     logger.debug(f"File ({wanted_file_type}) exists. No action taken.")
 
-def get_timezone(true_city_geocode):
+def get_timezone(true_city_geocode:Nominatim) -> None:
+  """
+  Get the timezone of the user's city using the geocode and set data class.
+  """
   tf = TimezoneFinder()
   timezone_str = tf.timezone_at(lng=true_city_geocode.longitude, lat=true_city_geocode.latitude)
   system_data.automatic_school_timezone = pytz.timezone(timezone_str)
 
 def app_final_closing():
+  """
+  Close the application after the setup has been completed.
+  """
+
   root.config(cursor="watch")
   final_app_close_button.configure(state="disabled", text_color="grey")
   logger.debug("Setup has been fully completed ! Application will now close....")
@@ -229,6 +243,10 @@ def app_final_closing():
   sys.exit(0)
 
 def show_config_data_qr_code():
+  """
+  Show the QR code containing the configuration data
+  """
+
   #Get a session id
   response = None
   try:
@@ -328,6 +346,10 @@ def show_config_data_qr_code():
    
 
 def final_step():
+  """
+  Show the final step of the setup wizard.
+  """
+
   logger.info("All steps have been succesfully completed !")
   tabview.pack_forget()
 
@@ -370,7 +392,11 @@ for step in steps:
         globals()[step] = False
 
 # Function to check if all steps are completed
-def check_all_steps_completed():    
+def check_all_steps_completed():
+    """
+    Check if all steps have been completed and call the final step if they have.
+    """
+    
     if all(globals().get(step, False) for step in steps):
         final_step()
 
@@ -411,6 +437,10 @@ def get_ntfy_topic():
     pass
 
 def config_steps():
+  """
+  Show the configuration steps for the setup wizard.
+  """
+
   mid_canvas.place_forget()
 
   if school_name_text is not None: # If the label exists
@@ -457,6 +487,10 @@ def config_steps():
   ntfy_topic_name_entry.bind("<Return>", lambda event: get_ntfy_topic())
 
   def open_docs():
+    """
+    Open the documentation in the default web browser.
+    """
+
     webbrowser.open("https://docs.pronotif.tech/installation/ntfy")
 
   need_help_icon = ctk.CTkImage(light_image=Image.open(f"{script_directory}/Icons/Global UI/need_help_light.png").resize((24, 24)), dark_image=Image.open(f"{script_directory}/Icons/Global UI/need_help_dark.png").resize((24, 24)))
@@ -466,7 +500,11 @@ def config_steps():
   need_help_tooltip = CTkToolTip(need_help_button, message="Vous ne savez pas quoi ecrire ici ?\nCliquez sur le point d'interrogation !", delay=0.3, alpha=0.8, wraplength=450, justify="center", font=default_subtitle_font)
 
   # Function to enable the button if entry is not empty
-  def enable_button(event):
+  def enable_button(event:tk.Event) -> None:
+    """
+    Enable the button if the entry is not empty.
+    """
+
     if ntfy_topic_name_entry.get() and ntfy_topic_name_entry.get() != "mon-topic-ntfy":
         ntfy_topic_name_button.configure(state="normal", text_color="white")
     else:
@@ -497,6 +535,10 @@ def config_steps():
     config_tab_step2_text.place(relx=0.5, rely=0.15, anchor="center")
 
     def evening_switch_toogle():
+        """
+        Toggle the evening menu switch.
+        """
+
         if evening_switch_var.get() == "True":
             evening_menu_switch.configure(text="Diner (oui)", progress_color="light green")
         else:
@@ -516,18 +558,28 @@ def config_steps():
     global current_day_index
     current_day_index = 0  # Initialize current_day_index here
 
-    def time_to_minutes(time):
-        """Convert time in HH:MM format to minutes since 00:00."""
+    def time_to_minutes(time: str) -> int:
+        """
+        Convert time in HH:MM format to minutes since 00:00.
+        """
+
         hours, minutes = map(int, time.split(":"))
         return hours * 60 + minutes
 
-    def minutes_to_time(minutes):
-        """Convert minutes since 00:00 to time in HH:MM format."""
+    def minutes_to_time(minutes: int) -> str:
+        """
+        Convert minutes since 00:00 to time in HH:MM format.
+        """
+
         hours = minutes // 60
         minutes = minutes % 60
         return f"{hours:02d}:{minutes:02d}"
 
     def submit_lunch_time():
+        """
+        Submit the selected lunch time and move to the next day.
+        """
+
         global current_day_index
         global day
         day = days[current_day_index]
@@ -600,7 +652,11 @@ def config_steps():
         scales[day] = scale
 
         # Add a label to show the selected time
-        def update_label(value, scale=scale, label=label, day=day):
+        def update_label(value, scale=scale, label=label, day=day) -> None:
+            """
+            Update the label with the selected time.
+            """
+        
             time = minutes_to_time(int(float(value)))
             label.configure(text=f"{day}: {time}h")
 
@@ -619,6 +675,10 @@ def config_steps():
   #TAB 3 NOTIFICATIONS
 
   def save_notifications_settings():
+    """
+    Save the notifications settings to the config file.
+    """
+
     unfinished_homework_reminder_switch.configure(state="disabled", text_color="grey", button_color="grey")
     get_bag_ready_reminder_switch.configure(state="disabled", text_color="grey", button_color="grey")
     save_button_notifications.configure(state="disabled", text_color="grey")
@@ -641,18 +701,30 @@ def config_steps():
     check_all_steps_completed()
      
   def unfinished_homework_reminder_switch_toogle():
+    """
+    Toggle the unfinished homework reminder switch.
+    """
+
     if unfinished_homework_reminder_switch_var.get() == "True":
       unfinished_homework_reminder_switch.configure(progress_color="light green")
     else:
       unfinished_homework_reminder_switch.configure(progress_color="grey")
 
   def get_bag_ready_reminder_toogle():
+    """
+    Toggle the get bag ready reminder
+    """
+
     if get_bag_ready_reminder_switch_var.get() == "True":
       get_bag_ready_reminder_switch.configure(progress_color="light green")
     else:
       get_bag_ready_reminder_switch.configure(progress_color="grey")                  
 
   def save_notifications_selection():
+      """
+      Save the notifications settings to the config file.
+      """
+
       config.unfinished_homework_reminder = unfinished_homework_reminder_switch_var.get()
       config.get_bag_ready_reminder = get_bag_ready_reminder_switch_var.get()
 
@@ -682,6 +754,10 @@ def config_steps():
   #TAB 4 ADVANCED
 
   def set_config_file_advanced():
+    """
+    Save the advanced settings to the config file.
+    """
+
     save_button.configure(state="disabled", text_color="grey")
     switch.configure(state="disabled", text_color="grey", button_color="grey")
     combo_menu.configure(state="disabled", button_color="grey")
@@ -706,6 +782,9 @@ def config_steps():
 
     
   def switch_toggled():
+      """Switch toggle
+      """
+
       if switch_var.get() == "off":
           switch.configure(text="Manuel")
           combo_menu.place(relx=0.21, rely=0.45, anchor="center")
@@ -714,6 +793,10 @@ def config_steps():
           combo_menu.place_forget()
 
   def save_selection():
+    """
+    Save timezone selection and notification delay
+    """
+
     global selected_timezone
     if switch_var.get() == "off":
       selected_option = combo_menu.get()
@@ -780,6 +863,10 @@ def config_steps():
 
 
 def save_credentials():
+    """
+    Save the username and password to the config file.
+    """
+
     username = username_entry.get()
     password = password_entry.get()
 
@@ -910,6 +997,10 @@ def save_credentials():
 
 
 def qr_code_login_process():
+    """
+    Process the QR code login.
+    """
+
     pin=enter_pin_entry.get()
     uuid=uuid4()
 
@@ -1014,6 +1105,10 @@ def qr_code_login_process():
           sentry_sdk.capture_exception(e)
 
 def ask_qr_code_pin():
+   """
+   Ask the user to enter the PIN code for the QR code login.
+   """
+
    root.deiconify()  # Restore the main window
    main_text.configure(text="Entrez le code PIN défini\nsur Pronote.", font=default_text_font)
 
@@ -1035,7 +1130,11 @@ def ask_qr_code_pin():
    enter_pin_button.place(relx=0.70, rely=0.65, anchor="center")
    
 
-def analyse_qr_code(screenshot):
+def analyse_qr_code(screenshot: Image) -> None:
+    """
+    Analyse the QR code from the screenshot
+    """
+
     decoded_objects = decode(screenshot) #Decode the QR Code
     
     #print(decoded_objects)
@@ -1053,7 +1152,11 @@ def analyse_qr_code(screenshot):
         root.deiconify()  # Restore the main window
         root.lift()  # Bring main window to top
 
-def process_coords(start_x, start_y, end_x, end_y):
+def process_coords(start_x:float, start_y:float, end_x:float, end_y:float) -> None:
+    """
+    Process the coordinates of the screenshot.
+    """
+
     overlay.destroy()
     # Ensure coordinates are ordered correctly
     left = min(start_x, end_x)
@@ -1065,13 +1168,21 @@ def process_coords(start_x, start_y, end_x, end_y):
     analyse_qr_code(screenshot)
 
 class DragRectangle:
-    def __init__(self, canvas):
+    def __init__(self, canvas: tk.Canvas):
+        """
+        Initialize the DragRectangle class.
+        """
+
         self.canvas = canvas
         self.start_x = None
         self.start_y = None
         self.rect = None
 
-    def start_drag(self, event):
+    def start_drag(self, event: tk.Event):
+        """
+        Start the drag.
+        """
+
         self.start_x = event.x
         self.start_y = event.y
 
@@ -1085,7 +1196,11 @@ class DragRectangle:
             outline="#FF0000", width=4
         )
 
-    def drag(self, event):
+    def drag(self, event:tk.Event):
+        """
+        Drag the rectangle.
+        """
+
         if self.rect:
             self.canvas.coords(
                 self.rect,
@@ -1093,13 +1208,21 @@ class DragRectangle:
                 event.x, event.y
             )
 
-    def stop_drag(self, event):
+    def stop_drag(self, event:tk.Event):
+        """
+        Stop
+        """
+
         if self.rect:
             end_x, end_y = event.x, event.y
             #print(f"Start: {start_x}, {start_y} End: {end_x}, {end_y}")
             process_coords(start_x, start_y, end_x, end_y)
 
 def create_overlay():
+    """
+    Create the overlay for the QR code scanning.
+    """
+
     global overlay
     overlay = ctk.CTkToplevel(root)
     overlay.overrideredirect(True)  # Remove title bar
@@ -1120,6 +1243,10 @@ def create_overlay():
     overlay.focus_force()  # Force focus on overlay
 
     def on_overlay_close():
+        """
+        Close the overlay.
+        """
+
         overlay.destroy()
         on_screen_qr_code_button.configure(state='normal')
 
@@ -1127,7 +1254,11 @@ def create_overlay():
 
     return overlay     
 
-def scan_qr_code(scan_qr_code_method):
+def scan_qr_code(scan_qr_code_method:str) -> None:
+   """
+    Scan the QR code depending the chosen methond.
+    """
+   
    system_data.scan_qr_code_method = scan_qr_code_method
 
    if scan_qr_code_method == "file": #If the user wants to scan a QR Code from a file
@@ -1135,6 +1266,10 @@ def scan_qr_code(scan_qr_code_method):
       camera_qr_code_button.place_forget()
 
       def import_qr_code_image():
+        """
+        Import the QR code from an image image.
+        """
+
         filename = filedialog.askopenfilename(parent=root, filetypes=[("Images", "*.png"), ("Images", "*.jpg"), ("Images", "*.jpeg"), ("Images", "*.svg"), ("Images", "*.webp")], title="Selectionnez le fichier contenant votre QR Code", initialdir="/downloads")
         if filename:
 
@@ -1179,6 +1314,10 @@ def scan_qr_code(scan_qr_code_method):
       cap = cv2.VideoCapture(0)
       
       def update_frame():
+          """
+          Update the camera frame.
+          """
+
           nonlocal cap, camera_frame
           try:
               ret, frame = cap.read()
@@ -1234,6 +1373,10 @@ def scan_qr_code(scan_qr_code_method):
       update_frame()
 
 def qr_code_login():
+  """
+  QR Code login method.
+  """
+
   logger.debug("User has chosen QR Code login method !")
   title_label.configure(text="Etape 4/4")
   main_text.configure(text="Choissisez comment\nscanner votre QR Code", font=default_text_font)
@@ -1262,13 +1405,21 @@ def qr_code_login():
   file_qr_code_button = ctk.CTkButton(root, text="Importer une image", font=default_items_font, command=lambda: scan_qr_code("file"), image=file_qr_code_image, compound="left")
   file_qr_code_button.place(relx=0.75, rely=0.75, anchor="center")
    
-def select_login_method(choice):
+def select_login_method(choice: str):
+   """
+   Select the login method.
+   """
+
    root.config(cursor="arrow")
    choice_menu.place_forget()
    title_label.configure(text="Etape 3/4")
    main_text.configure(text="Choisissez votre méthode\nde connexion à Pronote.", font=default_text_font)
 
    def adjust_text_size(event=None):
+    """
+    Adjust the text size based on the length of the text.
+    """
+
     global school_name_text
     school_name_text = ctk.CTkLabel(root, text=f"{choice}", font=default_subtitle_font)
     school_name_text.place(relx=0.23, rely=0.65, anchor="center")
@@ -1303,7 +1454,11 @@ def select_login_method(choice):
      login_with_credentials_button.configure(state="disabled", text_color="grey", image=disabled_credentials_login_image)
      credentials_login_disabled_tooltip = CTkToolTip(login_with_credentials_button, message="La connexion via ENT n'est plus supportée par Pronot'if.\nVeuillez utiliser le QR Code.\n\nPlus d'infos dans la documentation.", delay=0.3, alpha=0.8, wraplength=450, justify="center", font=default_subtitle_font)
 
-def check_pronote_use(choice): 
+def check_pronote_use(choice: str) -> None:
+  """
+  Check if the school uses Pronote by making a request to the instance.
+  """
+
   pronote_use = True
   pronote_use_msg = None
   try:
@@ -1342,7 +1497,11 @@ def check_pronote_use(choice):
       box = CTkMessagebox(title="Erreur", font=default_messagebox_font, message="Une erreur inconnue est survenue.\nMerci de réessayer plus tard.", icon=cancel_icon_path, option_1="Ok",master=root, width=350, height=10, corner_radius=20,sound=True)
       box.info._text_label.configure(wraplength=450)
 
-def login_step(choice):
+def login_step(choice:str) -> None:
+  """
+  Login step.
+  """
+
   pronote_url = config_data.pronote_url
     
   check_important_file_existence(wanted_file_type="config")
@@ -1374,7 +1533,11 @@ def login_step(choice):
     main_text.configure(text=f"Connectez vous à Pronote\nà l'aide de vos identifiants.", font=default_text_font)
     main_text.place(relx=0.23, rely=0.45, anchor="center") #Reposition the text to the initial position
 
-    def adjust_text_size(event=None):
+    def adjust_text_size(event=None) -> None:
+      """
+      Adjust the text size based on the length of the text.
+      """
+
       # Get the current text of the label
       text = school_name_text.cget("text")
       # Calculate the length of the text
@@ -1387,7 +1550,11 @@ def login_step(choice):
     global password_visible
     password_visible = None
     # Function to toggle the password visibility
-    def toggle_password(event=None):
+    def toggle_password(event=None) -> None:
+          """
+          Toggle the password visibility.
+          """
+    
           global password_visible
           if password_visible:
               logger.debug("Password has been hidden !") # Debugging line
@@ -1445,6 +1612,10 @@ def login_step(choice):
     save_button.place(relx=0.71, rely=0.83, anchor="center")
 
 def process_manual_login_url():
+  """
+  Process the manual login URL.
+  """
+
   manual_login_url = manual_pronote_url_entry.get()
 
   # Define the patterns for the two URL formats
@@ -1475,6 +1646,10 @@ def process_manual_login_url():
     
 
 def search_school():
+    """
+    Search for the school by making a request to the 'Education Nationale' API.
+    """
+
     root.config(cursor="watch")
 
     city = city_entry.get()
@@ -1619,7 +1794,10 @@ def search_school():
 
            logger.info(f"{results_count} results have been returned for {system_data.true_city_name} ! (limit is {limit})")  
 
-           def optionmenu_callback(choice):
+           def optionmenu_callback(choice: str) -> None:
+            """
+            Callback function for the OptionMenu.
+            """
  
             root.config(cursor="watch")
             
@@ -1717,6 +1895,8 @@ title_bar_color.set(root, "#16a376")
 window_frame.center(root)
 
 def close_app():
+  """
+  Close the application (triggered on both close buttons)."""
   box = CTkMessagebox(title="Fermer ?", font=default_messagebox_font, message="Annuler la configuration ?\nL'ensemble de vos données sera supprimé...", icon=question_icon_path, option_1="Annuler", option_2="Fermer",cancel_button=None ,cancel_button_color="light grey", justify="center", master=root, width=350, height=10, corner_radius=20,sound=True)
   box.info._text_label.configure(wraplength=450)
 
@@ -1757,8 +1937,11 @@ def close_app():
   elif response == "Annuler":
     pass
 
-def check_internet():
-    """Check if the computer is connected to the internet."""
+def check_internet() -> bool:
+    """
+    Check if the computer is connected to the internet.
+    """
+
     url = "http://www.google.com"
     timeout = 5
     try:
@@ -1770,16 +1953,28 @@ def check_internet():
 previously_connected = False
 
 def update_internet_label_state():
+    """
+    Update the internet status label.
+    """
+
     global previously_connected
 
     currently_connected = check_internet()
     
     if currently_connected and not previously_connected:
         def change_text():
+            """
+            Change the text of the label.
+            """
+
             internet_status_label.configure(text="De retour en ligne...", text_color="green")
             root.after(2000, clear_text)  # Wait 2 seconds before clearing the text
 
         def clear_text():
+            """
+            Clear the text of the label.
+            """
+
             internet_status_label.configure(text="")
         
         change_text()  # Call the change_text function to update the label and start the timer
@@ -1794,7 +1989,10 @@ def update_internet_label_state():
 
     root.after(1000, update_internet_label_state)
 
-def on_label_click(event):
+def on_label_click(event:tk.Event) -> None:
+    """
+    Open the Pronot'if website when the label is clicked (that's a secret...)
+    """
     global click_count
     click_count += 1
     if click_count == 8:
@@ -1804,6 +2002,10 @@ def on_label_click(event):
 click_count = 0
 
 def check_if_first_time():
+  """
+  Check if it's the first time the user is using Pronot'if (txt file existence).
+  """
+
   first_use_file = os.path.exists(f"{script_directory}/first_use.txt")
 
   if first_use_file:
@@ -1829,10 +2031,18 @@ mid_canvas = ctk.CTkCanvas(root, width=2, height=150, background= "white", highl
 mid_canvas.place(relx=0.5, rely=0.55, anchor="center")
 
 # Functions to open links in the default web browser
-def open_tos(event):
+def open_tos(event:tk.Event) -> None:
+    """
+    Open the Terms of Service link in the default web browser.
+    """
+
     webbrowser.open("https://safety.pronotif.tech/docs/terms-of-service")
 
-def open_privacy(event):
+def open_privacy(event:tk.Event) -> None:
+    """
+    Open the Privacy Policy link in the default web browser.
+    """
+
     webbrowser.open("https://safety.pronotif.tech/docs/politique-de-confidentialite")
 
 # Create a Text widget
