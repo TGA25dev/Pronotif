@@ -330,9 +330,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         deviceInfo.innerText = JSON.stringify(debugLogger.getDeviceInfo(), null, 2);
     }
     
-    // Secret trigger: tap app version 5 times quickly
-    if (appVersionEl) {
-        appVersionEl.addEventListener('click', (e) => {
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('app-version')) {
             e.preventDefault();
             tapCount++;
             
@@ -346,8 +345,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 tapCount = 0;
                 toggleDebugPanel();
             }
-        });
-    }
+        }
+    });
     
     function toggleDebugPanel() {
         debugPanel.classList.toggle('hidden');
@@ -656,8 +655,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Service Worker Registration
     if ('serviceWorker' in navigator) {
-        // Register the service worker with version control instead of timestamp
-        const SW_VERSION = '1.0.0'; // Manually update this when you make significant changes
+        
+        const SW_VERSION = '1.0.1'; 
         const swUrl = `sw.js?v=${SW_VERSION}`;
         
         navigator.serviceWorker.register(swUrl, {
