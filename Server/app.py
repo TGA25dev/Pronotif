@@ -2,7 +2,6 @@ from flask import Flask, make_response, request, jsonify
 import mysql.connector
 from mysql.connector import pooling
 from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 import logging
 from datetime import datetime, timedelta
 import redis
@@ -15,6 +14,7 @@ import bleach
 import json
 from flask_cors import CORS
 from flask_talisman import Talisman
+from werkzeug.middleware.proxy_fix import ProxyFix
 import hashlib
 import sentry_sdk
 from contextlib import contextmanager
@@ -58,6 +58,14 @@ except ValueError as e:
     exit(1)
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(
+    app.wsgi_app,
+    x_for=2,       # Number of proxies setting X-Forwarded-For
+    x_proto=1,     # Number of proxies setting X-Forwarded-Proto
+    x_host=1,      # Number of proxies setting X-Forwarded-Host
+    x_port=0,      # Number of proxies setting X-Forwarded-Port
+    x_prefix=0     # Number of proxies setting X-Forwarded-Prefix
+)
 # Parse CORS settings
 cors_origins = [origin.strip() for origin in os.getenv('CORS_ORIGINS', '').split(',')]
 cors_methods = [method.strip() for method in os.getenv('CORS_METHODS', '').split(',')]
@@ -118,7 +126,7 @@ redis_connection = redis.Redis(
 )
 
 limiter = Limiter(
-    get_remote_address,
+    lambda: request.remote_addr,
     app=app,
     storage_uri=f"redis://{os.getenv('REDIS_HOST')}:{int(os.getenv('LIMITER_PORT'))}"
 )
@@ -138,9 +146,19 @@ def ratelimit_error(error):
         "ip": request.remote_addr,
         "endpoint": request.endpoint
     })
+    
+    # Get retry-after from the response if available
+    retry_after = None
+    if hasattr(error, 'description') and hasattr(error.description, 'headers'):
+        retry_after = error.description.headers.get('Retry-After')
+    
     sentry_sdk.capture_message("Rate limit exceeded", level="warning")
     logger.warning(f"Rate limit exceeded: {error}")
-    return jsonify({'error': 'Rate limit exceeded'}), 429
+    
+    return jsonify({
+        'error': 'Rate limit exceeded',
+        'retry_after': retry_after,
+    }), 429, {'Retry-After': retry_after} if retry_after else {}
 
 
 @app.errorhandler(404)
@@ -151,7 +169,7 @@ def page_not_found(error):
 # API Endpoints
 
 @app.route('/ping', methods=['GET'])
-@limiter.limit(str(os.getenv('SESSION_SETUP_LIMIT')) + "per minute")
+@limiter.limit(str(os.getenv('PING_LIMIT')) + " per minute")
 def test_endpoint():
     """Ping endpoint to test server availability"""
     client_ip = request.remote_addr
