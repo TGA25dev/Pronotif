@@ -6,7 +6,7 @@
 
 # Pronot'if <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Books.png" alt="Books" width="25" height="25" />
 
-Vous notifie sur votre téléphone 5 minutes avant chaque cours.
+Vous notifie sur votre téléphone quelques minutes avant chaque cours.
 
 [![Licence](https://img.shields.io/github/license/tga25dev/pronotif?style=for-the-badge&logo=github&logoColor=white)](./LICENSE)
 
@@ -19,26 +19,27 @@ Vous notifie sur votre téléphone 5 minutes avant chaque cours.
 - [Fonctionalités](https://github.com/TGA25dev/Pronotif#fonctionalités--)
 - [Installation](https://github.com/TGA25dev/Pronotif#installation-)
 - [Screenshots](https://github.com/TGA25dev/Pronotif#screenshots-)
+- [Contribution](https://github.com/TGA25dev/Pronotif#contribution-)
 - [Licence](https://github.com/TGA25dev/Pronotif#licence-)
 
 ## Fonctionalités  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Glowing%20Star.png" alt="Glowing Star" width="25" height="25" />
 
 
 
-* Envoi une notification sur votre téléphone 5 minute avant chaque cours avec :
+* Pronot'if vous envoie une notification sur votre téléphone quelques minutes avant chaque cours avec :
   - la salle
   - la matière
   - et plus encore !
 
 
-* Vous informe à l'heure du dejeuner du menu du jour
+* Vous informe à l'heure du dejeuner ou du dîner du menu du jour _(Établissements compatibles uniquement)_
 
 #### Ce projet utilise l'api Pronote de [bain3](https://github.com/bain3/pronotepy) ainsi que sa propre application (pwa) avec Firebase Cloud Messaging pour l'envoi des notifications.
 
 
 ## Installation <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Hammer%20and%20Wrench.png" alt="Hammer and Wrench" width="25" height="25" />
 
-**La documentation du projet est disponible [ici](https://pronote-class-notifier-doc.gitbook.io/pronote-class-notifier-doc/)**
+**Les étapes sur comment installer Pronot'if sont disponibles [ici](https://docs.pronotif.tech).**
 
 ## Roadmap <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Light%20Bulb.png" alt="Light Bulb" width="25" height="25" />
 
@@ -64,6 +65,9 @@ Vous notifie sur votre téléphone 5 minutes avant chaque cours.
 [![pronote-notif1.png](https://i.postimg.cc/ryPRpXkS/pronote-notif1.png)](https://postimg.cc/Cdbxv2d1)
 
 [![pronote-notif4.png](https://i.postimg.cc/4ymK1wz7/pronote-notif4.png)](https://postimg.cc/D43yvrpn)
+
+## Contribution <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Laptop.png" alt="Laptop" width="25" height="25" />
+Toutes les informations sur comment nous aider sont disponibles sur la documentation du projet ([docs.pronotif.tech](https://docs.pronotif.tech)). 
 
 
 ## Licence <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Page%20with%20Curl.png" alt="Page with Curl" width="25" height="25" />

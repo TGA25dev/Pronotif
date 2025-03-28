@@ -5,7 +5,7 @@
 
 # Pronot'if <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Books.png" alt="Books" width="25" height="25" />
 
-Notifies you on your phone 5 minutes before each class.
+Notifies you on your phone a few minutes before each class.
 
 [![Licence](https://img.shields.io/github/license/tga25dev/pronotif?style=for-the-badge&logo=github&logoColor=white)](./LICENSE)
 
@@ -18,22 +18,23 @@ Notifies you on your phone 5 minutes before each class.
 - [Features](https://github.com/TGA25dev/Pronotif/blob/main/README_EN.md#features--)
 - [Instalation](https://github.com/TGA25dev/Pronotif/blob/main/README_EN.md#instalation-)
 - [Screenshots](https://github.com/TGA25dev/Pronotif/blob/main/README_EN.md#screenshots-)
+- [Contribution](https://github.com/TGA25dev/Pronotif#contribution-)
 - [License](https://github.com/TGA25dev/Pronotif/blob/main/README_EN.md#license-)
 
 ## Features  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Glowing%20Star.png" alt="Glowing Star" width="25" height="25" />
 
-- Notifies you 5 minutes before the start of every class with :
+- Pronot'if notifies you a few minutes before the start of every class with :
   - the classroom
   - the subject
   - and more !
 
-- Notifies you at lunchtime of day's menu
+- Notifies you at lunchtime or dinnertime of day's menu _(Compatible schools only)_
 
-#### This project uses the Pronote api from [bain3](https://github.com/bain3/pronotepy) and also it's own app(pwa) with Firebase Cloud Messaging to send the notifications.
+#### This project uses the Pronote api from [bain3](https://github.com/bain3/pronotepy) and also it's own app (pwa) with Firebase Cloud Messaging to send the notifications.
 
 ## Instalation <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Hammer%20and%20Wrench.png" alt="Hammer and Wrench" width="25" height="25" />
 
-**Project documentaion is available [here](https://pronote-class-notifier-doc.gitbook.io/pronote-class-notifier-doc/)** *(French only)*
+**Steps on how to install Pronot'if are available [here](https://docs.pronotif.tech/).** *(French only)*
 
 ## Roadmap <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Light%20Bulb.png" alt="Light Bulb" width="25" height="25" />
 
@@ -59,6 +60,9 @@ Notifies you on your phone 5 minutes before each class.
 [![pronote-notif1.png](https://i.postimg.cc/ryPRpXkS/pronote-notif1.png)](https://postimg.cc/Cdbxv2d1)
 
 [![pronote-notif4.png](https://i.postimg.cc/4ymK1wz7/pronote-notif4.png)](https://postimg.cc/D43yvrpn)
+
+## Contribution <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Laptop.png" alt="Laptop" width="25" height="25" />
+All you need to know about how to collaborate is written on the project's documentation ([docs.pronotif.tech](https://docs.pronotif.tech)).
 
 ## License <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Page%20with%20Curl.png" alt="Page with Curl" width="25" height="25" />
 
