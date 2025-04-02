@@ -1072,8 +1072,20 @@ def qr_code_login_process():
          set_key(f"{script_directory}/Data/pronote_password.env", 'Password', client.password)
          config_data.user_password = client.password
 
-         names = config_data.student_fullname.strip().split() if config_data.student_fullname.strip() else []
-         config_data.student_firstname = names[1] if len(names) > 1 else None
+         if config_data.student_fullname:
+          # Split the name into words
+          words = config_data.student_fullname.strip().split()
+            
+          # Find the first word that is not in ALL CAPS and not a hyphen
+          for word in words:
+            if not word.isupper() and word != "-":
+              config_data.student_firstname = word
+              break
+            else:
+
+             config_data.student_firstname = None
+          else:
+            config_data.student_firstname = None
 
          root.config(cursor="arrow")
 
