@@ -54,9 +54,6 @@ geolocator = Nominatim(user_agent="Geocoder")
 
 script_directory = os.path.dirname(os.path.abspath(__file__))
 
-config_file_path = f"{script_directory}/Data/config.ini"
-config_file_name = "config.ini"
-
 cancel_icon_path = f"{script_directory}/Icons/Messagebox UI/cancel_icon.png"
 ok_icon_path = f"{script_directory}/Icons/Messagebox UI/ok_icon.png"
 question_icon_path = f"{script_directory}/Icons/Messagebox UI/question_icon.png"
@@ -74,7 +71,6 @@ sentry_sdk.init("https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.inge
                 server_name="User-Machine")
 
 local_paths = {
-    "config": os.path.join(script_directory, "Data", "config.ini"),
     "ico": os.path.join(script_directory, "pronote_butterfly.ico"),
     "ent_data": os.path.join(script_directory, "Data", "ent_data.json"),
     "env_p": os.path.join(script_directory, "Data", "pronote_password.env"),
@@ -82,7 +78,6 @@ local_paths = {
 }
 
 github_paths = {
-    "config": "Data/config.ini",
     "ico": "pronote_butterfly.ico",
     "ent_data": "Data/ent_data.json",
     "env_p": "Data/pronote_password.env",
@@ -166,7 +161,7 @@ class ConfigData:
 
 config_data = ConfigData()
 
-#wanted file type can be : ico, config, ent_data, pronote_password or pronote_username
+#wanted file type can be : ico, ent_data, pronote_password or pronote_username
 
 def check_important_file_existence(wanted_file_type:str) -> None:
   """
@@ -416,19 +411,6 @@ def get_ntfy_topic():
     ntfy_topic_name_entry.configure(state="disabled", text_color="grey")
     config_tab_step1_text.configure(text="Parfait !\nVous pouvez passer au deuxième onglet.")
 
-    check_important_file_existence(wanted_file_type="config") 
-
-    # Read the INI file with the appropriate encoding
-    with open(config_file_path, 'r', encoding='utf-8') as configfile:
-     config.read_file(configfile)
-
-    # Modify a key in the INI file
-     config['Global']['topic_name'] = config_data.topic_name
-
-    # Write the changes back to the INI file
-    with open(config_file_path, 'w', encoding='utf-8') as configfile:
-     config.write(configfile)
-
     globals()['config_tab1_approved'] = True
     check_all_steps_completed() 
 
@@ -445,22 +427,6 @@ def config_steps():
 
   if school_name_text is not None: # If the label exists
     school_name_text.place_forget()
-
-  check_important_file_existence(wanted_file_type="config")
-
-  # Read the INI file with the appropriate encoding
-  with open(config_file_path, 'r', encoding='utf-8') as configfile:
-    config.read_file(configfile)
-
-  # Modify a key in the INI file
-  config['Global']['student_fullname'] = config_data.student_fullname
-  config['Global']['student_firstname'] = config_data.student_firstname
-  config['Global']['student_class'] = config_data.student_class_name
-
-
-  # Write the changes back to the INI file
-  with open(config_file_path, 'w', encoding='utf-8') as configfile:
-    config.write(configfile)
 
   global tabview
   tabview = ctk.CTkTabview(master=root, height=400, width=700)
@@ -620,22 +586,6 @@ def config_steps():
             config_tab_step2_text.configure(text="Vos paramètres ont étés enregistrés !\nPassez à la prochaine étape.")
             logger.debug(f"Lunch times submitted !")
 
-            check_important_file_existence(wanted_file_type="config")
-
-            # Read the INI file with the appropriate encoding
-            with open(config_file_path, 'r', encoding='utf-8') as configfile:
-                config.read_file(configfile)
-
-            # Save to config file
-            for english_day, time in config_data.lunch_times.items():
-                if time:
-                    config['LunchTimes'][english_day] = time
-            config['LunchTimes']['evening_menu'] = config_data.evening_menu        
-
-            # Write the changes back to the INI file
-            with open(config_file_path, 'w', encoding='utf-8') as configfile:
-                config.write(configfile)
-
             globals()['config_tab2_approved'] = True
             check_all_steps_completed()
 
@@ -676,26 +626,14 @@ def config_steps():
 
   def save_notifications_settings():
     """
-    Save the notifications settings to the config file.
+    Save the notifications settings.
     """
 
     unfinished_homework_reminder_switch.configure(state="disabled", text_color="grey", button_color="grey")
     get_bag_ready_reminder_switch.configure(state="disabled", text_color="grey", button_color="grey")
     save_button_notifications.configure(state="disabled", text_color="grey")
 
-    check_important_file_existence(wanted_file_type="config")
     reminders_info_label.configure(text="Vos paramètres ont bien été enregistrés !")
-
-    # Read the INI file with the appropriate encoding
-    with open(config_file_path, 'r', encoding='utf-8') as configfile:
-     config.read_file(configfile)
-
-    config['Advanced']['unfinished_homework_reminder'] = str(config_data.unfinished_homework_reminder)
-    config['Advanced']['get_bag_ready_reminder'] = str(config_data.get_bag_ready_reminder)
-
-    # Write the changes back to the INI file
-    with open(config_file_path, 'w', encoding='utf-8') as configfile:
-     config.write(configfile)
 
     globals()['config_tab3_approved'] = True
     check_all_steps_completed()
@@ -722,7 +660,7 @@ def config_steps():
 
   def save_notifications_selection():
       """
-      Save the notifications settings to the config file.
+      Save the notifications settings.
       """
 
       config.unfinished_homework_reminder = unfinished_homework_reminder_switch_var.get()
@@ -755,27 +693,13 @@ def config_steps():
 
   def set_config_file_advanced():
     """
-    Save the advanced settings to the config file.
+    Save the advanced settings.
     """
 
     save_button.configure(state="disabled", text_color="grey")
     switch.configure(state="disabled", text_color="grey", button_color="grey")
     combo_menu.configure(state="disabled", button_color="grey")
     notification_delay_menu.configure(state="disabled", button_color="grey")
-
-    check_important_file_existence(wanted_file_type="config")
-   
-    # Read the INI file with the appropriate encoding
-    with open(config_file_path, 'r', encoding='utf-8') as configfile:
-     config.read_file(configfile)
-
-    # Modify a key in the INI file
-    config['Advanced']['timezone'] = f"{config_data.selected_timezone}"
-    config['Global']['notification_delay'] = f"{config_data.notification_delay}"
-
-    # Write the changes back to the INI file
-    with open(config_file_path, 'w', encoding='utf-8') as configfile:
-     config.write(configfile)
 
     globals()['config_tab4_approved'] = True
     check_all_steps_completed()
@@ -864,7 +788,7 @@ def config_steps():
 
 def save_credentials():
     """
-    Save the username and password to the config file.
+    Save the username and password.
     """
 
     username = username_entry.get()
@@ -880,21 +804,8 @@ def save_credentials():
       root.config(cursor="watch")
 
       try:
-        check_important_file_existence(wanted_file_type="config") 
-      
-        # Read the INI file with the appropriate encoding
-        with open(config_file_path, 'r', encoding='utf-8') as configfile:
-          config.read_file(configfile)
 
         client = pronotepy.Client(config_data.pronote_url, username=username, password=password)
-
-        # Modify a key in the INI file
-        config['Global']['ent_used'] = "False"
-        config['Global']['qr_code_login'] = "False"
-
-        # Write the changes back to the INI file
-        with open(config_file_path, 'w', encoding='utf-8') as configfile:
-          config.write(configfile)
 
         config_data.qr_code_login = False  
             
@@ -1012,19 +923,6 @@ def qr_code_login_process():
 
         if client.logged_in:
          config_data.qr_code_login = True
-         
-         check_important_file_existence("config")
-         # Read the INI file with the appropriate encoding
-         with open(config_file_path, 'r', encoding='utf-8') as configfile:
-            config.read_file(configfile)
-
-         config["Global"]["qr_code_login"] = "True"
-         config["Global"]["uuid"] = str(uuid)
-         config["Global"]["login_page_link"] = client.pronote_url
-
-         # Write the changes back to the INI file
-         with open(config_file_path, 'w', encoding='utf-8') as configfile:
-            config.write(configfile) 
 
          box = CTkMessagebox(title="Succès !", font=default_messagebox_font, message="Connexion effectuée !", icon=ok_icon_path, option_1="Parfait", master=root, width=400, height=180, corner_radius=25,sound=True)
          box.info._text_label.configure(wraplength=450)
@@ -1517,18 +1415,6 @@ def login_step(choice:str) -> None:
 
   pronote_url = config_data.pronote_url
     
-  check_important_file_existence(wanted_file_type="config")
-
-  # Read the INI file with the appropriate encoding
-  with open(config_file_path, 'r', encoding='utf-8') as configfile:
-    config.read_file(configfile)
-
-  config["Global"]["login_page_link"] = pronote_url
-
-  # Write the changes back to the INI file
-  with open(config_file_path, 'w', encoding='utf-8') as configfile:
-    config.write(configfile) 
-
   # Handle any other unexpected errors
   if config_data.ent_connexion is False or config_data.ent_connexion is None:
     
@@ -1655,7 +1541,7 @@ def process_manual_login_url():
 
   else:
     logger.error("Given URL string is not well formated...")
-    box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, width=400, height=180, corner_radius=25, message="L'URL que vous avez entrée n'est pas correcte.\n\nVeuillez vérifier le format et réessayer.", icon=warning_icon_path, option_1="Réessayer", master=root, sound=True)
+    box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, width=450, height=180, corner_radius=25, message="L'URL que vous avez entrée n'est pas correcte.\n\nVeuillez vérifier le format et réessayer.", icon=warning_icon_path, option_1="Réessayer", master=root, sound=True)
     box.info._text_label.configure(wraplength=500)
     
 
@@ -1897,7 +1783,6 @@ fonts_dir = Path(__file__).parent / 'Fonts' # Create path to fonts directory
 for font_file in fonts_dir.glob('*.otf'): # Load all .otf fonts from the directory
     pyglet.font.add_file(str(font_file))
 
-#wanted file type can be : ico, config, ent_data, pronote_password or pronote_username
 check_important_file_existence(wanted_file_type="ico")
 
 
@@ -1922,7 +1807,6 @@ def close_app():
 
     # List of file paths to delete
     files_to_delete = [
-     os.path.join(script_directory, "Data", "config.ini"),
      os.path.join(script_directory, "Data", "pronote_password.env"),
      os.path.join(script_directory, "Data", "pronote_username.env")
     ]
@@ -1941,7 +1825,7 @@ def close_app():
         logger.critical(f"An error occurred while trying to delete {file_path}: {e}")
         sentry_sdk.capture_exception(e)
 
-    logger.debug(f"{deleted_files_count} files out of 3 deleted")
+    logger.debug(f"{deleted_files_count} files out of 2 deleted")
 
     time.sleep(0.1)
     root.destroy()
