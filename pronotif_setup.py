@@ -38,17 +38,17 @@ import cv2
 # Create a ConfigParser object
 config = configparser.ConfigParser()
 
-default_font_style = "Fixel Text Medium", 13
+default_font_style = "Fixel Text Medium", 16
 default_font_name = "Fixel Text Medium"
 
-default_title_font = ("Fixel Display Bold", 18)
+default_title_font = ("Fixel Display Bold", 28)
 
-default_messagebox_font = ("Fixel Text Medium", 15)
-default_items_font = ("Fixel Text Regular", 14)
-default_text_font = ("Fixel Text Medium", 14)
-default_config_step_font = ("Fixel Text Medium", 13)
-default_subtitle_font = ("Fixel Text Medium", 12)
-default_conditions_font = ("Fixel Text Medium", 10)
+default_messagebox_font = ("Fixel Text Medium", 18)
+default_items_font = ("Fixel Text Regular", 17)
+default_text_font = ("Fixel Text Medium", 17)
+default_config_step_font = ("Fixel Text Medium", 16)
+default_subtitle_font = ("Fixel Text Medium", 15)
+default_conditions_font = ("Fixel Text Medium", 13)
 
 geolocator = Nominatim(user_agent="Geocoder")
 
@@ -270,9 +270,9 @@ def show_config_data_qr_code():
 
   if session_id is None:
     if response and (response.text or response.status_code is not None):
-      box = CTkMessagebox(title=f"{response.status_code}: {response.text}", font=default_messagebox_font, message="Une erreur est survenue !\nVerifiez que vous êtes connecté à Internet.", icon=warning_icon_path, option_1="Annuler", option_2="Réessayer", master=root, width=350, height=10, corner_radius=20, sound=True)
+      box = CTkMessagebox(title=f"{response.status_code}: {response.text}", font=default_messagebox_font, message="Une erreur est survenue !\nVerifiez que vous êtes connecté à Internet.", icon=warning_icon_path, option_1="Annuler", option_2="Réessayer", master=root, width=400, height=180, corner_radius=25, sound=True)
     else:
-      box = CTkMessagebox(title=f"Erreur !", font=default_messagebox_font, message="Une erreur est survenue !\nVerifiez que vous êtes connecté à Internet.", icon=warning_icon_path, option_1="Annuler", option_2="Réessayer", master=root, width=350, height=10, corner_radius=20, sound=True)
+      box = CTkMessagebox(title=f"Erreur !", font=default_messagebox_font, message="Une erreur est survenue !\nVerifiez que vous êtes connecté à Internet.", icon=warning_icon_path, option_1="Annuler", option_2="Réessayer", master=root, width=400, height=180, corner_radius=25, sound=True)
     box.info._text_label.configure(wraplength=450)
 
     response = box.get()
@@ -310,14 +310,14 @@ def show_config_data_qr_code():
     close_button.place_forget()
     
     main_text.configure(text="Voici votre QR Code de configuration,\nscannez le dans l'application mobile.", font=default_config_step_font)
-    main_text.place(relx=0.3, rely=0.3, anchor="center")
+    main_text.place(relx=0.3, rely=0.4, anchor="center")
 
-    warning_text_label = ctk.CTkLabel(master=root, text="Ne partagez jamais ce QR Code,\nil contient des informations sensibles !", font=(default_font_name, 12, "underline"))
-    warning_text_label.place(relx=0.3, rely=0.6, anchor="center")
+    warning_text_label = ctk.CTkLabel(master=root, text="Ne partagez jamais ce QR Code,\nil contient des informations sensibles !", font=(default_font_name, 13, "underline"))
+    warning_text_label.place(relx=0.3, rely=0.5, anchor="center")
 
     global final_app_close_button
-    final_app_close_button = ctk.CTkButton(master=root, text="Terminer", font=default_items_font, command=app_final_closing, corner_radius=10)
-    final_app_close_button.place(relx=0.31, rely=0.8, anchor="center")
+    final_app_close_button = ctk.CTkButton(master=root, text="Terminer", font=default_items_font, command=app_final_closing, corner_radius=10, width=200, height=45)
+    final_app_close_button.place(relx=0.31, rely=0.7, anchor="center")
     
     # Create a QR code object
     config_data_qr = qrcode.QRCode(
@@ -336,12 +336,12 @@ def show_config_data_qr_code():
     pil_img = Image.open(img_bytes)
 
     # Convert the PIL image to a CTkImage
-    img_tk = CTkImage(light_image=pil_img, size=(150, 150))
+    img_tk = CTkImage(light_image=pil_img, size=(250, 250))
 
     # Place QR code on the right
     config_qr_label = ctk.CTkLabel(master=root, image=img_tk, text="")
     config_qr_label.image = img_tk
-    config_qr_label.place(relx=0.79, rely=0.5, anchor="center")
+    config_qr_label.place(relx=0.75, rely=0.5, anchor="center")
 
    
 
@@ -358,7 +358,7 @@ def final_step():
 
   global download_page_qr
   download_page_qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=1)
-  download_page_qr.add_data("https://pronotif.tech/download_page.html")
+  download_page_qr.add_data("https://pronotif.tech/download")
   download_page_qr.make(fit=True)
 
   img_bytes = io.BytesIO()
@@ -367,7 +367,7 @@ def final_step():
   pil_img = Image.open(img_bytes)
 
   # Convert the PIL image to a CTkImage
-  download_page_qr_img_tk = CTkImage(light_image=pil_img, size=(75, 75))
+  download_page_qr_img_tk = CTkImage(light_image=pil_img, size=(150, 150))
 
   # Place QR code
   global download_page_qr_img_label
@@ -380,7 +380,7 @@ def final_step():
   final_2nd_step.place(relx=0.5, rely=0.73, anchor="center")
 
   global show_config_qr_code_button
-  show_config_qr_code_button = ctk.CTkButton(master=root, text="Afficher le QR Code de configuratin", font=default_items_font, command=show_config_data_qr_code, corner_radius=10)
+  show_config_qr_code_button = ctk.CTkButton(master=root, text="Afficher le QR Code de configuratin", font=default_items_font, command=show_config_data_qr_code, corner_radius=10, width=350, height=45)
   show_config_qr_code_button.place(relx=0.5, rely=0.85, anchor="center")
 
   show_config_data_qr_code_tooltip = CTkToolTip(show_config_qr_code_button, message="Ne cliquez pas ici avant d'avoir installé l'application !", delay=0, alpha=0.8, wraplength=450, justify="center", font=default_subtitle_font)	
@@ -403,7 +403,7 @@ def check_all_steps_completed():
 def get_ntfy_topic():
   ntfy_entered_topic_name = ntfy_topic_name_entry.get()
  
-  box = CTkMessagebox(title="Valider ?", font=default_messagebox_font, message=f"Est-ce bien le nom de votre topic ?\n{ntfy_entered_topic_name}", icon=question_icon_path, option_1="Oui", option_2="Annuler",cancel_button=None ,cancel_button_color="light grey", justify="center", master=root, width=350, height=10, corner_radius=20)
+  box = CTkMessagebox(title="Valider ?", font=default_messagebox_font, message=f"Est-ce bien le nom de votre topic ?\n{ntfy_entered_topic_name}", icon=question_icon_path, option_1="Oui", option_2="Annuler",cancel_button=None ,cancel_button_color="light grey", justify="center", master=root, width=400, height=180, corner_radius=25)
   box.info._text_label.configure(wraplength=450)
 
   response = box.get()
@@ -463,8 +463,8 @@ def config_steps():
     config.write(configfile)
 
   global tabview
-  tabview = ctk.CTkTabview(master=root, height=195, width=450)
-  tabview.pack(padx=20, pady=0)
+  tabview = ctk.CTkTabview(master=root, height=400, width=700)
+  tabview.pack(padx=25, pady=25)
 
   tabview.add("1. ntfy")
   tabview.add("2. Repas")
@@ -482,8 +482,8 @@ def config_steps():
   config_tab_step1_text.place(relx=0.5, rely=0.2, anchor="center")
 
   global ntfy_topic_name_entry
-  ntfy_topic_name_entry = ctk.CTkEntry(master=tabview.tab("1. ntfy"), width=200, font=default_text_font)  
-  ntfy_topic_name_entry.place(relx=0.5, rely=0.5, anchor="center")
+  ntfy_topic_name_entry = ctk.CTkEntry(master=tabview.tab("1. ntfy"), width=250, height=40, font=default_text_font)  
+  ntfy_topic_name_entry.place(relx=0.5, rely=0.45, anchor="center")
   ntfy_topic_name_entry.bind("<Return>", lambda event: get_ntfy_topic())
 
   def open_docs():
@@ -494,8 +494,8 @@ def config_steps():
     webbrowser.open("https://docs.pronotif.tech/installation/ntfy")
 
   need_help_icon = ctk.CTkImage(light_image=Image.open(f"{script_directory}/Icons/Global UI/need_help_light.png").resize((24, 24)), dark_image=Image.open(f"{script_directory}/Icons/Global UI/need_help_dark.png").resize((24, 24)))
-  need_help_button = ctk.CTkButton(master=tabview.tab("1. ntfy"), command=open_docs, image=need_help_icon, text="", width=1, height=10, fg_color=["#dbdbdb", "#2b2b2b"], bg_color=["#dbdbdb", "#2b2b2b"], hover_color=["#dbdbdb", "#2b2b2b"], corner_radius=10)
-  need_help_button.place(relx=0.84, rely=0.5, anchor="center")
+  need_help_button = ctk.CTkButton(master=tabview.tab("1. ntfy"), command=open_docs, image=need_help_icon, text="", width=40, height=40, fg_color=["#dbdbdb", "#2b2b2b"], bg_color=["#dbdbdb", "#2b2b2b"], hover_color=["#dbdbdb", "#2b2b2b"], corner_radius=10)
+  need_help_button.place(relx=0.75, rely=0.45, anchor="center")
 
   need_help_tooltip = CTkToolTip(need_help_button, message="Vous ne savez pas quoi ecrire ici ?\nCliquez sur le point d'interrogation !", delay=0.3, alpha=0.8, wraplength=450, justify="center", font=default_subtitle_font)
 
@@ -517,8 +517,8 @@ def config_steps():
   ntfy_topic_name_entry.bind("<KeyRelease>", enable_button)
 
   global ntfy_topic_name_button
-  ntfy_topic_name_button = ctk.CTkButton(master=tabview.tab("1. ntfy"),font=default_items_font , text="Valider",command=get_ntfy_topic, state="disabled", text_color="grey", corner_radius=10)
-  ntfy_topic_name_button.place(relx=0.5, rely=0.75, anchor="center")
+  ntfy_topic_name_button = ctk.CTkButton(master=tabview.tab("1. ntfy"),font=default_items_font , text="Valider",command=get_ntfy_topic, state="disabled", text_color="grey", corner_radius=10, width=200, height=40)
+  ntfy_topic_name_button.place(relx=0.5, rely=0.7, anchor="center")
 
   #TAB 2 LUNCH TIMES
          
@@ -669,7 +669,7 @@ def config_steps():
         submit_button_icon = ctk.CTkImage(light_image=Image.open(f"{script_directory}/Icons/Global UI/save_meal_def.png").resize((24, 24)))
 
         # Create the submit button
-        submit_button = ctk.CTkButton(master=tabview.tab("2. Repas"),font=default_items_font , text="Enregistrer", image=submit_button_icon, compound="right", command=submit_lunch_time, corner_radius=10)
+        submit_button = ctk.CTkButton(master=tabview.tab("2. Repas"),font=default_items_font , text="Enregistrer", image=submit_button_icon, compound="right", command=submit_lunch_time, corner_radius=10, width=200, height=40)
         submit_button.place(relx=0.5, rely=0.8, anchor="center")
 
   #TAB 3 NOTIFICATIONS
@@ -737,18 +737,18 @@ def config_steps():
 
   unfinished_homework_reminder_switch_var = ctk.StringVar(value="False") # Set the switch to be disabled by default
   unfinished_homework_reminder_switch = ctk.CTkSwitch(master=tabview.tab("3. Notifications"), switch_width=50, switch_height=20, button_color="white", progress_color="grey", variable=unfinished_homework_reminder_switch_var, font=default_subtitle_font, text="Devoirs non faits", onvalue="True", offvalue="False", command=unfinished_homework_reminder_switch_toogle)
-  unfinished_homework_reminder_switch.place(relx=0.25, rely=0.25, anchor="center")
+  unfinished_homework_reminder_switch.place(relx=0.27, rely=0.25, anchor="center")
 
   get_bag_ready_reminder_switch_var = ctk.StringVar(value="False") # Set the switch to be disabled by default
   get_bag_ready_reminder_switch = ctk.CTkSwitch(master=tabview.tab("3. Notifications"), switch_width=50, switch_height=20, button_color="white", progress_color="grey", variable=get_bag_ready_reminder_switch_var, font=default_subtitle_font, text="Faire son sac", onvalue="True", offvalue="False", command=get_bag_ready_reminder_toogle)
-  get_bag_ready_reminder_switch.place(relx=0.21, rely=0.45, anchor="center")
+  get_bag_ready_reminder_switch.place(relx=0.25, rely=0.45, anchor="center")
 
   reminders_info_label = ctk.CTkLabel(master=tabview.tab("3. Notifications"), text="La notification de devoirs non faits à rendre pour le lendemain sera\nenvoyée vers 18h, le rappel de faire son sac vers 19h30.", font=default_conditions_font)
   reminders_info_label.place(relx=0.5, rely=0.69, anchor="center")
 
   # Add a save button
   global save_button_notifications
-  save_button_notifications = ctk.CTkButton(master=tabview.tab("3. Notifications"), font=default_items_font ,text="Enregistrer", command=save_notifications_selection, corner_radius=10, width=135, height=23)
+  save_button_notifications = ctk.CTkButton(master=tabview.tab("3. Notifications"), font=default_items_font ,text="Enregistrer", command=save_notifications_selection, corner_radius=10, width=200, height=40)
   save_button_notifications.place(relx=0.5, rely=0.92, anchor="center")
 
   #TAB 4 ADVANCED
@@ -802,7 +802,7 @@ def config_steps():
       selected_option = combo_menu.get()
       if selected_option == "":
         logger.error("Value cannot be None !")
-        box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Vous devez choisir une valeur du menu avant de valider !", icon=warning_icon_path, option_1="Réessayer", master=root, width=350, height=10, corner_radius=20, sound=True)
+        box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Vous devez choisir une valeur du menu avant de valider !", icon=warning_icon_path, option_1="Réessayer", master=root, width=400, height=180, corner_radius=25, sound=True)
         box.info._text_label.configure(wraplength=450)
         return
       else:
@@ -857,7 +857,7 @@ def config_steps():
   notification_delay_menu.place(relx=0.2, rely=0.63, anchor="center")
 
   # Add a save button
-  save_button = ctk.CTkButton(master=tabview.tab("4. Avancé"), font=default_items_font ,text="Enregistrer", command=save_selection, corner_radius=10)
+  save_button = ctk.CTkButton(master=tabview.tab("4. Avancé"), font=default_items_font ,text="Enregistrer", command=save_selection, corner_radius=10, width=200, height=40)
   save_button.place(relx=0.5, rely=0.9, anchor="center")
 
 
@@ -873,7 +873,7 @@ def save_credentials():
 
     if not username or not password:
      logger.error("Missing Entrys")
-     box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Vous devez renseigner un mot de passe et un identifiant...", icon=warning_icon_path, option_1="Réessayer",master=root, width=350, height=10, corner_radius=20,sound=True)
+     box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Vous devez renseigner un mot de passe et un identifiant...", icon=warning_icon_path, option_1="Réessayer",master=root, width=400, height=180, corner_radius=25,sound=True)
      box.info._text_label.configure(wraplength=450)
 
     else: 
@@ -899,7 +899,7 @@ def save_credentials():
         config_data.qr_code_login = False  
             
         if client.logged_in:
-          box = CTkMessagebox(title="Succès !", font=default_messagebox_font, message="Connexion effectuée !", icon=ok_icon_path, option_1="Parfait", master=root, width=300, height=10, corner_radius=20,sound=True)
+          box = CTkMessagebox(title="Succès !", font=default_messagebox_font, message="Connexion effectuée !", icon=ok_icon_path, option_1="Parfait", master=root, width=400, height=180, corner_radius=25,sound=True)
           box.info._text_label.configure(wraplength=450)
 
           # Get today's date
@@ -974,7 +974,7 @@ def save_credentials():
 
       except (pronotepy.CryptoError, pronotepy.ENTLoginError):
          logger.warning("Wrong credentials !")
-         box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Vos identifiants de connexion semblent incorrects...", icon=warning_icon_path, option_1="Réessayer",master=root, width=350, height=10, corner_radius=20,sound=True)
+         box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Vos identifiants de connexion semblent incorrects...", icon=warning_icon_path, option_1="Réessayer",master=root, width=400, height=180, corner_radius=25,sound=True)
          box.info._text_label.configure(wraplength=450)
          password_entry.delete(0, 'end')
          root.config(cursor="arrow")   
@@ -985,11 +985,11 @@ def save_credentials():
          if current_month == 7 or current_month == 8:
            
            logger.critical(f"Unknown error ! Month is {current_month}, perhaps service closure due to summer break ?\n{e}")
-           box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Une erreur inconnue est survenue...\n(Peut-être la fermeture estivale de Pronote ?)", icon=cancel_icon_path, option_1="Ok",master=root, width=400, height=10, corner_radius=20,sound=True)
+           box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Une erreur inconnue est survenue...\n(Peut-être la fermeture estivale de Pronote ?)", icon=cancel_icon_path, option_1="Ok",master=root, width=400, height=180, corner_radius=25,sound=True)
 
          else:
             logger.critical(f"Unknown error ! Detail below :\n{e}")
-            box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Une erreur inconnue est survenue...\nVeuillez réessayer plus tard.", icon=cancel_icon_path, option_1="Ok",master=root, width=300, height=10, corner_radius=20,sound=True)
+            box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Une erreur inconnue est survenue...\nVeuillez réessayer plus tard.", icon=cancel_icon_path, option_1="Ok",master=root, width=400, height=180, corner_radius=25,sound=True)
             sentry_sdk.capture_exception(e)
 
          box.info._text_label.configure(wraplength=450) 
@@ -1026,7 +1026,7 @@ def qr_code_login_process():
          with open(config_file_path, 'w', encoding='utf-8') as configfile:
             config.write(configfile) 
 
-         box = CTkMessagebox(title="Succès !", font=default_messagebox_font, message="Connexion effectuée !", icon=ok_icon_path, option_1="Parfait", master=root, width=300, height=10, corner_radius=20,sound=True)
+         box = CTkMessagebox(title="Succès !", font=default_messagebox_font, message="Connexion effectuée !", icon=ok_icon_path, option_1="Parfait", master=root, width=400, height=180, corner_radius=25,sound=True)
          box.info._text_label.configure(wraplength=450)
 
          # Get today's date
@@ -1101,17 +1101,17 @@ def qr_code_login_process():
     except Exception as e:
         # Vérifie si le message d'erreur indique un problème de déchiffrement lié à un QR code expiré
         if "Decryption failed while trying to un pad" in str(e) and "qr code has expired" in str(e):
-          box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Le QR code a expiré !\nVeuillez en générer un nouveau sur Pronote.", icon=warning_icon_path, option_1="Réessayer",master=root, width=350, height=10, corner_radius=20,sound=True)
+          box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Le QR code a expiré !\nVeuillez en générer un nouveau sur Pronote.", icon=warning_icon_path, option_1="Réessayer",master=root, width=400, height=180, corner_radius=25,sound=True)
           box.info._text_label.configure(wraplength=450)
           logger.error("QR Code has expired !")
 
         elif "invalid confirmation code" in str(e):
-          box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Le code de confirmation est incorrect !", icon=warning_icon_path, option_1="Réessayer",master=root, width=350, height=10, corner_radius=20,sound=True)
+          box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Le code de confirmation est incorrect !", icon=warning_icon_path, option_1="Réessayer",master=root, width=400, height=180, corner_radius=25,sound=True)
           box.info._text_label.configure(wraplength=450)
           logger.error("Invalid confirmation code !")
 
         else:
-          box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Une erreur inconnue est survenue...\nVeuillez réessayer plus tard.", icon=cancel_icon_path, option_1="Ok",master=root, width=300, height=10, corner_radius=20,sound=True)
+          box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Une erreur inconnue est survenue...\nVeuillez réessayer plus tard.", icon=cancel_icon_path, option_1="Ok",master=root, width=400, height=180, corner_radius=25,sound=True)
           box.info._text_label.configure(wraplength=450)
           logger.error(f"Can not login with QR code: {str(e)}")
           sentry_sdk.capture_exception(e)
@@ -1134,12 +1134,12 @@ def ask_qr_code_pin():
     file_qr_code_button.place_forget()
 
    global enter_pin_entry
-   enter_pin_entry = ctk.CTkEntry(root, width=100, font=default_text_font, placeholder_text="1234")
-   enter_pin_entry.place(relx=0.70, rely=0.5, anchor="center")
+   enter_pin_entry = ctk.CTkEntry(root, width=250, height=40, font=default_text_font, placeholder_text="1234")
+   enter_pin_entry.place(relx=0.75, rely=0.45, anchor="center")
 
    global enter_pin_button
-   enter_pin_button = ctk.CTkButton(root, text="Valider", font=default_items_font, command=qr_code_login_process)
-   enter_pin_button.place(relx=0.70, rely=0.65, anchor="center")
+   enter_pin_button = ctk.CTkButton(root, text="Valider", font=default_items_font, command=qr_code_login_process, corner_radius=10, width=200, height=40)
+   enter_pin_button.place(relx=0.75, rely=0.6, anchor="center")
    
 
 def analyse_qr_code(screenshot: Image) -> None:
@@ -1158,7 +1158,7 @@ def analyse_qr_code(screenshot: Image) -> None:
 
     except Exception as e:
         logger.error(f"Can not decode QR code: {str(e)}")
-        box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Le QR Code scanné ne semble pas être valide...", icon=warning_icon_path, option_1="Réessayer",master=root, width=350, height=10, corner_radius=20,sound=True)
+        box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Le QR Code scanné ne semble pas être valide...", icon=warning_icon_path, option_1="Réessayer",master=root, width=400, height=180, corner_radius=25,sound=True)
         box.info._text_label.configure(wraplength=450)
 
         root.deiconify()  # Restore the main window
@@ -1295,12 +1295,12 @@ def scan_qr_code(scan_qr_code_method:str) -> None:
 
       main_text.configure(text="Importez l'image\nde votre QR Code", font=default_text_font)
       global file_qr_code_button
-      file_qr_code_button.configure(text="Charger un fichier", command=import_qr_code_image)
-      file_qr_code_button.place(relx=0.75, rely=0.5, anchor="center")
+      file_qr_code_button.configure(text="Charger un fichier", command=import_qr_code_image, width=250, height=45)
+      file_qr_code_button.place(relx=0.75, rely=0.4, anchor="center")
 
       global under_button_text
       under_button_text = ctk.CTkLabel(root, text="Formats supportés : PNG, JPG, JPEG, SVG, WEBP", font=default_subtitle_font)
-      under_button_text.place(relx=0.75, rely=0.85, anchor="center")   
+      under_button_text.place(relx=0.75, rely=0.5 , anchor="center")   
 
    elif scan_qr_code_method == "screen":
       logger.debug("Scan on screen method chosen !")
@@ -1316,8 +1316,8 @@ def scan_qr_code(scan_qr_code_method:str) -> None:
 
       main_text.configure(text="Placez votre QR Code\ndans le carrée vert", font=default_text_font)
       # Create camera frame
-      camera_frame = ctk.CTkFrame(root, width=300, height=255)
-      camera_frame.place(relx=0.74, rely=0.56, anchor="center")
+      camera_frame = ctk.CTkFrame(root, width=400, height=300)
+      camera_frame.place(relx=0.74, rely=0.5, anchor="center")
       
       camera_label = tk.Label(camera_frame)
       camera_label.pack()
@@ -1335,7 +1335,7 @@ def scan_qr_code(scan_qr_code_method:str) -> None:
               ret, frame = cap.read()
               if ret:
                   frame = cv2.flip(frame, 1) # Flip the frame horizontally
-                  frame = cv2.resize(frame, (300, 255)) # Resize the frame
+                  frame = cv2.resize(frame, (400, 300)) # Resize the frame
 
                   # Draw green square in center
                   h, w = frame.shape[:2]
@@ -1369,7 +1369,7 @@ def scan_qr_code(scan_qr_code_method:str) -> None:
                       except json.JSONDecodeError:
                           logger.error("Invalid QR code format")
 
-                          box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Le QR Code scanné ne semble pas être valide...", icon=warning_icon_path, option_1="Réessayer",master=root, width=350, height=10, corner_radius=20,sound=True)
+                          box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Le QR Code scanné ne semble pas être valide...", icon=warning_icon_path, option_1="Réessayer",master=root, width=400, height=180, corner_radius=25,sound=True)
                           box.info._text_label.configure(wraplength=450)
                       
                   root.after(10, update_frame)
@@ -1392,6 +1392,7 @@ def qr_code_login():
   logger.debug("User has chosen QR Code login method !")
   title_label.configure(text="Etape 4/4")
   main_text.configure(text="Choissisez comment\nscanner votre QR Code", font=default_text_font)
+  main_text.place(rely=0.45)
 
   global school_name_text
   school_name_text = ctk.CTkLabel(root, text="")
@@ -1406,16 +1407,16 @@ def qr_code_login():
 
   #Create 3 buttons for 3 methods
   global on_screen_qr_code_button
-  on_screen_qr_code_button = ctk.CTkButton(root, text="Scanner depuis l'écran", font=default_items_font, command=lambda: scan_qr_code("screen"), image=on_screen_qr_code_image, compound="left")
-  on_screen_qr_code_button.place(relx=0.75, rely=0.35, anchor="center")
+  on_screen_qr_code_button = ctk.CTkButton(root, text="Scanner depuis l'écran", font=default_items_font, command=lambda: scan_qr_code("screen"), image=on_screen_qr_code_image, compound="left", width=250, height=45)
+  on_screen_qr_code_button.place(relx=0.75, rely=0.3, anchor="center")
 
   global camera_qr_code_button
-  camera_qr_code_button = ctk.CTkButton(root, text="Scanner avec la caméra", font=default_items_font, command=lambda: scan_qr_code("camera"), image=camera_qr_code_image, compound="left")
-  camera_qr_code_button.place(relx=0.75, rely=0.55, anchor="center")
+  camera_qr_code_button = ctk.CTkButton(root, text="Scanner avec la caméra", font=default_items_font, command=lambda: scan_qr_code("camera"), image=camera_qr_code_image, compound="left", width=250, height=45)
+  camera_qr_code_button.place(relx=0.75, rely=0.45, anchor="center")
 
   global file_qr_code_button
-  file_qr_code_button = ctk.CTkButton(root, text="Importer une image", font=default_items_font, command=lambda: scan_qr_code("file"), image=file_qr_code_image, compound="left")
-  file_qr_code_button.place(relx=0.75, rely=0.75, anchor="center")
+  file_qr_code_button = ctk.CTkButton(root, text="Importer une image", font=default_items_font, command=lambda: scan_qr_code("file"), image=file_qr_code_image, compound="left", width=250, height=45)
+  file_qr_code_button.place(relx=0.75, rely=0.6, anchor="center")
    
 def select_login_method(choice: str):
    """
@@ -1434,7 +1435,7 @@ def select_login_method(choice: str):
 
     global school_name_text
     school_name_text = ctk.CTkLabel(root, text=f"{choice}", font=default_subtitle_font)
-    school_name_text.place(relx=0.23, rely=0.65, anchor="center")
+    school_name_text.place(relx=0.25, rely=0.45, anchor="center")
 
     # Bind the label to the adjust_text_size function
     school_name_text.bind("<Configure>", adjust_text_size)
@@ -1444,7 +1445,7 @@ def select_login_method(choice: str):
     # Calculate the length of the text
     text_length = len(text)
     # Adjust font size based on text length
-    font_size = max(10, 12 - text_length // 10)  # Adjust the formula as needed
+    font_size = max(12, 14 - text_length // 12)
     # Update the font size of the label
     school_name_text.configure(font=(default_font_name, font_size))
 
@@ -1455,12 +1456,12 @@ def select_login_method(choice: str):
 
    #Create 2 buttons for two login methods
    global login_with_qr_button
-   login_with_qr_button = ctk.CTkButton(root, text="Avec le QR Code", font=default_items_font, image=qr_code_login_image, compound="left", command=qr_code_login)
-   login_with_qr_button.place(relx=0.75, rely=0.4, anchor="center")
+   login_with_qr_button = ctk.CTkButton(root, text="Avec le QR Code", font=default_items_font, image=qr_code_login_image, compound="left", command=qr_code_login, width=250, height=45)
+   login_with_qr_button.place(relx=0.75, rely=0.35, anchor="center")
 
    global login_with_credentials_button
-   login_with_credentials_button = ctk.CTkButton(root, text="Avec vos Identifiants", font=default_items_font, image=credentials_login_image, compound="left", command=lambda: login_step(choice))
-   login_with_credentials_button.place(relx=0.75, rely=0.65, anchor="center")
+   login_with_credentials_button = ctk.CTkButton(root, text="Avec vos Identifiants", font=default_items_font, image=credentials_login_image, compound="left", command=lambda: login_step(choice), width=250, height=45)
+   login_with_credentials_button.place(relx=0.75, rely=0.5, anchor="center")
 
    if config_data.ent_connexion == True: #If the school uses ENT connexion disable the credentials login button
      login_with_credentials_button.configure(state="disabled", text_color="grey", image=disabled_credentials_login_image)
@@ -1494,7 +1495,7 @@ def check_pronote_use(choice: str) -> None:
   else:
     if pronote_use_msg == "DNS Error":
       logger.warning(f"{choice} ({system_data.true_city_name}) doesn't seem to use Pronote... See below\nWebsite {config_data.pronote_url} does not exists. {pronote_use_msg}")
-      box = CTkMessagebox(title="Aucun résultat", font=default_messagebox_font, message="Votre établissement ne semble pas utiliser Pronote.", icon=warning_icon_path, option_1="Ok",master=root, width=350, height=10, corner_radius=20,sound=True)
+      box = CTkMessagebox(title="Aucun résultat", font=default_messagebox_font, message="Votre établissement ne semble pas utiliser Pronote.", icon=warning_icon_path, option_1="Ok",master=root, width=400, height=180, corner_radius=25,sound=True)
       box.info._text_label.configure(wraplength=450)
       root.config(cursor="arrow")
 
@@ -1506,7 +1507,7 @@ def check_pronote_use(choice: str) -> None:
     else:
       logger.critical(response)
       logger.critical(f"Unknown error for {config_data.pronote_url}\nError detail : {pronote_use_msg}")
-      box = CTkMessagebox(title="Erreur", font=default_messagebox_font, message="Une erreur inconnue est survenue.\nMerci de réessayer plus tard.", icon=cancel_icon_path, option_1="Ok",master=root, width=350, height=10, corner_radius=20,sound=True)
+      box = CTkMessagebox(title="Erreur", font=default_messagebox_font, message="Une erreur inconnue est survenue.\nMerci de réessayer plus tard.", icon=cancel_icon_path, option_1="Ok",master=root, width=400, height=180, corner_radius=25,sound=True)
       box.info._text_label.configure(wraplength=450)
 
 def login_step(choice:str) -> None:
@@ -1534,6 +1535,7 @@ def login_step(choice:str) -> None:
     if system_data.international_use:
        manual_pronote_url_entry.place_forget()
        maunual_pronote_url_button.place_forget()
+       country_and_city_label.place_forget()
     else:   
      choice_menu.place_forget()
      login_with_qr_button.place_forget()
@@ -1543,7 +1545,7 @@ def login_step(choice:str) -> None:
     
     title_label.configure(text="Etape 3/4")
     main_text.configure(text=f"Connectez vous à Pronote\nà l'aide de vos identifiants.", font=default_text_font)
-    main_text.place(relx=0.23, rely=0.45, anchor="center") #Reposition the text to the initial position
+    main_text.place(relx=0.25, rely=0.45, anchor="center") #Reposition the text to the initial position (but rely changed to 0.45)
 
     def adjust_text_size(event=None) -> None:
       """
@@ -1594,34 +1596,34 @@ def login_step(choice:str) -> None:
     # Création des labels
     global username_label
     username_label = ctk.CTkLabel(root, text="Identifiant", font=default_subtitle_font)
-    username_label.place(relx=0.71, rely=0.23, anchor="center")
+    username_label.place(relx=0.75, rely=0.25, anchor="center")
 
     global password_label
     password_label = ctk.CTkLabel(root, text="Mot de passe", font=default_subtitle_font)
-    password_label.place(relx=0.71, rely=0.52, anchor="center")
+    password_label.place(relx=0.75, rely=0.45, anchor="center")
 
     # Création des champs de saisie
     global username_entry
-    username_entry = ctk.CTkEntry(root, width=150, placeholder_text="Nom d'utilisateur", font=default_subtitle_font)
-    username_entry.place(relx=0.71, rely=0.35, anchor="center")
+    username_entry = ctk.CTkEntry(root, width=300, height=45, placeholder_text="Nom d'utilisateur", font=default_subtitle_font)
+    username_entry.place(relx=0.75, rely=0.35, anchor="center")
 
     global password_entry
-    password_entry = ctk.CTkEntry(root, width=150, height=35, show="*", placeholder_text="Mot de passe", font=default_subtitle_font)
-    password_entry.place(relx=0.71, rely=0.65, anchor="center")
+    password_entry = ctk.CTkEntry(root, width=300, height=45, show="*", placeholder_text="Mot de passe", font=default_subtitle_font)
+    password_entry.place(relx=0.75, rely=0.55, anchor="center")
     password_entry.bind("<Return>", lambda event: save_credentials())
 
     # Bouton pour afficher/masquer le mot de passe avec événements de clic
     global password_eye_button
     password_eye_button = ctk.CTkButton(root,width=1, height=10 ,image=closed_eye_image, text="", fg_color=["#f9f9fa", "#343638"], bg_color=["#f9f9fa", "#343638"], hover_color=["#f9f9fa", "#343638"], corner_radius=10)
-    password_eye_button.place(relx=0.85, rely=0.65, anchor="center")
+    password_eye_button.place(relx=0.92, rely=0.55, anchor="center")
 
     # Bind left mouse button click to toggle password visibility
     password_eye_button.bind("<Button-1>", toggle_password)
                       
     # Create the save button with the lock icon
     global save_button
-    save_button = ctk.CTkButton(root, text="Connexion", font=default_items_font, command=save_credentials, corner_radius=10, width=135, height=23)
-    save_button.place(relx=0.71, rely=0.83, anchor="center")
+    save_button = ctk.CTkButton(root, text="Connexion", font=default_items_font, command=save_credentials, corner_radius=10, width=250, height=45)
+    save_button.place(relx=0.75, rely=0.7, anchor="center")
 
 def process_manual_login_url():
   """
@@ -1653,7 +1655,7 @@ def process_manual_login_url():
 
   else:
     logger.error("Given URL string is not well formated...")
-    box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, height=50, message="L'URL que vous avez entrée n'est pas correcte.\n\nVeuillez vérifier le format et réessayer.", icon=warning_icon_path, option_1="Réessayer", master=root, corner_radius=20, sound=True)
+    box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, width=400, height=180, corner_radius=25, message="L'URL que vous avez entrée n'est pas correcte.\n\nVeuillez vérifier le format et réessayer.", icon=warning_icon_path, option_1="Réessayer", master=root, sound=True)
     box.info._text_label.configure(wraplength=500)
     
 
@@ -1669,14 +1671,14 @@ def search_school():
     try:
      true_city_geocode = geolocator.geocode(city)
     except:
-      box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Une erreur inconnue est survenue...", icon=warning_icon_path, option_1="Réessayer",master=root, width=300, height=10, corner_radius=20,sound=True)
+      box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Une erreur inconnue est survenue...", icon=warning_icon_path, option_1="Réessayer",master=root, width=400, height=180, corner_radius=25,sound=True)
       box.info._text_label.configure(wraplength=450)
       root.config(cursor="arrow")
       sentry_sdk.capture_exception(e)
     
     if not true_city_geocode:
        logger.error("Unknow city !")
-       box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Cette ville ne semble pas exister...", icon=warning_icon_path, option_1="Réessayer",master=root, width=300, height=10, corner_radius=20,sound=True)
+       box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Cette ville ne semble pas exister...", icon=warning_icon_path, option_1="Réessayer", master=root, width=400, height=180, corner_radius=25, sound=True)
        box.info._text_label.configure(wraplength=450)
        root.config(cursor="arrow")
 
@@ -1701,36 +1703,36 @@ def search_school():
       search_button.place_forget()
       city_entry.place_forget()
       tos_label.place_forget()
-      mid_canvas.configure(height=190)
-      internet_status_label.place(relx=0.75, rely=0.8, anchor="center")
+      mid_canvas.configure(height=400)
+      internet_status_label.place(relx=0.75, rely=0.85, anchor="center")
 
       title_label.configure(text="Etape 2/4")
       
-      main_text.configure(text="Etablissement à l'étranger ?\n\nRenseignez manuellement\nvotre url de connexion Pronote.", justify="center", anchor="w", font=default_config_step_font)
-      main_text.place(relx=0.25, rely=0.45, anchor="center")
+      main_text.configure(text="Etablissement à l'étranger ?\n\nRenseignez manuellement votre url\nde connexion Pronote.", justify="center", anchor="w", font=default_config_step_font)
+      main_text.place(relx=0.25, rely=0.4, anchor="center")
  
       global country_and_city_label
-      country_and_city_label = ctk.CTkLabel(master=root, text=f"{system_data.true_city_name}, {system_data.country_name}", font=(default_font_name, 11, "underline"), justify="center", anchor="center")
-      country_and_city_label.place(relx=0.23, rely=0.70, anchor="center")
+      country_and_city_label = ctk.CTkLabel(master=root, text=f"{system_data.true_city_name}, {system_data.country_name}", font=(default_font_name, 13, "underline"), justify="center", anchor="center")
+      country_and_city_label.place(relx=0.23, rely=0.55, anchor="center")
 
       global manual_pronote_url_entry
-      manual_pronote_url_entry = ctk.CTkEntry(master=root, font=(default_font_name, 11), width=188, placeholder_text="https://xxxxxxxx.index-education.net")
-      manual_pronote_url_entry.place(relx=0.75, rely=0.50, anchor="center")
+      manual_pronote_url_entry = ctk.CTkEntry(master=root, font=(default_font_name, 13), width=350, height=45, placeholder_text="https://xxxxxxxx.index-education.net")
+      manual_pronote_url_entry.place(relx=0.75, rely=0.45, anchor="center")
       manual_pronote_url_entry.bind("<Return>", lambda event: process_manual_login_url())
 
       global maunual_pronote_url_button
-      maunual_pronote_url_button = ctk.CTkButton(master=root, text="Valider", font=default_items_font , command=process_manual_login_url, corner_radius=10)
-      maunual_pronote_url_button.place(relx=0.75, rely=0.67, anchor="center")
+      maunual_pronote_url_button = ctk.CTkButton(master=root, text="Valider", font=default_items_font , command=process_manual_login_url, corner_radius=10, width=250, height=45)
+      maunual_pronote_url_button.place(relx=0.75, rely=0.6, anchor="center")
 
      else:
       city_entry.delete(0, "end")
       if ("Marseille" in system_data.true_city_name) and "Arrondissement" not in system_data.true_city_name:  
-       box = CTkMessagebox(title="Info", font=default_messagebox_font, message=f"Pour Marseille merci de spécifier l'arrondissement en entier !\nExemple : Marseille 1er Arrondissement, Marseille 2e Arrondissement,", icon=info_icon_path, option_1="Réessayer",master=root, width=350, height=15, corner_radius=20,sound=True)
+       box = CTkMessagebox(title="Info", font=default_messagebox_font, message=f"Pour Marseille merci de spécifier l'arrondissement en entier !\nExemple : Marseille 1er Arrondissement, Marseille 2e Arrondissement,", icon=info_icon_path, option_1="Réessayer",master=root, width=400, height=180, corner_radius=25,sound=True)
        box.info._text_label.configure(wraplength=450)
        root.config(cursor="arrow")
 
       elif ("Paris" in system_data.true_city_name or "Lyon" in system_data.true_city_name) and "Arrondissement" not in system_data.true_city_name:
-       box = CTkMessagebox(title="Info", font=default_messagebox_font, message=f"Pour {system_data.true_city_name} merci de spécifier l'arrondissement !\nExemple : {system_data.true_city_name} 19e, {system_data.true_city_name} 20e, {system_data.true_city_name} 1er", icon=info_icon_path, option_1="Réessayer",master=root, width=350, height=10, corner_radius=20,sound=True)
+       box = CTkMessagebox(title="Info", font=default_messagebox_font, message=f"Pour {system_data.true_city_name} merci de spécifier l'arrondissement !\nExemple : {system_data.true_city_name} 19e, {system_data.true_city_name} 20e, {system_data.true_city_name} 1er", icon=info_icon_path, option_1="Réessayer",master=root, width=400, height=180, corner_radius=25,sound=True)
        box.info._text_label.configure(wraplength=450)
        root.config(cursor="arrow")
 
@@ -1768,7 +1770,7 @@ def search_school():
             response = requests.get(url, params=params, verify=True)
         except requests.exceptions.SSLError:
             logger.error("Unable to verify SSL certificate !")
-            box = CTkMessagebox(title="Erreur réseau !", font=default_messagebox_font, message="Une erreur SSL est survenue et une connexion sécurisée ne peut être établie.", icon=cancel_icon_path, option_1="D'accord", master=root, width=350, height=10, corner_radius=20, sound=True)
+            box = CTkMessagebox(title="Erreur réseau !", font=default_messagebox_font, message="Une erreur SSL est survenue et une connexion sécurisée ne peut être établie.", icon=cancel_icon_path, option_1="D'accord", master=root, width=400, height=180, corner_radius=25, sound=True)
             box.info._text_label.configure(wraplength=450)
             response = box.get()
             if response == "D'accord":
@@ -1785,7 +1787,7 @@ def search_school():
 
           if results_number == 0:
            logger.error("No results for the city !")
-           box = CTkMessagebox(title="Aucun résultat", font=default_messagebox_font, message="Il ne semble pas y avoir de collèges ou lycées pris en charge dans cette ville...", icon=warning_icon_path, option_1="Réessayer",master=root, width=350, height=10, corner_radius=20,sound=True)
+           box = CTkMessagebox(title="Aucun résultat", font=default_messagebox_font, message="Il ne semble pas y avoir de collèges ou lycées pris en charge dans cette ville...", icon=warning_icon_path, option_1="Réessayer",master=root, width=400, height=180, corner_radius=25,sound=True)
            box.info._text_label.configure(wraplength=450)
 
            root.config(cursor="arrow")
@@ -1848,8 +1850,8 @@ def search_school():
              check_pronote_use(choice)
 
            tos_label.place_forget()
-           mid_canvas.configure(height=190)
-           internet_status_label.place(relx=0.75, rely=0.8, anchor="center")
+           mid_canvas.configure(height=400)
+           internet_status_label.place(relx=0.75, rely=0.85, anchor="center")
 
            title_label.configure(text="Etape 2/4")
            main_text.configure(text="Selectionnez \nvotre établissement.")
@@ -1859,7 +1861,7 @@ def search_school():
 
            # Create the OptionMenu with dynamic width
            global choice_menu
-           choice_menu = ctk.CTkOptionMenu(root, font=default_items_font , width=175, dynamic_resizing=False, values=appellation_officielle_values, variable=default_choice_menu_var, command=optionmenu_callback)
+           choice_menu = ctk.CTkOptionMenu(root, font=default_items_font , width=350, height=45, dynamic_resizing=False, values=appellation_officielle_values, variable=default_choice_menu_var, command=optionmenu_callback)
            choice_menu.place(relx=0.75, rely=0.4, anchor="center")
 
            search_button.place_forget()
@@ -1874,7 +1876,7 @@ def search_school():
        
        except Exception as e:
         logger.error(f"An error occurred while trying to search for the city !\n{e}")
-        box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Une erreur inconnue est survenue...", icon=warning_icon_path, option_1="Réessayer",master=root, width=300, height=10, corner_radius=20,sound=True)
+        box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Une erreur inconnue est survenue...", icon=warning_icon_path, option_1="Réessayer",master=root, width=400, height=180, corner_radius=25,sound=True)
         box.info._text_label.configure(wraplength=450)
         sentry_sdk.capture_exception(e)
         root.config(cursor="arrow")
@@ -1884,9 +1886,9 @@ def search_school():
 # Create the main window
 windll.shcore.SetProcessDpiAwareness(1)
 root = ctk.CTk()
-root.geometry("400x200")
+root.geometry("750x500")
 root.resizable(False, False)
-root.title("Pronot'if Setup")
+root.title(f"Pronot'if Setup {version}")
 root.option_add("*Font", default_font_style)
 
 pyglet.options['win32_gdi_font'] = True # Use GDI font rendering
@@ -1909,7 +1911,7 @@ window_frame.center(root)
 def close_app():
   """
   Close the application (triggered on both close buttons)."""
-  box = CTkMessagebox(title="Fermer ?", font=default_messagebox_font, message="Annuler la configuration ?\nL'ensemble de vos données sera supprimé...", icon=question_icon_path, option_1="Annuler", option_2="Fermer",cancel_button=None ,cancel_button_color="light grey", justify="center", master=root, width=350, height=10, corner_radius=20,sound=True)
+  box = CTkMessagebox(title="Fermer ?", font=default_messagebox_font, message="Annuler la configuration ?\nL'ensemble de vos données sera supprimé...", icon=question_icon_path, option_1="Annuler", option_2="Fermer",cancel_button=None ,cancel_button_color="light grey", justify="center", master=root, width=400, height=180, corner_radius=25,sound=True)
   box.info._text_label.configure(wraplength=450)
 
 
@@ -2022,7 +2024,7 @@ def check_if_first_time():
 
   if first_use_file:
     logger.info("Initial Startup !")
-    box = CTkMessagebox(title="Premiere fois ici ?", font=default_messagebox_font, message=f"On dirait que vous n'avez jamais utilisé Pronot'if...\n\nLisez la documentation pour mieux comprendre comment vous en servir.", icon=info_icon_path, option_1="D'accord", cancel_button=None ,cancel_button_color="light grey", justify="center", master=root, width=450, height=10, corner_radius=20)
+    box = CTkMessagebox(title="Premiere fois ici ?", font=default_messagebox_font, message=f"On dirait que vous n'avez jamais utilisé Pronot'if...\n\nLisez la documentation pour mieux comprendre comment vous en servir.", icon=info_icon_path, option_1="D'accord", cancel_button=None ,cancel_button_color="light grey", justify="center", master=root, width=400, height=180, corner_radius=25)
     box.info._text_label.configure(wraplength=450)
     webbrowser.open_new_tab("https://docs.pronotif.tech")
     os.remove(f"{script_directory}/first_use.txt")
@@ -2034,13 +2036,13 @@ def check_if_first_time():
 #Create name label
 global author_name_label
 author_name_label = ctk.CTkLabel(root, text="Pronot'if Team | ©2025", font=default_subtitle_font, bg_color="transparent")
-author_name_label.place(relx=0.67, rely=0.89)
+author_name_label.place(relx=0.87, rely=0.96, anchor="center")
 author_name_label.bind("<Button-1>", on_label_click)
 
 # Create a Canvas widget to draw the line
 
-mid_canvas = ctk.CTkCanvas(root, width=2, height=150, background= "white", highlightthickness=0)
-mid_canvas.place(relx=0.5, rely=0.55, anchor="center")
+mid_canvas = ctk.CTkCanvas(root, width=3, height=400, background= "white", highlightthickness=0)
+mid_canvas.place(relx=0.5, rely=0.48, anchor="center")
 
 # Functions to open links in the default web browser
 def open_tos(event:tk.Event) -> None:
@@ -2058,8 +2060,8 @@ def open_privacy(event:tk.Event) -> None:
     webbrowser.open("https://safety.pronotif.tech/docs/politique-de-confidentialite")
 
 # Create a Text widget
-tos_label = ctk.CTkTextbox(root, height=10, width=600, fg_color="transparent", bg_color="transparent", font=default_conditions_font, wrap="word")
-tos_label.place(relx=0.78, rely=0.78, anchor="center")
+tos_label = ctk.CTkTextbox(root, height=20, width=900, fg_color="transparent", bg_color="transparent", font=default_conditions_font, wrap="word")
+tos_label.place(relx=0.78, rely=0.85, anchor="center")
 
 # Insert normal text and the link text
 tos_label.insert("end", "En continuant vous acceptez les ")
@@ -2092,26 +2094,26 @@ title_label.place(relx=0.5, rely=0.1, anchor="center")
 
 # Create main text label
 main_text = ctk.CTkLabel(root, text="Recherchez ici la ville\n  de votre établissement.", font=default_text_font)
-main_text.place(relx=0.23, rely=0.45, anchor="center")
+main_text.place(relx=0.25, rely=0.40, anchor="center")
 
 # Create city entry widget
-city_entry = ctk.CTkEntry(root, width=150, font=default_text_font)
-city_entry.place(relx=0.75, rely=0.4, anchor="center")
+city_entry = ctk.CTkEntry(root, width=300, height=45, font=default_text_font)
+city_entry.place(relx=0.75, rely=0.35, anchor="center")
 city_entry.bind("<Return>", lambda event: search_school())
 
 search_icon = ctk.CTkImage(light_image=Image.open(f"{script_directory}/Icons/Global UI/search_def.png").resize((48, 48)))
 
 # Create search button
 global search_button
-search_button = ctk.CTkButton(root, text="Chercher",font=default_items_font, command=search_school, image=search_icon, compound="right", corner_radius=10) 
-search_button.place(relx=0.75, rely=0.6, anchor="center")
+search_button = ctk.CTkButton(root, text="Chercher",font=default_items_font, command=search_school, image=search_icon, compound="right", corner_radius=10, width=250, height=45) 
+search_button.place(relx=0.75, rely=0.5, anchor="center")
 
 #Create internet status label
 internet_status_label = ctk.CTkLabel(root, text="Checking connection...", font=default_subtitle_font)
-internet_status_label.place(relx=0.25, rely=0.6, anchor="center")
+internet_status_label.place(relx=0.75, rely=0.65, anchor="center")
 
 #Create close button
-close_button = ctk.CTkButton(root, text="Fermer", font=default_items_font, command=close_app, width=15, corner_radius=10, fg_color="#FF6347", hover_color="#FF4500")
+close_button = ctk.CTkButton(root, text="Fermer", font=default_items_font, command=close_app, width=150, height=40, corner_radius=10, fg_color="#FF6347", hover_color="#FF4500")
 close_button.place(relx=0.01, rely=0.98, anchor="sw")
 
 root.protocol("WM_DELETE_WINDOW", close_app)
