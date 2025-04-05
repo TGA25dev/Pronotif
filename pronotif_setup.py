@@ -61,7 +61,7 @@ warning_icon_path = f"{script_directory}/Icons/Messagebox UI/warning_icon.png"
 info_icon_path = f"{script_directory}/Icons/Messagebox UI/info_icon.png"
 
 github_repo_name = "TGA25dev/Pronotif"
-version = "v0.7"
+version = "v0.8"
 
 sentry_sdk.init("https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992", 
                 enable_tracing=True,

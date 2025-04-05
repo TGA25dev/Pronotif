@@ -19,7 +19,7 @@ import hashlib
 import sentry_sdk
 from contextlib import contextmanager
 
-version = "v0.7"
+version = "v0.8"
 sentry_sdk.init("https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992", 
                 enable_tracing=True,
                 traces_sample_rate=1.0,

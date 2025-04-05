@@ -8,13 +8,13 @@ authors:
   - given-names: TGA25
 repository-code: 'https://github.com/TGA25dev/Pronotif'
 abstract: >-
-  Utilise ntfy et l'api Pronote de bain3 pour notifier les
-  utilisateurs sur leur téléphone 5 minutes avant chaque
+  Utilise une pwa et l'api Pronote de bain3 pour notifier les
+  utilisateurs sur leur téléphone quelques minutes avant chaque
   cours.
 keywords:
   - Pronote
   - Python
-  - Ntfy
-license: CC-BY-NC-4.0
-version: '0.7'
-date-released: '2024-12-10'
+  - Notifications
+license: AGPL-3.0
+version: '0.8'
+date-released: '2025-04-05'
