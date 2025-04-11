@@ -131,34 +131,57 @@ def handle_exception(exc_type:str, exc_value:str, exc_traceback:str) -> None:
 
 sys.excepthook = handle_exception
 
-def handle_error_with_relogin(e:str) -> bool:
+async def handle_error_with_relogin(e) -> bool:
     """
-    Handle errors by attempting to relogin and return True if successful, False otherwise"
+    Handle errors by attempting to relogin and return True if successful, False otherwise
     """
 
     logger.error(f"Critical error occurred: {e}\nAttempting to relogin...")
     global client
-    try:
-        if qr_code_login == "True":
-            client = pronotepy.Client.token_login(login_page_link, username=secured_username, password=secured_password, uuid=uuid)
-        else:
-            client = pronotepy.Client(login_page_link, username=secured_username, password=secured_password)
-
-        if client.logged_in:
-            logger.success("Successfully logged back in!")
-            if qr_code_login == "True":
-                set_key(f"{script_directory}/Data/pronote_password.env", 'Password', client.password)
-            return True
-        
-        logger.error("Failed to log back in!")
-        return False
     
-    except Exception as relogin_error:
-        logger.critical(f"Failed to relogin: {relogin_error}")
-        sentry_sdk.capture_exception(relogin_error)
-        return False
+    # Backoff for connection issues
+    for attempt in range(5):  # Try 5 times
+        try:
+            # Delay between retries with exponential backoff
+            if attempt > 0:
+                wait_time = 5 * (2 ** attempt)  # 5, 10, 20s
+                logger.info(f"Retry attempt {attempt+1}/5 after waiting {wait_time} seconds...")
+                await asyncio.sleep(wait_time)
+            
+            # Check if server is even reachable before attempting relogin
+            if not await check_pronote_server():
+                logger.warning(f"Pronote server is unreachable (attempt {attempt+1}/5). Waiting before retry...")
+                continue
+                
+            # Attempt to relogin
+            if qr_code_login == "True":
+                client = pronotepy.Client.token_login(login_page_link, username=secured_username, 
+                                                     password=secured_password, uuid=uuid)
+            else:
+                client = pronotepy.Client(login_page_link, username=secured_username, 
+                                         password=secured_password)
 
-internet_connected = None
+            if client.logged_in:
+                logger.success("Successfully logged back in!")
+                if qr_code_login == "True":
+                    set_key(f"{script_directory}/Data/pronote_password.env", 'Password', client.password)
+                return True
+            
+            logger.error("Failed to log back in!")
+        
+        except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectTimeout, 
+                requests.exceptions.ConnectionError) as conn_error:
+            logger.warning(f"Connection error during relogin attempt {attempt+1}/3: {conn_error}")
+        
+        except Exception as relogin_error:
+            logger.critical(f"Failed to relogin (attempt {attempt+1}/3): {relogin_error}")
+            sentry_sdk.capture_exception(relogin_error)
+    
+    #All attempts failed
+    logger.error("All relogin attempts failed")
+    sentry_sdk.capture_message("All relogin attempts failed", level="error")
+    return False
+
 async def check_internet_connexion() -> bool:
   """
   Check if the internet connexion is available
@@ -166,12 +189,11 @@ async def check_internet_connexion() -> bool:
 
   url = "http://www.google.com"
   timeout = 5
-  global internet_connected
   try:
     requests.get(url, timeout=timeout)
-    internet_connected = True
+    return True
   except requests.ConnectionError:
-    internet_connected = False
+    return False
 
 first_login = True    
 async def check_session(client:pronotepy.Client) -> None:
@@ -203,7 +225,7 @@ async def check_session(client:pronotepy.Client) -> None:
 
     except Exception as e:
         logger.error(f"Session check failed: {e}")
-        handle_error_with_relogin(e)
+        await handle_error_with_relogin(e)
 
 async def retry_with_backoff(func, *args, max_attempts=5) -> None:
     """
@@ -273,9 +295,29 @@ async def retry_with_backoff(func, *args, max_attempts=5) -> None:
         except Exception as e:
             logger.error(f"Error in {func.__name__}: {e}")
             sentry_sdk.capture_exception(e)
-            if not handle_error_with_relogin(e):
+            if not await handle_error_with_relogin(e):
                 return [] if func.__name__ in ['fetch_lessons', 'fetch_menus'] else None
             raise
+        
+async def check_pronote_server() -> bool:
+  """
+  Sends a HEAD request to check if the server is reachable.
+  """
+  try:
+      response = requests.get(login_page_link, timeout=10, stream=True)
+      if response.status_code == 200:
+          #logger.debug("Pronote server is reachable.")
+          return True
+      else:
+          if response.status_code < 500:
+             #logger.error(f"Pronote instance seems to be down ! (status code: {response.status_code}, link: {login_page_link})")
+             sentry_sdk.capture_message("Pronote instance seems to be down !", level="error")
+
+      return False
+  
+  except requests.ConnectionError:
+      logger.error("Connection error while checking Pronote server.")
+      return False
 
 async def pronote_main_checks_loop():
   """
@@ -284,19 +326,19 @@ async def pronote_main_checks_loop():
 
   try:
     await check_internet_connexion()
-    if internet_connected is False:
+    if await check_internet_connexion() is False:
       logger.critical("No Internet connexion !\n\nProgram will close in 2 seconds...")
       time.sleep(2)
       sys.exit(1)
     
-    logger.debug(internet_connected)
+    logger.debug(await check_internet_connexion())
     now = datetime.datetime.now(timezone)
     # Calculate the time to the next full minute
     next_minute = (now + timedelta(minutes=1)).replace(second=0, microsecond=0)
     wait_time = (next_minute - now).total_seconds()
 
     logger.info(f"Waiting for {round(wait_time, 1)} seconds until system start...")
-    await asyncio.sleep(wait_time)
+    #await asyncio.sleep(wait_time)
     logger.debug(f"System started ! ({datetime.datetime.now(timezone).strftime('%H:%M:%S')})")
 
     global client
@@ -470,7 +512,7 @@ async def pronote_main_checks_loop():
                             
                       except Exception as e:
                         logger.error(f"Error sending notification: {e}")
-                        if not handle_error_with_relogin(e):
+                        if not await handle_error_with_relogin(e):
                             sys.exit(1)      
 
                     if canceled:
@@ -490,7 +532,7 @@ async def pronote_main_checks_loop():
                     break
         except Exception as e:
             logger.error(f"Error in lesson check: {e}")
-            handle_error_with_relogin(e)
+            await handle_error_with_relogin(e)
 
       async def send_class_info_notification_via_ntfy(message:str) -> int:
         """
@@ -511,7 +553,7 @@ async def pronote_main_checks_loop():
                 
         except Exception as e:
             logger.error(f"Error sending notification: {e}")
-            if not handle_error_with_relogin(e):
+            if not await handle_error_with_relogin(e):
                 sys.exit(1)
 
       async def menu_food_check():
@@ -577,7 +619,7 @@ async def pronote_main_checks_loop():
 
         except Exception as e:
             logger.error(f"Error in menu check: {e}")
-            handle_error_with_relogin(e)
+            await handle_error_with_relogin(e)
 
       async def food_notif_send_system() -> None:
           """
@@ -701,7 +743,7 @@ async def pronote_main_checks_loop():
 
         except Exception as e:
           logger.error(f"Error sending notification: {e}")
-          if not handle_error_with_relogin(e):
+          if not await handle_error_with_relogin(e):
               sys.exit(1)     
 
       async def send_reminder_notification_via_ntfy(message:str, reminder_type:str) -> int:
@@ -741,7 +783,7 @@ async def pronote_main_checks_loop():
 
         except Exception as e:
             logger.error(f"Error sending notification: {e}")
-            if not handle_error_with_relogin(e):
+            if not await handle_error_with_relogin(e):
                 sys.exit(1)
 
       async def check_reminder_notifications() -> None:
@@ -775,7 +817,7 @@ async def pronote_main_checks_loop():
 
               except Exception as e:
                 logger.error(f"Unexpected error checking lessons: {e}")
-                if not handle_error_with_relogin(e):
+                if not await handle_error_with_relogin(e):
                     sys.exit(1)
 
                 class_checker = []
@@ -834,33 +876,37 @@ async def pronote_main_checks_loop():
 
         except Exception as e:
             logger.error(f"Error in reminder check: {e}")
-            handle_error_with_relogin(e)
+            await handle_error_with_relogin(e)
 
+      no_internet_message = None
+      instance_not_reachable_message = None
       while run_main_loop is True:
         start_time = time.time() 
         await check_internet_connexion()
 
-        if internet_connected:
+        if await check_internet_connexion() and await check_pronote_server():
           no_internet_message = False
+          instance_not_reachable_message = False
           await check_session(client)
           await asyncio.gather(lesson_check(), menu_food_check(), check_reminder_notifications())
 
         else:
-          if not no_internet_message:
-            logger.warning("Tasks have been paused... (No Internet connexion)")
+          if not no_internet_message or not instance_not_reachable_message:
+            logger.warning("Tasks have been paused... (No Internet connexion or Pronote server unreachable)")
             no_internet_message = True
+            instance_not_reachable_message = True
 
         await asyncio.sleep(60 - ((time.time() - start_time) % 60))
         
     else:
-      logger.critical(f"An error has occured while login: {Exception}\n\nClosing program...")
-      sentry_sdk.capture_exception(Exception)
+      logger.critical(f"An error has occured while login: {e}\n\nClosing program...")
+      sentry_sdk.capture_exception(e)
       time.sleep(2)
       exit(1)
 
   except Exception as e:
     logger.critical(f"Critical error in main loop: {e}")
-    if not handle_error_with_relogin(e):
+    if not await handle_error_with_relogin(e):
         sys.exit(1)
     return
 
