@@ -516,7 +516,7 @@ def process_qr_code():
             required_fields = [
                 "session_id", "token", "login_page_link", "student_username", "student_password",
                 "student_fullname", "student_firstname", "student_class",
-                "ent_used", "qr_code_login", "uuid", "topic_name", "timezone",
+                "ent_used", "qr_code_login", "uuid", "timezone",
                 "notification_delay", "evening_menu",
                 "unfinished_homework_reminder", "get_bag_ready_reminder"
             ]
@@ -590,7 +590,7 @@ def process_qr_code():
                             INSERT INTO {student_table_name} (
                                 app_session_id, app_token, login_page_link, student_username, student_password,
                                 student_fullname, student_firstname, student_class,
-                                ent_used, qr_code_login, uuid, topic_name, timezone,
+                                ent_used, qr_code_login, uuid, timezone,
                                 notification_delay, evening_menu,
                                 unfinished_homework_reminder, get_bag_ready_reminder,
                                 monday_lunch, tuesday_lunch, wednesday_lunch, thursday_lunch, friday_lunch,
