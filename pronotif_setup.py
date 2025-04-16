@@ -139,7 +139,6 @@ class ConfigData:
         self.user_password = None
         self.user_username = None
         self.ent_connexion = None
-        self.topic_name = None
         self.notification_delay = None
         self.uuid = None
         self.qr_code_login = None
@@ -289,7 +288,6 @@ def show_config_data_qr_code():
       "ent_used": "1" if config_data.ent_connexion else "0",
       "qr_code_login": "1" if config_data.qr_code_login else "0",
       "uuid": str(config_data.uuid),
-      "topic_name": str(config_data.topic_name),
       "timezone": str(config_data.selected_timezone),
       "notification_delay": str(config_data.notification_delay),
       "lunch_times": str(config_data.lunch_times),
@@ -380,43 +378,11 @@ def final_step():
 
   show_config_data_qr_code_tooltip = CTkToolTip(show_config_qr_code_button, message="Ne cliquez pas ici avant d'avoir installé l'application !", delay=0, alpha=0.8, wraplength=450, justify="center", font=default_subtitle_font)	
 
-steps = ['config_tab1_approved', 'config_tab2_approved', 'config_tab3_approved', 'config_tab4_approved']
+steps = ['config_tab1_approved', 'config_tab2_approved', 'config_tab3_approved']
 
 for step in steps:
     if step not in globals():
         globals()[step] = False
-
-# Function to check if all steps are completed
-def check_all_steps_completed():
-    """
-    Check if all steps have been completed and call the final step if they have.
-    """
-    
-    if all(globals().get(step, False) for step in steps):
-        final_step()
-
-def get_ntfy_topic():
-  ntfy_entered_topic_name = ntfy_topic_name_entry.get()
- 
-  box = CTkMessagebox(title="Valider ?", font=default_messagebox_font, message=f"Est-ce bien le nom de votre topic ?\n{ntfy_entered_topic_name}", icon=question_icon_path, option_1="Oui", option_2="Annuler",cancel_button=None ,cancel_button_color="light grey", justify="center", master=root, width=400, height=180, corner_radius=25)
-  box.info._text_label.configure(wraplength=450)
-
-  response = box.get()
-
-  if response == "Oui":
-    config_data.topic_name = ntfy_entered_topic_name
-    logger.debug(f"ntfy topic name has been defined on: {config_data.topic_name}")
-
-    ntfy_topic_name_button.configure(state="disabled")
-    ntfy_topic_name_entry.configure(state="disabled", text_color="grey")
-    config_tab_step1_text.configure(text="Parfait !\nVous pouvez passer au deuxième onglet.")
-
-    globals()['config_tab1_approved'] = True
-    check_all_steps_completed() 
-
-
-  elif response == "Annuler":
-    pass
 
 def config_steps():
   """
@@ -428,72 +394,150 @@ def config_steps():
   if school_name_text is not None: # If the label exists
     school_name_text.place_forget()
 
+
+  class VerticalTabView(ctk.CTkFrame):
+      def __init__(self, master, **kwargs):
+          if "height" in kwargs:
+              del kwargs["height"]
+          if "width" in kwargs:
+              del kwargs["width"]
+              
+          super().__init__(master, **kwargs)
+          
+          self.tab_frame = ctk.CTkFrame(self, width=250, fg_color=("#e0e0e0", "#2b2b2b"))
+          self.tab_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+          
+          # Add title
+          self.settings_label = ctk.CTkLabel(self.tab_frame, text="Paramètres", 
+                                            font=("Fixel Display Bold", 22),
+                                            anchor="center")
+          self.settings_label.pack(pady=(25, 30), padx=5)
+          
+          self.content_frame = ctk.CTkFrame(self)
+          self.content_frame.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
+          
+          self.grid_columnconfigure(1, weight=4)
+          self.grid_rowconfigure(0, weight=1)
+
+          self.SELECTED_COLOR = "#3a86ff"
+          self.NORMAL_COLOR = ("#d0d0d0", "#3b3b3b") #Default colors
+          self.HOVER_COLOR = ("#c0c0c0", "#4b4b4b")
+          
+          #Frame creation
+          self.buttons_container = ctk.CTkFrame(self.tab_frame, fg_color="transparent")
+          self.buttons_container.pack(fill="both", expand=True, padx=5, pady=5)
+          
+          self.tabs = {}
+          self.buttons = {}
+          self.current_tab = None
+      
+      def add(self, name:str) -> ctk.CTkFrame:
+          """
+          Add a new tab with the given name.
+          """
+
+          tab = ctk.CTkFrame(self.content_frame, corner_radius=10)
+          self.tabs[name] = tab
+          
+          btn = ctk.CTkButton(
+              self.buttons_container, 
+              text=name,
+              command=lambda n=name: self.set(n),
+              corner_radius=8,
+              height=65,
+              width=230,
+              anchor="w",
+              font=default_items_font,
+              fg_color=self.NORMAL_COLOR,
+              text_color=("#000000", "#ffffff"),
+              hover_color=self.HOVER_COLOR,
+          )
+
+          btn.pack(fill="x", pady=(0, 12), padx=5)
+          self.buttons[name] = btn
+          
+          return tab
+          
+      def set(self, name:str) -> None:
+          """
+          Set the currently visible tab to the one with the given name.
+          """
+
+          # Hide all tabs first
+          for tab_name, tab in self.tabs.items():
+              tab.place_forget()
+              if tab_name != name: 
+                  self.buttons[tab_name].configure(
+                      fg_color=self.NORMAL_COLOR,
+                      text_color=("#000000", "#ffffff")
+                  )
+          
+          # Show the selected tab
+          if name in self.tabs:
+              self.tabs[name].place(relx=0, rely=0, relwidth=1, relheight=1)
+              # Change color of selected button
+              self.buttons[name].configure(
+                  fg_color=self.SELECTED_COLOR,
+                  hover_color=self.SELECTED_COLOR,
+                  text_color=("#FFFFFF", "#FFFFFF")
+              )
+              self.current_tab = name
+
+      def tab(self, name):
+          """
+          Get the tab with the given name.
+          """
+
+          if name in self.tabs:
+              return self.tabs[name]
+          else:
+              raise ValueError(f"Tab {name} does not exist")
+              
+      def get_next_tab(self, current_tab_name):
+          """
+          Get the next tab name based on the current tab
+          """
+
+          tab_names = list(self.tabs.keys())
+          try:
+              current_index = tab_names.index(current_tab_name)
+              if current_index < len(tab_names) - 1:
+                  return tab_names[current_index + 1]
+          except ValueError:
+              pass
+          return None
+          
   global tabview
-  tabview = ctk.CTkTabview(master=root, height=400, width=700)
-  tabview.pack(padx=25, pady=25)
+  tabview = VerticalTabView(master=root)
+  tabview.pack(padx=20, pady=(20, 60), fill="both", expand=True)
 
-  tabview.add("1. ntfy")
+  tabview.add("1. Notifications")
   tabview.add("2. Repas")
-  tabview.add("3. Notifications")
-  tabview.add("4. Avancé")
+  tabview.add("3. Avancé")
 
-  tabview.set("1. ntfy")  # set currently visible tab
+  tabview.set("1. Notifications")  # set currently visible tab
   close_button.tkraise()
   author_name_label.tkraise()
-
-  global config_tab_step1_text
-  current_hour = datetime.datetime.now().hour
-  greeting = "Bonjour" if 6 <= current_hour < 18 else "Bonsoir"
-  config_tab_step1_text = ctk.CTkLabel(master=tabview.tab("1. ntfy"), font=default_config_step_font ,text=f"{greeting} {config_data.student_firstname} !\nEnregistrez ici le nom de votre topic ntfy.")
-  config_tab_step1_text.place(relx=0.5, rely=0.2, anchor="center")
-
-  global ntfy_topic_name_entry
-  ntfy_topic_name_entry = ctk.CTkEntry(master=tabview.tab("1. ntfy"), width=250, height=40, font=default_text_font)  
-  ntfy_topic_name_entry.place(relx=0.5, rely=0.45, anchor="center")
-  ntfy_topic_name_entry.bind("<Return>", lambda event: get_ntfy_topic())
-
-  def open_docs():
-    """
-    Open the documentation in the default web browser.
-    """
-
-    webbrowser.open("https://docs.pronotif.tech/installation/ntfy")
-
-  need_help_icon = ctk.CTkImage(light_image=Image.open(f"{script_directory}/Icons/Global UI/need_help_light.png").resize((24, 24)), dark_image=Image.open(f"{script_directory}/Icons/Global UI/need_help_dark.png").resize((24, 24)))
-  need_help_button = ctk.CTkButton(master=tabview.tab("1. ntfy"), command=open_docs, image=need_help_icon, text="", width=40, height=40, fg_color=["#dbdbdb", "#2b2b2b"], bg_color=["#dbdbdb", "#2b2b2b"], hover_color=["#dbdbdb", "#2b2b2b"], corner_radius=10)
-  need_help_button.place(relx=0.75, rely=0.45, anchor="center")
-
-  need_help_tooltip = CTkToolTip(need_help_button, message="Vous ne savez pas quoi ecrire ici ?\nCliquez sur le point d'interrogation !", delay=0.3, alpha=0.8, wraplength=450, justify="center", font=default_subtitle_font)
-
-  # Function to enable the button if entry is not empty
-  def enable_button(event:tk.Event) -> None:
-    """
-    Enable the button if the entry is not empty.
-    """
-
-    if ntfy_topic_name_entry.get() and ntfy_topic_name_entry.get() != "mon-topic-ntfy":
-        ntfy_topic_name_button.configure(state="normal", text_color="white")
-    else:
-        ntfy_topic_name_button.configure(state="disabled", text_color="grey")
-
-  
-  ntfy_topic_name_entry.insert(0, "mon-topic-ntfy")
-  ntfy_topic_name_entry.bind("<FocusIn>", lambda event: ntfy_topic_name_entry.delete(0, ctk.END) if ntfy_topic_name_entry.get() == "mon-topic-ntfy" else None)
-  ntfy_topic_name_entry.bind("<FocusOut>", lambda event: ntfy_topic_name_entry.insert(0, "mon-topic-ntfy") if not ntfy_topic_name_entry.get() else None)
-  ntfy_topic_name_entry.bind("<KeyRelease>", enable_button)
-
-  global ntfy_topic_name_button
-  ntfy_topic_name_button = ctk.CTkButton(master=tabview.tab("1. ntfy"),font=default_items_font , text="Valider",command=get_ntfy_topic, state="disabled", text_color="grey", corner_radius=10, width=200, height=40)
-  ntfy_topic_name_button.place(relx=0.5, rely=0.7, anchor="center")
 
   #TAB 2 LUNCH TIMES
          
   if not menus_found:
-    config_tab_step2_text = ctk.CTkLabel(master=tabview.tab("2. Repas"), text="Votre établissement ne semble pas avoir défini\nle menu de la cantine dans Pronote !\n\nPassez cette étape.", font=default_config_step_font)
+    config_tab_step2_text = ctk.CTkLabel(master=tabview.tab("2. Repas"), text="Votre établissement ne semble pas être compatible\navec de cette fonctionalité de Pronot'if pour le moment !\n\nPassez cette étape.", font=default_config_step_font)
     config_tab_step2_text.place(relx=0.5, rely=0.5, anchor="center")
 
+    # Add a next button to navigate to the next tab
+    next_button = ctk.CTkButton(
+        master=tabview.tab("2. Repas"), 
+        font=default_items_font,
+        text="Suivant", 
+        command=lambda: tabview.set("3. Avancé"), 
+        corner_radius=10, 
+        width=200, 
+        height=40
+    )
+    next_button.place(relx=0.5, rely=0.8, anchor="center")
+
     globals()['config_tab2_approved'] = True
-    check_all_steps_completed() 
 
   # Handling the case when a menu is found
   else:
@@ -509,6 +553,10 @@ def config_steps():
             evening_menu_switch.configure(text="Diner (oui)", progress_color="light green")
         else:
             evening_menu_switch.configure(text="Diner (non)", progress_color="grey")
+        
+        # Auto-save evening menu preference
+        config_data.evening_menu = evening_switch_var.get()
+        logger.debug(f"Evening menu option has been set to {config_data.evening_menu}")
 
     evening_switch_var = ctk.StringVar(value="False") # Set the switch to be disabled by default
     evening_menu_switch = ctk.CTkSwitch(master=tabview.tab("2. Repas"), switch_width=50, switch_height=20, button_color="white", progress_color="grey", variable=evening_switch_var, font=default_subtitle_font, text="Diner (non)", onvalue="True", offvalue="False", command=evening_switch_toogle)
@@ -571,25 +619,21 @@ def config_steps():
             next_day = days[current_day_index]
             labels[next_day].place(relx=0.2, rely=0.35)
             scales[next_day].place(relx=0.3, rely=0.55, anchor="center")
-
-            evening_menu_switch.configure(state="disabled", text_color="grey", button_color="grey") # Disable the switch
-            evening_menu_tooltip.configure(message="Vous avez déjà défini cette option...")
         else:
             # Final submission
             scales[day].configure(state="disabled", progress_color="grey")
             label.configure(text_color="grey")
-            submit_button.configure(state="disabled", text_color="grey")
-
-            config_data.evening_menu = evening_switch_var.get() # Save the evening menu option
-            logger.debug(f"Evening menu option has been set to {config_data.evening_menu}")
-
-            config_tab_step2_text.configure(text="Vos paramètres ont étés enregistrés !\nPassez à la prochaine étape.")
+            
+            # Display success message
+            config_tab_step2_text.configure(text="Vos paramètres ont étés enregistrés !")
+            
+            submit_button.configure(text="Suivant", command=lambda: tabview.set("3. Avancé"))
+            
             logger.debug(f"Lunch times submitted !")
 
             globals()['config_tab2_approved'] = True
-            check_all_steps_completed()
 
-    # Define the time range for lunch times (e.g., from 10:30 to 14:30 in 5-minute intervals)
+    # Define the time range for lunch times (from 10:30 to 14:30 in 5-minute intervals)
     start_time = time_to_minutes("10:30")
     end_time = time_to_minutes("14:30")
     increment = 5  # 5 minutes increment
@@ -619,25 +663,11 @@ def config_steps():
         submit_button_icon = ctk.CTkImage(light_image=Image.open(f"{script_directory}/Icons/Global UI/save_meal_def.png").resize((24, 24)))
 
         # Create the submit button
-        submit_button = ctk.CTkButton(master=tabview.tab("2. Repas"),font=default_items_font , text="Enregistrer", image=submit_button_icon, compound="right", command=submit_lunch_time, corner_radius=10, width=200, height=40)
+        submit_button = ctk.CTkButton(master=tabview.tab("2. Repas"),font=default_items_font , text="Suivant", image=submit_button_icon, compound="right", command=submit_lunch_time, corner_radius=10, width=200, height=40)
         submit_button.place(relx=0.5, rely=0.8, anchor="center")
 
-  #TAB 3 NOTIFICATIONS
-
-  def save_notifications_settings():
-    """
-    Save the notifications settings.
-    """
-
-    unfinished_homework_reminder_switch.configure(state="disabled", text_color="grey", button_color="grey")
-    get_bag_ready_reminder_switch.configure(state="disabled", text_color="grey", button_color="grey")
-    save_button_notifications.configure(state="disabled", text_color="grey")
-
-    reminders_info_label.configure(text="Vos paramètres ont bien été enregistrés !")
-
-    globals()['config_tab3_approved'] = True
-    check_all_steps_completed()
-     
+  #TAB 1 NOTIFICATIONS
+  
   def unfinished_homework_reminder_switch_toogle():
     """
     Toggle the unfinished homework reminder switch.
@@ -647,6 +677,15 @@ def config_steps():
       unfinished_homework_reminder_switch.configure(progress_color="light green")
     else:
       unfinished_homework_reminder_switch.configure(progress_color="grey")
+      
+    # Auto-save the setting
+    config_data.unfinished_homework_reminder = unfinished_homework_reminder_switch_var.get()
+    logger.debug(f"Unfinished homework reminder set to {config_data.unfinished_homework_reminder}")
+    
+    # Mark first tab as completed if both settings are configured
+    if config_data.unfinished_homework_reminder is not None and config_data.get_bag_ready_reminder is not None:
+      globals()['config_tab1_approved'] = True
+      
 
   def get_bag_ready_reminder_toogle():
     """
@@ -656,135 +695,268 @@ def config_steps():
     if get_bag_ready_reminder_switch_var.get() == "True":
       get_bag_ready_reminder_switch.configure(progress_color="light green")
     else:
-      get_bag_ready_reminder_switch.configure(progress_color="grey")                  
-
-  def save_notifications_selection():
-      """
-      Save the notifications settings.
-      """
-
-      config.unfinished_homework_reminder = unfinished_homework_reminder_switch_var.get()
-      config.get_bag_ready_reminder = get_bag_ready_reminder_switch_var.get()
-
-      #logger.debug(f"Unfinished homework reminder has been set to {config.unfinished_homework_reminder}")
-      #logger.debug(f"Get bag ready reminder has been set to {config.get_bag_ready_reminder}")
-      save_notifications_settings()
-     
-  config_tab_step3_text = ctk.CTkLabel(master=tabview.tab("3. Notifications"), text="Paramètres de notifications", font=default_config_step_font)
-  config_tab_step3_text.place(relx=0.5, rely=0.05, anchor="center")
-
-  unfinished_homework_reminder_switch_var = ctk.StringVar(value="False") # Set the switch to be disabled by default
-  unfinished_homework_reminder_switch = ctk.CTkSwitch(master=tabview.tab("3. Notifications"), switch_width=50, switch_height=20, button_color="white", progress_color="grey", variable=unfinished_homework_reminder_switch_var, font=default_subtitle_font, text="Devoirs non faits", onvalue="True", offvalue="False", command=unfinished_homework_reminder_switch_toogle)
-  unfinished_homework_reminder_switch.place(relx=0.27, rely=0.25, anchor="center")
-
-  get_bag_ready_reminder_switch_var = ctk.StringVar(value="False") # Set the switch to be disabled by default
-  get_bag_ready_reminder_switch = ctk.CTkSwitch(master=tabview.tab("3. Notifications"), switch_width=50, switch_height=20, button_color="white", progress_color="grey", variable=get_bag_ready_reminder_switch_var, font=default_subtitle_font, text="Faire son sac", onvalue="True", offvalue="False", command=get_bag_ready_reminder_toogle)
-  get_bag_ready_reminder_switch.place(relx=0.25, rely=0.45, anchor="center")
-
-  reminders_info_label = ctk.CTkLabel(master=tabview.tab("3. Notifications"), text="La notification de devoirs non faits à rendre pour le lendemain sera\nenvoyée vers 18h, le rappel de faire son sac vers 19h30.", font=default_conditions_font)
-  reminders_info_label.place(relx=0.5, rely=0.69, anchor="center")
-
-  # Add a save button
-  global save_button_notifications
-  save_button_notifications = ctk.CTkButton(master=tabview.tab("3. Notifications"), font=default_items_font ,text="Enregistrer", command=save_notifications_selection, corner_radius=10, width=200, height=40)
-  save_button_notifications.place(relx=0.5, rely=0.92, anchor="center")
-
-  #TAB 4 ADVANCED
-
-  def set_config_file_advanced():
-    """
-    Save the advanced settings.
-    """
-
-    save_button.configure(state="disabled", text_color="grey")
-    switch.configure(state="disabled", text_color="grey", button_color="grey")
-    combo_menu.configure(state="disabled", button_color="grey")
-    notification_delay_menu.configure(state="disabled", button_color="grey")
-
-    globals()['config_tab4_approved'] = True
-    check_all_steps_completed()
-
+      get_bag_ready_reminder_switch.configure(progress_color="grey")
+      
+    # Auto-save the setting
+    config_data.get_bag_ready_reminder = get_bag_ready_reminder_switch_var.get()
+    logger.debug(f"Get bag ready reminder set to {config_data.get_bag_ready_reminder}")
     
-  def switch_toggled():
-      """Switch toggle
-      """
+    # Mark first tab as completed if both settings are configured
+    if config_data.unfinished_homework_reminder is not None and config_data.get_bag_ready_reminder is not None:
+      globals()['config_tab1_approved'] = True
+      
+                     
+  # Header section
+  header_frame = ctk.CTkFrame(master=tabview.tab("1. Notifications"), fg_color="transparent")
+  header_frame.place(relx=0.5, rely=0.13, anchor="center", relwidth=0.9)
+  
+  header_title = ctk.CTkLabel(master=header_frame, text="Rappels et Notifications", 
+                          font=("Fixel Display Bold", 20))
+  header_title.pack(anchor="w")
 
+  # Settings container frame
+  settings_container = ctk.CTkFrame(master=tabview.tab("1. Notifications"), fg_color="transparent")
+  settings_container.place(relx=0.5, rely=0.5, anchor="center", relwidth=0.9, relheight=0.6)
+  
+  # Create a function to make cards consistent
+  def create_setting_card(container, title, description, var, toggle_command):
+      card = ctk.CTkFrame(master=container, corner_radius=15)
+      card.pack(fill="x", pady=10, ipady=5)
+      
+      # Main content frame
+      content = ctk.CTkFrame(master=card, fg_color="transparent")
+      content.pack(fill="both", expand=True, padx=20, pady=10)
+      
+      content.grid_columnconfigure(0, weight=8)  # Text column
+      content.grid_columnconfigure(1, weight=1)  # Switch column
+      content.grid_rowconfigure(1, minsize=40)  # Set minimum height for description row
+      
+      # Title and description
+      title_label = ctk.CTkLabel(master=content, text=title, 
+                           font=("Fixel Text Medium", 16))
+      title_label.grid(row=0, column=0, sticky="w", pady=(0, 5))
+      
+
+      desc_label = ctk.CTkLabel(
+          master=content, 
+          text=description, 
+          font=("Fixel Text Regular", 13),
+          text_color=("gray50", "gray70"),
+          wraplength=240,
+          anchor="w",      # Left alignment 
+          justify="left"   # Left-aligned text
+      )
+      desc_label.grid(row=1, column=0, sticky="nw", pady=(0, 5))
+      
+      # Switch
+      switch = ctk.CTkSwitch(
+          master=content,
+          switch_width=50, 
+          switch_height=25, 
+          button_color="#ffffff", 
+          progress_color="#3a86ff",
+          button_hover_color="#f0f0f0",
+          variable=var, 
+          text="", 
+          onvalue="True", 
+          offvalue="False", 
+          command=toggle_command
+      )
+      switch.grid(row=0, column=1, rowspan=2, sticky="e", padx=(10, 5))
+      
+      return switch
+    
+  #Homework reminder card
+  unfinished_homework_reminder_switch_var = ctk.StringVar(value="False")
+  unfinished_homework_reminder_switch = create_setting_card(
+      settings_container,
+      "Devoirs non faits",
+      "Recevez un rappel vers 18h pour terminer vos devoirs non faits.",
+      unfinished_homework_reminder_switch_var,
+      unfinished_homework_reminder_switch_toogle
+  )
+  config_data.unfinished_homework_reminder = False #Default value
+  
+  #bag reminder card
+  get_bag_ready_reminder_switch_var = ctk.StringVar(value="False")
+  get_bag_ready_reminder_switch = create_setting_card(
+      settings_container,
+      "Faire son sac",
+      "Recevez un rappel vers 19h30 pour préparer votre sac pour le lendemain.",
+      get_bag_ready_reminder_switch_var,
+      get_bag_ready_reminder_toogle
+  )
+  config_data.get_bag_ready_reminder = False #Default value
+  
+  next_button = ctk.CTkButton(
+      master=tabview.tab("1. Notifications"), 
+      font=default_items_font,
+      text="Suivant", 
+      command=lambda: tabview.set("2. Repas"), 
+      corner_radius=10, 
+      width=200, 
+      height=40
+  )
+  next_button.place(relx=0.5, rely=0.88, anchor="center")
+
+  #TAB 3 ADVANCED
+
+  def switch_toggled():
+      """Switch toggle handler for timezone selection mode
+      """
       if switch_var.get() == "off":
           switch.configure(text="Manuel")
-          combo_menu.place(relx=0.21, rely=0.45, anchor="center")
+          combo_menu.place(relx=0.5, rely=0.45, anchor="center")
       else:
           switch.configure(text="Automatique")
           combo_menu.place_forget()
+          
+      # Auto-save the timezone selection
+      if switch_var.get() == "off":
+          selected_option = combo_menu.get()
+          if selected_option:
+              if selected_option == "UTC":
+                  config_data.selected_timezone = "UTC"
+              else:
+                  sign = selected_option[3]
+                  offset = selected_option[4:]
 
-  def save_selection():
-    """
-    Save timezone selection and notification delay
-    """
+                  # Invert the sign for the Etc/GMT format
+                  if sign == '+':
+                      etc_gmt_offset = f"-{offset}"
+                  elif sign == '-':
+                      etc_gmt_offset = f"+{offset}"
 
-    global selected_timezone
-    if switch_var.get() == "off":
-      selected_option = combo_menu.get()
-      if selected_option == "":
-        logger.error("Value cannot be None !")
-        box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Vous devez choisir une valeur du menu avant de valider !", icon=warning_icon_path, option_1="Réessayer", master=root, width=400, height=180, corner_radius=25, sound=True)
-        box.info._text_label.configure(wraplength=450)
-        return
+                  config_data.selected_timezone = f"Etc/GMT{etc_gmt_offset}"
+                  logger.debug(f"New timezone has been selected: {config_data.selected_timezone}")
       else:
-        if selected_option == "UTC":
-          config_data.selected_timezone = "UTC"
-        else:
-          sign = selected_option[3]
-          offset = selected_option[4:]
+          config_data.selected_timezone = system_data.automatic_school_timezone
+          logger.debug("Default timezone has been selected!")
 
-          # Invert the sign for the Etc/GMT format
-          if sign == '+':
-            etc_gmt_offset = f"-{offset}"
-          elif sign == '-':
-            etc_gmt_offset = f"+{offset}"
-
-          config_data.selected_timezone = f"Etc/GMT{etc_gmt_offset}"
-          logger.debug(f"New timezone has been selected : {selected_timezone}")
-    else:
-      config_data.selected_timezone = system_data.automatic_school_timezone  # Use the automatic timezone
-      logger.debug("Default timezone has been selected !")
-
-    # Extract just the number from the string
-    delay = int(notification_delay_menu.get().split()[0])
-    config_data.notification_delay = delay
-    logger.debug(f"Notification delay set to {delay} minutes")
-      
-    set_config_file_advanced()
+  def notification_delay_changed(new_value):
+      """Handle notification delay change
+      """
+      # Extract just the number from the string
+      delay = int(new_value.split()[0])
+      config_data.notification_delay = delay
+      logger.debug(f"Notification delay set to {delay} minutes")
   
-  config_tab_step4_text = ctk.CTkLabel(master=tabview.tab("4. Avancé"), text="Fuseau horaire", font=default_config_step_font)
-  config_tab_step4_text.place(relx=0.2, rely=0.1, anchor="center")
+  # Header section
+  advanced_header_frame = ctk.CTkFrame(master=tabview.tab("3. Avancé"), fg_color="transparent")
+  advanced_header_frame.place(relx=0.5, rely=0.05, anchor="center", relwidth=0.9)
+  
+  advanced_header_title = ctk.CTkLabel(master=advanced_header_frame, text="Paramètres avancés", 
+                          font=("Fixel Display Bold", 20))
+  advanced_header_title.pack(anchor="w")
 
-  # Add a switch (CTkSwitch)
-  switch_var = ctk.StringVar(value="on")  # Set the switch to be enabled by default
-  switch = ctk.CTkSwitch(master=tabview.tab("4. Avancé"), font=default_subtitle_font, switch_width=50, switch_height=20, text="Automatique", variable=switch_var, onvalue="on", offvalue="off", command=switch_toggled)
-  switch.place(relx=0.2, rely=0.25, anchor="center")
-  manual_timezone_not_recommende_tooltip = CTkToolTip(switch, message="Il est déconseillé de changer le fuseau horaire !", delay=0.3, alpha=0.8, wraplength=450, justify="center", font=default_subtitle_font)
-
-  # Add a combobox
-  options = ["UTC", "UTC+1", "UTC+2", "UTC+3", "UTC+4", "UTC+5", "UTC+6", "UTC+7", "UTC+8", "UTC+9", "UTC+10", "UTC+11", "UTC+12", "UTC-1", "UTC-2", "UTC-3", "UTC-4", "UTC-5", "UTC-6", "UTC-7", "UTC-8", "UTC-9", "UTC-10", "UTC-11", "UTC-12", "UTC-13", "UTC-14"]
-  combo_menu = ctk.CTkComboBox(master=tabview.tab("4. Avancé"), font=default_text_font , values=options, state="readonly")
-  combo_menu.place_forget()  # Initially hidden
-
-  # Add notification delay selection
-  notification_delay_label = ctk.CTkLabel(master=tabview.tab("4. Avancé"), text="Délai avant envoi", font=default_config_step_font)
-  notification_delay_label.place(relx=0.2, rely=0.47, anchor="center")
-
-  # Create notification delay dropdown menu
-  notification_delays = ["1 minute", "3 minutes", "5 minutes", "10 minutes"]
-  notification_delay_var = ctk.StringVar(value=notification_delays[2])  # Default to 5 minutes
-
-  notification_delay_menu = ctk.CTkOptionMenu(master=tabview.tab("4. Avancé"), font=default_subtitle_font, values=notification_delays, variable=notification_delay_var, width=120)
-  notification_delay_menu.place(relx=0.2, rely=0.63, anchor="center")
-
-  # Add a save button
-  save_button = ctk.CTkButton(master=tabview.tab("4. Avancé"), font=default_items_font ,text="Enregistrer", command=save_selection, corner_radius=10, width=200, height=40)
-  save_button.place(relx=0.5, rely=0.9, anchor="center")
-
-
+  # Settings container frame
+  advanced_settings_container = ctk.CTkFrame(master=tabview.tab("3. Avancé"), fg_color="transparent")
+  advanced_settings_container.place(relx=0.5, rely=0.45, anchor="center", relwidth=0.9, relheight=0.8)
+  
+  # Create a function to make cards consistent
+  def create_advanced_card(container, title, content_setup_func):
+      card = ctk.CTkFrame(master=container, corner_radius=15)
+      card.pack(fill="x", pady=10, ipady=10)
+      
+      # Card content frame
+      content = ctk.CTkFrame(master=card, fg_color="transparent")
+      content.pack(fill="both", expand=True, padx=20, pady=15)
+      
+      # Set title
+      card_title = ctk.CTkLabel(master=content, text=title, font=("Fixel Text Medium", 16))
+      card_title.pack(anchor="w", pady=(0, 10))
+      
+      content_setup_func(content)
+      
+      return card
+  
+  # Function to set up timezone card content
+  def setup_timezone_content(content):
+      # Switch for automatic/manual timezone
+      global switch, switch_var, combo_menu
+      switch_var = ctk.StringVar(value="on")  # Default to automatic
+      switch = ctk.CTkSwitch(master=content, 
+                          font=("Fixel Text Regular", 13),
+                          switch_width=50, 
+                          switch_height=25,
+                          button_color="#ffffff",
+                          progress_color="#3a86ff", 
+                          text="Automatique", 
+                          variable=switch_var, 
+                          onvalue="on", 
+                          offvalue="off", 
+                          command=switch_toggled)
+      switch.pack(anchor="w", pady=(0, 10))
+      
+      # Timezone dropdown (initially hidden)
+      options = ["UTC", "UTC+1", "UTC+2", "UTC+3", "UTC+4", "UTC+5", "UTC+6", "UTC+7", "UTC+8", 
+                "UTC+9", "UTC+10", "UTC+11", "UTC+12", "UTC-1", "UTC-2", "UTC-3", "UTC-4", 
+                "UTC-5", "UTC-6", "UTC-7", "UTC-8", "UTC-9", "UTC-10", "UTC-11", "UTC-12"]
+      combo_menu = ctk.CTkComboBox(master=content, 
+                                font=("Fixel Text Regular", 13),
+                                values=options, 
+                                state="readonly",
+                                width=200,
+                                height=35)
+      # Initially hidden, will be shown when manual mode is selected
+      
+      # Auto-set timezone to automatic
+      config_data.selected_timezone = system_data.automatic_school_timezone
+      #logger.debug("Default timezone has been selected automatically")
+  
+  # Function to set up notification delay card content
+  def setup_delay_content(content):
+      global notification_delay_menu
+      # Description text
+      desc = ctk.CTkLabel(master=content, 
+                        text="Combien de temps à l'avance souhaitez-vous être notifié ?", 
+                        font=("Fixel Text Regular", 13),
+                        text_color=("gray50", "gray70"),
+                        wraplength=300,
+                        justify="left")
+      desc.pack(anchor="w", pady=(0, 15))
+      
+      # Dropdown for notification delay
+      notification_delays = ["1 minute", "3 minutes", "5 minutes", "10 minutes"]
+      notification_delay_var = ctk.StringVar(value=notification_delays[2])  # Default to 5 minutes
+      
+      notification_delay_menu = ctk.CTkOptionMenu(
+          master=content,
+          font=("Fixel Text Regular", 13),
+          values=notification_delays, 
+          variable=notification_delay_var, 
+          command=notification_delay_changed,
+          width=200,
+          height=40,
+          button_color="#3a86ff",
+          button_hover_color="#2d6ed3", 
+          dropdown_fg_color="#ffffff",
+          dropdown_hover_color="#f0f0f0",
+          dropdown_text_color="#000000",
+          text_color=("#ffffff", "#ffffff"),
+          fg_color="#3a86ff",
+          state="readonly"
+      )
+      notification_delay_menu.pack(anchor="w")
+      
+      # Auto-set the default notification delay (5 minutes)
+      config_data.notification_delay = 5
+      #logger.debug("Default notification delay set to 5 minutes")
+  
+  # Create the cards
+  timezone_card = create_advanced_card(advanced_settings_container, "Fuseau horaire", setup_timezone_content)
+  delay_card = create_advanced_card(advanced_settings_container, "Délai avant envoi des notifications", setup_delay_content)
+  
+  # Finish button at the bottom of the tab
+  finish_button = ctk.CTkButton(master=tabview.tab("3. Avancé"), 
+                           font=default_items_font,
+                           text="Terminer", 
+                           command=final_step, 
+                           corner_radius=10, 
+                           width=200, 
+                           height=40,
+                           state="normal")
+  finish_button.place(relx=0.5, rely=0.88, anchor="center")
 
 def save_credentials():
     """
@@ -810,13 +982,28 @@ def save_credentials():
         config_data.qr_code_login = False  
             
         if client.logged_in:
-          box = CTkMessagebox(title="Succès !", font=default_messagebox_font, message="Connexion effectuée !", icon=ok_icon_path, option_1="Parfait", master=root, width=400, height=180, corner_radius=25,sound=True)
+          
+          config_data.student_fullname = client.info.name
+          config_data.student_class_name = client.info.class_name
+
+          logger.info(f'Logged in as {config_data.student_fullname}')
+
+          config_data.user_username = username
+          config_data.user_password = password
+
+          names = config_data.student_fullname.strip().split() if config_data.student_fullname.strip() else []
+          config_data.student_firstname = names[1] if len(names) > 1 else None
+
+          current_hour = datetime.datetime.now().hour
+          greeting = "Bonjour" if 6 <= current_hour < 18 else "Bonsoir"
+
+          box = CTkMessagebox(title="Connexion réussie !", font=default_messagebox_font, message=f"{greeting} {config_data.student_firstname} !\nPrenez quelques instants pour personaliser Pronot'if.", icon=ok_icon_path, option_1="Parfait", master=root, width=580, height=180, corner_radius=25,sound=True)
           box.info._text_label.configure(wraplength=450)
 
           # Get today's date
           today = datetime.date.today()
 
-          # Automatically determine the start date (e.g., 30 days before today)
+          # Automatically determine the start date (30 days before today)
           days_back = 30  # Number of days to go back
           start_date = today - datetime.timedelta(days=days_back)
 
@@ -844,20 +1031,6 @@ def save_credentials():
                 break
             except KeyError:
               menus_found = False # If no menu is found, set the flag to False
-          
-          config_data.student_fullname = client.info.name
-          config_data.student_class_name = client.info.class_name
-
-          logger.info(f'Logged in as {config_data.student_fullname}')
-
-          # Enregistrer le nom d'utilisateur et le mot de passe dans deux fichiers .env différents
-          set_key(f"{script_directory}/Data/pronote_username.env", 'User', username)
-          config_data.user_username = username
-          set_key(f"{script_directory}/Data/pronote_password.env", 'Password', password)
-          config_data.user_password = password
-
-          names = config_data.student_fullname.strip().split() if config_data.student_fullname.strip() else []
-          config_data.student_firstname = names[1] if len(names) > 1 else None
 
           root.config(cursor="arrow")
 
@@ -885,7 +1058,7 @@ def save_credentials():
 
       except (pronotepy.CryptoError, pronotepy.ENTLoginError):
          logger.warning("Wrong credentials !")
-         box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Vos identifiants de connexion semblent incorrects...", icon=warning_icon_path, option_1="Réessayer",master=root, width=400, height=180, corner_radius=25,sound=True)
+         box = CTkMessagebox(title="Erreur !", font=default_messagebox_font, message="Vos identifiants de connexion semblent incorrects...", icon=warning_icon_path, option_1="Réessayer",master=root, width=470, height=180, corner_radius=25,sound=True)
          box.info._text_label.configure(wraplength=450)
          password_entry.delete(0, 'end')
          root.config(cursor="arrow")   
