@@ -612,7 +612,6 @@ def process_qr_code():
                             sanitized_payload['ent_used'],
                             sanitized_payload['qr_code_login'],
                             sanitized_payload['uuid'],
-                            sanitized_payload['topic_name'],
                             sanitized_payload['timezone'],
                             sanitized_payload['notification_delay'],
                             sanitized_payload['evening_menu'],
