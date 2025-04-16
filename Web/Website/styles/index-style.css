@@ -134,7 +134,7 @@ body {
     gap: 1rem;
 }
 
-.main-title-box .footer-text {
+.main-title-box .footer-text-conditions {
     font-size: 10px;
     text-align: center;
     padding: 0.5rem;
@@ -165,7 +165,7 @@ a {
     animation: slideText 15s cubic-bezier(0.4, 0, 0.2, 1) infinite;
     backface-visibility: hidden;
     transition: all 0.6s ease;
-    padding: 0 10px; /* Add padding to prevent text from being cut off */
+    padding: 0 10px; /* Prevent text from being cut off */
 }
 
 
@@ -304,12 +304,15 @@ a {
     border-top: 2px solid var(--shadow);
 }
 
-.footer-box p {
-    margin-top: 1rem;
-    font-size: 0.9rem;
+.footer-box span{
+    margin-top: 2rem;
     line-height: 1.4;
+    font-size: 12px;
 }
 
+.copyright{
+    font-size: 15px!important;
+}
 
 .main-feature-box {
     grid-area: main-feature-box;
@@ -1115,4 +1118,159 @@ a {
     .status-update-time {
         font-size: 10px;
     }
+}
+
+@media screen and (min-width: 1440px) {
+    .html, body {
+        overflow-x: hidden!important;
+        height: 100%!important;
+    }
+
+    .bento-container {
+        padding-top: 0rem;
+        height: auto;
+        max-height: 100vh;
+        margin: 1rem auto;
+        
+        grid-template-rows: auto auto 1fr auto;
+        align-items: stretch;
+    }
+        
+    .support-project-box,
+    .secondary-feature-box {
+        height: 270px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .support-project-box {
+        width: 500px;
+    }
+    
+    .main-title-box {
+        height: 320px;
+    }
+    
+    .learn-more-box {
+        height: auto;
+        min-height: 450px;
+        margin-bottom: 0;
+        gap: 16px;
+    }
+    
+    .main-feature-box {
+        height: 300px;
+    }
+    
+    .download-box {
+        height: 320px;
+    }
+
+    .learn-more-box img {
+        bottom: -50%;
+    }
+
+    /* Elements inside the boxes */
+    .carousel-container {
+        height: 100px;
+        width: 500%;
+    }
+    
+    .carousel-text {
+        font-size: 70px;
+        line-height: 1.2;
+        padding-bottom: 10px; 
+    }
+
+    .carousel-subtitle {
+        font-size: 20px !important;
+        max-width: 90%;
+    }
+
+    .footer-text-conditions span, a{
+        font-size: 13px;
+    }
+
+    .bento-box h2 {
+        font-size: 2rem;
+    }
+
+    .bento-box p {
+        font-size: 1.2rem;
+    }
+
+    .footer-box span {
+        font-size: 16px;
+    }
+    
+    .copyright{
+        font-size: 18px!important;
+    }
+
+    /* Button positioning */
+    .learn-more-btn {
+        width: 250px;
+        height: 60px;
+        margin-bottom: 3rem;
+        margin-left: 0;
+        font-size: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .download-btn {
+        width: 290px;
+        height: 85px;
+        margin: 2.5rem auto 2rem;
+        font-size: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .support-project-btn {
+        width: 280px;
+        height: 95px!important;
+        margin: 2rem auto 3rem 4rem;
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Langugage toogle */
+
+    .language-toggle {
+        padding: 12px 28px;
+        border-radius: 60px;
+        font-size: 20px;
+        gap: 10px;
+    }
+    
+    .language-dropdown {
+        margin-bottom: 12px;
+        padding: 12px;
+        min-width: 180px;
+        border-radius: 16px;
+    }
+    
+    .language-option {
+        padding: 10px 18px;
+        border-radius: 12px;
+    }
+    
+    .lang-text {
+        font-size: 18px;
+    }
+    
+    .lang-code {
+        font-size: 18px;
+    }
+    
+    .language-switcher {
+        bottom: 28px;
+        right: 28px;
+    }
+    
 }

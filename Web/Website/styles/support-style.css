@@ -636,3 +636,25 @@ h1 {
         margin-left: 0;
     }
 }
+
+@media screen and (min-width: 1440px) {
+    .support-container {
+        padding: 5rem 3rem;
+        max-width: 4600px;
+        margin: 0 auto;
+    }
+    
+    .split-layout {
+        transform: scale(1.1);
+        transform-origin: center top;
+        margin: 1rem auto;
+    }
+    
+    .content-right {
+        max-height: 620px;
+    }
+    
+    .content-right iframe {
+        height: 600px;
+    }
+}
