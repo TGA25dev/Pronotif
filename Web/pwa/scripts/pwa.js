@@ -946,7 +946,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     lunch_times: convertToString(qrData.lunch_times),
                                     qr_code_login: convertToString(qrData.qr_code_login),
                                     uuid: qrData.uuid === "None" ? "00000000-0000-0000-0000-000000000000" : qrData.uuid,
-                                    topic_name: qrData.topic_name,
                                     timezone: qrData.timezone,
                                     notification_delay: qrData.notification_delay,
                                     evening_menu: convertToString(qrData.evening_menu),
