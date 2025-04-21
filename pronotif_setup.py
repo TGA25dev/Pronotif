@@ -351,7 +351,7 @@ def final_step():
 
   global download_page_qr
   download_page_qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=1)
-  download_page_qr.add_data("https://pronotif.tech/download")
+  download_page_qr.add_data("https://pronotif.tech/download?step2")
   download_page_qr.make(fit=True)
 
   img_bytes = io.BytesIO()
