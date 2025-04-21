@@ -86,6 +86,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     updateDeviceSpecificContent();
 
+    // Query parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const step2Param = urlParams.get('step2');
+
+    if (step2Param !== null) {
+        // Trigger step 2
+        const progressContainer = document.querySelector('.steps-container');
+        const step2 = document.querySelector('.step-2');
+        const step1 = document.querySelector('.step-1');
+
+        if (progressContainer && step2 && step1) {
+            // Deactivate step 1 and activate step 2
+            step1.classList.remove('active');
+            step2.classList.add('active');
+            progressContainer.classList.add('progress-active');
+
+            // Scroll to step 2
+            console.log('Directly going to step 2...');
+            step2.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
     // Platform buttons initialization
     if (platformBtns) {
         platformBtns.forEach(btn => {
@@ -154,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showModal() {
         const scrollY = window.scrollY;
-        warningModal.style.display = 'block';
+        warningModal.style.display = 'flex';
         document.body.classList.add('modal-open');
         document.body.style.position = 'fixed';
         document.body.style.top = `-${scrollY}px`;
@@ -188,7 +210,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (confirmDownload) {
         confirmDownload.addEventListener('click', () => {
-            window.location.href = "https://github.com/TGA25dev/Pronotif/releases/latest/download/Pronotif.Setup.v0.5.1.zip";
+            // Fetch latest version from GitHub API
+            fetch('https://api.github.com/repos/TGA25dev/Pronotif/releases/latest')
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(data => {
+                    const latestVersion = data.tag_name.replace('v', ''); // Remove 'v' prefix
+                    window.location.href = `https://github.com/TGA25dev/Pronotif/releases/latest/download/Pronotif.Setup.v${latestVersion}.zip`;
+                    console.log('Redirecting to latest version:', latestVersion);
+                })
+                .catch(error => {
+                    console.error('Error fetching latest version:', error);
+                    // Fallback if API request fail
+                    window.location.href = "https://github.com/TGA25dev/Pronotif/releases/latest/download/Pronotif.Setup.v0.8.zip";
+                    console.log('Redirecting to hardcoded version: 0.8');
+                });
             hideModal();
         });
     }
