@@ -74,15 +74,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize URL handling from shared config
     config.initializeUrlHandling();
     
+    // Get modal element and hide it explicitly on page load
+    const warningModal = document.getElementById('warningModal');
+    if (warningModal) {
+        warningModal.style.display = 'none';
+    }
+    
     const platformBtns = document.querySelectorAll('.platform-btn');
-    const msStoreSteps = document.querySelector('.ms-store-steps');
     const directSteps = document.querySelector('.direct-steps');
     const step2 = document.querySelector('.step-2');
-    const storeBtn = document.querySelector('.store-btn');
     const downloadBtn = document.querySelector('.download-exe-btn');
     const progressContainer = document.querySelector('.steps-container');
     const installButton = document.getElementById('installButton');
     const installSteps = document.getElementById('installSteps');
+    const closeBtn = document.querySelector('.close-btn');
+    const confirmDownload = document.getElementById('confirmDownload');
+    const directBtn = document.querySelector('.direct-btn');
 
     updateDeviceSpecificContent();
 
@@ -108,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Platform buttons initialization
+    // Platform buttons initialization - removed MS Store logic
     if (platformBtns) {
         platformBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -116,10 +123,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 platformBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 
-                if (btn.classList.contains('ms-store-btn')) {
-                    //window.open('ms-windows-store://pdp/?productid=9999999', '_blank');
-                } else if (btn.classList.contains('direct-btn')) {
-                    warningModal.style.display = 'block';
+                if (btn.classList.contains('direct-btn')) {
+                    showModal(); // Use function instead of direct style setting
                 }
 
                 if (progressContainer && step2) {
@@ -131,48 +136,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
-
-    // Installation PWA
-    if (installButton) {
-        installButton.addEventListener('click', async () => {
-            if (!deferredPrompt) {
-                alert('Installation non disponible pour le moment. Assurez-vous que l\'application n\'est pas déja  installée.');
-                return;
-            }
-
-            try {
-                deferredPrompt.prompt();
-                const choiceResult = await deferredPrompt.userChoice;
-                if (choiceResult.outcome === 'accepted') {
-                    console.log('[PWA] Installation accepted !');
-                }
-                deferredPrompt = null;
-            } catch (error) {
-                console.error('[PWA] Installation error :', error);
-                alert('Une erreur est survenue lors de l\'installation.');
-            }
-        });
-    }
-
-    updateDeviceSpecificContent();
-
-    if (window.innerWidth <= 768) {
-        const steps = document.querySelectorAll('.step');
-        
-        steps.forEach(step => {
-            step.addEventListener('click', () => {
-                const nextStep = step.nextElementSibling;
-                if (nextStep && nextStep.classList.contains('step')) {
-                    nextStep.scrollIntoView({ behavior: 'smooth' });
-                }
-            });
-        });
-    }
-
-    const directBtn = document.querySelector('.direct-btn');
-    const warningModal = document.getElementById('warningModal');
-    const closeBtn = document.querySelector('.close-btn');
-    const confirmDownload = document.getElementById('confirmDownload');
 
     function showModal() {
         const scrollY = window.scrollY;
@@ -193,6 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
         warningModal.style.display = 'none';
     }
 
+    // Keep the rest of your event handlers
     if (directBtn) {
         directBtn.addEventListener('click', (e) => {
             e.preventDefault();
