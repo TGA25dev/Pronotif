@@ -1428,16 +1428,16 @@ body.modal-open {
     }
 
     .steps-container {
-        padding-left: 0; /* EnlÃ¨ve le padding pour la progress bar */
+        padding-left: 0; 
     }
 
     .progress-line {
-        display: none; /* Cache la progress bar verticale */
+        display: none;
     }
 
     .step {
         position: relative;
-        margin: 0 0 15px 0; /* Single smaller margin */
+        margin: 0 0 15px 0;
         padding: 0;
         width: 100%;
     }
@@ -1507,6 +1507,27 @@ body.modal-open {
     .pc-message p {
         width: 100%;
         margin: 10px 0;
+    }
+
+    .modal-content {
+        margin: 0 15px;
+        padding: 30px 20px; 
+        width: calc(100% - 30px);
+        max-width: 100%;
+    }
+    
+    .warning-body {
+        padding: 15px;
+        margin: 10px 0;
+    }
+    
+    .warning-icon {
+        font-size: 40px;
+        margin-bottom: 15px;
+    }
+    
+    .modal-content h2 {
+        font-size: 1.5rem;
     }
 
 }

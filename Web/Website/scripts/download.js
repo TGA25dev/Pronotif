@@ -98,24 +98,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const step2Param = urlParams.get('step2');
 
     if (step2Param !== null) {
-        // Trigger step 2
+        // Trigger
         const progressContainer = document.querySelector('.steps-container');
         const step2 = document.querySelector('.step-2');
         const step1 = document.querySelector('.step-1');
-
+    
         if (progressContainer && step2 && step1) {
             // Deactivate step 1 and activate step 2
             step1.classList.remove('active');
             step2.classList.add('active');
             progressContainer.classList.add('progress-active');
-
-            // Scroll to step 2
-            console.log('Directly going to step 2...');
-            step2.scrollIntoView({ behavior: 'smooth' });
+    
+            // Scroll with offset
+            setTimeout(() => {
+                const offset = 20;
+                const elementPosition = step2.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - offset;
+                
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
+                
+                console.log('Scrolling to step 2 with offset...');
+            }, 100); // Delay to ensure the class is added before scrolling
         }
     }
 
-    // Platform buttons initialization - removed MS Store logic
+    // Platform buttons initialization
     if (platformBtns) {
         platformBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -124,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 btn.classList.add('active');
                 
                 if (btn.classList.contains('direct-btn')) {
-                    showModal(); // Use function instead of direct style setting
+                    showModal(); // Use function to show modal
                 }
 
                 if (progressContainer && step2) {
@@ -156,7 +166,6 @@ document.addEventListener('DOMContentLoaded', () => {
         warningModal.style.display = 'none';
     }
 
-    // Keep the rest of your event handlers
     if (directBtn) {
         directBtn.addEventListener('click', (e) => {
             e.preventDefault();
