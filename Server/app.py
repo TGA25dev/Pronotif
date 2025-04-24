@@ -18,6 +18,9 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 import hashlib
 import sentry_sdk
 from contextlib import contextmanager
+from modules.coquelicot import coquelicot_bp
+from flask_session import Session
+from redis import Redis
 
 version = "v0.8"
 sentry_sdk.init("https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992", 
@@ -70,7 +73,7 @@ app.wsgi_app = ProxyFix(
 cors_origins = [origin.strip() for origin in os.getenv('CORS_ORIGINS', '').split(',')]
 cors_methods = [method.strip() for method in os.getenv('CORS_METHODS', '').split(',')]
 cors_headers = [header.strip() for header in os.getenv('CORS_HEADERS', '').split(',')]
-cors_credentials = os.getenv('CORS_CREDENTIALS', 'false').lower() == 'true'
+cors_credentials = os.getenv('CORS_CREDENTIALS', 'False')
 
 CORS(app, 
      resources={r"/*": {
@@ -87,6 +90,18 @@ Talisman(app,
     session_cookie_secure=True,
     session_cookie_http_only=True
 )
+
+app.config['SESSION_TYPE'] = 'redis'
+app.config['SESSION_PERMANENT'] = False
+app.config['SESSION_USE_SIGNER'] = True
+app.config['SESSION_KEY_PREFIX'] = 'session:'
+app.config['SESSION_REDIS'] = Redis(
+    host=os.getenv('REDIS_HOST'),
+    port=int(os.getenv('REDIS_PORT')),
+    db=int(os.getenv('REDIS_DB'))
+)
+
+Session(app)
 
 # Setup logging
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -117,6 +132,10 @@ connection_pool = pooling.MySQLConnectionPool(**default_connection_pool_settings
 authcode = os.getenv('AUTHCODE')
 auth_table_name = os.getenv('DB_AUTH_TABLE_NAME')
 student_table_name = os.getenv('DB_STUDENT_TABLE_NAME')
+app.secret_key = os.getenv('FLASK_KEY')
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = True  #HTTPS
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 
 # Flask-Limiter and Redis Configuration
 redis_connection = redis.Redis(
@@ -974,6 +993,9 @@ def initialize():
     if not initialized:
         start_background_tasks()
         initialized = True
+
+# Register blueprint
+app.register_blueprint(coquelicot_bp)
 
 if __name__ == '__main__':
     app.run(host=os.getenv('HOST'), port=os.getenv('MAIN_PORT'))
