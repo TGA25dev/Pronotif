@@ -803,54 +803,75 @@ def fetch_student_data():
 
     if not app_session_id or not app_token:
         return jsonify({"error": "Authentication required"}), 401
-    
-    else:
-        with sentry_sdk.start_transaction(op="http.server", name="fetch_student_data"):
+
+    # Validate session ID and token format
+    if len(app_session_id) != 32 or len(app_token) != 64:
+        return jsonify({"error": "Invalid credentials"}), 401
+
+    # Get requested fields from query parameters
+    requested_fields = request.args.get('fields')
+    if not requested_fields:
+        return jsonify({"error": "No fields specified"}), 400
+
+    allowed_fields = {
+        "student_firstname", "student_fullname", "student_class", 
+        "student_username", "login_page_link", "ent_used", 
+        "qr_code_login", "uuid", "timezone", "notification_delay", 
+        "evening_menu", "unfinished_homework_reminder", 
+        "get_bag_ready_reminder", "monday_lunch", "tuesday_lunch", 
+        "wednesday_lunch", "thursday_lunch", "friday_lunch", 
+        "fcm_token", "token_updated_at", "timestamp", "is_active"
+    }
+
+    # Validate and sanitize requested fields
+    fields = list(set(field.strip() for field in requested_fields.split(',') if field.strip() in allowed_fields))
+    if not fields:
+        return jsonify({"error": "Invalid or no fields specified"}), 400
+
+    try:
+        # Sanitize inputs
+        app_session_id = bleach.clean(app_session_id)
+        app_token = bleach.clean(app_token)
+
+        with get_db_connection() as connection:
+            cursor = connection.cursor(dictionary=True)
             try:
-                # Sanitize inputs
-                app_session_id = bleach.clean(app_session_id)
-                app_token = bleach.clean(app_token)
+                query = f"""
+                    SELECT {', '.join(fields)}
+                    FROM {student_table_name}
+                    WHERE app_session_id = %s AND app_token = %s AND is_active = TRUE
+                """
+                cursor.execute(query, (app_session_id, app_token))
+                result = cursor.fetchone()
 
-                with get_db_connection() as connection:
-                    cursor = connection.cursor(dictionary=True)
+                if not result:
+                    logger.warning(f"Invalid credentials for session: {app_session_id[:4]}****")
+                    return jsonify({"error": "Invalid credentials"}), 401
 
-                    try:
-                        with sentry_sdk.start_span(op="db.query", description="Fetch student data"):
-                            query = f"""
-                                SELECT  student_fullname, student_firstname, student_class
-                                FROM {student_table_name}
-                                WHERE app_session_id = %s AND app_token = %s AND is_active = TRUE
-                            """
-                            cursor.execute(query, (app_session_id, app_token))
-                            result = cursor.fetchone()
+                # Return only requested fields
+                response_data = {field: result[field] for field in fields if field in result}
 
-                            if not result:
-                                logger.warning(f"!! Failed authentification attempt: {app_session_id} !!")
-                                return jsonify({"error": "Invalid credentials or inactive account"}), 401
+                response = jsonify({
+                    "data": response_data,
+                    "status": 200
+                })
+                response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+                response.headers['Pragma'] = 'no-cache'
+                response.headers['X-Content-Type-Options'] = 'nosniff'
+                return response
 
-                            logger.info(f"Student data fetched for session: {app_session_id}")   
-
-                            response = jsonify({
-                                "data": result, 
-                                "status": 200
-                            })
-                            response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
-                            response.headers['Pragma'] = 'no-cache'
-                            response.headers['X-Content-Type-Options'] = 'nosniff'
-                            return response
-
-                    except mysql.connector.Error as err:
-                        sentry_sdk.capture_exception(err)
-                        logger.error(f"MySQL error: {err}")
-                        return jsonify({"error": "Internal server error"}), 500
-
-                    finally:
-                        cursor.close()
-
-            except Exception as e:
-                sentry_sdk.capture_exception(e)
-                logger.error(f"Unexpected error in fetch_student_data: {e}")
+            except mysql.connector.Error as err:
+                sentry_sdk.capture_exception(err)
+                logger.error(f"MySQL error: {err}")
                 return jsonify({"error": "Internal server error"}), 500
+
+            finally:
+                cursor.close()
+
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        logger.error(f"Unexpected error in fetch_student_data: {e}")
+        return jsonify({"error": "Internal server error"}), 500
 
 # Background tasks
 def cleanup_auth_sessions():
@@ -987,15 +1008,16 @@ def get_db_connection():
                 logger.error(f"Error closing connection: {e}")
                 sentry_sdk.capture_exception(e)
 
-@app.before_request
-def initialize():
-    global initialized
-    if not initialized:
-        start_background_tasks()
-        initialized = True
+if __name__ == '__main__':    
+    @app.before_request
+    def initialize():
+        global initialized
+        if not initialized:
+            start_background_tasks()
+            initialized = True
 
-# Register blueprint
-app.register_blueprint(coquelicot_bp)
+    # Register blueprint
+    app.register_blueprint(coquelicot_bp)
 
-if __name__ == '__main__':
+    # Start the Flask app
     app.run(host=os.getenv('HOST'), port=os.getenv('MAIN_PORT'))
