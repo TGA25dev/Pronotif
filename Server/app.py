@@ -615,7 +615,7 @@ def process_qr_code():
                                 monday_lunch, tuesday_lunch, wednesday_lunch, thursday_lunch, friday_lunch,
                                 user_hash, is_active, timestamp
                             ) VALUES (
-                                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
                             )
                         """
                         
