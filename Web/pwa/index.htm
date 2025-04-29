@@ -14,7 +14,7 @@
         <link rel="preload" href="fonts/FixelVariable.ttf" as="font" type="font/ttf" crossorigin>
         <link rel="preload" href="fonts/FixelVariableItalic.ttf" as="font" type="font/ttf" crossorigin>
         <link rel="stylesheet" href="styles/fonts.css">
-        <link rel="stylesheet" href="styles/pwa-style.css?8776614">
+        <link rel="stylesheet" href="styles/pwa-style.css?crixuayzwi">
         <script src="scripts/jsQR.js"></script>
     </head>
     <body>
@@ -85,15 +85,86 @@
                     <button id="clearLogs" class="debug-button">Vider les logs</button>
                 </div>
             </div>
-        </div>    
+        </div>   
             
         <div id="dashboardView" class="view hidden">
-        <!--- Dashboard Page-->
-            <p class="welcome-greeting" id="welcomeGreeting">Veuillez patienter...</p>
-            <button class="allow-notif-button" id="allowNotifButton">Activer les notifications</button>
-
-            <span class="app-version">v0.8 beta 🐛</span>
-        </div>    
-        <script type="module" src="scripts/pwa.js?h6788g"></script>
+            <div class="dashboard-container">
+                <!-- Welcome header with user info -->
+                <div class="dashboard-header">
+                    <div class="welcome-section">
+                        <div class="welcome-text">
+                            <p class="welcome-greeting" id="welcomeGreeting">Bonjour {FirstName} ! <span class="wave-emoji">👋</span></p>
+                            <p class="welcome-subtitle">Voici un rapide aperçu de votre journée.</p>
+                        </div>
+                        <div class="user-avatar">
+                            <img src="images/default-avatar.jpg" alt="Avatar">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Next course card -->
+                <div class="dashboard-card next-course-card">
+                    <div class="card-label">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+                            <path d="M12 7v5l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        Prochain cours
+                    </div>
+                    <div class="course-content">
+                        <h3 class="course-title">{Subject} avec {Teacher}</h3>
+                        <p class="course-details">Salle {RoomName} · Début à {Start}</p>
+                    </div>
+                </div>
+                
+                <!-- Homework section -->
+                <div class="section-header">
+                    <h2>À faire ce soir</h2>
+                </div>
+                
+                <!-- Homework items -->
+                <div class="homework-list">
+                    <div class="homework-item">
+                        <div class="homework-content">
+                            <h3 class="homework-subject">{Title}</h3>
+                            <p class="homework-task">{Content}</p>
+                        </div>
+                        <div class="homework-due">Demain {Time}</div>
+                    </div>
+                    <div class="homework-item">
+                        <div class="homework-content">
+                            <h3 class="homework-subject">{Title}</h3>
+                            <p class="homework-task">{Content}</p>
+                        </div>
+                        <div class="homework-due">Demain {Time}</div>
+                    </div>
+                    
+                    <div class="homework-item">
+                        <div class="homework-content">
+                            <h3 class="homework-subject">{Title}</h3>
+                            <p class="homework-task">{Content}</p>
+                        </div>
+                        <div class="homework-due">Demain {Time}</div>
+                    </div>
+                </div>
+                
+                <!-- See more button -->
+                <button class="see-more-button">Voir plus</button>
+                
+                <!-- Current class card -->
+                <div class="dashboard-card current-class-card">
+                    <h3 class="course-title">{Subject} avec {Teacher}</h3>
+                    <p class="player-course-details">Salle {RoomName} · Fin à {End} | {TimeLeft} minutes restantes.</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                        <div class="progress-handle"></div>
+                    </div>
+                </div>
+                
+                <button class="allow-notif-button" id="allowNotifButton">Activer les notifications</button>
+                <span class="app-version">v0.8 beta 🐛</span>
+            </div>
+        </div>
+        <script type="module" src="scripts/pwa.js?povitepn"></script>
     </body>
 </html>
