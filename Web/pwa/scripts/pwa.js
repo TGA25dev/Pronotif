@@ -655,9 +655,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Service Worker Registration
     if ('serviceWorker' in navigator) {
-        
-        const SW_VERSION = '1.0.1'; 
-        const swUrl = `sw.js?v=${SW_VERSION}`;
+        const cacheBuster = new Date().getTime();
+        const swUrl = `sw.js?v=${cacheBuster}`;
         
         navigator.serviceWorker.register(swUrl, {
             scope: './'
@@ -735,7 +734,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Dashboard initialization
     function initializeDashboard() {
-        fetch("https://api.pronotif.tech/v1/app/fetch", {
+        fetch("https://api.pronotif.tech/v1/app/fetch?fields=student_firstname,student_fullname,student_class", {
             method: 'GET',
             headers: { 
                 'Content-Type': 'application/json',

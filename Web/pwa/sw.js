@@ -2,7 +2,7 @@
 importScripts('https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.9.0/firebase-messaging-compat.js');
 
-const CACHE_NAME = 'pronotif-pwa-v20';
+const CACHE_NAME = 'pronotif-pwa-v23';
 
 // Global variable to store Firebase Messaging instance
 let messaging = null;
@@ -153,21 +153,46 @@ self.addEventListener('activate', (event) => {
 });
 
 // Helper function to check if we're actually online
+let onlineCheckPromise = null;
+let lastOnlineCheck = { timestamp: 0, result: null };
+
 function isOnline() {
-    // Try to make a lightweight HEAD request to detect real connectivity
-    return new Promise(resolve => {
-        // Use Date.now() to prevent caching
-        fetch('https://api.pronotif.tech/ping?' + Date.now(), { 
+    const now = Date.now();
+    
+    // If we have a recent cached result (within 5 seconds), use it
+    if (now - lastOnlineCheck.timestamp < 5000 && lastOnlineCheck.result !== null) {
+        return Promise.resolve(lastOnlineCheck.result);
+    }
+    
+    // If there's already a check in progress, return that promise instead of starting a new one
+    if (onlineCheckPromise) {
+        return onlineCheckPromise;
+    }
+    
+    // Otherwise, start a new check
+    onlineCheckPromise = new Promise(resolve => {
+        // Use a single timestamp for the check
+        const checkTime = now;
+        fetch('https://api.pronotif.tech/ping?' + checkTime, { 
             method: 'HEAD',
             mode: 'no-cors',
             cache: 'no-store'
         })
-        .then(() => resolve(true))
-        .catch(() => resolve(false));
-    }).catch(() => {
-        // Fallback to navigator.onLine if the fetch fails
-        return navigator.onLine;
+        .then(() => {
+            lastOnlineCheck = { timestamp: now, result: true };
+            resolve(true);
+            // Clear the promise after a delay to allow new checks later
+            setTimeout(() => { onlineCheckPromise = null; }, 1000);
+        })
+        .catch(() => {
+            lastOnlineCheck = { timestamp: now, result: false };
+            resolve(false);
+            // Clear the promise after a delay to allow new checks later
+            setTimeout(() => { onlineCheckPromise = null; }, 1000);
+        });
     });
+    
+    return onlineCheckPromise;
 }
 
 // Helper function to check if a request is for a font file
@@ -192,8 +217,13 @@ function getCacheKey(request) {
 }
 
 self.addEventListener('fetch', (event) => {
-
-    console.log('[PWA] Fetch request for:', event.request.url, 'Online status:', isOnline());
+    // Get the online status first (don't log it yet)
+    const onlineStatusPromise = isOnline();
+    
+    // Log the request using the resolved online status
+    onlineStatusPromise.then(isOnline => {
+        console.log('[PWA] Fetch request for:', event.request.url, 'Online status:', isOnline);
+    });
     
     // Special handling for font requests
     if (isFontRequest(event.request.url)) {
