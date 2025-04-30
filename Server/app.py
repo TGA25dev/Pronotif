@@ -122,10 +122,10 @@ default_connection_pool_settings ={
     "user": os.getenv('DB_USER'),
     "password": os.getenv('DB_PASSWORD'),
     "database": os.getenv('DB_NAME'),
-    "connect_timeout": 10,
+    "connect_timeout": 30,
     "get_warnings": True,
     "autocommit": True,
-    "connection_timeout": 5
+    "connection_timeout": 15
 }
 connection_pool = pooling.MySQLConnectionPool(**default_connection_pool_settings)
 
@@ -526,7 +526,7 @@ def process_qr_code():
             return jsonify({"error": "Content-Type must be application/json"}), 400
 
         try:
-            request.timeout = 30
+            request.timeout = 60
             data = request.get_json()
             if not data:
                 return jsonify({"error": "Missing request data"}), 400
@@ -804,10 +804,6 @@ def fetch_student_data():
     if not app_session_id or not app_token:
         return jsonify({"error": "Authentication required"}), 401
 
-    # Validate session ID and token format
-    if len(app_session_id) != 32 or len(app_token) != 64:
-        return jsonify({"error": "Invalid credentials"}), 401
-
     # Get requested fields from query parameters
     requested_fields = request.args.get('fields')
     if not requested_fields:
@@ -815,8 +811,8 @@ def fetch_student_data():
 
     allowed_fields = {
         "student_firstname", "student_fullname", "student_class", 
-        "student_username", "login_page_link", "ent_used", 
-        "qr_code_login", "uuid", "timezone", "notification_delay", 
+        "login_page_link", "ent_used", 
+        "qr_code_login", "timezone", "notification_delay", 
         "evening_menu", "unfinished_homework_reminder", 
         "get_bag_ready_reminder", "monday_lunch", "tuesday_lunch", 
         "wednesday_lunch", "thursday_lunch", "friday_lunch", 
@@ -992,21 +988,70 @@ def start_background_tasks():
 @contextmanager
 def get_db_connection():
     connection = None
-    try:
-        connection = connection_pool.get_connection()
-        yield connection
-    except mysql.connector.Error as err:
-        sentry_sdk.capture_exception(err)
-        logger.error(f"Database connection error: {err}")
-        sentry_sdk.capture_exception(err)
-        raise
-    finally:
-        if connection:
-            try:
-                connection.close()
-            except Exception as e:
-                logger.error(f"Error closing connection: {e}")
-                sentry_sdk.capture_exception(e)
+    max_retries = 3
+    retry_count = 0
+    
+    while retry_count < max_retries:
+        try:
+            connection = connection_pool.get_connection()
+            
+            # Test if connection is valid
+            cursor = connection.cursor()
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+            cursor.close()
+            
+            yield connection
+            break  # If successful, exit the retry loop
+            
+        except mysql.connector.errors.PoolError as err:
+            # No available connections in pool
+            retry_count += 1
+            logger.warning(f"Pool error on attempt {retry_count}: {err}")
+            sentry_sdk.capture_exception(err)
+            
+            if retry_count >= max_retries:
+                logger.error("Connection pool exhausted after retries")
+                raise
+                
+            # Wait before retrying (exponential backoff)
+            time.sleep(0.5 * (2 ** retry_count))
+            
+        except mysql.connector.errors.InterfaceError as err:
+            # Connection interface error (connection lost)
+            retry_count += 1
+            logger.warning(f"Connection interface error on attempt {retry_count}: {err}")
+            sentry_sdk.capture_exception(err)
+            
+            if retry_count >= max_retries:
+                logger.error("Failed to establish working connection after retries")
+                raise
+                
+            # Connection might be invalid, try to reset the pool
+            if retry_count == max_retries - 1:
+                try:
+                    reset_connection_pool()
+                except Exception as e:
+                    logger.error(f"Failed to reset pool during retry: {e}")
+                    
+            time.sleep(0.5 * (2 ** retry_count))
+            
+        except mysql.connector.Error as err:
+            # Other MySQL errors
+            sentry_sdk.capture_exception(err)
+            logger.error(f"Database error: {err}")
+            raise
+            
+        finally:
+            if connection:
+                try:
+                    connection.close()
+                except Exception as e:
+                    logger.error(f"Error closing connection: {e}")
+                    # Don't raise this exception, just log it
+    
+    if retry_count >= max_retries:
+        raise mysql.connector.Error("Failed to get a working database connection after multiple attempts")
 
 if __name__ == '__main__':    
     @app.before_request
