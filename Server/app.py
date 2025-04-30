@@ -21,6 +21,7 @@ from contextlib import contextmanager
 from modules.coquelicot import coquelicot_bp
 from flask_session import Session
 from redis import Redis
+from modules.encryption import encrypt, decrypt
 
 version = "v0.8"
 sentry_sdk.init("https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992", 
@@ -618,16 +619,22 @@ def process_qr_code():
                                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
                             )
                         """
-                        
+                        encrypted_username = encrypt(sanitized_payload['student_username'])
+                        encrypted_password = encrypt(sanitized_payload['student_password'])
+                        encrypted_fullname = encrypt(sanitized_payload['student_fullname'])
+                        encrypted_firstname = encrypt(sanitized_payload['student_firstname'])
+                        encrypted_class = encrypt(sanitized_payload['student_class'])
+                        encrypted_login_link = encrypt(sanitized_payload['login_page_link'])
+
                         cursor.execute(insert_query, (
                             app_session_id,
                             app_token,
-                            sanitized_payload['login_page_link'],
-                            sanitized_payload['student_username'],
-                            sanitized_payload['student_password'],
-                            sanitized_payload['student_fullname'],
-                            sanitized_payload['student_firstname'], 
-                            sanitized_payload['student_class'],
+                            encrypted_login_link,
+                            encrypted_username,
+                            encrypted_password,
+                            encrypted_fullname,
+                            encrypted_firstname,
+                            encrypted_class,
                             sanitized_payload['ent_used'],
                             sanitized_payload['qr_code_login'],
                             sanitized_payload['uuid'],
@@ -845,7 +852,21 @@ def fetch_student_data():
                     return jsonify({"error": "Invalid credentials"}), 401
 
                 # Return only requested fields
-                response_data = {field: result[field] for field in fields if field in result}
+                response_data = {}
+                for field in fields:
+                    if field not in result:
+                        continue
+                        
+                    # Decrypt sensitive fields
+                    if field in ['student_firstname', 'student_fullname', 'student_class', 'login_page_link']:
+                        try:
+                            response_data[field] = decrypt(result[field])
+                        except Exception as e:
+                            logger.error(f"Error decrypting {field}: {e}")
+                            sentry_sdk.capture_exception(e)
+                            response_data[field] = None
+                    else:
+                        response_data[field] = result[field]
 
                 response = jsonify({
                     "data": response_data,
