@@ -647,14 +647,6 @@ h1 {
     color: var(--text);
 }
 
-.wave-emoji {
-    display: inline-block;
-    vertical-align: middle;
-    position: relative;
-    top: -0.1em;
-    margin-right: 0.1em;
-}
-
 .welcome-subtitle {
     color: var(--text-light);
     font-size: 1rem;
@@ -880,21 +872,119 @@ h1 {
     display: none;
 }
 
-.allow-notif-button {
+.user-avatar img {
+    background-color: #e2e8f0;
+}
+
+/* Notification specific animations */
+
+@keyframes notifFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px); /
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes notifFadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+}
+
+.notification-prompt {
+    position: fixed;
+    bottom: 1rem;
+    left: 0;
+    right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    background: var(--primary-light);
+    color: var(--text);
+    padding: 1rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    display: none;
+    width: calc(100% - 2rem);
+    max-width: 400px;
+    text-align: center;
+    animation: notifFadeIn 0.3s ease;
+    opacity: 1;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.notification-prompt.visible {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    animation: notifFadeIn 0.3s ease forwards;
+}
+
+.notification-prompt.fade-out {
+    animation: notifFadeOut 0.3s ease forwards;
+    pointer-events: none;
+}
+
+.notification-prompt h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.notification-prompt h3 svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    fill: var(--primary);
+}
+
+.notification-prompt p {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin: 0;
+}
+
+.notification-prompt .allow-button {
     background: var(--primary);
     color: white;
     border: none;
-    border-radius: 0.75rem;
-    font-size: 0.9rem;
-    padding: 0.75rem 1rem;
-    margin: 1rem auto;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
     cursor: pointer;
-    font-family: "FixelVariable", sans-serif;
-    display: block;
+    transition: background 0.2s ease;
+    width: 100%;
 }
 
-.user-avatar img {
-    background-color: #e2e8f0;
+.notification-prompt .allow-button:hover {
+    background: var(--primary-dark);
+}
+
+.notification-prompt .later-button {
+    background: transparent;
+    color: var(--primary);
+    border: none;
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-decoration: underline;
+    margin-top: 0.5rem;
+}
+
+.notification-prompt .later-button:hover {
+    color: var(--primary-dark);
 }
 
 @media screen and (max-height: 667px) {
@@ -935,9 +1025,6 @@ h1 {
         font-size: 1.2rem;
     }
     
-    .wave-emoji {
-        top: -0.05em;
-    }
     
     .welcome-subtitle {
         font-size: 0.9rem;
@@ -1060,6 +1147,10 @@ h1 {
         --text: #f8fafc;
         --text-light: #94a3b8;
         --primary-light: rgba(69, 168, 168, 0.15);
+        --notification-bg: #227472 ;
+        --notification-border: rgba(255, 255, 255, 0.2);
+        --notification-text: var(--text);
+        --notification-text-secondary: rgba(255, 255, 255, 0.9);
     }
 
     body::before {
@@ -1082,5 +1173,41 @@ h1 {
     
     .dashboard-card:not(.next-course-card):not(.current-class-card) {
         background: rgba(255, 255, 255, 0.05);
+    }
+    
+    /* Dark mode styling for notification prompt */
+    .notification-prompt {
+        background: var(--notification-bg);
+        border: 1px solid var(--notification-border);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    }
+    
+    .notification-prompt h3 {
+        color: var(--notification-text);
+    }
+    
+    .notification-prompt p {
+        color: var(--notification-text-secondary);
+    }
+    
+    .notification-prompt h3 svg {
+        fill: #EDEDED;
+    }
+    
+    .notification-prompt .allow-button {
+        background: #EDEDED;
+        color: var(--primary);
+    }
+    
+    .notification-prompt .allow-button:hover {
+        background: #EDEDED;
+    }
+    
+    .notification-prompt .later-button {
+        color: var(--notification-text);
+    }
+    
+    .notification-prompt .later-button:hover {
+        color: #EDEDED;
     }
 }

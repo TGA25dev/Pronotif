@@ -447,11 +447,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const feedbackMessage = document.getElementById('feedbackMessage');
     const spinner = document.getElementById('spinner');
     const infosQR = document.getElementById('infosQR');
-    const welcomeGreeting = document.getElementById('welcomeGreeting');
+    const notifPrompt = document.querySelector(".notification-prompt");
     const allowNotifButton = document.getElementById('allowNotifButton');
+    const laterButton = notifPrompt.querySelector(".later-button");
 
-    // Update checkExistingSession with better error handling
-    function checkExistingSession() {
+    function checkExistingSession(retryCount = 0) {
         if (!navigator.onLine) {
             console.warn('[Auth] Device is offline, showing login view');
             setTimeout(() => showLoginView(), 1000);
@@ -465,7 +465,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 'Content-Type': 'application/json',
             },
             credentials: 'include',
-            signal: AbortSignal.timeout(2000),
+            signal: AbortSignal.timeout(10000),
             cache: 'no-store'
         })
         .then(response => {
@@ -480,7 +480,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         })
         .catch(error => {
             console.warn('[Auth] Session check failed:', error.message);
-            setTimeout(() => showLoginView(), 1000);
+            
+            // 3 retries
+            if (retryCount < 3 && error.message.includes('timed out')) {
+                console.info(`[Auth] Retrying session check (${retryCount + 1}/3)...`);
+                setTimeout(() => checkExistingSession(retryCount + 1), 1000);
+            } else {
+                setTimeout(() => showLoginView(), 1000);
+            }
         });
     }
 
@@ -548,7 +555,36 @@ document.addEventListener('DOMContentLoaded', async () => {
         }    
 
         if (Notification.permission !== 'denied' || Notification.permission === 'default') {
-            allowNotifButton.style.display = 'block';
+            const isDashboard = document.getElementById('dashboardView') && 
+                                !document.getElementById('dashboardView').classList.contains('hidden');
+            if (isDashboard) {
+                // Check if the user has already dismissed the notification
+                if (document.cookie.includes("notifDismissed=true")) {
+                    return; // Don't show the prompt again
+                }
+
+                // Show the notification prompt
+                notifPrompt.classList.add("visible");
+
+                // "Allow" button
+                allowNotifButton.addEventListener("click", async () => {
+                    const permission = await Notification.requestPermission();
+                    if (permission === "granted") {
+                        console.log("Notifications allowed");
+                        notifPrompt.classList.add("fade-out");
+                        setTimeout(() => notifPrompt.classList.remove("visible"), 300);
+                    } else {
+                        console.log("Notifications denied");
+                    }
+                });
+
+                //"Later" button
+                laterButton.addEventListener("click", () => {
+                    document.cookie = "notifDismissed=true; path=/; max-age=31536000"; // 1 year
+                    notifPrompt.classList.add("fade-out");
+                    setTimeout(() => notifPrompt.classList.remove("visible"), 300);
+                });
+            }
         }
 
         console.log('Notification permission:', Notification.permission);
@@ -566,58 +602,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Check for notifications permission
     checkNotifEnabled();
-
-    // Ntification permission button
-    if (allowNotifButton) {
-        allowNotifButton.addEventListener('click', async () => {
-            const permission = await Notification.requestPermission();
-            console.info("Requesting notification permission...");
-            if (permission === 'granted') {
-                console.log('Notification permission granted!');
-                allowNotifButton.style.display = 'none';
-                
-                try {
-                    // Get the Firebase config
-                    const firebaseConfig = await fetchFirebaseConfig();
-                    
-                    // Wait for service worker to be fully registered and active
-                    const swRegistration = await navigator.serviceWorker.ready;
-                    
-                    // Pass Firebase config to service worker
-                    swRegistration.active.postMessage({
-                        type: 'FIREBASE_CONFIG',
-                        config: firebaseConfig
-                    });
-                    
-                    console.log('[PWA] Firebase config sent to service worker');
-                    
-                    // Wait a moment for the service worker to process the config
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                    
-                    const messaging = getMessaging(app);
-                    const vapidKey = 'BMwPi20UcpJRPkeiE1ktEjuv2tNPHhMmc1M-xvIWXSuAEVmU0ct96APLCXDl51f_iWevhdrewii6No6QJ3OYcgY';
-                    
-                    // Get the token
-                    const currentToken = await getToken(messaging, { 
-                        vapidKey, 
-                        serviceWorkerRegistration: swRegistration 
-                    });
-                    
-                    if (currentToken) {
-                        console.log('FCM Registration Token:', currentToken);
-                        sendFCMTokenToServer(currentToken);
-                    } else {
-                        console.warn('No registration token available');
-                    }
-                    
-                } catch (error) {
-                    console.error('Error getting FCM token after permission granted:', error);
-                }
-            } else {
-                console.log('Notification permission denied');
-            }
-        });
-    }
 
     function isImageTooDark(imageData) {
         const data = imageData.data;
@@ -740,7 +724,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 'Content-Type': 'application/json',
             },
             credentials: 'include', // Send cookies
-            signal: AbortSignal.timeout(2000)
+            signal: AbortSignal.timeout(10000)
         })
         .then(response => response.json())
         .then(data => {
@@ -751,11 +735,70 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             // Update the welcome message
             if (welcomeElement && studentFirstName) {
-                welcomeElement.textContent = `Bonjour ${studentFirstName} !`;
+                welcomeElement.textContent = `Bonjour ${studentFirstName} ! 👋`;
             }
             
             // Check if notification permission was revoked
             checkNotificationPermissionChange();
+
+            // Check for notifications permission
+            checkNotifEnabled();
+
+            // Ntification permission button
+            if (allowNotifButton) {
+                allowNotifButton.addEventListener('click', async () => {
+                    const permission = await Notification.requestPermission();
+                    console.info("Requesting notification permission...");
+                    if (permission === 'granted') {
+                        console.log('Notification permission granted!');
+                        allowNotifButton.style.display = 'none';
+                        const currentPermission = Notification.permission;
+            
+                        // Update stored permission
+                        localStorage.setItem('notificationPermission', currentPermission);
+                        
+                        try {
+                            // Get the Firebase config
+                            const firebaseConfig = await fetchFirebaseConfig();
+                            
+                            // Wait for service worker to be fully registered and active
+                            const swRegistration = await navigator.serviceWorker.ready;
+                            
+                            // Pass Firebase config to service worker
+                            swRegistration.active.postMessage({
+                                type: 'FIREBASE_CONFIG',
+                                config: firebaseConfig
+                            });
+                            
+                            console.log('[PWA] Firebase config sent to service worker');
+                            
+                            // Wait a moment for the service worker to process the config
+                            await new Promise(resolve => setTimeout(resolve, 500));
+                            
+                            const messaging = getMessaging(app);
+                            const vapidKey = 'BMwPi20UcpJRPkeiE1ktEjuv2tNPHhMmc1M-xvIWXSuAEVmU0ct96APLCXDl51f_iWevhdrewii6No6QJ3OYcgY';
+                            
+                            // Get the token
+                            const currentToken = await getToken(messaging, { 
+                                vapidKey, 
+                                serviceWorkerRegistration: swRegistration 
+                            });
+                            
+                            if (currentToken) {
+                                console.log('FCM Registration Token:', currentToken);
+                                sendFCMTokenToServer(currentToken);
+                            } else {
+                                console.warn('No registration token available');
+                            }
+                            
+                        } catch (error) {
+                            console.error('Error getting FCM token after permission granted:', error);
+                        }
+                    } else {
+                        console.log('Notification permission denied');
+                    }
+                });
+            }
         })
         .catch(error => {
             console.error('Dashboard data fetch failed:', error);
@@ -974,7 +1017,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify(mappedData),
                                     credentials: 'include',
-                                    signal: AbortSignal.timeout(2000)
+                                    signal: AbortSignal.timeout(10000)
 
                                     
                                 })
