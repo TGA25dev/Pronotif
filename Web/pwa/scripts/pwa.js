@@ -1,5 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js';
 import { getMessaging, getToken } from 'https://www.gstatic.com/firebasejs/10.9.0/firebase-messaging.js';
+const VAPID_KEY = 'BMwPi20UcpJRPkeiE1ktEjuv2tNPHhMmc1M-xvIWXSuAEVmU0ct96APLCXDl51f_iWevhdrewii6No6QJ3OYcgY';
 
 // Custom debug logger
 const originalConsole = {
@@ -121,7 +122,6 @@ const debugLogger = {
         const APP_VERSION = '0.8.0';
         const API_VERSION = 'v1';
         const API_BASE_URL = 'https://api.pronotif.tech';
-        const VAPID_KEY = 'BMwPi20UcpJRPkeiE1ktEjuv2tNPHhMmc1M-xvIWXSuAEVmU0ct96APLCXDl51f_iWevhdrewii6No6QJ3OYcgY';
         
         const info = {
             app: {
@@ -451,12 +451,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const allowNotifButton = document.getElementById('allowNotifButton');
     const infoNotifText = document.getElementById('infoNotifText');
     const infoNotifTitle = document.getElementById('infoNotifTitle');
-    const laterButton = notifPrompt.getElementById('laterButton');
+    const laterButton = document.getElementById('laterButton');
 
     function checkExistingSession(retryCount = 0) {
         // Check if demo mode is enabled
         const isDemoMode = localStorage.getItem('demoMode') === 'true' || 
-                          new URLSearchParams(window.location.search).get('demo') === 'true';
+                        new URLSearchParams(window.location.search).get('demo') === 'true';
+        console.log('Demo mode:', isDemoMode);
         
         if (isDemoMode) {
             console.info('[Auth] Demo mode enabled, bypassing login');
@@ -470,6 +471,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             setTimeout(() => showDashboard(), 1000);
             return;
         }
+
+        // Explicitly set demo mode to false if not in demo mode
+        window.appDemoMode = false;
 
         if (!navigator.onLine) {
             console.warn('[Auth] Device is offline, showing login view');
@@ -792,12 +796,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (allowNotifButton) {
                 allowNotifButton.addEventListener('click', async () => {
                     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-                    const permission = await Notification.requestPermission();
+                    await Notification.requestPermission();
                     console.info("Requesting notification permission...");
 
-                    if (permission === 'granted') {
+                    // Wait until Notification.permission is no longer "default"
+                    function waitForPermissionChange(resolve) {
+                        if (Notification.permission !== 'default') {
+                            resolve(Notification.permission);
+                        } else {
+                            setTimeout(() => waitForPermissionChange(resolve), 100);
+                        }
+                    }
+                    const finalPermission = await new Promise(waitForPermissionChange);
+
+                    if (finalPermission === 'granted') {
                         console.log('Notification permission granted!');
-                        
                         allowNotifButton.style.display = 'none';
                         const currentPermission = Notification.permission;
             
@@ -826,12 +839,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 type: 'FIREBASE_CONFIG',
                                 config: firebaseConfig
                             });
-                            
                             console.log('[PWA] Firebase config sent to service worker');
                             
                             // Wait a moment for the service worker to process the config
                             await new Promise(resolve => setTimeout(resolve, 500));
-                            
                             const messaging = getMessaging(app);
                             
                             // Get the token
@@ -850,18 +861,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                         } catch (error) {
                             console.error('Error getting FCM token after permission granted:', error);
                         }
-                    } else {
+                    } else if (finalPermission === "denied") {
                         console.log('Notification permission denied');
-                        // Update stored permission
-                        localStorage.setItem('notificationPermission', permission);
-            
-                        // Store that we've asked already
+                        localStorage.setItem('notificationPermission', finalPermission);
                         document.cookie = "notifDismissed=true; path=/; max-age=31536000"; // 1 year
 
                         allowNotifButton.style.display = 'none';
                         laterButton.style.display = 'none';
-                        infoNotifText.textContent = 'Notifications désactivées !';
-                        infoNotifTitle.textContent = 'Vous avez refusé les notifications, activez les à nouveau dans les paramètres de votre appareil.';
+                        infoNotifTitle.textContent = 'Notifications désactivées ! 😢';
+                        infoNotifText.textContent = 'Vous avez refusé les notifications, pous pourrez toujours les activer à nouveau dans les paramètres de votre appareil.';
 
                         setTimeout(() => {
                             //Fade out
@@ -870,12 +878,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                             // Hide it 
                             setTimeout(() => {
                                 notifPrompt.classList.remove("visible");
-                            }, 300);
-                        }, 3000);
+                            }, 500);
+                        }, 5000);
                     }
                 });
-            }
-        })
+            }        })
         .catch(error => {
             console.error('Dashboard data fetch failed:', error);
             showFeedback('Unable to load dashboard. Please try again.', 'error');
@@ -968,10 +975,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
 
+            cameraView.setAttribute('playsinline', true);
+            cameraView.setAttribute('autoplay', true);
+            cameraView.setAttribute('muted', true);
+            cameraView.playsInline = true;
+            cameraView.autoplay = true;
+            cameraView.muted = true;
             cameraView.srcObject = stream;
             cameraView.style.display = 'block';
             cameraButton.style.display = 'none';
             infosQR.style.display = 'block';
+
+            function stopCameraStream() {
+                if (cameraView && cameraView.srcObject) {
+                    cameraView.srcObject.getTracks().forEach(track => track.stop());
+                    cameraView.srcObject = null;
+                }
+            }
 
             // Start QR code scanning
             function startQRScanning() {
@@ -1133,6 +1153,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                         isProcessing = false;
                                         cameraView.classList.remove('loading');
                                         hideFeedback();
+                                        stopCameraStream();
                                         showDashboard();
                                     }, 3000);
                                 })
@@ -1228,6 +1249,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Send FCM token to server
     async function sendFCMTokenToServer(token) {
+        if (token === lastSentToken) {
+            console.log('FCM token already sent, skipping duplicate.');
+            return;
+        }
+        lastSentToken = token;
         try {
             const response = await fetch('https://api.pronotif.tech/v1/app/fcm-token', {
                 method: 'POST',

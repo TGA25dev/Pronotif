@@ -957,7 +957,7 @@ h1 {
 }
 
 .notification-prompt .allow-button {
-    font-family: "Fixel Variable", sans-serif;
+    font-family: "FixelVariable", sans-serif;
     background: var(--primary);
     color: white;
     border: none;
@@ -975,7 +975,7 @@ h1 {
 }
 
 .notification-prompt .later-button {
-    font-family: 'Fixel Variable', sans-serif;
+    font-family: 'FixelVariable', sans-serif;
     background: transparent;
     color: var(--primary);
     border: none;
