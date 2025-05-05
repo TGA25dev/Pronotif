@@ -452,6 +452,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const infoNotifText = document.getElementById('infoNotifText');
     const infoNotifTitle = document.getElementById('infoNotifTitle');
     const laterButton = document.getElementById('laterButton');
+    let lastSentToken = localStorage.getItem('fcmToken') || null;
 
     function checkExistingSession(retryCount = 0) {
         // Check if demo mode is enabled
