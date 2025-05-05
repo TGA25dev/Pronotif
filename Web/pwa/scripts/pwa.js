@@ -429,7 +429,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                     if (spinner) spinner.style.display = 'none';
                     resolve();
-                }, 400);
+                }, 600);
             } else {
                 // If no loading view, show login immediately
                 if (loginView) {
@@ -449,9 +449,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     const infosQR = document.getElementById('infosQR');
     const notifPrompt = document.querySelector(".notification-prompt");
     const allowNotifButton = document.getElementById('allowNotifButton');
-    const laterButton = notifPrompt.querySelector(".later-button");
+    const infoNotifText = document.getElementById('infoNotifText');
+    const infoNotifTitle = document.getElementById('infoNotifTitle');
+    const laterButton = notifPrompt.getElementById('laterButton');
 
     function checkExistingSession(retryCount = 0) {
+        // Check if demo mode is enabled
+        const isDemoMode = localStorage.getItem('demoMode') === 'true' || 
+                          new URLSearchParams(window.location.search).get('demo') === 'true';
+        
+        if (isDemoMode) {
+            console.info('[Auth] Demo mode enabled, bypassing login');
+            // Set demo mode flag
+            window.appDemoMode = true;
+            // Store the demo mode preference if it came from URL
+            if (new URLSearchParams(window.location.search).get('demo') === 'true') {
+                localStorage.setItem('demoMode', 'true');
+            }
+            // Go directly to dashboard
+            setTimeout(() => showDashboard(), 1000);
+            return;
+        }
+
         if (!navigator.onLine) {
             console.warn('[Auth] Device is offline, showing login view');
             setTimeout(() => showLoginView(), 1000);
@@ -531,11 +550,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
                 const messaging = getMessaging(app);
-                const vapidKey = 'BMwPi20UcpJRPkeiE1ktEjuv2tNPHhMmc1M-xvIWXSuAEVmU0ct96APLCXDl51f_iWevhdrewii6No6QJ3OYcgY';
                 
                 // Get the token
                 const currentToken = await getToken(messaging, { 
-                    vapidKey, 
+                    VAPID_KEY, 
                     serviceWorkerRegistration: swRegistration 
                 });
     
@@ -656,7 +674,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     console.log('[PWA] Service worker state:', newWorker.state);
                     
                     if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                        // New service worker available, but let's not force activation immediately
+                        // New service worker available
                         console.log('[PWA] New service worker available. Refresh to update.');
                         // add toast message for new update ?
                     }
@@ -713,12 +731,38 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             // Start loading dashboard data
             initializeDashboard();
-        }, 400);
+        }, 600);
     }
 
     // Dashboard initialization
     function initializeDashboard() {
-        fetch("https://api.pronotif.tech/v1/app/fetch?fields=student_firstname,student_fullname,student_class", {
+        // Check if we're in demo mode
+        if (window.appDemoMode) {
+            console.log('[Dashboard] Loading in demo mode with mock data');
+            
+            // Update UI to indicate demo mode
+            const welcomeElement = document.getElementById('welcomeGreeting');
+            if (welcomeElement) {
+                welcomeElement.textContent = 'Bonjour Demo ! 👋';
+            }
+            
+            // Add demo mode indicator
+            const header = document.querySelector('.dashboard-header');
+            if (header) {
+                const demoIndicator = document.createElement('div');
+                demoIndicator.className = 'demo-mode-indicator';
+                demoIndicator.textContent = 'Mode Démo';
+                demoIndicator.addEventListener('click', () => {
+                    localStorage.removeItem('demoMode');
+                    window.location.reload();
+                });
+                header.appendChild(demoIndicator);
+            }
+            
+            return; // Skip actual API calls
+        }
+
+        fetch("https://api.pronotif.tech/v1/app/fetch?fields=student_firstname", {
             method: 'GET',
             headers: { 
                 'Content-Type': 'application/json',
@@ -747,16 +791,29 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Ntification permission button
             if (allowNotifButton) {
                 allowNotifButton.addEventListener('click', async () => {
+                    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
                     const permission = await Notification.requestPermission();
                     console.info("Requesting notification permission...");
+
                     if (permission === 'granted') {
                         console.log('Notification permission granted!');
+                        
                         allowNotifButton.style.display = 'none';
                         const currentPermission = Notification.permission;
             
                         // Update stored permission
                         localStorage.setItem('notificationPermission', currentPermission);
+
+                        if (isIOS) {
+                            console.log('iOS detected, reloading page to enable notifications');
+                            // Reload the page to apply changes
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
+                            return;
+                        }
                         
+                        // Non iOS devices, follow as planned
                         try {
                             // Get the Firebase config
                             const firebaseConfig = await fetchFirebaseConfig();
@@ -776,11 +833,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                             await new Promise(resolve => setTimeout(resolve, 500));
                             
                             const messaging = getMessaging(app);
-                            const vapidKey = 'BMwPi20UcpJRPkeiE1ktEjuv2tNPHhMmc1M-xvIWXSuAEVmU0ct96APLCXDl51f_iWevhdrewii6No6QJ3OYcgY';
                             
                             // Get the token
                             const currentToken = await getToken(messaging, { 
-                                vapidKey, 
+                                VAPID_KEY, 
                                 serviceWorkerRegistration: swRegistration 
                             });
                             
@@ -796,6 +852,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                     } else {
                         console.log('Notification permission denied');
+                        // Update stored permission
+                        localStorage.setItem('notificationPermission', permission);
+            
+                        // Store that we've asked already
+                        document.cookie = "notifDismissed=true; path=/; max-age=31536000"; // 1 year
+
+                        allowNotifButton.style.display = 'none';
+                        laterButton.style.display = 'none';
+                        infoNotifText.textContent = 'Notifications désactivées !';
+                        infoNotifTitle.textContent = 'Vous avez refusé les notifications, activez les à nouveau dans les paramètres de votre appareil.';
+
+                        setTimeout(() => {
+                            //Fade out
+                            notifPrompt.classList.add("fade-out");
+                            
+                            // Hide it 
+                            setTimeout(() => {
+                                notifPrompt.classList.remove("visible");
+                            }, 300);
+                        }, 3000);
                     }
                 });
             }
@@ -1187,10 +1263,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             const swRegistration = await navigator.serviceWorker.ready;
-            const vapidKey = 'BMwPi20UcpJRPkeiE1ktEjuv2tNPHhMmc1M-xvIWXSuAEVmU0ct96APLCXDl51f_iWevhdrewii6No6QJ3OYcgY';
             
             const currentToken = await getToken(messaging, { 
-                vapidKey, 
+                VAPID_KEY, 
                 serviceWorkerRegistration: swRegistration 
             });
 

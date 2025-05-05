@@ -957,6 +957,7 @@ h1 {
 }
 
 .notification-prompt .allow-button {
+    font-family: "Fixel Variable", sans-serif;
     background: var(--primary);
     color: white;
     border: none;
@@ -974,6 +975,7 @@ h1 {
 }
 
 .notification-prompt .later-button {
+    font-family: 'Fixel Variable', sans-serif;
     background: transparent;
     color: var(--primary);
     border: none;
@@ -985,6 +987,28 @@ h1 {
 
 .notification-prompt .later-button:hover {
     color: var(--primary-dark);
+}
+
+.demo-mode-indicator {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #ff5722;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 0 0 8px 8px;
+    font-size: 12px;
+    font-weight: 500;
+    z-index: 1000;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+.demo-mode-indicator:hover {
+    background: #e64a19;
+    padding-top: 6px;
 }
 
 @media screen and (max-height: 667px) {
