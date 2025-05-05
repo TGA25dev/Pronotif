@@ -870,7 +870,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         allowNotifButton.style.display = 'none';
                         laterButton.style.display = 'none';
                         infoNotifTitle.textContent = 'Notifications désactivées ! 😢';
-                        infoNotifText.textContent = 'Vous avez refusé les notifications, pous pourrez toujours les activer à nouveau dans les paramètres de votre appareil.';
+                        infoNotifText.textContent = 'Pour les activer à nouveau rendez-vous dans les paramètres de votre appareil.';
 
                         setTimeout(() => {
                             //Fade out

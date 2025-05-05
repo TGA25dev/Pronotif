@@ -2,7 +2,7 @@
 importScripts('https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.9.0/firebase-messaging-compat.js');
 
-const CACHE_NAME = 'pronotif-pwa-v24';
+const CACHE_NAME = 'pronotif-pwa-v25';
 
 // Global variable to store Firebase Messaging instance
 let messaging = null;
@@ -59,17 +59,19 @@ self.addEventListener('push', function(event) {
         return;
       }
       
-      const title = payload.notification?.title || 'Pronot\'if';
-      const options = {
-        body: payload.notification?.body || 'Nouvelle notification',
-        icon: '/Web/images/pwa/assets/icon-192x192.png',
-        tag: 'pronotif-notification', // Add tag to prevent duplicates
-        renotify: false,              // Don't notify again for same tag
-        ...payload.notification
-      };
-      
+      const deepLink = payload.notification?.data?.deep_link || payload.data?.deep_link || 'https://pronotif.tech/pwa/index.htm';
       event.waitUntil(
-        clients.openWindow(event.notification.data?.deep_link || 'https://pronotif.tech/pwa/index.htm')
+          self.registration.showNotification(
+              payload.notification?.title || 'Pronot\'if',
+              {
+                  body: payload.notification?.body || 'Nouvelle notification',
+                  icon: '/Web/images/pwa/assets/icon-192x192.png',
+                  tag: 'pronotif-notification',
+                  renotify: false,
+                  data: { deep_link: deepLink },
+                  ...payload.notification
+              }
+          )
       );
     } catch (error) {
       console.error('[Service Worker] Error handling push event:', error);
