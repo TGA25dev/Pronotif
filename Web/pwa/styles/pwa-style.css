@@ -139,6 +139,11 @@ body::before {
     animation: fadeOut 0.4s ease forwards;
 }
 
+.fade-in, .fade-out {
+    will-change: opacity, transform;
+    backface-visibility: hidden;
+  }
+
 .animating-out {
     pointer-events: none;
     z-index: 5;
@@ -1011,6 +1016,93 @@ h1 {
     padding-top: 6px;
 }
 
+
+/* Styles for #skeletonView */
+#skeletonView .skeleton-container {
+    margin-top: 1rem; 
+    padding: 1rem 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Welcome header skeleton  */
+#skeletonView .welcome-section .welcome-text .skelly-rectangle:first-child {
+    margin-bottom: 12px;
+}
+
+/* Next course card skeleton */
+#skeletonView .dashboard-card.next-course-card {
+    background-color: rgba(69, 168, 168, 0.15);
+}
+
+/* Internal to next course card skeleton */
+#skeletonView .next-course-card .card-label .skelly-rectangle {
+    display: inline-block;
+    vertical-align: middle;
+}
+#skeletonView .next-course-card .course-content {
+    margin-top: 12px;
+}
+#skeletonView .next-course-card .course-content .skelly-rectangle:first-child {
+    margin-bottom: 12px;
+}
+
+
+/* Homework items skeleton */
+
+#skeletonView .homework-list .homework-item {
+    background-color: rgba(240, 240, 240, 0.3);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+/* Internal to homework item skeleton */
+#skeletonView .homework-item .homework-content .skelly-rectangle:first-child {
+    margin-bottom: 8px;
+}
+#skeletonView .homework-item > .skelly-rectangle {
+    background-color: rgba(220, 220, 220, 0.5);
+    float: right;
+    margin-top: -40px; 
+}
+
+/* See more button skeleton */
+#skeletonView .homework-list + div { 
+    width: 100%;
+    text-align: center;
+
+}
+#skeletonView .homework-list + div > .skelly-rectangle {
+    display: inline-block;
+}
+
+/* Current class card skeleton */
+#skeletonView .dashboard-card.current-class-card {
+    background-color: rgba(69, 168, 168, 0.15);
+    border-radius: 0.75rem;
+    margin-top: 5rem;
+    padding: 0.75rem 0;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+/* Internal to current class card skeleton */
+#skeletonView .current-class-card > .skelly-rectangle:nth-child(1) {
+    margin: 0 1rem 8px 1rem;
+}
+#skeletonView .current-class-card > .skelly-rectangle:nth-child(2) {
+    margin: 0 1rem 12px 1rem;
+}
+#skeletonView .current-class-card .progress-bar {
+    background-color: rgba(200, 200, 200, 0.3);
+    height: 4px;
+    border-radius: 4px;
+    margin: 1.25rem 1rem 0.5rem 1rem;
+    width: calc(100% - 2rem);
+}
+
+
+
 @media screen and (max-height: 667px) {
     :root {
         --spacing-md: 1rem;
@@ -1124,6 +1216,20 @@ h1 {
     .welcome-section {
         margin-bottom: 0.75rem;
     }
+
+    #skeletonView .skeleton-container {
+        margin-top: -1.5rem;
+    }
+
+    /* Reduce the size of skelly rectangles in current class card*/
+    #skeletonView .current-class-card > .skelly-rectangle:nth-child(1) {
+        height: 14px !important;
+    }
+    
+    #skeletonView .current-class-card > .skelly-rectangle:nth-child(2) {
+        height: 12px !important;
+    }
+
 }
 
 @media screen and (max-height: 568px) {
@@ -1153,6 +1259,13 @@ h1 {
         display: none;
     }
 }
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
 
 /* Notched phones */
 @supports (padding: env(safe-area-inset-top)) {

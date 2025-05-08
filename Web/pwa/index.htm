@@ -14,8 +14,15 @@
         <link rel="preload" href="fonts/FixelVariable.ttf" as="font" type="font/ttf" crossorigin>
         <link rel="preload" href="fonts/FixelVariableItalic.ttf" as="font" type="font/ttf" crossorigin>
         <link rel="stylesheet" href="styles/fonts.css">
-        <link rel="stylesheet" href="styles/pwa-style.css?byuiBYcrtETRrtyUOpoiNUOctEXre">
+        <link rel="stylesheet" href="styles/pwa-style.css?HbyuiBYcrtETRrtyUOpoiNUOctEXre">
+
+        <!--jsQR Script-->
         <script src="scripts/jsQR.js"></script>
+        <!-- Skelly CSS -->
+        <link rel="stylesheet" href="https://unpkg.com/@midnight-theory/skelly/dist/bundle.min.css">
+        <!-- Skelly JS -->
+        <script src="https://unpkg.com/@midnight-theory/skelly/dist/bundle.min.js"></script>
+        
     </head>
     <body>
         <div class="orientation-warning">
@@ -85,8 +92,83 @@
                     <button id="clearLogs" class="debug-button">Vider les logs</button>
                 </div>
             </div>
-        </div>   
-            
+        </div> 
+
+
+        <!--Skeleton Loader-->
+        <div id="skeletonView" class="view hidden">
+            <div class="skeleton-container">
+                <!-- Welcome header skeleton -->
+                <div class="dashboard-header">
+                    <div class="welcome-section">
+                        <div class="welcome-text">
+                            <div class="skelly-rectangle" data-width="220px" data-height="28px" data-radius="4px"></div>
+                            <div class="skelly-rectangle" data-width="280px" data-height="18px" data-radius="4px"></div>
+                        </div>
+                        <div class="user-avatar">
+                            <div class="skelly-circle" data-size="45px"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Next course card skeleton -->
+                <div class="dashboard-card next-course-card">
+                    <div class="card-label">
+                        <div class="skelly-rectangle" data-width="120px" data-height="18px" data-radius="4px"></div>
+                    </div>
+                    <div class="course-content">
+                        <div class="skelly-rectangle" data-width="80%" data-height="22px" data-radius="4px"></div>
+                        <div class="skelly-rectangle" data-width="60%" data-height="16px" data-radius="4px"></div>
+                    </div>
+                </div>
+                
+                <!-- Homework section skeleton -->
+                <div class="section-header">
+                    <div class="skelly-rectangle" data-width="140px" data-height="28px" data-radius="4px"></div>
+                </div>
+                
+                <!-- Homework items skeleton -->
+                <div class="homework-list">
+                    <div class="homework-item">
+                        <div class="homework-content">
+                            <div class="skelly-rectangle" data-width="120px" data-height="20px" data-radius="4px"></div>
+                            <div class="skelly-rectangle" data-width="90%" data-height="16px" data-radius="4px"></div>
+                        </div>
+                        <div class="skelly-rectangle" data-width="100px" data-height="16px" data-radius="4px"></div>
+                    </div>
+                    <div class="homework-item">
+                        <div class="homework-content">
+                            <div class="skelly-rectangle" data-width="100px" data-height="20px" data-radius="4px"></div>
+                            <div class="skelly-rectangle" data-width="85%" data-height="16px" data-radius="4px"></div>
+                        </div>
+                        <div class="skelly-rectangle" data-width="100px" data-height="16px" data-radius="4px"></div>
+                    </div>
+                    <div class="homework-item">
+                        <div class="homework-content">
+                            <div class="skelly-rectangle" data-width="110px" data-height="20px" data-radius="4px"></div>
+                            <div class="skelly-rectangle" data-width="80%" data-height="16px" data-radius="4px"></div>
+                        </div>
+                        <div class="skelly-rectangle" data-width="100px" data-height="16px" data-radius="4px"></div>
+                    </div>
+                </div>
+
+                <!-- See more button skeleton -->
+                <div>
+                    <div class="skelly-rectangle" data-width="80px" data-height="14px" data-radius="4px"></div>
+                </div>
+
+                <!-- Current class card skeleton-->
+                <div class="dashboard-card current-class-card">
+                    <div class="skelly-rectangle" data-width="70%" data-height="22px" data-radius="4px"></div>
+                    <div class="skelly-rectangle" data-width="80%" data-height="16px" data-radius="4px"></div>
+                    
+                    <div class="progress-bar">
+                        <div class="skelly-rectangle" data-width="40%" data-height="100%" data-radius="4px" data-color="rgba(69, 168, 168, 0.5)"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div id="dashboardView" class="view hidden">
             <div class="dashboard-container">
                 <!-- Welcome header with user info -->
@@ -176,6 +258,6 @@
             <button id="laterButton" class="later-button">Plus tard</button>
         </div>
 
-        <script type="module" src="scripts/pwa.js?vxvxvxvnununxvxvxvxvxv786545678" crossorigin="anonymous"></script>
+        <script type="module" src="scripts/pwa.js?Qvxvxvxvnununxvxvxvxvxv786545678" crossorigin="anonymous"></script>
     </body>
 </html>

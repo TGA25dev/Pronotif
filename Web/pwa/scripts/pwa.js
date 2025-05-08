@@ -297,6 +297,19 @@ async function initializeFirebase() {
 
 document.addEventListener('DOMContentLoaded', async () => {
 
+    // Initialize Skelly components once the DOM is ready
+    if (window.Skelly && typeof window.Skelly.InitAll === 'function') {
+        try {
+            window.Skelly.InitAll();
+            console.log('[Skelly] Succesfully initialized all Skelly components !');
+        } catch (error) {
+            console.error('[Skelly] Error initializing Skelly components:', error);
+        }
+    } else {
+        console.warn('[Skelly] Skelly.InitAll function not found. Skelly components might not render correctly...');
+
+    }
+
     if (!localStorage.getItem('notificationPermission')) {
         localStorage.setItem('notificationPermission', Notification.permission);
     }
@@ -696,47 +709,74 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Hide the spinner when showing dashboard
         const spinner = document.getElementById('spinner');
         if (spinner) spinner.style.display = 'none';
-        // Get the login view and loading view
+
         const loginView = document.getElementById('loginView');
         const loadingView = document.getElementById('loadingView');
+        const skeletonView = document.getElementById('skeletonView');
+        const dashboardView = document.getElementById('dashboardView');
 
-        if (dashboardView) {
-            dashboardView.classList.add('hidden');
-            dashboardView.classList.remove('fade-in');
-        }
-
+        // Start fade-out for login or loading views if they are visible
+        let initialFadeOutOccurred = false;
         if (loginView && !loginView.classList.contains('hidden')) {
-            loginView.classList.add('animating-out');
-            loginView.classList.add('fade-out');
+            loginView.classList.add('animating-out', 'fade-out');
             console.log('[UI] Fading out login view');
+            initialFadeOutOccurred = true;
+        }
+        if (loadingView && !loadingView.classList.contains('hidden')) {
+            loadingView.classList.add('animating-out', 'fade-out');
+            console.log('[UI] Fading out loading view');
+            initialFadeOutOccurred = true;
         }
 
-        if (loadingView && !loadingView.classList.contains('hidden')) {
-            loadingView.classList.add('animating-out');
-            loadingView.classList.add('fade-out');
-            console.log('[UI] Fading out loading view');
-        }
+        const initialFadeOutDuration = initialFadeOutOccurred ? 600 : 0;
 
         setTimeout(() => {
-            console.log('[UI] Animation complete, showing dashboard');
-            
             // Hide all views
             document.querySelectorAll('.view').forEach(view => {
                 view.classList.add('hidden');
-                view.classList.remove('animating-out');
-                view.classList.remove('fade-out');
-                view.classList.remove('fade-in');
+                view.classList.remove('animating-out', 'fade-out', 'fade-in');
             });
-            
-            // Show dashboard with animation
-            if (dashboardView) {
-                dashboardView.classList.remove('hidden');
-                dashboardView.classList.add('fade-in');
+            console.log('[UI] All previous views hidden. Showing skeleton view.');
+
+            // Show skeleton view
+            if (skeletonView) {
+                skeletonView.classList.remove('hidden');
+                skeletonView.classList.add('fade-in');
+                console.log('[UI] Skeleton view is now visible.');
             }
-            
-            // Start loading dashboard data
-            initializeDashboard();
-        }, 600);
+
+            // Initialize dashboard content (demo or real) while skeleton is visible.
+            initializeDashboard()
+                .then(() => {
+                    return new Promise((resolve) => {
+                        setTimeout(resolve, 400); // Small delay to avoid flicker
+                    });
+                })
+                .then(() => {
+                    console.log('[UI] Data ready, fading out skeleton.');
+                    if (skeletonView) {
+                        skeletonView.classList.add('animating-out','fade-out');
+                    }
+                    setTimeout(() => {
+                        console.log('[UI] Skeleton fade out complete. Showing dashboard view.');
+                        if (skeletonView) {
+                            skeletonView.classList.add('hidden');
+                            skeletonView.classList.remove('animating-out', 'fade-out', 'fade-in');
+                        }
+
+                        // Show the dashboard view (which has been prepared by initializeDashboard)
+                        if (dashboardView) {
+                            dashboardView.classList.remove('hidden');
+                            dashboardView.classList.add('fade-in');
+                            console.log('[UI] Dashboard view is now visible.');
+                        }
+                    }, 600);
+                })
+                .catch(err => {
+                    console.error('[UI] Dashboard init failed:', err);
+                    // Handle error
+                });
+        }, initialFadeOutDuration);
     }
 
     // Dashboard initialization
@@ -764,10 +804,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 header.appendChild(demoIndicator);
             }
             
-            return; // Skip actual API calls
+            return Promise.resolve(); // Resolve immediately in demo mode
         }
 
-        fetch("https://api.pronotif.tech/v1/app/fetch?fields=student_firstname", {
+        return fetch("https://api.pronotif.tech/v1/app/fetch?fields=student_firstname", {
             method: 'GET',
             headers: { 
                 'Content-Type': 'application/json',
