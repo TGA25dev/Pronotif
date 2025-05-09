@@ -495,8 +495,8 @@ def get_firebase_config():
                         
                         # Return the config
                         response = jsonify(firebase_config)
-                        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
-                        response.headers['Pragma'] = 'no-cache'
+                        cache_seconds = int(os.getenv('FIREBASE_CONFIG_CACHE_SECONDS', '3600'))
+                        response.headers['Cache-Control'] = f'private, max-age={cache_seconds}'
                         response.headers['X-Content-Type-Options'] = 'nosniff'
                         return response
                 
