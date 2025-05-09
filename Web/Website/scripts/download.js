@@ -197,8 +197,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 .catch(error => {
                     console.error('Error fetching latest version:', error);
                     // Fallback if API request fail
-                    window.location.href = "https://github.com/TGA25dev/Pronotif/releases/latest/download/Pronotif.Setup.v0.8.zip";
-                    console.log('Redirecting to hardcoded version: 0.8');
+                    window.location.href = "https://github.com/TGA25dev/Pronotif/releases/latest/download/Pronotif.Setup.v0.8.1.zip";
+                    console.log('Redirecting to hardcoded version: 0.8.1');
                 });
             hideModal();
         });
