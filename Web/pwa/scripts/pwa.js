@@ -529,12 +529,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function fetchFirebaseConfig() {
+        // Check for cached config
+        const cachedConfig = localStorage.getItem('firebaseConfig');
+        const cachedTimestamp = localStorage.getItem('firebaseConfigTimestamp');
+        const cacheTTL = 3600 * 1000; // 1 hour cache lifetime
+        
+        if (cachedConfig && cachedTimestamp && 
+            (Date.now() - parseInt(cachedTimestamp) < cacheTTL)) {
+            console.log('Using cached Firebase config');
+            return JSON.parse(cachedConfig);
+        }
+
         const response = await fetch('https://api.pronotif.tech/v1/app/firebase-config', {
-            credentials: 'include',
-            cache: 'no-store'
+            credentials: 'include'
         });
         
         if (!response.ok) throw new Error('Failed to get Firebase config');
+        
+        const config = await response.json();
+
+        // Cache the result
+        localStorage.setItem('firebaseConfig', JSON.stringify(config));
+        localStorage.setItem('firebaseConfigTimestamp', Date.now().toString());
+        
+        return config;
         return response.json();
     }
 
