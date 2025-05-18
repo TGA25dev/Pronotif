@@ -2,6 +2,7 @@ from cryptography.fernet import Fernet
 import os
 import logging
 from dotenv import load_dotenv
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -16,8 +17,10 @@ class EncryptionManager:
         """Initialize encryption key - either load existing or generate new one"""
         
         # Load variables
-        load_dotenv()
+        env_path = Path(__file__).resolve().parent.parent.parent / '.env'
+        load_dotenv(dotenv_path=env_path)
         key_var = os.getenv('ENCRYPTION_KEY')
+        logger.warning(f"Loaded ENCRYPTION_KEY: {key_var}")
         
         if not key_var:
             logger.warning("No encryption key found in environment. Generating a new one.")

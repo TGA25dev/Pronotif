@@ -18,10 +18,10 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 import hashlib
 import sentry_sdk
 from contextlib import contextmanager
-from Server.modules.admin.coquelicot import coquelicot_bp
 from flask_session import Session
 from redis import Redis
-from Server.modules.security.encryption import encrypt, decrypt
+from modules.security.encryption import encrypt, decrypt
+from modules.admin.coquelicot import coquelicot_bp
 
 version = "v0.8.1"
 sentry_sdk.init("https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992", 
