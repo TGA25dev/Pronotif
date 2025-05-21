@@ -19,21 +19,38 @@ from modules.pronote.users import PronotifUser
 from modules.messaging.firebase import send_notification_to_device
 
 # Initialize Sentry
+ignore_errors = [KeyboardInterrupt]
 sentry_sdk.init(
     "https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992", 
     enable_tracing=True,
     traces_sample_rate=1.0,
     environment="production",
     release="v0.9",
-    server_name="Server"
+    server_name="Server",
+    ignore_errors=ignore_errors,
+     _experiments={
+        "enable_logs": True,
+    },
+
 )
 
 load_dotenv() # Load environment variables
- 
-# Configure logger
+
+# Send logs to Sentry
+def sentry_sink(message):
+    record = message.record
+    level = record["level"].name.lower()
+    sentry_logger = sentry_sdk.logger
+    if hasattr(sentry_logger, level):
+        getattr(sentry_logger, level)(record["message"], extra=record["extra"])
+    else:
+        sentry_logger.info(record["message"], extra=record["extra"])
+
+# Configure Loguru
 logger.remove()
-logger.add(sys.stdout, level="DEBUG")
-logger.add("notif_system_logs.log", level="DEBUG", rotation="500 MB")
+logger.add(sys.stdout, level="TRACE")  # Local logs
+logger.add("notif_system_logs.log", level="TRACE", rotation="500 MB")  # File logging
+logger.add(sentry_sink, level="DEBUG")  # Forward important logs to Sentry
 
 DB_CONFIG = {
     "host": os.getenv('DB_HOST'),
