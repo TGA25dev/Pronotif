@@ -2,6 +2,22 @@ import firebase_admin
 from firebase_admin import messaging, credentials
 from dotenv import load_dotenv
 import os
+import sentry_sdk
+
+ignore_errors = [KeyboardInterrupt]
+sentry_sdk.init(
+    "https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992", 
+    enable_tracing=True,
+    traces_sample_rate=1.0,
+    environment="production",
+    release="v0.9",
+    server_name="Server",
+    ignore_errors=ignore_errors,
+     _experiments={
+        "enable_logs": True,
+    },
+
+)
 
 load_dotenv()
 

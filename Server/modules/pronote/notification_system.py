@@ -3,6 +3,7 @@ import os
 import time
 from loguru import logger
 import sentry_sdk
+from sentry_sdk import logger as sentry_logger
 import sys
 import mysql.connector
 from mysql.connector import pooling
@@ -10,6 +11,8 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta
 from datetime import time as dt_time
 import requests
+import aiohttp
+import aiofiles
 import json
 import random
 from dotenv import load_dotenv
@@ -36,7 +39,7 @@ sentry_sdk.init(
 
 load_dotenv() # Load environment variables
 
-# Send logs to Sentry
+# Send Loguru logs to Sentry
 def sentry_sink(message):
     record = message.record
     level = record["level"].name.lower()
@@ -48,7 +51,7 @@ def sentry_sink(message):
 
 # Configure Loguru
 logger.remove()
-logger.add(sys.stdout, level="TRACE")  # Local logs
+logger.add(sys.stdout, level="TRACE")  # Local logs (with trace/success)
 logger.add("notif_system_logs.log", level="TRACE", rotation="500 MB")  # File logging
 logger.add(sentry_sink, level="DEBUG")  # Forward important logs to Sentry
 
@@ -146,12 +149,12 @@ def get_db_connection():
                     logger.error(f"Error closing connection: {e}")
 
 # Store previous user list
-_previous_user_ids = set()
+_previous_user_hashes = set()
 _existing_users = {}  # Cache of user objects by ID
 
 async def load_active_users() -> list:
     """Load all active users from the database using connection pooling"""
-    global _previous_user_ids, _existing_users
+    global _previous_user_hashes, _existing_users
     users = []
     
     try:
@@ -167,32 +170,32 @@ async def load_active_users() -> list:
             results = cursor.fetchall()
             
             # Process query results
-            current_user_ids = set()
+            current_user_hashes = set()
             for user_data in results:
-                user_id = user_data['app_session_id']
-                current_user_ids.add(user_id)
+                user_hash = user_data['user_hash']
+                current_user_hashes.add(user_hash)
                 
-                if user_id in _existing_users:
+                if user_hash in _existing_users:
                     # Update existing user with fresh data
-                    _existing_users[user_id].update_from_db(user_data)
-                    users.append(_existing_users[user_id])
+                    _existing_users[user_hash].update_from_db(user_data)
+                    users.append(_existing_users[user_hash])
                 else:
                     # Only create new users that don't already exist
                     new_user = PronotifUser(user_data)
-                    _existing_users[user_id] = new_user
+                    _existing_users[user_hash] = new_user
                     users.append(new_user)
             
             # Clean up removed users
             for old_id in list(_existing_users.keys()):
-                if old_id not in current_user_ids:
+                if old_id not in current_user_hashes:
                     del _existing_users[old_id]
             
             # Only log if the set of users has changed
-            if current_user_ids != _previous_user_ids:
-                new_count = len(current_user_ids - _previous_user_ids)
-                removed_count = len(_previous_user_ids - current_user_ids)
+            if current_user_hashes != _previous_user_hashes:
+                new_count = len(current_user_hashes - _previous_user_hashes)
+                removed_count = len(_previous_user_hashes - current_user_hashes)
                 logger.info(f"Loaded {len(users)} active users from database ({new_count} new, {removed_count} removed)")
-                _previous_user_ids = current_user_ids
+                _previous_user_hashes = current_user_hashes
                 
             return users
             
@@ -202,12 +205,12 @@ async def load_active_users() -> list:
         return []
     
 async def check_internet_connection() -> bool:
-    """Check if internet connection is available"""
     url = "http://www.google.com"
     try:
-        requests.get(url, timeout=5)
-        return True
-    except requests.ConnectionError:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, timeout=15) as resp:
+                return resp.status == 200
+    except Exception:
         return False
 
 async def user_process_loop(user:PronotifUser) -> None: 
@@ -215,15 +218,15 @@ async def user_process_loop(user:PronotifUser) -> None:
     try:
         # Login
         if not await user.login():
-            logger.error(f"Failed to login user {user.app_session_id}, skipping...")
+            logger.error(f"Failed to login user {user.user_hash}, skipping...")
             return
             
         no_internet_message = False
         instance_not_reachable_message = False
         
-        # Add staggering based on user ID
-        user_offset = hash(user.app_session_id) % 30  # 0-29 second offset
-        logger.debug(f"User {user.app_session_id} assigned offset of {user_offset} seconds")
+        # Add staggering based on user_hash
+        user_offset = hash(user.user_hash) % 30  # 0-29 second offset
+        logger.debug(f"User {user.user_hash} assigned offset of {user_offset} seconds")
         await asyncio.sleep(user_offset)  # Initial delay to distribute users
         
         while True:
@@ -235,7 +238,7 @@ async def user_process_loop(user:PronotifUser) -> None:
             
             if internet_available and server_reachable:
                 if no_internet_message or instance_not_reachable_message:
-                    logger.info(f"Connectivity restored for user {user.app_session_id}")
+                    logger.info(f"Connectivity restored for user {user.user_hash}")
                     no_internet_message = False
                     instance_not_reachable_message = False
                 
@@ -251,7 +254,7 @@ async def user_process_loop(user:PronotifUser) -> None:
                 
             else:
                 if not no_internet_message and not instance_not_reachable_message:
-                    logger.warning(f"Tasks paused for user {user.app_session_id} - No internet or server unreachable")
+                    logger.warning(f"Tasks paused for user {user.user_hash} - No internet or server unreachable")
                     no_internet_message = True
                     instance_not_reachable_message = True
             
@@ -261,7 +264,7 @@ async def user_process_loop(user:PronotifUser) -> None:
             await asyncio.sleep(sleep_time)
             
     except Exception as e:
-        logger.critical(f"Critical error in user loop for {user.app_session_id}: {e}")
+        logger.critical(f"Critical error in user loop for {user.user_hash}: {e}")
         sentry_sdk.capture_exception(e)
 
 async def retry_with_backoff(func, user, *args, max_attempts=5) -> None:
@@ -276,15 +279,15 @@ async def retry_with_backoff(func, user, *args, max_attempts=5) -> None:
             if timeout_incident_id:
                 with sentry_sdk.new_scope() as scope:
                     scope.set_tag("status", "resolved")
-                    scope.set_tag("user_id", user.app_session_id)
+                    scope.set_tag("user_id", user.user_hash)
                     sentry_sdk.capture_message(
                         f"Timeout resolved for {func.__name__} after {attempt} retries",
                         level="info"
                     )
-                logger.success(f"Function {func.__name__} recovered for user {user.app_session_id} after {attempt} retries")
+                logger.success(f"Function {func.__name__} recovered for user {user.user_hash} after {attempt} retries")
             # Only log success if it's not the first attempt
             elif attempt > 0:
-                logger.success(f"Function {func.__name__} succeeded for user {user.app_session_id} after {attempt} retries")
+                logger.success(f"Function {func.__name__} succeeded for user {user.user_hash} after {attempt} retries")
             
             return result
             
@@ -300,9 +303,9 @@ async def retry_with_backoff(func, user, *args, max_attempts=5) -> None:
                     scope.set_tag("error_type", "timeout")
                     scope.set_tag("function", func.__name__)
                     scope.set_tag("status", "ongoing")
-                    scope.set_tag("user_id", user.app_session_id)
+                    scope.set_tag("user_id", user.user_hash)
                     timeout_incident_id = sentry_sdk.capture_message(
-                        f"Timeout occurred in {func.__name__} for user {user.app_session_id}",
+                        f"Timeout occurred in {func.__name__} for user {user.user_hash}",
                         level="error"
                     )
             
@@ -313,9 +316,9 @@ async def retry_with_backoff(func, user, *args, max_attempts=5) -> None:
                     scope.set_tag("function", func.__name__)
                     scope.set_tag("status", "failed")
                     scope.set_tag("total_retries", str(max_attempts))
-                    scope.set_tag("user_id", user.app_session_id)
+                    scope.set_tag("user_id", user.user_hash)
                     sentry_sdk.capture_message(
-                        f"All retry attempts failed for {func.__name__} for user {user.app_session_id}",
+                        f"All retry attempts failed for {func.__name__} for user {user.user_hash}",
                         level="error"
                     )
                     
@@ -324,12 +327,12 @@ async def retry_with_backoff(func, user, *args, max_attempts=5) -> None:
                 else:
                     return None
             
-            logger.warning(f"Network error for user {user.app_session_id}: {e}. "
+            logger.warning(f"Network error for user {user.user_hash}: {e}. "
                           f"Retrying in {wait_time} seconds... (Attempt {attempt + 1}/{max_attempts})")
             await asyncio.sleep(wait_time)
 
         except Exception as e:
-            logger.error(f"Error in {func.__name__} for user {user.app_session_id}: {e}")
+            logger.error(f"Error in {func.__name__} for user {user.user_hash}: {e}")
             sentry_sdk.capture_exception(e)
             if not await user.handle_error_with_relogin(e):
                 return [] if func.__name__ in ['fetch_lessons', 'fetch_menus'] else None
@@ -355,7 +358,7 @@ async def lesson_check(user):
         
         if not lessons:
             if not user.class_message_printed_today:
-                logger.debug(f"No lessons found for user {user.app_session_id} today")
+                logger.debug(f"No lessons found for user {user.user_hash} today")
                 user.class_message_printed_today = True
             return
         
@@ -400,9 +403,9 @@ async def lesson_check(user):
                 emoji_path = os.path.join(data_dir, 'emoji_cours_names.json')
                 subject_path = os.path.join(data_dir, 'subject_names_format.json')
 
-                with open(emoji_path, 'r', encoding='utf-8') as emojis_data, open(subject_path, 'r', encoding='utf-8') as subjects_data:
-                    emojis = json.load(emojis_data)
-                    subjects = json.load(subjects_data)
+                async with aiofiles.open(emoji_path, 'r', encoding='utf-8') as emojis_data, aiofiles.open(subject_path, 'r', encoding='utf-8') as subjects_data:
+                    emojis = json.load(await emojis_data.read())
+                    subjects = json.load(await subjects_data.read())
 
                 global lower_cap_subject_name
                 lower_cap_subject_name = subject[0].capitalize() + subject[1:].lower()
@@ -464,7 +467,7 @@ async def lesson_check(user):
                         title=f"❌ Cours annulé !",
                         body=f"Le cours {det}{extra_space}{name} initialement prévu à {class_start_time} est annulé.",
                     )
-                    logger.success(f"Sent cancellation notification to user {user.app_session_id}")
+                    logger.success(f"Sent cancellation notification to user {user.user_hash}")
 
                 elif not canceled:
                     if room_name is None:
@@ -473,7 +476,7 @@ async def lesson_check(user):
                     else:  
                         class_time_message = f"Le cours {det}{extra_space}{name} se fera en salle {room_name} et commencera à {class_start_time}. {chosen_emoji}"
 
-                    logger.debug(class_time_message)
+                    #logger.debug(class_time_message)
         
                     # S grammar
                     s = "" if int(user.notification_delay) == 1 else "s"
@@ -484,10 +487,10 @@ async def lesson_check(user):
                         title=title,
                         body=f"{class_time_message}",
                     ) #Send notification using Firebase
-                    logger.success(f"Sent lesson notification to user {user.app_session_id}")
+                    logger.success(f"Sent lesson notification to user {user.user_hash}")
         
     except Exception as e:
-        logger.error(f"Error checking lessons for user {user.app_session_id}: {e}")
+        logger.error(f"Error checking lessons for user {user.user_hash}: {e}")
         sentry_sdk.capture_exception(e)
 
 async def menu_food_check(user):
@@ -512,18 +515,18 @@ async def menu_food_check(user):
         menus = await retry_with_backoff(fetch_menus, user)
         logger.info(menus)
         for menu in menus:
-            logger.info(f"Menu found for user {user.app_session_id}: {menu}")
+            logger.info(f"Menu found for user {user.user_hash}: {menu}")
 
         if not menus:
             if not user.menu_message_printed_today:
-                logger.info(f"No menus found for user {user.app_session_id} today")
+                logger.info(f"No menus found for user {user.user_hash} today")
                 user.menu_message_printed_today = True
             return
         
         #TODO: Process menus and send notifications
         
     except Exception as e:
-        logger.error(f"Error checking menus for user {user.app_session_id}: {e}")
+        logger.error(f"Error checking menus for user {user.user_hash}: {e}")
         sentry_sdk.capture_exception(e)
 
 async def check_reminder_notifications(user):
@@ -547,21 +550,21 @@ async def main():
     # Check internet connection
     if not await check_internet_connection():
         logger.critical("No internet connection! Program will close in 2 seconds...")
-        time.sleep(2)
+        await asyncio.sleep(2)
         sys.exit(1)
         
     # Initial user loading
     users = await load_active_users()
     if not users:
         logger.critical("No active users found! Program will close in 2 seconds...")
-        time.sleep(2)
+        await asyncio.sleep(2)
         sys.exit(1)
     
     # Start user processing tasks
     user_tasks = {}
     for user in users:
         task = asyncio.create_task(user_process_loop(user))
-        user_tasks[user.app_session_id] = task
+        user_tasks[user.user_hash] = task  # Use user_hash as key
     
     # Periodically check for new/updated/removed users
     while True:
@@ -569,18 +572,18 @@ async def main():
         
         try:
             current_users = await load_active_users()
-            current_user_ids = {user.app_session_id for user in current_users}
-            existing_user_ids = set(user_tasks.keys())
+            current_user_hashes = {user.user_hash for user in current_users}
+            existing_user_hashes = set(user_tasks.keys())
             
             # Add new users
             for user in current_users:
-                if user.app_session_id not in existing_user_ids:
-                    logger.info(f"Adding new user: {user.app_session_id}")
+                if user.user_hash not in existing_user_hashes:
+                    logger.info(f"Adding new user: {user.user_hash}")
                     task = asyncio.create_task(user_process_loop(user))
-                    user_tasks[user.app_session_id] = task
+                    user_tasks[user.user_hash] = task
             
             # Remove users that are no longer active
-            for user_id in existing_user_ids - current_user_ids:
+            for user_id in existing_user_hashes - current_user_hashes:
                 logger.info(f"Removing user: {user_id}")
                 task = user_tasks.pop(user_id)
                 task.cancel()

@@ -5,6 +5,7 @@ from loguru import logger
 import sentry_sdk
 import requests
 from datetime import datetime
+import aiohttp
 import pytz
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
@@ -28,6 +29,7 @@ class PronotifUser:
         # Core identifiers
         self.app_session_id = user_data['app_session_id']
         self.app_token = user_data.get('app_token')
+        self.user_hash = user_data.get('user_hash')
         
         # Client connection
         self.client = None
@@ -247,10 +249,10 @@ class PronotifUser:
     async def check_pronote_server(self) -> bool:
         """Check if Pronote server is reachable"""
         try:
-            response = requests.get(self.login_page_link, timeout=20, stream=True)
-            return response.status_code == 200
-        
-        except requests.ConnectionError:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(self.login_page_link, timeout=20) as resp:
+                    return resp.status == 200
+        except aiohttp.ClientError:
             return False
     
     def update_from_db(self, user_data) -> None:
