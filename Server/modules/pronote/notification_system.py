@@ -404,8 +404,8 @@ async def lesson_check(user):
                 subject_path = os.path.join(data_dir, 'subject_names_format.json')
 
                 async with aiofiles.open(emoji_path, 'r', encoding='utf-8') as emojis_data, aiofiles.open(subject_path, 'r', encoding='utf-8') as subjects_data:
-                    emojis = json.load(await emojis_data.read())
-                    subjects = json.load(await subjects_data.read())
+                    emojis = json.loads(await emojis_data.read())
+                    subjects = json.loads(await subjects_data.read())
 
                 global lower_cap_subject_name
                 lower_cap_subject_name = subject[0].capitalize() + subject[1:].lower()
