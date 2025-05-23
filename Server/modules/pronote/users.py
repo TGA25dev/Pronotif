@@ -12,13 +12,15 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 from modules.security.encryption import decrypt
 
 # Initialize Sentry
+ignore_errors = [KeyboardInterrupt]
 sentry_sdk.init(
     "https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992", 
     enable_tracing=True,
     traces_sample_rate=1.0,
     environment="production",
     release="v0.9",
-    server_name="Server"
+    server_name="Server",
+    ignore_errors=ignore_errors,
 )
 
 table_name = os.getenv('DB_STUDENT_TABLE_NAME')
@@ -78,7 +80,7 @@ class PronotifUser:
         self.class_message_printed_today = False
         self.menu_message_printed_today = False
         
-        logger.debug(f"Initialized user {self.app_session_id}")
+        logger.debug(f"Initialized user {self.user_hash}")
     
     async def login(self) -> bool:
         """Attempt to log in to Pronote with user credentials"""
@@ -98,17 +100,17 @@ class PronotifUser:
                 )
                 
             if self.client.logged_in:
-                logger.success(f"User {self.app_session_id} successfully logged in!")
+                logger.success(f"User {self.user_hash} successfully logged in!")
                 if self.qr_code_login:
                     # Update password for future logins
                     await self._save_password()
                 return True
             else:
-                logger.error(f"Failed to log in user {self.app_session_id}")
+                logger.error(f"Failed to log in user {self.user_hash}")
                 return False
                 
         except Exception as e:
-            logger.error(f"Login error for user {self.app_session_id} : {e}")
+            logger.error(f"Login error for user {self.user_hash} : {e}")
             sentry_sdk.capture_exception(e)
             return False
             
@@ -139,12 +141,12 @@ class PronotifUser:
             db_connection.commit()
             
             if cursor.rowcount > 0:
-                logger.success(f"Updated token password for user {self.app_session_id}")
+                logger.success(f"Updated token password for user {self.user_hash}")
             else:
-                logger.warning(f"Failed to update token password for user {self.app_session_id}")
+                logger.warning(f"Failed to update token password for user {self.user_hash}")
                 
         except Exception as e:
-            logger.error(f"Error saving new password for user {self.app_session_id}: {e}")
+            logger.error(f"Error saving new password for user {self.user_hash}: {e}")
             sentry_sdk.capture_exception(e)
         
         finally:
@@ -159,7 +161,7 @@ class PronotifUser:
             
         try:
             if self.client.session_check():
-                logger.warning(f"Session expired for user {self.app_session_id} !")
+                logger.warning(f"Session expired for user {self.user_hash} !")
                 
                 if self.qr_code_login:
                     # Reload user data to get fresh password if it was updated elsewhere
@@ -173,14 +175,14 @@ class PronotifUser:
                     )
                     
                     if self.client.logged_in:
-                        logger.success(f"New session created for user {self.app_session_id}")
+                        logger.success(f"New session created for user {self.user_hash}")
                         await self._save_password()
                 else:
                     self.client.refresh()
-                    logger.success(f"Session refreshed for user {self.app_session_id}")
+                    logger.success(f"Session refreshed for user {self.user_hash}")
                     
         except Exception as e:
-            logger.error(f"Session check failed for user {self.app_session_id}: {e}")
+            logger.error(f"Session check failed for user {self.user_hash}: {e}")
             await self.handle_error_with_relogin(e)
     
     async def _reload_password(self) -> str:
@@ -207,7 +209,7 @@ class PronotifUser:
                 return self.password  # Current password as fallback
                 
         except Exception as e:
-            logger.error(f"Failed to reload password for user {self.app_session_id}: {e}")
+            logger.error(f"Failed to reload password for user {self.user_hash}: {e}")
             sentry_sdk.capture_exception(e)
             return self.password  # Current password as fallback
             
@@ -217,18 +219,18 @@ class PronotifUser:
             
     async def handle_error_with_relogin(self, error) -> bool:
         """Handle errors by attempting to relogin"""
-        logger.error(f"Error for user {self.app_session_id}: {error}. Attempting relogin...")
+        logger.error(f"Error for user {self.user_hash}: {error}. Attempting relogin...")
         
         for attempt in range(5):
             try:
                 if attempt > 0:
                     wait_time = 5 * (2 ** attempt)
-                    logger.info(f"Retry attempt {attempt+1}/5 for user {self.app_session_id} after waiting {wait_time} seconds...")
+                    logger.info(f"Retry attempt {attempt+1}/5 for user {self.user_hash} after waiting {wait_time} seconds...")
                     await asyncio.sleep(wait_time)
                     
                 # Check if server is reachable
                 if not await self.check_pronote_server():
-                    logger.warning(f"Pronote server unreachable for user {self.app_session_id} (attempt {attempt+1}/5)")
+                    logger.warning(f"Pronote server unreachable for user {self.user_hash} (attempt {attempt+1}/5)")
                     continue
                     
                 # Attempt relogin
@@ -237,13 +239,13 @@ class PronotifUser:
                     
             except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectTimeout, 
                     requests.exceptions.ConnectionError) as e:
-                logger.warning(f"Connection error during relogin for user {self.app_session_id}: {e}")
+                logger.warning(f"Connection error during relogin for user {self.user_hash}: {e}")
                 
             except Exception as e:
-                logger.critical(f"Failed relogin for user {self.app_session_id}: {e}")
+                logger.critical(f"Failed relogin for user {self.user_hash}: {e}")
                 sentry_sdk.capture_exception(e)
                 
-        logger.error(f"All relogin attempts failed for user {self.app_session_id}")
+        logger.error(f"All relogin attempts failed for user {self.user_hash}")
         return False
         
     async def check_pronote_server(self) -> bool:
@@ -337,4 +339,4 @@ class PronotifUser:
         
         # Only log if something changed
         if changes_made:
-            logger.debug(f"Updated user {self.app_session_id} from database")
+            logger.debug(f"Updated user {self.user_hash} from database")
