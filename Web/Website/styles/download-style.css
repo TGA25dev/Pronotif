@@ -2004,6 +2004,78 @@ body.modal-open {
     .steps-container {
         padding-left: 0;
     }
+
+    .beta-code-overlay {
+        padding: 15px;
+    }
+    
+    .beta-code-container {
+        max-width: 100%;
+        padding: 20px 15px;
+        margin: 0;
+        max-height: 85vh;
+        overflow-y: auto;
+    }
+    
+    .beta-logo svg {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .beta-code-container h1 {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+    }
+    
+    .beta-welcome {
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+    }
+    
+    .beta-info-box {
+        padding: 15px;
+        margin-bottom: 20px;
+        font-size: 0.85rem;
+    }
+    
+    .beta-code-input-container {
+        margin-bottom: 15px;
+    }
+    
+    .beta-code-input-container label {
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+    }
+    
+    .beta-code-input {
+        padding: 12px 15px;
+        font-size: 1rem;
+        margin-bottom: 15px;
+    }
+    
+    .beta-code-submit {
+        padding: 12px 20px;
+        font-size: 0.95rem;
+    }
+    
+    .beta-divider {
+        margin: 20px 0 15px 0;
+        font-size: 0.85rem;
+    }
+    
+    .beta-request {
+        padding-top: 15px;
+    }
+    
+    .beta-request p {
+        font-size: 0.85rem;
+        margin-bottom: 15px;
+    }
+    
+    .beta-request-btn {
+        padding: 10px 18px;
+        font-size: 0.9rem;
+    }
 }
 
 @media screen and (min-width: 1440px) {
