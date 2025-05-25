@@ -296,8 +296,7 @@ async function initializeFirebase() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-
-    // Initialize Skelly components once the DOM is ready
+    // Initialize Skelly components
     if (window.Skelly && typeof window.Skelly.InitAll === 'function') {
         try {
             window.Skelly.InitAll();
@@ -307,9 +306,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     } else {
         console.warn('[Skelly] Skelly.InitAll function not found. Skelly components might not render correctly...');
-
     }
 
+    // CHECK BETA ACCESS
+    const betaCodeOverlay = document.getElementById('betaCodeOverlay');
+    const betaCodeInput = document.getElementById('betaCodeInput');
+    const betaCodeSubmit = document.getElementById('betaCodeSubmit');
+    const betaCodeError = document.getElementById('betaCodeError');
+    const mainContent = document.querySelector('.main-container');
+
+    // Check if user has already entered a valid code
+    const hasValidCode = await checkBetaAccess();
+
+    if (!hasValidCode) {
+        // Show beta code overlay and stop execution
+        mainContent.style.display = 'none';
+        betaCodeOverlay.style.display = 'flex';
+        
+        // Set up beta code input handlers
+        setupBetaCodeHandlers();
+        return; // Exit early - don't initialize the rest of the app
+    }
+
+    // Beta access confirmed - hide overlay and continue with app initialization
+    betaCodeOverlay.style.display = 'none';
+    mainContent.style.display = 'block';
+
+    // NOW continue with the rest of your app initialization...
     if (!localStorage.getItem('notificationPermission')) {
         localStorage.setItem('notificationPermission', Notification.permission);
     }
@@ -1385,5 +1408,98 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
         });
+    }
+
+    async function checkBetaAccess() {
+        try {
+            const response = await fetch('https://api.pronotif.tech/v1/beta/verify-access', {
+                method: 'GET',
+                credentials: 'include',
+                cache: 'no-store'
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                return result.hasAccess === true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Beta access check failed:', error);
+            return false;
+        }
+    }
+
+    function setupBetaCodeHandlers() {
+        const betaCodeInput = document.getElementById('betaCodeInput');
+        const betaCodeSubmit = document.getElementById('betaCodeSubmit');
+        const betaCodeError = document.getElementById('betaCodeError');
+
+        // Format the beta code
+        betaCodeInput.addEventListener('input', () => {
+            let code = betaCodeInput.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+            if (code.length > 3) {
+                code = code.replace(/(.{3})(?=.)/g, '$1-');
+            }
+            betaCodeInput.value = code;
+            betaCodeError.classList.remove('visible');
+        });
+
+        // Validate the beta code
+        betaCodeSubmit.addEventListener('click', validateBetaCode);
+        betaCodeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                validateBetaCode();
+            }
+        });
+    }
+
+    async function validateBetaCode() {
+        const betaCodeInput = document.getElementById('betaCodeInput');
+        const betaCodeError = document.getElementById('betaCodeError');
+        const betaCodeOverlay = document.getElementById('betaCodeOverlay');
+        const mainContent = document.querySelector('.main-container');
+
+        const code = betaCodeInput.value.trim();
+        if (!/^[A-Z0-9]{3}-[A-Z0-9]{3}-[A-Z0-9]{3}$/.test(code)) {
+            betaCodeError.textContent = "Le code doit être au format XXX-XXX-XXX.";
+            betaCodeError.classList.add('visible');
+            betaCodeError.classList.remove('hidden');
+            return;
+        }
+
+        try {
+            const response = await fetch('https://api.pronotif.tech/v1/beta/consume', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code }),
+                credentials: 'include',
+            });
+
+            const result = await response.json();
+            if (response.ok && result.success) {
+                betaCodeOverlay.style.display = 'none';
+                mainContent.style.display = 'block';
+                
+                // Reload the page to properly initialize the app
+                window.location.reload();
+            } else if (response.status === 403) {
+                betaCodeError.textContent = "Code invalide ou expiré.";
+                betaCodeError.classList.add('visible');
+                betaCodeError.classList.remove('hidden');
+            } else if (response.status === 429) {
+                betaCodeError.textContent = "Trop de tentatives. Veuillez réessayer plus tard.";
+                betaCodeError.classList.add('visible');
+                betaCodeError.classList.remove('hidden');
+            } else {
+                betaCodeError.textContent = "Erreur de connexion. Veuillez réessayer plus tard.";
+                betaCodeError.classList.add('visible');
+                betaCodeError.classList.remove('hidden');
+            }
+        } catch (error) {
+            console.error('Error validating beta code:', error);
+            betaCodeError.textContent = "Erreur de connexion. Veuillez réessayer plus tard.";
+            betaCodeError.classList.add('visible');
+            betaCodeError.classList.remove('hidden');
+        }
     }
 });

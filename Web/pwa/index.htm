@@ -21,7 +21,8 @@
             src="https://js.sentry-cdn.com/8c5e5e92f5e18135e5c89280db44a056.min.js"
             crossorigin="anonymous"
         ></script>
-        <script>
+
+        <!-- <script>
             window.sentryOnLoad = function () {
                 Sentry.init({
                 dsn: "https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992",
@@ -55,7 +56,7 @@
                 replaysOnErrorSampleRate: 1.0,
                 });
             };
-        </script>
+        </script> -->
 
         <!--jsQR Script-->
         <script src="scripts/jsQR.js"></script>
@@ -70,6 +71,27 @@
             <div class="warning-emoji">🦉</div>
             <p>Veuillez utiliser votre téléphone en mode portrait pour accéder à Pronot'if.</p>
         </div>
+
+        <div id="betaCodeOverlay" class="beta-code-overlay">
+            <div class="beta-code-container">
+                <h1>Accès Bêta</h1>
+                <p>Entrez votre code d'accès pour continuer.</p>
+                <input 
+                    type="text" 
+                    id="betaCodeInput" 
+                    class="beta-code-input" 
+                    placeholder="XXX-XXX-XXX" 
+                    maxlength="11" 
+                    aria-label="Code d'accès"
+                />
+                <button id="betaCodeSubmit" class="beta-code-submit">Valider</button>
+                <p id="betaCodeError" class="beta-code-error hidden">Code invalide, veuillez réessayer.</p>
+                <p class="beta-info">
+                    Pas de code ?<br><a href="#">Revenez en septembre</a> pour l'accès public!<br><br><small>Plus d'informations sur la page téléchargement du site.</small>
+                </p>
+            </div>
+        </div>
+
         <div class="main-container">
             <div id="loadingView" class="view">
                 <div class="loading-container">

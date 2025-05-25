@@ -71,6 +71,9 @@ window.addEventListener('beforeinstallprompt', (evt) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize beta code overlay
+    initBetaCodeOverlay();
+    
     // Initialize URL handling from shared config
     config.initializeUrlHandling();
     
@@ -341,6 +344,247 @@ document.addEventListener("DOMContentLoaded", async () => {
         updateSelectedLanguage(savedLanguage);
     }
     await updateLanguage(savedLanguage);
+
+});
+
+// Beta code functionality
+function initBetaCodeOverlay() {
+    const betaCodeOverlay = document.getElementById('betaCodeOverlay');
+    const betaCodeInput = document.getElementById('betaCodeInput');
+    const betaCodeSubmit = document.getElementById('betaCodeSubmit');
+    const betaCodeError = document.getElementById('betaCodeError');
+    const betaRequestBtn = document.getElementById('betaRequestBtn');
+    const mainContent = document.querySelector('.bento-container');
+    const languageSwitcher = document.querySelector('.language-switcher');
+
+    // Check if user has already entered a valid code
+    const hasValidCode = localStorage.getItem('pronotif_beta_access') === 'true';
+
+    if (hasValidCode) {
+        betaCodeOverlay.classList.add('hidden');
+        mainContent.style.display = 'block';
+        languageSwitcher.style.display = 'block';
+    } else {
+        mainContent.style.display = 'none';
+        languageSwitcher.style.display = 'none';
+    }
+
+    // Beta request button handler
+    if (betaRequestBtn) {
+        betaRequestBtn.addEventListener('click', function () {
+            showBetaRequestModal();
+        });
+    }
+
+    // Format the beta code
+    betaCodeInput.addEventListener('input', function () {
+        let code = this.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+
+        // Group the code into chunks of 3 characters
+        if (code.length > 3) {
+            code = code.replace(/(.{3})(?=.)/g, '$1-');
+        }
+
+        this.value = code;
+        betaCodeError.classList.remove('visible');
+    });
+
+    betaCodeSubmit.addEventListener('click', function () {
+        validateBetaCode();
+    });
+
+    betaCodeInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            validateBetaCode();
+        }
+    });
+
+    async function validateBetaCode() {
+        let code = betaCodeInput.value.trim();
+
+        // Ensure the code is formatted as XXX-XXX-XXX
+        code = code.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+        if (code.length === 9) {
+            code = code.replace(/(.{3})(.{3})(.{3})/, '$1-$2-$3');
+        }
+
+        // Validate the format strictly
+        if (!/^[A-Z0-9]{3}-[A-Z0-9]{3}-[A-Z0-9]{3}$/.test(code)) {
+            betaCodeError.textContent = "Le code doit être au format XXX-XXX-XXX.";
+            betaCodeError.classList.add('visible');
+            betaCodeInput.focus();
+            return;
+        }
+
+        try {
+            const response = await fetch('https://api.pronotif.tech/v1/beta/verify', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ code }),
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                localStorage.setItem('pronotif_beta_access', 'true');
+                betaCodeOverlay.classList.add('hidden');
+
+                setTimeout(() => {
+                    mainContent.style.display = 'block';
+                    languageSwitcher.style.display = 'block';
+                }, 500);
+            } else {
+                // Map API error messages to French
+                const errorMessages = {
+                    "Invalid or expired code": "Code invalide ou expiré.",
+                    "Code required": "Un code est requis.",
+                    "Content-Type must be application/json": "Le type de contenu doit être application/json.",
+                    "Missing request data": "Données de requête manquantes.",
+                    "Invalid code format": "Format de code invalide.",
+                };
+
+                betaCodeError.textContent = errorMessages[result.error] || "Une erreur est survenue. Veuillez réessayer.";
+                betaCodeError.classList.add('visible');
+                betaCodeInput.focus();
+            }
+        } catch (error) {
+            console.error('Error validating beta code:', error);
+            betaCodeError.textContent = "Erreur de connexion. Veuillez réessayer.";
+            betaCodeError.classList.add('visible');
+        }
+    }
+}
+
+// Beta Request Modal
+function showBetaRequestModal() {
+    const modal = document.getElementById('betaRequestModal');
+    const form = document.getElementById('betaRequestForm');
+    const success = document.getElementById('betaRequestSuccess');
     
-    // ...rest of existing DOMContentLoaded code...
+    // Reset modal state
+    form.style.display = 'block';
+    success.style.display = 'none';
+    
+    // Clear form
+    document.getElementById('betaForm').reset();
+    
+    // Show modal
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    // Focus first input
+    setTimeout(() => {
+        document.getElementById('betaName').focus();
+    }, 100);
+}
+
+function hideBetaRequestModal() {
+    const modal = document.getElementById('betaRequestModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('betaRequestModal');
+    const closeBtn = modal.querySelector('.beta-request-close-btn');
+    const cancelBtn = modal.querySelector('.beta-cancel-btn');
+    const form = document.getElementById('betaForm');
+    const successCloseBtn = document.getElementById('betaSuccessClose');
+    
+    // Close button handlers
+    closeBtn.addEventListener('click', hideBetaRequestModal);
+    cancelBtn.addEventListener('click', hideBetaRequestModal);
+    successCloseBtn.addEventListener('click', hideBetaRequestModal);
+    
+    // Close on background click
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            hideBetaRequestModal();
+        }
+    });
+    
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        const data = {
+            name: formData.get('name').trim(),
+            email: formData.get('email').trim(),
+            reason: formData.get('reason').trim()
+        };
+        
+        // Field validation
+        if (!data.name || !data.email) {
+            alert('Veuillez remplir tous les champs obligatoires');
+            return;
+        }
+        
+        // Email validation
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (!emailRegex.test(data.email)) {
+            alert('Veuillez entrer une adresse e-mail valide');
+            return;
+        }
+        
+        // Length validation
+        if (data.name.length > 100) {
+            alert('Le nom est trop long (maximum 100 caractères)');
+            return;
+        }
+        
+        if (data.reason.length > 500) {
+            alert('La raison est trop longue (maximum 500 caractères)');
+            return;
+        }
+        
+        // Disable submit button
+        const submitBtn = form.querySelector('.beta-submit-btn');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Envoi en cours...';
+        
+        // Send request to backend API
+        fetch('https://api.pronotif.tech/v1/beta/request', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                console.log('Beta request submitted successfully:', data);
+                
+                // Show success message
+                document.getElementById('betaRequestForm').style.display = 'none';
+                document.getElementById('betaRequestSuccess').style.display = 'block';
+                
+                // Reset form for next time
+                form.reset();
+            } else {
+                // Handle backend errors
+                alert(result.error || 'Une erreur est survenue lors de l\'envoi de votre demande');
+                console.error('Backend error:', result.error);
+            }
+        })
+        .catch(error => {
+            console.error('Network error:', error);
+            alert('Erreur de connexion. Veuillez réessayer plus tard.');
+        })
+        .finally(() => {
+            // Re-enable submit button
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        });
+    });
+    
+    // Prevent modal content from closing when clicked
+    modal.querySelector('.beta-request-modal-content').addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
 });
