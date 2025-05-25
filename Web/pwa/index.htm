@@ -21,7 +21,6 @@
             src="https://js.sentry-cdn.com/8c5e5e92f5e18135e5c89280db44a056.min.js"
             crossorigin="anonymous"
         ></script>
-
         <script>
             window.sentryOnLoad = function () {
                 Sentry.init({
@@ -32,9 +31,10 @@
                 // Alternatively, use `process.env.npm_package_version` for a dynamic release version
                 // if your build tool supports it.
                 release: "pronotif@0.8.1",
+                // Use Sentry-provided integrations directly rather than custom integration objects
                 integrations: [
-                    Sentry.browserTracingIntegration(),
-                    Sentry.replayIntegration(),
+                    new Sentry.BrowserTracing(),
+                    new Sentry.Replay()
                 ],
                 // Set tracesSampleRate to 1.0 to capture 100%
                 // of transactions for tracing.
@@ -299,6 +299,6 @@
             <button id="laterButton" class="later-button">Plus tard</button>
         </div>
 
-        <script type="module" src="scripts/pwa.js?Tvxvxvxvnununxvxvxvxvxv786545678" crossorigin="anonymous"></script>
+        <script type="module" src="scripts/pwa.js?Rvxvxvxvnununxvxvxvxvxv786545678" crossorigin="anonymous"></script>
     </body>
 </html>

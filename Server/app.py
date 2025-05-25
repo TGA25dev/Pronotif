@@ -1,7 +1,7 @@
-from flask import Flask, make_response, request, jsonify
+from flask import Flask, make_response, request, jsonify, session
+from functools import wraps
 import mysql.connector
 from mysql.connector import pooling
-from flask_limiter import Limiter
 import logging
 from datetime import datetime, timedelta
 import redis
@@ -20,8 +20,11 @@ import sentry_sdk
 from contextlib import contextmanager
 from flask_session import Session
 from redis import Redis
+import re
 from modules.security.encryption import encrypt, decrypt
 from modules.admin.coquelicot import coquelicot_bp
+from modules.admin.beta import beta_bp
+from modules.ratelimit.ratelimiter import limiter
 
 version = "v0.8.1"
 sentry_sdk.init("https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992", 
@@ -62,6 +65,7 @@ except ValueError as e:
     exit(1)
 
 app = Flask(__name__)
+limiter.init_app(app)
 app.wsgi_app = ProxyFix(
     app.wsgi_app,
     x_for=2,       # Number of proxies setting X-Forwarded-For
@@ -133,6 +137,7 @@ connection_pool = pooling.MySQLConnectionPool(**default_connection_pool_settings
 authcode = os.getenv('AUTHCODE')
 auth_table_name = os.getenv('DB_AUTH_TABLE_NAME')
 student_table_name = os.getenv('DB_STUDENT_TABLE_NAME')
+beta_table_name = os.getenv('DB_BETA_TABLE_NAME')
 app.secret_key = os.getenv('FLASK_KEY')
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_SECURE'] = True  #HTTPS
@@ -145,13 +150,24 @@ redis_connection = redis.Redis(
     db=int(os.getenv('REDIS_DB'))
 )
 
-limiter = Limiter(
-    lambda: request.remote_addr,
-    app=app,
-    storage_uri=f"redis://{os.getenv('REDIS_HOST')}:{int(os.getenv('LIMITER_PORT'))}"
-)
-
 initialized = False
+
+def require_beta_access(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Skip beta check for beta-related endpoints
+        if request.endpoint in ['consume_code', 'verify_beta_access', 'verify_code']:
+            return f(*args, **kwargs)
+        
+        # Check for beta tester cookie
+        is_beta_tester = request.cookies.get('is_beta_tester')
+        
+        if is_beta_tester != '1':
+            return jsonify({'error': 'Beta access required'}), 403
+        
+        return f(*args, **kwargs)
+    
+    return decorated_function
 
 @app.errorhandler(500)
 def internal_error(error):
@@ -200,6 +216,7 @@ def test_endpoint():
 
 @app.route("/v1/setup/session", methods=["POST", "HEAD"])
 @limiter.limit(str(os.getenv('SESSION_SETUP_LIMIT')) + " per minute")
+@require_beta_access
 def generate_session():
     """
     Endpoint to generate a new temporary session for the setup app
@@ -306,6 +323,7 @@ def deactivate_previous_registrations(cursor, user_hash):
 
 @app.route("/v1/app/revoke-fcm-token", methods=["POST", "HEAD"])    
 @limiter.limit(str(os.getenv('REVOKE_FCM_TOKEN_LIMIT')) + " per minute")
+@require_beta_access
 def revoke_fcm_token():
     """
     Revoke the Firebase Cloud Messaging token for the authenticated user
@@ -357,6 +375,7 @@ def revoke_fcm_token():
 
 @app.route("/v1/app/fcm-token", methods=["POST", "HEAD"])
 @limiter.limit(str(os.getenv('FCM_TOKEN_LIMIT')) + " per minute")
+@require_beta_access
 def save_fcm_token():
     """
     Endpoint to receive and store Firebase Cloud Messaging token for a user
@@ -441,6 +460,7 @@ def save_fcm_token():
 
 @app.route("/v1/app/firebase-config", methods=["GET"])
 @limiter.limit(str(os.getenv('FIREBASE_CONFIG_LIMIT', '10')) + " per minute")
+@require_beta_access
 def get_firebase_config():
     """
     Send the Firebase configuration to the authenticated user
@@ -515,6 +535,7 @@ def get_firebase_config():
 
 @app.route("/v1/app/qrscan", methods=["POST", "HEAD"])
 @limiter.limit(str(os.getenv('QR_CODE_SCAN_LIMIT')) + " per minute")
+@require_beta_access
 def process_qr_code():
     """
     Process the data received from the QR code scan
@@ -703,6 +724,7 @@ def process_qr_code():
 
 @app.route('/v1/app/auth/refresh', methods=['POST', 'HEAD'])
 @limiter.limit(str(os.getenv('REFRESH_CRED_LIMIT')) + " per minute")
+@require_beta_access
 def refresh_credentials():
     """
     Refresh the authentication tokens for the user
@@ -800,6 +822,7 @@ def refresh_credentials():
             
 @app.route("/v1/app/fetch", methods=["GET"])
 @limiter.limit(str(os.getenv('FETCH_DATA_LIMIT')) + " per minute")
+@require_beta_access
 def fetch_student_data():
     """
     Fetch and return the student data for the authenticated user
@@ -889,6 +912,160 @@ def fetch_student_data():
         sentry_sdk.capture_exception(e)
         logger.error(f"Unexpected error in fetch_student_data: {e}")
         return jsonify({"error": "Internal server error"}), 500
+
+# BETA ENDPOINTS
+@app.route('/v1/beta/verify-access', methods=['GET'])
+@limiter.limit(str(os.getenv('BETA_VERIFY_LIMIT')) + " per minute")
+def verify_beta_access():
+    """
+    Verify if the user has beta access based on a cookie
+    """
+    if request.method == "HEAD":
+        return jsonify({"message": ""}), 200
+    # Check for the beta tester cookie
+    is_beta_tester = request.cookies.get('is_beta_tester')
+    
+    if is_beta_tester == '1':
+        return jsonify({'hasAccess': True})
+    else:
+        return jsonify({'hasAccess': False})
+    
+@app.route("/v1/beta/verify", methods=["POST", "HEAD"])
+@limiter.limit(str(os.getenv('BETA_VERIFY_LIMIT')) + " per minute")
+def verify_code():
+    """
+    Verify a beta code
+    """
+    if request.method == "HEAD":
+        return jsonify({"message": ""}), 200
+
+    with sentry_sdk.start_transaction(op="http.server", name="verify_beta_code"):
+        try:
+            if not request.is_json:
+                return jsonify({"success": False, "error": "Content-Type must be application/json"}), 400
+
+            data = request.get_json()
+            if not data:
+                return jsonify({"success": False, "error": "Missing request data"}), 400
+
+            code = data.get("code", "").strip().upper()
+            if not code:
+                return jsonify({"success": False, "error": "Code required"}), 400
+
+            # Sanitize the code
+            code = bleach.clean(code)
+            
+            # Validate code format
+            if not re.match(r'^[A-Z0-9]{3}-[A-Z0-9]{3}-[A-Z0-9]{3}$', code):
+                return jsonify({"success": False, "error": "Invalid code format"}), 400
+
+            with get_db_connection() as connection:
+                cursor = connection.cursor(dictionary=True)
+                try:
+                    with sentry_sdk.start_span(op="db.query", description="Verify beta code"):
+                        cursor.execute(
+                            f"SELECT code FROM {beta_table_name} WHERE code = %s AND is_used = 0", 
+                            (code,)
+                        )
+                        result = cursor.fetchone()
+
+                        if result:
+                            logger.info(f"Beta code verified successfully")
+                            return jsonify({"success": True}), 200
+                        else:
+                            logger.warning(f"Invalid beta code verification attempt")
+                            return jsonify({"success": False, "error": "Invalid or expired code"}), 403
+
+                except mysql.connector.Error as err:
+                    sentry_sdk.capture_exception(err)
+                    logger.error(f"MySQL error in beta verify: {err}")
+                    return jsonify({"success": False, "error": "Internal server error"}), 500
+
+                finally:
+                    cursor.close()
+
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            logger.error(f"Unexpected error in verify_code: {e}")
+            return jsonify({"success": False, "error": "Internal server error"}), 500
+
+@app.route("/v1/beta/consume", methods=["POST", "HEAD"])
+@limiter.limit(str(os.getenv('BETA_CONSUME_LIMIT')) + " per hour")
+def consume_code():
+    """
+    Consume a beta code
+    """
+    if request.method == "HEAD":
+        return jsonify({"message": ""}), 200
+
+    with sentry_sdk.start_transaction(op="http.server", name="consume_beta_code"):
+        try:
+            if not request.is_json:
+                return jsonify({"success": False, "error": "Content-Type must be application/json"}), 400
+
+            data = request.get_json()
+            if not data:
+                return jsonify({"success": False, "error": "Missing request data"}), 400
+
+            code = data.get("code", "").strip().upper()
+            if not code:
+                return jsonify({"success": False, "error": "Code required"}), 400
+
+            # Sanitize the code
+            code = bleach.clean(code)
+            
+            # Validate code format
+            if not re.match(r'^[A-Z0-9]{3}-[A-Z0-9]{3}-[A-Z0-9]{3}$', code):
+                return jsonify({"success": False, "error": "Invalid code format"}), 400
+
+            with get_db_connection() as connection:
+                cursor = connection.cursor(dictionary=True)
+                try:
+                    with sentry_sdk.start_span(op="db.query", description="Consume beta code"):
+                        # Verify the code exists and is unused
+                        cursor.execute(
+                            f"SELECT code FROM {beta_table_name} WHERE code = %s AND is_used = 0", 
+                            (code,)
+                        )
+                        result = cursor.fetchone()
+
+                        if result:
+                            # Update the code as used
+                            cursor.execute(
+                                f"UPDATE {beta_table_name} SET is_used = 1, used_at = %s WHERE code = %s",
+                                (datetime.now(), code)
+                            )
+                            connection.commit()
+                            
+                            logger.info(f"Beta code consumed successfully")
+                            response = make_response(jsonify({"success": True}), 200)
+                            # Set secure HTTP-only cookie for beta tester
+                            response.set_cookie(
+                                'is_beta_tester',
+                                '1',
+                                httponly=True,
+                                secure=True,
+                                samesite='Lax',
+                                max_age=60*60*24*365  # 1 year
+                                # domain="pronotif.tech"
+                            )
+                            return response
+                        else:
+                            logger.warning(f"Invalid beta code consumption attempt")
+                            return jsonify({"success": False, "error": "Invalid or expired code"}), 403
+
+                except mysql.connector.Error as err:
+                    sentry_sdk.capture_exception(err)
+                    logger.error(f"MySQL error in beta consume: {err}")
+                    return jsonify({"success": False, "error": "Internal server error"}), 500
+
+                finally:
+                    cursor.close()
+
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            logger.error(f"Unexpected error in consume_code: {e}")
+            return jsonify({"success": False, "error": "Internal server error"}), 500
 
 # Background tasks
 def cleanup_auth_sessions():
@@ -1084,6 +1261,9 @@ if __name__ == '__main__':
 
     # Register blueprint
     app.register_blueprint(coquelicot_bp)
+    app.register_blueprint(beta_bp)
+
+
 
     # Start the Flask app
     app.run(host=os.getenv('HOST'), port=os.getenv('MAIN_PORT'))
