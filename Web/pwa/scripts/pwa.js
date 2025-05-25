@@ -631,9 +631,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }    
 
-        if (Notification.permission !== 'denied' || Notification.permission === 'default') {
+        if (Notification.permission === 'default') {
+            console.log('Permission is default, checking if we should show popup...');
             const isDashboard = document.getElementById('dashboardView') && 
                                 !document.getElementById('dashboardView').classList.contains('hidden');
+
+            console.log('Dashboard visible:', isDashboard);
+            console.log('Notification dismissed cookie:', document.cookie.includes("notifDismissed=true"));
+            console.log('Notification prompt element exists:', !!notifPrompt);
+
             if (isDashboard) {
                 // Check if the user has already dismissed the notification
                 if (document.cookie.includes("notifDismissed=true")) {
@@ -676,9 +682,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // check session
     checkExistingSession();
-
-    // Check for notifications permission
-    checkNotifEnabled();
 
     function isImageTooDark(imageData) {
         const data = imageData.data;
@@ -810,6 +813,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                             dashboardView.classList.remove('hidden');
                             dashboardView.classList.add('fade-in');
                             console.log('[UI] Dashboard view is now visible.');
+
+                            // Check notifications since dashboard is actually visible
+                            setTimeout(() => {
+                                checkNotifEnabled();
+                            }, 200);
                         }
                     }, 600);
                 })
@@ -871,8 +879,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Check if notification permission was revoked
             checkNotificationPermissionChange();
 
-            // Check for notifications permission
-            checkNotifEnabled();
 
             // Ntification permission button
             if (allowNotifButton) {
