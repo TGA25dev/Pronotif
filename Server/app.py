@@ -216,7 +216,6 @@ def test_endpoint():
 
 @app.route("/v1/setup/session", methods=["POST", "HEAD"])
 @limiter.limit(str(os.getenv('SESSION_SETUP_LIMIT')) + " per minute")
-@require_beta_access
 def generate_session():
     """
     Endpoint to generate a new temporary session for the setup app
@@ -1251,19 +1250,19 @@ def get_db_connection():
     if retry_count >= max_retries:
         raise mysql.connector.Error("Failed to get a working database connection after multiple attempts")
 
+initialized = False
+
+@app.before_request
+def initialize():
+    global initialized
+    if not initialized:
+        start_background_tasks()
+        initialized = True
+
+# Register blueprints (move this outside the if block)
+app.register_blueprint(coquelicot_bp)
+app.register_blueprint(beta_bp)
+
 if __name__ == '__main__':    
-    @app.before_request
-    def initialize():
-        global initialized
-        if not initialized:
-            start_background_tasks()
-            initialized = True
-
-    # Register blueprint
-    app.register_blueprint(coquelicot_bp)
-    app.register_blueprint(beta_bp)
-
-
-
     # Start the Flask app
     app.run(host=os.getenv('HOST'), port=os.getenv('MAIN_PORT'))
