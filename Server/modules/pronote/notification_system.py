@@ -215,6 +215,9 @@ async def check_internet_connection() -> bool:
 
 async def user_process_loop(user:PronotifUser) -> None: 
     """Handle all checks and notifications for a single user with staggered timing"""
+    consecutive_failures = 0
+    max_consecutive_failures = 10
+    
     try:
         # Login
         if not await user.login():
@@ -224,49 +227,67 @@ async def user_process_loop(user:PronotifUser) -> None:
         no_internet_message = False
         instance_not_reachable_message = False
         
-        # Add staggering based on user_hash
-        user_offset = hash(user.user_hash) % 30  # 0-29 second offset
+        user_offset = hash(user.user_hash) % 30
         logger.debug(f"User {user.user_hash} assigned offset of {user_offset} seconds")
-        await asyncio.sleep(user_offset)  # Initial delay to distribute users
+        await asyncio.sleep(user_offset)
         
         while True:
             start_time = time.time()
             
-            # Check connectivity
-            internet_available = await check_internet_connection()
-            server_reachable = await user.check_pronote_server() if internet_available else False
+            try:
+                # Check connectivity with longer timeout
+                internet_available = await check_internet_connection()
+                server_reachable = await user.check_pronote_server() if internet_available else False
+                
+                if internet_available and server_reachable:
+                    if no_internet_message or instance_not_reachable_message:
+                        logger.info(f"Connectivity restored for user {user.user_hash}")
+                        no_internet_message = False
+                        instance_not_reachable_message = False
+                        consecutive_failures = 0  # Reset failure counter
+                    
+                    await user.check_session()
+                    
+                    # Run all notification checks in parallel
+                    await asyncio.gather(
+                        lesson_check(user), 
+                        menu_food_check(user), 
+                        check_reminder_notifications(user)
+                    )
+                    
+                    consecutive_failures = 0  # Reset on success
+                    
+                else:
+                    consecutive_failures += 1
+                    if consecutive_failures >= max_consecutive_failures:
+                        logger.critical(f"User {user.user_hash} has {consecutive_failures} consecutive failures. Pausing for 10 minutes.")
+                        await asyncio.sleep(600)  # Wait 10 minutes before trying again
+                        consecutive_failures = 0  # Reset after long wait
+                    
+                    if not no_internet_message and not instance_not_reachable_message:
+                        logger.warning(f"Tasks paused for user {user.user_hash} - No internet or server unreachable")
+                        no_internet_message = True
+                        instance_not_reachable_message = True
+                
+            except Exception as loop_error:
+                consecutive_failures += 1
+                logger.error(f"Error in main loop for user {user.user_hash}: {loop_error}")
+                
+                if consecutive_failures >= max_consecutive_failures:
+                    logger.critical(f"Too many consecutive errors for user {user.user_hash}. Pausing.")
+                    await asyncio.sleep(600)
+                    consecutive_failures = 0
             
-            if internet_available and server_reachable:
-                if no_internet_message or instance_not_reachable_message:
-                    logger.info(f"Connectivity restored for user {user.user_hash}")
-                    no_internet_message = False
-                    instance_not_reachable_message = False
-                
-                # Check session and perform all checks
-                await user.check_session()
-                
-                # Run all notification checks in parallel
-                await asyncio.gather(
-                    lesson_check(user), 
-                    menu_food_check(user), 
-                    check_reminder_notifications(user)
-                )
-                
-            else:
-                if not no_internet_message and not instance_not_reachable_message:
-                    logger.warning(f"Tasks paused for user {user.user_hash} - No internet or server unreachable")
-                    no_internet_message = True
-                    instance_not_reachable_message = True
-            
-            # Calculate time to next check with staggering
+            # Calculate time to next check with adaptive timing based on failures
+            base_sleep = 60 if consecutive_failures < 3 else 120  # Longer intervals during issues
             current_seconds = datetime.now().second
-            sleep_time = ((60 - current_seconds) + user_offset) % 60 or 60  # User's offset
+            sleep_time = ((base_sleep - current_seconds) + user_offset) % base_sleep or base_sleep
             await asyncio.sleep(sleep_time)
             
     except Exception as e:
         logger.critical(f"Critical error in user loop for {user.user_hash}: {e}")
         sentry_sdk.capture_exception(e)
-
+        
 async def retry_with_backoff(func, user, *args, max_attempts=5) -> None:
     """Retry a function with exponential backoff"""
     timeout_incident_id = None
@@ -293,9 +314,12 @@ async def retry_with_backoff(func, user, *args, max_attempts=5) -> None:
             
         except (requests.exceptions.ReadTimeout, 
                 requests.exceptions.ConnectTimeout, 
-                requests.exceptions.ConnectionError) as e:
+                requests.exceptions.ConnectionError,
+                aiohttp.ClientError,
+                asyncio.TimeoutError,
+                aiohttp.ServerTimeoutError) as e:
             
-            wait_time = 3 * (2 ** attempt)
+            wait_time = 10 * (2 ** attempt)
             
             # On first timeout, create an incident in Sentry
             if attempt == 0:

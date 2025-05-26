@@ -254,7 +254,12 @@ class PronotifUser:
             async with aiohttp.ClientSession() as session:
                 async with session.get(self.login_page_link, timeout=20) as resp:
                     return resp.status == 200
-        except aiohttp.ClientError:
+        except (aiohttp.ClientError, asyncio.TimeoutError, aiohttp.ServerTimeoutError) as e:
+            logger.warning(f"Pronote server check failed for {self.user_hash}: {e}")
+            return False
+        
+        except Exception as e:
+            logger.error(f"Unexpected error checking Pronote server for {self.user_hash}: {e}")
             return False
     
     def update_from_db(self, user_data) -> None:
