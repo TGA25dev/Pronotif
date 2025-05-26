@@ -152,57 +152,61 @@ def get_db_connection():
 _previous_user_hashes = set()
 _existing_users = {}  # Cache of user objects by ID
 
+# Lock for shared resources
+user_update_lock = asyncio.Lock()
+
 async def load_active_users() -> list:
     """Load all active users from the database using connection pooling"""
     global _previous_user_hashes, _existing_users
     users = []
     
-    try:
-        with get_db_connection() as connection:
-            cursor = connection.cursor(dictionary=True)
-            
-            query = f"""
-            SELECT *
-            FROM {table_name}
-            WHERE is_active = 1
-            """
-            cursor.execute(query)
-            results = cursor.fetchall()
-            
-            # Process query results
-            current_user_hashes = set()
-            for user_data in results:
-                user_hash = user_data['user_hash']
-                current_user_hashes.add(user_hash)
+    async with user_update_lock:  # Ensure thread-safe updates
+        try:
+            with get_db_connection() as connection:
+                cursor = connection.cursor(dictionary=True)
                 
-                if user_hash in _existing_users:
-                    # Update existing user with fresh data
-                    _existing_users[user_hash].update_from_db(user_data)
-                    users.append(_existing_users[user_hash])
-                else:
-                    # Only create new users that don't already exist
-                    new_user = PronotifUser(user_data)
-                    _existing_users[user_hash] = new_user
-                    users.append(new_user)
-            
-            # Clean up removed users
-            for old_id in list(_existing_users.keys()):
-                if old_id not in current_user_hashes:
-                    del _existing_users[old_id]
-            
-            # Only log if the set of users has changed
-            if current_user_hashes != _previous_user_hashes:
-                new_count = len(current_user_hashes - _previous_user_hashes)
-                removed_count = len(_previous_user_hashes - current_user_hashes)
-                logger.info(f"Loaded {len(users)} active users from database ({new_count} new, {removed_count} removed)")
-                _previous_user_hashes = current_user_hashes
+                query = f"""
+                SELECT *
+                FROM {table_name}
+                WHERE is_active = 1
+                """
+                cursor.execute(query)
+                results = cursor.fetchall()
                 
-            return users
-            
-    except Exception as e:
-        logger.error(f"Failed to load users: {e}")
-        sentry_sdk.capture_exception(e)
-        return []
+                # Process query results
+                current_user_hashes = set()
+                for user_data in results:
+                    user_hash = user_data['user_hash']
+                    current_user_hashes.add(user_hash)
+                    
+                    if user_hash in _existing_users:
+                        # Update existing user with fresh data
+                        _existing_users[user_hash].update_from_db(user_data)
+                        users.append(_existing_users[user_hash])
+                    else:
+                        # Only create new users that don't already exist
+                        new_user = PronotifUser(user_data)
+                        _existing_users[user_hash] = new_user
+                        users.append(new_user)
+                
+                # Clean up removed users
+                for old_id in list(_existing_users.keys()):
+                    if old_id not in current_user_hashes:
+                        del _existing_users[old_id]
+                
+                # Only log if the set of users has changed
+                if current_user_hashes != _previous_user_hashes:
+                    new_count = len(current_user_hashes - _previous_user_hashes)
+                    removed_count = len(_previous_user_hashes - current_user_hashes)
+                    logger.info(f"Loaded {len(users)} active users from database ({new_count} new, {removed_count} removed)")
+                    _previous_user_hashes = current_user_hashes
+                    
+                return users
+                
+        except Exception as e:
+            logger.error(f"Failed to load users: {e}")
+            sentry_sdk.capture_exception(e)
+            return []
     
 async def check_internet_connection() -> bool:
     url = "http://www.google.com"
@@ -427,9 +431,16 @@ async def lesson_check(user):
                 emoji_path = os.path.join(data_dir, 'emoji_cours_names.json')
                 subject_path = os.path.join(data_dir, 'subject_names_format.json')
 
-                async with aiofiles.open(emoji_path, 'r', encoding='utf-8') as emojis_data, aiofiles.open(subject_path, 'r', encoding='utf-8') as subjects_data:
-                    emojis = json.loads(await emojis_data.read())
-                    subjects = json.loads(await subjects_data.read())
+                try:
+                    async with aiofiles.open(emoji_path, 'r', encoding='utf-8') as emojis_data, aiofiles.open(subject_path, 'r', encoding='utf-8') as subjects_data:
+                        emojis = json.loads(await emojis_data.read())
+                        subjects = json.loads(await subjects_data.read())
+                        
+                except (FileNotFoundError, json.JSONDecodeError) as e:
+                    logger.error(f"Failed to load JSON files for user {user.user_hash}: {e}")
+                    sentry_sdk.capture_exception(e)
+                    emojis = {}
+                    subjects = {}
 
                 global lower_cap_subject_name
                 lower_cap_subject_name = subject[0].capitalize() + subject[1:].lower()
