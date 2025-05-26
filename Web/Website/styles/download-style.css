@@ -1349,6 +1349,7 @@ body.modal-open {
                       radial-gradient(circle at 80% 80%, var(--primary-light) 0%, transparent 25%);
     background-size: 100% 100%;
     background-repeat: no-repeat;
+    overflow-y: auto;
 }
 
 .beta-code-overlay.hidden {
@@ -1361,6 +1362,7 @@ body.modal-open {
     background: var(--card-bg);
     border-radius: 24px;
     padding: 40px;
+    margin: 0;
     width: 100%;
     max-width: 1000px;
     text-align: center;
@@ -1465,20 +1467,25 @@ body.modal-open {
 .beta-code-error {
     color: #ff6b6b;
     font-size: 0.9rem;
-    margin-top: 10px;
+    margin-top: 0px;
     opacity: 0;
     transition: opacity 0.3s ease;
+    margin-bottom: 0;
+    height: 0;
+    overflow: hidden; 
 }
 
 .beta-code-error.visible {
     opacity: 1;
+    height: auto;
+    margin-top: 10px;
 }
 
 .beta-divider {
     display: flex;
     align-items: center;
     text-align: center;
-    margin: 30px 0;
+    margin: 15px 0;
 }
 
 .beta-divider::before,
