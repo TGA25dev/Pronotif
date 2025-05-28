@@ -265,25 +265,30 @@ class PronotifUser:
     def update_from_db(self, user_data) -> None:
         """Update user with fresh data from database without reinitializing"""
         changes_made = False
-        
+        changes = []  # List to track what changed
+
         # Update core identifiers if needed
         if user_data.get('app_token') != self.app_token:
             self.app_token = user_data.get('app_token', self.app_token)
             changes_made = True
-        
+            changes.append('app_token')
+
         # Update student info
         if user_data.get('student_fullname') != self.student_fullname:
             self.student_fullname = user_data.get('student_fullname')
             changes_made = True
-        
+            changes.append('student_fullname')
+
         if user_data.get('student_firstname') != self.student_firstname:
             self.student_firstname = user_data.get('student_firstname')
             changes_made = True
-        
+            changes.append('student_firstname')
+
         if user_data.get('student_class') != self.student_class:
             self.student_class = user_data.get('student_class')
             changes_made = True
-        
+            changes.append('student_class')
+
         # Update credentials if they've changed
         new_username = decrypt(user_data.get('student_username', ''))
         new_password = decrypt(user_data.get('student_password', ''))
@@ -293,7 +298,8 @@ class PronotifUser:
             # Force re-login on next check
             self.first_login = True
             changes_made = True
-        
+            changes.append('credentials')
+
         # Update connection settings
         new_login_page_link = decrypt(user_data.get('login_page_link', ''))
         if new_login_page_link != self.login_page_link:
@@ -301,47 +307,66 @@ class PronotifUser:
             # Force re-login on next check
             self.first_login = True
             changes_made = True
-        
+            changes.append('login_page_link')
+
         if user_data.get('uuid') != self.uuid:
             self.uuid = user_data.get('uuid', self.uuid)
             changes_made = True
+            changes.append('uuid')
 
         new_qr_code_login = bool(user_data.get('qr_code_login', 0))
         if new_qr_code_login != self.qr_code_login:
             self.qr_code_login = new_qr_code_login
             changes_made = True
+            changes.append('qr_code_login')
 
         new_ent_used = bool(user_data.get('ent_used', 0))
         if new_ent_used != self.ent_used:
             self.ent_used = new_ent_used
             changes_made = True
+            changes.append('ent_used')
 
         if user_data.get('notification_delay') != self.notification_delay:
             self.notification_delay = user_data.get('notification_delay', self.notification_delay)
             changes_made = True
+            changes.append('notification_delay')
 
         if user_data.get('fcm_token') != self.fcm_token:
             self.fcm_token = user_data.get('fcm_token', self.fcm_token)
             changes_made = True
-        
+            changes.append('fcm_token')
+
         # Update time settings
         new_timezone = user_data.get('timezone', self.timezone)
         if new_timezone != self.timezone:
             self.timezone = new_timezone
             self.timezone_obj = pytz.timezone(self.timezone)
-        
+            changes_made = True
+            changes.append('timezone')
+
         # Update lunch times
         for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']:
             if user_data.get(f'{day}_lunch') != self.lunch_times.get(day):
                 self.lunch_times[day] = user_data.get(f'{day}_lunch', self.lunch_times.get(day))
                 changes_made = True
-        
+                changes.append(f'{day}_lunch')
+
         # Update feature flags
-        self.evening_menu = bool(user_data.get('evening_menu', self.evening_menu))
-        self.unfinished_homework_reminder = bool(user_data.get('unfinished_homework_reminder', self.unfinished_homework_reminder))
-        self.get_bag_ready_reminder = bool(user_data.get('get_bag_ready_reminder', self.get_bag_ready_reminder))
-        
-        
+        if bool(user_data.get('evening_menu', self.evening_menu)) != self.evening_menu:
+            self.evening_menu = bool(user_data.get('evening_menu', self.evening_menu))
+            changes_made = True
+            changes.append('evening_menu')
+
+        if bool(user_data.get('unfinished_homework_reminder', self.unfinished_homework_reminder)) != self.unfinished_homework_reminder:
+            self.unfinished_homework_reminder = bool(user_data.get('unfinished_homework_reminder', self.unfinished_homework_reminder))
+            changes_made = True
+            changes.append('unfinished_homework_reminder')
+
+        if bool(user_data.get('get_bag_ready_reminder', self.get_bag_ready_reminder)) != self.get_bag_ready_reminder:
+            self.get_bag_ready_reminder = bool(user_data.get('get_bag_ready_reminder', self.get_bag_ready_reminder))
+            changes_made = True
+            changes.append('get_bag_ready_reminder')
+
         # Only log if something changed
         if changes_made:
-            logger.debug(f"Updated user {self.user_hash} from database")
+            logger.debug(f"Updated user {self.user_hash} from database. Changes: {', '.join(changes)}")
