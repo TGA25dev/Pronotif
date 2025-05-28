@@ -35,7 +35,7 @@ const updateDeviceSpecificContent = () => {
 
     // Reset display
     if (iosSteps) iosSteps.style.display = 'none';
-    if (androidSteps) iosSteps.style.display = 'none';
+    if (androidSteps) androidSteps.style.display = 'none';
 
     if (isIos()) {
         if (iosSteps) {
@@ -94,7 +94,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const confirmDownload = document.getElementById('confirmDownload');
     const directBtn = document.querySelector('.direct-btn');
 
-    updateDeviceSpecificContent();
+    if (installButton) {
+        installButton.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                console.log('Install button clicked, showing install prompt...');
+                
+                // Show the installation prompt
+                deferredPrompt.prompt();
+                
+                // Wait for the user's choice
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User installation choice: ${outcome}`);
+                
+                // We've used the prompt, and can't use it again
+                deferredPrompt = null;
+                
+                // Update UI based on new state
+                updateDeviceSpecificContent();
+            } else {
+                console.log('Install button clicked but deferredPrompt is not available');
+            }
+        });
+    }
 
     // Query parameters
     const urlParams = new URLSearchParams(window.location.search);
@@ -239,7 +260,7 @@ window.addEventListener('appinstalled', (evt) => {
 // Service Worker
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('scripts/sw.js')
+        navigator.serviceWorker.register('/sw.js')
             .then((registration) => {
                 console.log('Server worker succesfully saved : ', registration);
                 // Check if the service worker is active
@@ -364,6 +385,8 @@ function initBetaCodeOverlay() {
         betaCodeOverlay.classList.add('hidden');
         mainContent.style.display = 'block';
         languageSwitcher.style.display = 'block';
+
+        updateDeviceSpecificContent();
     } else {
         mainContent.style.display = 'none';
         languageSwitcher.style.display = 'none';
@@ -430,6 +453,7 @@ function initBetaCodeOverlay() {
             if (response.ok && result.success) {
                 localStorage.setItem('pronotif_beta_access', 'true');
                 betaCodeOverlay.classList.add('hidden');
+                updateDeviceSpecificContent();
 
                 setTimeout(() => {
                     mainContent.style.display = 'block';
