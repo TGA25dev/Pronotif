@@ -4,7 +4,7 @@ import asyncio
 from loguru import logger
 import sentry_sdk
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 import aiohttp
 import pytz
 import sys
@@ -36,6 +36,12 @@ class PronotifUser:
         # Client connection
         self.client = None
         self.first_login = True
+        
+        # Session refresh tracking
+        self.session_refresh_count = 0
+        self.refresh_timestamps = []
+        self.max_refreshes_per_window = 5
+        self.refresh_window_minutes = 30
         
         # Student info
         self.student_fullname = user_data.get('student_fullname')
@@ -82,6 +88,32 @@ class PronotifUser:
         
         logger.debug(f"Initialized user {self.user_hash}")
     
+    def _should_force_relogin(self) -> bool:
+        """Check if we should force a full relogin based on refresh frequency"""
+        now = datetime.now(self.timezone_obj)
+        
+        # Remove timestamps older than the window
+        cutoff_time = now - timedelta(minutes=self.refresh_window_minutes)
+        self.refresh_timestamps = [ts for ts in self.refresh_timestamps if ts > cutoff_time]
+        
+        # Check if the refresh limit has been exceded
+        return len(self.refresh_timestamps) >= self.max_refreshes_per_window
+    
+    def _record_session_refresh(self) -> None:
+        """Record a session refresh timestamp"""
+        now = datetime.now(self.timezone_obj)
+        self.refresh_timestamps.append(now)
+        self.session_refresh_count += 1
+        
+        logger.debug(f"Session refresh #{len(self.refresh_timestamps)} for user {self.user_hash} "
+                    f"in last {self.refresh_window_minutes} minutes")
+    
+    def _reset_refresh_counter(self) -> None:
+        """Reset the refresh counter after successful relogin"""
+        self.refresh_timestamps.clear()
+        self.session_refresh_count = 0
+        logger.debug(f"Reset session refresh counter for user {self.user_hash}")
+
     async def login(self) -> bool:
         """Attempt to log in to Pronote with user credentials"""
         try:
@@ -101,6 +133,7 @@ class PronotifUser:
                 
             if self.client.logged_in:
                 logger.success(f"User {self.user_hash} successfully logged in!")
+                self._reset_refresh_counter()  # Reset counter on successful login
                 if self.qr_code_login:
                     # Update password for future logins
                     await self._save_password()
@@ -161,7 +194,23 @@ class PronotifUser:
             
         try:
             if self.client.session_check():
-                logger.warning(f"Session expired for user {self.user_hash} !")
+                logger.warning(f"Session expired for user {self.user_hash}!")
+                
+                # Check if we should force a full relogin
+                if self._should_force_relogin():
+                    logger.warning(f"User {self.user_hash} exceeded refresh limit "
+                                 f"({self.max_refreshes_per_window} refreshes in {self.refresh_window_minutes} minutes). "
+                                 f"Forcing full relogin...")
+                    
+                    # Force full relogin
+                    if await self.login():
+                        logger.success(f"Forced relogin successful for user {self.user_hash}")
+                    else:
+                        logger.error(f"Forced relogin failed for user {self.user_hash}")
+                    return
+                
+                # Record this refresh attempt
+                self._record_session_refresh()
                 
                 if self.qr_code_login:
                     # Reload user data to get fresh password if it was updated elsewhere
