@@ -193,46 +193,41 @@ class PronotifUser:
             return
             
         try:
-            if self.client.session_check():
-                logger.warning(f"Session expired for user {self.user_hash}!")
-                
-                # Check if we should force a full relogin
-                if self._should_force_relogin():
-                    logger.warning(f"User {self.user_hash} exceeded refresh limit "
-                                 f"({self.max_refreshes_per_window} refreshes in {self.refresh_window_minutes} minutes). "
-                                 f"Forcing full relogin...")
-                    
-                    # Force full relogin
-                    if await self.login():
-                        logger.success(f"Forced relogin successful for user {self.user_hash}")
-                    else:
-                        logger.error(f"Forced relogin failed for user {self.user_hash}")
-                    return
-                
-                # Record this refresh attempt
+            # session_check() : returns True if session was refreshed
+            was_refreshed = self.client.session_check()
+            
+            if was_refreshed:
+                logger.info(f"Session was automatically refreshed for user {self.user_hash}")
                 self._record_session_refresh()
                 
+                # For QR code users -> save the updated password
                 if self.qr_code_login:
-                    # Reload user data to get fresh password if it was updated elsewhere
-                    self.password = await self._reload_password()
-                    
-                    self.client = pronotepy.Client.token_login(
-                        self.login_page_link, 
-                        username=self.username, 
-                        password=self.password,
-                        uuid=self.uuid
-                    )
-                    
-                    if self.client.logged_in:
-                        logger.success(f"New session created for user {self.user_hash}")
-                        await self._save_password()
-                else:
-                    self.client.refresh()
-                    logger.success(f"Session refreshed for user {self.user_hash}")
-                    
+                    await self._save_password()
+            
         except Exception as e:
             logger.error(f"Session check failed for user {self.user_hash}: {e}")
-            await self.handle_error_with_relogin(e)
+            
+            # Check if we should force a full relogin
+            if self._should_force_relogin():
+                logger.warning(f"User {self.user_hash} exceeded refresh limit. Forcing full relogin...")
+                if await self.login():
+                    logger.success(f"Forced relogin successful for user {self.user_hash}")
+
+                else:
+                    logger.error(f"Forced relogin failed for user {self.user_hash}")
+            else:
+                # Manual refresh
+                try:
+                    self.client.refresh()
+                    logger.success(f"Manual refresh successful for user {self.user_hash}")
+                    self._record_session_refresh()
+                    
+                    if self.qr_code_login:
+                        await self._save_password()
+                        
+                except Exception as refresh_error:
+                    logger.error(f"Manual refresh failed for user {self.user_hash}: {refresh_error}")
+                    await self.handle_error_with_relogin(refresh_error)
     
     async def _reload_password(self) -> str:
         """Reload password from database"""
