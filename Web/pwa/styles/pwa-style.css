@@ -24,6 +24,15 @@
     --camera-height: min(15rem, 50vh);
     --header-size: clamp(3.5rem, 15vw, 7rem);
     --subtitle-size: clamp(1.1rem, 4vw, 1.4rem);
+
+    /* Fonts */
+    --font-family: 'FixelVariable', sans-serif;
+}
+
+#sentry-feedback {
+        --font-family: {var(--font-family)};
+        --accent-foreground: (#ffffff);
+        --accent-background: var(--primary);
 }
 
 * {

@@ -14,10 +14,50 @@
         <link rel="preload" href="fonts/FixelVariable.ttf" as="font" type="font/ttf" crossorigin>
         <link rel="preload" href="fonts/FixelVariableItalic.ttf" as="font" type="font/ttf" crossorigin>
         <link rel="stylesheet" href="styles/fonts.css">
-        <link rel="stylesheet" href="styles/pwa-style.css?YbyuiBYcrtETRrtyUOpoIUbhiNUOctEXre">
+        <link rel="stylesheet" href="styles/pwa-style.css?byiVTUycyuBNUIounoBYIcetyTVBni">
 
         <!-- Sentry -->
-        <script src="https://js-de.sentry-cdn.com/8c5e5e92f5e18135e5c89280db44a056.min.js" crossorigin="anonymous"></script>
+        <script
+        src="https://browser.sentry-cdn.com/9.27.0/bundle.tracing.replay.feedback.min.js"
+        data-cfasync="false"
+        integrity="sha384-bgLpuKJGJQ6NPLP1BK6iD0rCcN2QwUa771+6r1/rF4A37cOSS8EYyc2AxeQARkRf"
+        crossorigin="anonymous"
+        ></script>
+
+        <script>
+            Sentry.init({
+                dsn: "https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992",
+                release: "v0.8.1",
+                environment: "production",
+
+                integrations: [
+                Sentry.feedbackIntegration({
+                    enableScreenshot: true,
+                    useSentryUser: true,
+                    colorScheme: "system",
+                    autoInject: true, 
+                    position: "bottom-right",
+                    triggerLabel: "Donner un avis",
+                    triggerAriaLabel: "Donner un avis",
+                    formTitle: "Envoyer un retour",
+                    submitButtonLabel: "Envoyer",
+                    cancelButtonLabel: "Annuler",
+                    confirmButtonLabel: "Confirmer",
+                    addScreenshotButtonLabel: "Ajouter une capture d'écran",
+                    removeScreenshotButtonLabel: "Supprimer la capture d'écran",
+                    nameLabel: "Nom (Facultatif)",
+                    namePlaceholder: "Votre nom",
+                    emailLabel: "E-mail (Facultatif)",
+                    emailPlaceholder: "votre.email@exemple.org",
+                    isRequiredLabel: "(obligatoire)",
+                    messageLabel: "Votre message",
+                    messagePlaceholder: "Décrivez votre retour, suggestion ou bug ici.",
+                    successMessageText: "Merci pour votre retour !",
+                })
+                ]
+            });
+        </script>
+
         <!--jsQR Script-->
         <script src="scripts/jsQR.js"></script>
         <!-- Skelly CSS -->
@@ -281,6 +321,6 @@
             <button id="laterButton" class="later-button">Plus tard</button>
         </div>
 
-        <script type="module" src="scripts/pwa.js?9090B786G" crossorigin="anonymous"></script>
+        <script type="module" src="scripts/pwa.js?79090887778877889090B786G" crossorigin="anonymous"></script>
     </body>
 </html>
