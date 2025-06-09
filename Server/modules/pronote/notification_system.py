@@ -548,21 +548,138 @@ async def menu_food_check(user):
     
     try:
         menus = await retry_with_backoff(fetch_menus, user)
-        logger.info(menus)
-        for menu in menus:
-            logger.info(f"Menu found for user {user.user_hash}: {menu}")
 
         if not menus:
             if not user.menu_message_printed_today:
-                logger.info(f"No menus found for user {user.user_hash} today")
+                logger.debug(f"No menus found for user {user.user_hash} today")
                 user.menu_message_printed_today = True
             return
         
-        #TODO: Process menus and send notifications
+        current_time = datetime.now(user.timezone_obj).time()
+        
+        # Check for lunch time (user-specific lunch times)
+        day_str = today.strftime('%A').lower()
+        lunch_time = user.lunch_times.get(day_str)
+        
+        dinner_time = None
+        
+        if lunch_time is not None:
+            lunch_hour, lunch_minute = lunch_time
+            
+            if current_time.hour == lunch_hour and current_time.minute == lunch_minute:
+                logger.info(f"Lunch time for user {user.user_hash}! ({today.strftime('%A')} {lunch_hour:02d}:{lunch_minute:02d})")
+                dinner_time = False
+                await send_menu_notification(user, menus, dinner_time)
+        
+        # Check for dinner time at 18:55 if evening menu is enabled
+        if current_time.hour == 18 and current_time.minute == 55 and user.evening_menu:
+            logger.info(f"Dinner time for user {user.user_hash}! ({today.strftime('%A')} 18:55)")
+            dinner_time = True
+            await send_menu_notification(user, menus, dinner_time)
         
     except Exception as e:
         logger.error(f"Error checking menus for user {user.user_hash}: {e}")
         sentry_sdk.capture_exception(e)
+
+async def send_menu_notification(user, menus, dinner_time):
+    """Send menu notifications to user"""
+    
+    def format_menu(menu_items) -> dict:
+        """Format the menu items for notification"""
+        
+        def extract_relevant_item(item_string) -> str:
+            """Extract the relevant item from a string or list of items"""
+            # Handle both string and list inputs
+            if isinstance(item_string, str):
+                items = [elem.strip() for elem in item_string.split(',')]
+            elif isinstance(item_string, list):
+                items = [str(elem).strip() for elem in item_string]
+            else:
+                items = []
+
+            # Heuristic to determine main dish
+            def is_main_dish(item: str) -> bool:
+                """Determine if an item is a main dish"""
+                # Exclude items containing certain keywords or being very short
+                if len(item.split()) <= 2:  # Generally, main dishes have few words
+                    return True
+                if "de" in item.lower():  # Avoid phrases with "de"
+                    return False
+                return True
+
+            # Handle the case where items might be Menu.Food objects
+            if isinstance(item_string, list):
+                formatted_items = []
+                for item in item_string:
+                    if hasattr(item, 'name'):  # Check if it's a Menu.Food object with a name attribute
+                        formatted_items.append(str(item.name))
+                    else:
+                        formatted_items.append(str(item))
+                items = formatted_items
+            
+            main_dishes = [item for item in items if is_main_dish(item)]
+
+            # If no main dish is detected, return everything to avoid data loss
+            return ', '.join(main_dishes) if main_dishes else ', '.join(items)
+
+        def get_menu_items(items) -> str:
+            """Get the menu items for a category"""
+            if not items:
+                return ''
+            # Apply extraction to strings of each category
+            return extract_relevant_item(items)
+
+        return {
+            'first_meal': get_menu_items(menu_items.first_meal),
+            'main_meal': get_menu_items(menu_items.main_meal),
+            'side_meal': get_menu_items(menu_items.side_meal),
+            'dessert': get_menu_items(menu_items.dessert),
+        }
+
+    for menu in menus:
+        if dinner_time is False and menu.is_lunch:
+            # Format lunch menu items
+            menu_items = format_menu(menu)
+
+            if all(menu_items.values()):  # Check that all categories are present
+                menu_text = (
+                    f"Au menu: {menu_items['first_meal']}, "
+                    f"{menu_items['main_meal']}, "
+                    f"{menu_items['side_meal']} "
+                    f"et {menu_items['dessert']} en dessert.\n"
+                    "Bon appétit ! 😁"
+                )
+
+                send_notification_to_device(
+                    user.fcm_token,
+                    title="🍽️ C'est l'heure de manger !",
+                    body=menu_text,
+                )
+                logger.success(f"Sent lunch menu notification to user {user.user_hash}")
+            else:
+                logger.warning(f"Incomplete lunch menu for {menu.date} for user {user.user_hash}. Skipping notification.")
+
+        elif dinner_time is True and menu.is_dinner:
+            # Format dinner menu items
+            menu_items = format_menu(menu)
+
+            if all(menu_items.values()):  # Check that all categories are present
+                menu_text = (
+                    f"Au menu: {menu_items['first_meal']}, "
+                    f"{menu_items['main_meal']}, "
+                    f"{menu_items['side_meal']} "
+                    f"et {menu_items['dessert']} en dessert.\n"
+                    "Bonne soirée ! 🌙"
+                )
+
+                send_notification_to_device(
+                    user.fcm_token,
+                    title="🌙 C'est l'heure du dîner !",
+                    body=menu_text,
+                )
+                logger.success(f"Sent dinner menu notification to user {user.user_hash}")
+            else:
+                logger.warning(f"Incomplete dinner menu for {menu.date} for user {user.user_hash}. Skipping notification.")
 
 async def check_reminder_notifications(user):
     """Check for homework and bag reminders"""
@@ -570,15 +687,90 @@ async def check_reminder_notifications(user):
     if not user.unfinished_homework_reminder and not user.get_bag_ready_reminder:
         return
     
-    today = datetime.now(user.timezone_obj).date()
+    current_time = datetime.now(user.timezone_obj).time()
+    tomorrow_date = (datetime.now(user.timezone_obj) + timedelta(days=1)).date()
     
-    # Implementation for homework reminders
-    if user.unfinished_homework_reminder:
-        pass  # TODO: Implement homework reminder logic
-    
-    # Implementation for "get bag ready" reminder
-    if user.get_bag_ready_reminder:
-        pass  # TODO: Implement "get bag ready" reminder logic
+    try:
+        # Check if there are classes tomorrow
+        class_checker = []
+        for attempt in range(5):  # max_retries
+            try:
+                class_checker = user.client.lessons(date_from=tomorrow_date)
+                break
+            except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError) as e:
+                if attempt < 4:  # max_retries - 1
+                    logger.warning(f"Connection timeout during lesson check for user {user.user_hash} (attempt {attempt + 1}/5). Retrying in 3 seconds...")
+                    await asyncio.sleep(3 * (2 ** attempt))
+                else:
+                    logger.error(f"Failed to check lessons after 5 attempts for user {user.user_hash}")
+                    sentry_sdk.capture_exception(e)
+                    class_checker = []
+            except Exception as e:
+                logger.error(f"Unexpected error checking lessons for user {user.user_hash}: {e}")
+                if not await user.handle_error_with_relogin(e):
+                    return
+                class_checker = []
+                break
+
+        class_tomorrow = bool(class_checker)
+
+        # Bag ready reminder at 19:35
+        if (current_time.hour == 19 and current_time.minute == 35 and
+            user.get_bag_ready_reminder and class_tomorrow):
+            
+            reminder_message = "Il est temps de préparer votre sac pour demain !"
+            
+            send_notification_to_device(
+                user.fcm_token,
+                title="📚 N'oubliez pas !",
+                body=reminder_message,
+            )
+            logger.success(f"Sent bag ready reminder to user {user.user_hash}")
+
+        # Homework reminder at 18:15
+        if (current_time.hour == 18 and current_time.minute == 15 and 
+            user.unfinished_homework_reminder and class_tomorrow):
+            
+            try:
+                homeworks = user.client.homework(tomorrow_date, tomorrow_date)
+                not_finished_homeworks_count = 0
+                
+                if not homeworks:
+                    not_finished_homeworks_count = 0
+                    logger.debug(f"No homeworks found for tomorrow for user {user.user_hash}")
+                else:
+                    # Count unfinished homework
+                    for homework in homeworks:
+                        if not homework.done:
+                            not_finished_homeworks_count += 1
+                
+                # Set reminder message based on homework completion status
+                if not_finished_homeworks_count == 0:
+                    reminder_message = "Vous avez fini tous vos devoirs pour demain, vous pouvez souffler ! 😮‍💨"
+                    title = "✅ Reposez vous bien !"
+
+                elif not_finished_homeworks_count > 1:
+                    reminder_message = f"Il vous reste {not_finished_homeworks_count} devoirs à terminer pour demain."
+                    title = "📝 Devoirs non faits !"
+
+                else:  # not_finished_homeworks_count == 1
+                    reminder_message = "Il vous reste 1 devoir à terminer pour demain."
+                    title = "📝 Devoir non fait !"
+
+                send_notification_to_device(
+                    user.fcm_token,
+                    title=title,
+                    body=reminder_message,
+                )
+                logger.success(f"Sent homework reminder to user {user.user_hash} !")
+                
+            except Exception as homework_error:
+                logger.error(f"Error checking homework for user {user.user_hash}: {homework_error}")
+                sentry_sdk.capture_exception(homework_error)
+
+    except Exception as e:
+        logger.error(f"Error in reminder check for user {user.user_hash}: {e}")
+        sentry_sdk.capture_exception(e)
 
 async def main():
     """Main function to run the multi-user system"""
