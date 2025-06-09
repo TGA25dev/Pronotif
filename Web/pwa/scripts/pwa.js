@@ -119,7 +119,7 @@ const debugLogger = {
     },
     
     getDeviceInfo() {
-        const APP_VERSION = '0.8.0';
+        const APP_VERSION = '0.8.1';
         const API_VERSION = 'v1';
         const API_BASE_URL = 'https://api.pronotif.tech';
         
@@ -259,6 +259,109 @@ window.fetch = async function(...args) {
         throw error;
     }
 };
+
+function getGreeting() {
+    const now = new Date();
+    const hour = now.getHours();
+    const minute = now.getMinutes();
+
+    //time based greetings
+    if (hour >= 5 && hour < 18) {
+        return "Bonjour";
+    } else if (hour >= 18 && hour < 22) {
+        return "Bonsoir";
+    } else {
+        return "Bonne nuit";
+    }
+}
+
+function getTimeEmoji() {
+    const now = new Date();
+    const hour = now.getHours();
+    const day = now.getDay(); // 0 = Sunday, 6 = Saturday
+    const isWeekend = day === 0 || day === 6;
+
+    // Weekend variations
+    if (isWeekend) {
+        if (hour >= 8 && hour < 12) return "☕";
+        if (hour >= 12 && hour < 14) return "🍽️";
+        if (hour >= 14 && hour < 17) return "🏖️";
+        if (hour >= 17 && hour < 22) return "🎮";
+    }
+
+    if (hour >= 5 && hour < 9) {
+        return "🌅";
+    } else if (hour >= 9 && hour < 18) {
+        return "👋";
+    } else if (hour >= 18 && hour < 23) {
+        return "🌙";
+    } else {
+        return "🌃";
+    }
+}
+
+function getSubtitle() {
+    const now = new Date();
+    const hour = now.getHours();
+    const day = now.getDay(); // 0 = Sunday, 6 = Saturday
+    const isWeekend = day === 0 || day === 6;
+    
+    let subtitles = [];
+    
+    if (isWeekend) {
+        // Weekend subtitles
+        subtitles = [
+            "Profitez de votre temps libre",
+            "Une pause bien méritée",
+            "C'est le week-end !",
+            "C’est enfin le week-end",
+        ];
+
+    } else {
+        // Weekday subtitles
+        if (hour >= 5 && hour < 8) {
+            subtitles = [
+                "Une nouvelle journée commence",
+                "Courage pour cette journée",
+                "Prêt·e pour aujourd’hui ?",
+                "Bien réveillé.e ?",
+            ];
+        } else if (hour >= 8 && hour < 12) {
+            subtitles = [
+                "Voici un rapide aperçu de votre journée",
+                "Votre matinée en un clin d'œil",
+            ];
+        } else if (hour >= 12 && hour < 14) {
+            subtitles = [
+                "C'est l'heure du déjeuner",
+                "Bon appétit !",
+                "Profitez de votre pause déjeuner",
+            ];
+        } else if (hour >= 14 && hour < 17) {
+            subtitles = [
+                "Plus que quelques heures",
+                "Vous y êtes presque",
+                "Passez une bonne après midi"
+            ];
+        } else if (hour >= 17 && hour < 22) {
+            subtitles = [
+                "Reposez vous bien",
+                "Prenez un moment pour souffler",
+                "Fin de journée en vue",
+            ];
+        } else {
+            subtitles = [
+                "Il est temps de se reposer",
+                "Préparez vous pour demain",
+                "Récupérez bien",
+                "À demain pour une nouvelle journée !"
+            ];
+        }
+    }
+    
+    // Return a random subtitle from the appropriate array
+    return subtitles[Math.floor(Math.random() * subtitles.length)];
+}
 
 async function initializeFirebase() {
     try {
@@ -649,18 +752,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Show the notification prompt
                 notifPrompt.classList.add("visible");
 
-                // "Allow" button
-                allowNotifButton.addEventListener("click", async () => {
-                    const permission = await Notification.requestPermission();
-                    if (permission === "granted") {
-                        console.log("Notifications allowed");
-                        notifPrompt.classList.add("fade-out");
-                        setTimeout(() => notifPrompt.classList.remove("visible"), 300);
-                    } else {
-                        console.log("Notifications denied");
-                    }
-                });
-
                 //"Later" button
                 laterButton.addEventListener("click", () => {
                     document.cookie = "notifDismissed=true; path=/; max-age=31536000"; // 1 year
@@ -834,10 +925,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (window.appDemoMode) {
             console.log('[Dashboard] Loading in demo mode with mock data');
             
-            // Update UI to indicate demo mode
+            // Demo mode
             const welcomeElement = document.getElementById('welcomeGreeting');
+            const welcomeSubtitle = document.getElementById('welcomeSubtitle');
             if (welcomeElement) {
-                welcomeElement.textContent = 'Bonjour Demo ! 👋';
+                welcomeElement.textContent = `${getGreeting()} Demo ! ${getTimeEmoji()}`;
+                welcomeSubtitle.textContent = getSubtitle();
             }
             
             // Add demo mode indicator
@@ -870,10 +963,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const studentFirstName = data.data?.student_firstname;
             const welcomeElement = document.getElementById('welcomeGreeting');
+            const welcomeSubtitle = document.getElementById('welcomeSubtitle');
             
             // Update the welcome message
             if (welcomeElement && studentFirstName) {
-                welcomeElement.textContent = `Bonjour ${studentFirstName} ! 👋`;
+                welcomeElement.textContent = `${getGreeting()} ${studentFirstName} ! ${getTimeEmoji()}`;
+                welcomeSubtitle.textContent = getSubtitle();
             }
             
             // Check if notification permission was revoked
@@ -899,20 +994,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                     if (finalPermission === 'granted') {
                         console.log('Notification permission granted!');
+                        
                         allowNotifButton.style.display = 'none';
+                        laterButton.style.display = 'none';
+                        infoNotifTitle.textContent = 'Notifications activées ! 🎉';
+                        infoNotifText.textContent = 'Vous recevrez maintenant des notifications pour vos cours et devoirs.';
+                        
                         const currentPermission = Notification.permission;
             
                         // Update stored permission
                         localStorage.setItem('notificationPermission', currentPermission);
 
                         if (isIOS) {
-                            console.log('iOS detected, reloading page to enable notifications');
-                            // Reload the page to apply changes
+                            console.log('iOS detected, showing success message then reloading');
+                            infoNotifText.textContent = "L'application va redémarrer pour finaliser l\'activation des notifications.";
+                            // Show success message for 2 seconds and reload
                             setTimeout(() => {
                                 window.location.reload();
-                            }, 1000);
+                            }, 5000);
                             return;
                         }
+
+                        // For non-iOS: show success message then hide modal
+                        setTimeout(() => {
+                            notifPrompt.classList.add("fade-out");
+                            setTimeout(() => notifPrompt.classList.remove("visible"), 300);
+                        }, 5000);
                         
                         // Non iOS devices, follow as planned
                         try {
