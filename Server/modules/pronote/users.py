@@ -30,7 +30,6 @@ class PronotifUser:
         """Initialize user with data from database row"""
         # Core identifiers
         self.app_session_id = user_data['app_session_id']
-        self.app_token = user_data.get('app_token')
         self.user_hash = user_data.get('user_hash')
         
         # Client connection
@@ -310,12 +309,6 @@ class PronotifUser:
         """Update user with fresh data from database without reinitializing"""
         changes_made = False
         changes = []  # List to track what changed
-
-        # Update core identifiers if needed
-        if user_data.get('app_token') != self.app_token:
-            self.app_token = user_data.get('app_token', self.app_token)
-            changes_made = True
-            changes.append('app_token')
 
         # Update student info
         if user_data.get('student_fullname') != self.student_fullname:
