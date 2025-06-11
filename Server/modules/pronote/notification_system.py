@@ -736,8 +736,8 @@ async def check_reminder_notifications(user):
                 not_finished_homeworks_count = 0
                 
                 if not homeworks:
-                    not_finished_homeworks_count = 0
                     logger.debug(f"No homeworks found for tomorrow for user {user.user_hash}")
+                    not_finished_homeworks_count = -1 # No homeworks means no unfinished ones so score is -1
                 else:
                     # Count unfinished homework
                     for homework in homeworks:
@@ -745,24 +745,29 @@ async def check_reminder_notifications(user):
                             not_finished_homeworks_count += 1
                 
                 # Set reminder message based on homework completion status
-                if not_finished_homeworks_count == 0:
-                    reminder_message = "Vous avez fini tous vos devoirs pour demain, vous pouvez souffler ! 😮‍💨"
-                    title = "✅ Reposez vous bien !"
 
-                elif not_finished_homeworks_count > 1:
-                    reminder_message = f"Il vous reste {not_finished_homeworks_count} devoirs à terminer pour demain."
-                    title = "📝 Devoirs non faits !"
+                if not_finished_homeworks_count == -1:
+                    pass #Do not send notification if no homework was found
+                
+                else:
+                    if not_finished_homeworks_count == 0:
+                        reminder_message = "Vous avez fini tous vos devoirs pour demain, vous pouvez souffler ! 😮‍💨"
+                        title = "✅ Reposez vous bien !"
 
-                else:  # not_finished_homeworks_count == 1
-                    reminder_message = "Il vous reste 1 devoir à terminer pour demain."
-                    title = "📝 Devoir non fait !"
+                    elif not_finished_homeworks_count > 1:
+                        reminder_message = f"Il vous reste {not_finished_homeworks_count} devoirs à terminer pour demain."
+                        title = "📝 Devoirs non faits !"
 
-                send_notification_to_device(
-                    user.fcm_token,
-                    title=title,
-                    body=reminder_message,
-                )
-                logger.success(f"Sent homework reminder to user {user.user_hash} !")
+                    elif not_finished_homeworks_count == 1:  # not_finished_homeworks_count == 1
+                        reminder_message = "Il vous reste 1 devoir à terminer pour demain."
+                        title = "📝 Devoir non fait !"
+
+                    send_notification_to_device(
+                        user.fcm_token,
+                        title=title,
+                        body=reminder_message,
+                    )
+                    logger.success(f"Sent homework reminder to user {user.user_hash} !")
                 
             except Exception as homework_error:
                 logger.error(f"Error checking homework for user {user.user_hash}: {homework_error}")
