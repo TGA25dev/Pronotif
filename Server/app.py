@@ -21,10 +21,12 @@ from contextlib import contextmanager
 from flask_session import Session
 from redis import Redis
 import re
+import asyncio
 from modules.security.encryption import encrypt, decrypt
 from modules.admin.coquelicot import coquelicot_bp
 from modules.admin.beta import beta_bp
 from modules.ratelimit.ratelimiter import limiter
+from modules.pronote.notification_system import  get_user_by_auth
 
 version = "v0.8.1"
 sentry_sdk.init("https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992", 
@@ -96,6 +98,10 @@ Talisman(app,
     session_cookie_http_only=True
 )
 
+# Setup logging
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 app.config['SESSION_TYPE'] = 'redis'
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
@@ -103,14 +109,12 @@ app.config['SESSION_KEY_PREFIX'] = 'session:'
 app.config['SESSION_REDIS'] = Redis(
     host=os.getenv('REDIS_HOST'),
     port=int(os.getenv('REDIS_PORT')),
-    db=int(os.getenv('REDIS_DB'))
+    db=int(os.getenv('REDIS_DB')),
+    password=(os.getenv("REDIS_PASSWORD"))
 )
+logger.critical(os.getenv("REDIS_PASSWORD"))
 
 Session(app)
-
-# Setup logging
-logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 file_handler = logging.FileHandler('app.log')
 file_handler.setLevel(logging.DEBUG)
@@ -147,7 +151,8 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 redis_connection = redis.Redis(
     host=os.getenv('REDIS_HOST'),
     port=int(os.getenv('REDIS_PORT')),
-    db=int(os.getenv('REDIS_DB'))
+    db=int(os.getenv('REDIS_DB')),
+    password=(os.getenv("REDIS_PASSWORD"))
 )
 
 initialized = False
@@ -821,7 +826,7 @@ def refresh_credentials():
             
 @app.route("/v1/app/fetch", methods=["GET"])
 @limiter.limit(str(os.getenv('FETCH_DATA_LIMIT')) + " per minute")
-@require_beta_access
+#@require_beta_access
 def fetch_student_data():
     """
     Fetch and return the student data for the authenticated user
@@ -844,7 +849,11 @@ def fetch_student_data():
         "qr_code_login", "timezone", "notification_delay", 
         "evening_menu", "unfinished_homework_reminder", 
         "get_bag_ready_reminder", "monday_lunch", "tuesday_lunch", 
-        "wednesday_lunch", "thursday_lunch", "friday_lunch", 
+        "wednesday_lunch", "thursday_lunch", "friday_lunch",
+        "next_class_name", "next_class_room", "next_class_teacher", 
+        "next_class_start", "next_class_end",
+        "current_class_name", "current_class_room", "current_class_teacher", 
+        "current_class_start", "current_class_end",
         "fcm_token", "token_updated_at", "timestamp", "is_active"
     }
 
@@ -858,54 +867,102 @@ def fetch_student_data():
         app_session_id = bleach.clean(app_session_id)
         app_token = bleach.clean(app_token)
 
-        with get_db_connection() as connection:
-            cursor = connection.cursor(dictionary=True)
+        # Separate DB fields from Pronote fields
+        db_fields = [f for f in fields if not f.startswith(('next_class_', 'current_class_'))]
+        pronote_fields = [f for f in fields if f.startswith(('next_class_', 'current_class_'))]
+        
+        response_data = {}
+
+        # Get database fields first (also serves as authentication)
+        if db_fields:
+            with get_db_connection() as connection:
+                cursor = connection.cursor(dictionary=True)
+                try:
+                    query = f"""
+                        SELECT {', '.join(db_fields)}
+                        FROM {student_table_name}
+                        WHERE app_session_id = %s AND app_token = %s AND is_active = TRUE
+                    """
+                    cursor.execute(query, (app_session_id, app_token))
+                    result = cursor.fetchone()
+
+                    if not result:
+                        logger.warning(f"Invalid credentials for session: {app_session_id[:4]}****")
+                        return jsonify({"error": "Invalid credentials"}), 401
+
+                    # Process DB fields
+                    for field in db_fields:
+                        if field not in result:
+                            continue
+                            
+                        # Decrypt sensitive fields
+                        if field in ['student_firstname', 'student_fullname', 'student_class', 'login_page_link']:
+                            try:
+                                response_data[field] = decrypt(result[field])
+                            except Exception as e:
+                                logger.error(f"Error decrypting {field}: {e}")
+                                sentry_sdk.capture_exception(e)
+                                response_data[field] = None
+                        else:
+                            response_data[field] = result[field]
+
+                except mysql.connector.Error as err:
+                    sentry_sdk.capture_exception(err)
+                    logger.error(f"MySQL error: {err}")
+                    return jsonify({"error": "Internal server error"}), 500
+
+                finally:
+                    cursor.close()
+        else:
+            # If no DB fields requested, still verify authentication
+            with get_db_connection() as connection:
+                cursor = connection.cursor()
+                try:
+                    query = f"""
+                        SELECT 1 FROM {student_table_name}
+                        WHERE app_session_id = %s AND app_token = %s AND is_active = TRUE
+                    """
+                    cursor.execute(query, (app_session_id, app_token))
+                    if not cursor.fetchone():
+                        return jsonify({"error": "Invalid credentials"}), 401
+                finally:
+                    cursor.close()
+
+        # Get Pronote fields from existing user session if requested
+        if pronote_fields:
             try:
-                query = f"""
-                    SELECT {', '.join(fields)}
-                    FROM {student_table_name}
-                    WHERE app_session_id = %s AND app_token = %s AND is_active = TRUE
-                """
-                cursor.execute(query, (app_session_id, app_token))
-                result = cursor.fetchone()
-
-                if not result:
-                    logger.warning(f"Invalid credentials for session: {app_session_id[:4]}****")
-                    return jsonify({"error": "Invalid credentials"}), 401
-
-                # Return only requested fields
-                response_data = {}
-                for field in fields:
-                    if field not in result:
-                        continue
-                        
-                    # Decrypt sensitive fields
-                    if field in ['student_firstname', 'student_fullname', 'student_class', 'login_page_link']:
-                        try:
-                            response_data[field] = decrypt(result[field])
-                        except Exception as e:
-                            logger.error(f"Error decrypting {field}: {e}")
-                            sentry_sdk.capture_exception(e)
-                            response_data[field] = None
+                # Run async function in new event loop
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    user = loop.run_until_complete(get_user_by_auth(app_session_id, app_token))
+                    if user and user.client and user.client.logged_in:
+                        pronote_data = loop.run_until_complete(user.get_pronote_data(pronote_fields))
+                        response_data.update(pronote_data)
+                        logger.debug(f"Retrieved Pronote data for user {app_session_id[:4]}****")
                     else:
-                        response_data[field] = result[field]
+                        logger.warning(f"User session not active in notification system for {app_session_id[:4]}****")
+                        # Return None for Pronote fields if user session not active
+                        for field in pronote_fields:
+                            response_data[field] = None
+                finally:
+                    loop.close()
+                    
+            except Exception as e:
+                logger.error(f"Error fetching Pronote data: {e}")
+                sentry_sdk.capture_exception(e)
+                # Return None for Pronote fields on error
+                for field in pronote_fields:
+                    response_data[field] = None
 
-                response = jsonify({
-                    "data": response_data,
-                    "status": 200
-                })
-                response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
-                response.headers['Pragma'] = 'no-cache'
-                response.headers['X-Content-Type-Options'] = 'nosniff'
-                return response
-
-            except mysql.connector.Error as err:
-                sentry_sdk.capture_exception(err)
-                logger.error(f"MySQL error: {err}")
-                return jsonify({"error": "Internal server error"}), 500
-
-            finally:
-                cursor.close()
+        response = jsonify({
+            "data": response_data,
+            "status": 200
+        })
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        return response
 
     except Exception as e:
         sentry_sdk.capture_exception(e)
