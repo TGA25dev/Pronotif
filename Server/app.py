@@ -86,7 +86,7 @@ CORS(app,
      resources={r"/*": {
          "origins": cors_origins,
          "methods": cors_methods,
-         "headers": cors_headers,
+         "allow_headers": cors_headers,
          "supports_credentials": cors_credentials
      }}
 )
@@ -112,7 +112,6 @@ app.config['SESSION_REDIS'] = Redis(
     db=int(os.getenv('REDIS_DB')),
     password=(os.getenv("REDIS_PASSWORD"))
 )
-logger.critical(os.getenv("REDIS_PASSWORD"))
 
 Session(app)
 
