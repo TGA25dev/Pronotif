@@ -946,142 +946,292 @@ document.addEventListener('DOMContentLoaded', async () => {
                 header.appendChild(demoIndicator);
             }
             
-            return Promise.resolve(); // Resolve immediately in demo mode
+            // Load demo data for all sections
+            loadDemoData();
+            
+            return Promise.resolve();
         }
 
-        return fetch("https://api.pronotif.tech/v1/app/fetch?fields=student_firstname", {
-            method: 'GET',
-            headers: { 
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include', // Send cookies
-            signal: AbortSignal.timeout(10000)
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Dashboard data:', data);
+        // Real mode - fetch data from API
+        return fetchDashboardData();
+    }
 
-            const studentFirstName = data.data?.student_firstname;
-            const welcomeElement = document.getElementById('welcomeGreeting');
-            const welcomeSubtitle = document.getElementById('welcomeSubtitle');
+    function loadDemoData() {
+        // Welcome section
+        const welcomeElement = document.getElementById('welcomeGreeting');
+        const welcomeSubtitle = document.getElementById('welcomeSubtitle');
+        if (welcomeElement) {
+            welcomeElement.textContent = `${getGreeting()} Demo ! ${getTimeEmoji()}`;
+            welcomeSubtitle.textContent = getSubtitle();
+        }
+
+        // Next course card
+        const nextCourseCard = document.querySelector('.next-course-card');
+        if (nextCourseCard) {
+            const courseTitle = nextCourseCard.querySelector('.course-title');
+            const courseDetails = nextCourseCard.querySelector('.course-details');
             
-            // Update the welcome message
-            if (welcomeElement && studentFirstName) {
-                welcomeElement.textContent = `${getGreeting()} ${studentFirstName} ! ${getTimeEmoji()}`;
-                welcomeSubtitle.textContent = getSubtitle();
+            if (courseTitle && courseDetails) {
+                courseTitle.textContent = "Mathématiques avec M. Dupont";
+                courseDetails.textContent = "Salle 201 · Début à 14:00";
             }
-            
-            // Check if notification permission was revoked
+        }
+
+        // Current class card (hide in demo)
+        const currentClassCard = document.querySelector('.current-class-card');
+        if (currentClassCard) {
+            currentClassCard.style.display = 'none';
+        }
+
+        // Homework section
+        const homeworkList = document.querySelector('.homework-list');
+        if (homeworkList) {
+            homeworkList.innerHTML = `
+                <div class="homework-item">
+                    <div class="homework-content">
+                        <h3 class="homework-subject">Mathématiques</h3>
+                        <p class="homework-task">Exercices 5 à 12 page 47</p>
+                    </div>
+                    <div class="homework-due">Demain 8h</div>
+                </div>
+                <div class="homework-item">
+                    <div class="homework-content">
+                        <h3 class="homework-subject">Histoire</h3>
+                        <p class="homework-task">Apprendre la leçon sur la Révolution française</p>
+                    </div>
+                    <div class="homework-due">Vendredi 10h</div>
+                </div>
+                <div class="homework-item">
+                    <div class="homework-content">
+                        <h3 class="homework-subject">Anglais</h3>
+                        <p class="homework-task">Compléter la fiche de vocabulaire</p>
+                    </div>
+                    <div class="homework-due">Lundi 9h</div>
+                </div>
+            `;
+        }
+    }
+
+    async function fetchDashboardData() {
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+            // Fetch student info and Pronote data
+            const response = await fetch("https://api.pronotif.tech/v1/app/fetch?fields=student_firstname,next_class_name,next_class_room,next_class_teacher,next_class_start,next_class_end,current_class_name,current_class_room,current_class_teacher,current_class_start,current_class_end", {
+                method: 'GET',
+                headers: { 
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                signal: controller.signal,
+                cache: 'no-store'
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                throw new Error(`Fetch failed: ${response.status} ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            console.log('Dashboard data received:', result);
+
+            if (result.data) {
+                updateDashboardWithData(result.data);
+            } else {
+                console.warn('No data in API response, using fallback');
+                loadFallbackData();
+            }
+
+            // Check notification permission
             checkNotificationPermissionChange();
 
-
-            // Ntification permission button
-            if (allowNotifButton) {
-                allowNotifButton.addEventListener('click', async () => {
-                    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-                    await Notification.requestPermission();
-                    console.info("Requesting notification permission...");
-
-                    // Wait until Notification.permission is no longer "default"
-                    function waitForPermissionChange(resolve) {
-                        if (Notification.permission !== 'default') {
-                            resolve(Notification.permission);
-                        } else {
-                            setTimeout(() => waitForPermissionChange(resolve), 100);
-                        }
-                    }
-                    const finalPermission = await new Promise(waitForPermissionChange);
-
-                    if (finalPermission === 'granted') {
-                        console.log('Notification permission granted!');
-                        
-                        allowNotifButton.style.display = 'none';
-                        laterButton.style.display = 'none';
-                        infoNotifTitle.textContent = 'Notifications activées ! 🎉';
-                        infoNotifText.textContent = 'Vous recevrez maintenant des notifications pour vos cours et devoirs.';
-                        
-                        const currentPermission = Notification.permission;
-            
-                        // Update stored permission
-                        localStorage.setItem('notificationPermission', currentPermission);
-
-                        if (isIOS) {
-                            console.log('iOS detected, showing success message then reloading');
-                            infoNotifText.textContent = "L'application va redémarrer pour finaliser l\'activation des notifications.";
-                            // Show success message for 2 seconds and reload
-                            setTimeout(() => {
-                                window.location.reload();
-                            }, 5000);
-                            return;
-                        }
-
-                        // For non-iOS: show success message then hide modal
-                        setTimeout(() => {
-                            notifPrompt.classList.add("fade-out");
-                            setTimeout(() => notifPrompt.classList.remove("visible"), 300);
-                        }, 5000);
-                        
-                        // Non iOS devices, follow as planned
-                        try {
-                            // Get the Firebase config
-                            const firebaseConfig = await fetchFirebaseConfig();
-                            
-                            // Wait for service worker to be fully registered and active
-                            const swRegistration = await navigator.serviceWorker.ready;
-                            
-                            // Pass Firebase config to service worker
-                            swRegistration.active.postMessage({
-                                type: 'FIREBASE_CONFIG',
-                                config: firebaseConfig
-                            });
-                            console.log('[PWA] Firebase config sent to service worker');
-                            
-                            // Wait a moment for the service worker to process the config
-                            await new Promise(resolve => setTimeout(resolve, 500));
-                            const messaging = getMessaging(app);
-                            
-                            // Get the token
-                            const currentToken = await getToken(messaging, { 
-                                VAPID_KEY, 
-                                serviceWorkerRegistration: swRegistration 
-                            });
-                            
-                            if (currentToken) {
-                                console.log('FCM Registration Token:', currentToken);
-                                sendFCMTokenToServer(currentToken);
-                            } else {
-                                console.warn('No registration token available');
-                            }
-                            
-                        } catch (error) {
-                            console.error('Error getting FCM token after permission granted:', error);
-                        }
-                    } else if (finalPermission === "denied") {
-                        console.log('Notification permission denied');
-                        localStorage.setItem('notificationPermission', finalPermission);
-                        document.cookie = "notifDismissed=true; path=/; max-age=31536000"; // 1 year
-
-                        allowNotifButton.style.display = 'none';
-                        laterButton.style.display = 'none';
-                        infoNotifTitle.textContent = 'Notifications désactivées ! 😢';
-                        infoNotifText.textContent = 'Pour les activer à nouveau rendez-vous dans les paramètres de votre appareil.';
-
-                        setTimeout(() => {
-                            //Fade out
-                            notifPrompt.classList.add("fade-out");
-                            
-                            // Hide it 
-                            setTimeout(() => {
-                                notifPrompt.classList.remove("visible");
-                            }, 500);
-                        }, 5000);
-                    }
-                });
-            }        })
-        .catch(error => {
+        } catch (error) {
             console.error('Dashboard data fetch failed:', error);
-            showFeedback('Unable to load dashboard. Please try again.', 'error');
-        });
+            
+            // Always load fallback data if fetch fails
+            loadFallbackData();
+            
+            //error indicator
+            showDataFetchError();
+        }
+    }
+
+    function updateDashboardWithData(data) {
+        console.log('Updating dashboard with data:', data);
+        
+        // Update welcome section
+        const welcomeElement = document.getElementById('welcomeGreeting');
+        const welcomeSubtitle = document.getElementById('welcomeSubtitle');
+        
+        if (welcomeElement) {
+            if (data.student_firstname) {
+                welcomeElement.textContent = `${getGreeting()} ${data.student_firstname} ! ${getTimeEmoji()}`;
+            } else {
+                welcomeElement.textContent = `${getGreeting()} ! ${getTimeEmoji()}`;
+            }
+            if (welcomeSubtitle) {
+                welcomeSubtitle.textContent = getSubtitle();
+            }
+        }
+
+        updateNextCourseCard(data);         
+        updateCurrentClassCard(data);
+        
+        console.log('Dashboard update completed');
+    }
+
+    function updateNextCourseCard(data) {
+        const nextCourseCard = document.querySelector('.next-course-card');
+        
+        if (!nextCourseCard) {
+            console.warn('Next course card element not found');
+            return;
+        }
+        
+        const courseTitle = nextCourseCard.querySelector('.course-title');
+        const courseDetails = nextCourseCard.querySelector('.course-details');
+        
+        // Remove loading state
+        nextCourseCard.classList.remove('loading-data');
+        
+        // Check if we have valid next class data (not null/undefined/empty string)
+        if (data.next_class_name && data.next_class_name !== null && data.next_class_name !== '') {
+            let titleText = data.next_class_name;
+            if (data.next_class_teacher && data.next_class_teacher !== null && data.next_class_teacher !== '') {
+                titleText += ` avec ${data.next_class_teacher}`;
+            }
+            
+            let detailsText = '';
+            if (data.next_class_room && data.next_class_room !== null && data.next_class_room !== '') {
+                detailsText += `Salle ${data.next_class_room}`;
+            }
+            if (data.next_class_start && data.next_class_start !== null && data.next_class_start !== '') {
+                if (detailsText) detailsText += ' · ';
+                detailsText += `Début à ${data.next_class_start}`;
+            }
+            
+            if (courseTitle) courseTitle.textContent = titleText;
+            if (courseDetails) courseDetails.textContent = detailsText || 'Informations disponibles';
+            
+            nextCourseCard.style.display = 'block';
+        } else {
+            // No next class data available
+            if (courseTitle) courseTitle.textContent = "Aucun cours à venir";
+            if (courseDetails) courseDetails.textContent = "Profitez de votre temps libre";
+            nextCourseCard.style.display = 'block';
+        }
+    }
+
+    function updateCurrentClassCard(data) {
+        const currentClassCard = document.querySelector('.current-class-card');
+        
+        if (!currentClassCard) {
+            console.warn('Current class card element not found');
+            return;
+        }
+        
+        // Check if we have valid current class data (not null/undefined/empty string)
+        if (data.current_class_name && data.current_class_name !== null && data.current_class_name !== '') {
+            const courseTitle = currentClassCard.querySelector('.course-title');
+            const courseDetails = currentClassCard.querySelector('.course-details');
+            
+            let titleText = data.current_class_name;
+            if (data.current_class_teacher && data.current_class_teacher !== null && data.current_class_teacher !== '') {
+                titleText += ` avec ${data.current_class_teacher}`;
+            }
+            
+            let detailsText = '';
+            if (data.current_class_room && data.current_class_room !== null && data.current_class_room !== '') {
+                detailsText += `Salle ${data.current_class_room}`;
+            }
+            if (data.current_class_end && data.current_class_end !== null && data.current_class_end !== '') {
+                if (detailsText) detailsText += ' · ';
+                detailsText += `Fin à ${data.current_class_end}`;
+            }
+            
+            // Calculate progress if we have time data
+            const progressFill = currentClassCard.querySelector('.progress-fill');
+            const progressHandle = currentClassCard.querySelector('.progress-handle');
+            
+            if (data.current_class_start && data.current_class_end && 
+                data.current_class_start !== null && data.current_class_end !== null &&
+                data.current_class_start !== '' && data.current_class_end !== '') {
+                const now = new Date();
+                const startTime = parseTimeString(data.current_class_start);
+                const endTime = parseTimeString(data.current_class_end);
+                
+                if (startTime && endTime) {
+                    const totalDuration = endTime - startTime;
+                    const elapsed = now.getTime() - startTime.getTime();
+                    const progress = Math.max(0, Math.min(100, (elapsed / totalDuration) * 100));
+                    
+                    if (progressFill) {
+                        progressFill.style.width = `${progress}%`;
+                    }
+                    if (progressHandle) {
+                        progressHandle.style.left = `${progress}%`;
+                    }
+                    
+                    // Add remaining time to details
+                    const remainingMinutes = Math.max(0, Math.ceil((endTime - now) / (1000 * 60)));
+                    if (remainingMinutes > 0) {
+                        detailsText += ` | ${remainingMinutes} minutes restantes`;
+                    }
+                }
+            }
+            
+            if (courseTitle) courseTitle.textContent = titleText;
+            if (courseDetails) courseDetails.textContent = detailsText || 'Cours en cours...';
+            
+            currentClassCard.style.display = 'block';
+            console.log('Current class card shown:', titleText);
+        } else {
+            // No current class - hide the card
+            currentClassCard.style.display = 'none';
+            console.log('Current class card hidden - no current class');
+        }
+    }
+
+    function parseTimeString(timeStr) {
+        if (!timeStr || typeof timeStr !== 'string') return null;
+        
+        const [hours, minutes] = timeStr.split(':').map(num => parseInt(num, 10));
+        if (isNaN(hours) || isNaN(minutes)) return null;
+        
+        const now = new Date();
+        const timeDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
+        return timeDate;
+    }
+
+    function showDataFetchError() {
+        console.warn('[Dashboard] Data fetch error - continuing with fallback');
+        
+        // Optionally add a small retry button or indicator
+        const nextCourseCard = document.querySelector('.next-course-card');
+        if (nextCourseCard) {
+            const refreshButton = document.createElement('button');
+            refreshButton.className = 'refresh-data-btn';
+            refreshButton.innerHTML = '🔄';
+            refreshButton.title = 'Actualiser les données';
+            refreshButton.onclick = () => {
+                refreshButton.remove();
+                fetchDashboardData();
+            };
+            nextCourseCard.appendChild(refreshButton);
+        }
+    }
+
+    // Global functions
+    function showFeedback(message, type) {
+        const feedbackEl = document.getElementById('feedbackMessage');
+        if (!feedbackEl) return;
+        
+        feedbackEl.innerHTML = message;
+        feedbackEl.className = 'feedback-message';
+        feedbackEl.classList.add(type);
+        feedbackEl.style.display = 'block';
     }
     
     // Check if notification permission has change
