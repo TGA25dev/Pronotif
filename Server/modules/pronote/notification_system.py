@@ -16,6 +16,8 @@ import aiofiles
 import json
 import random
 from dotenv import load_dotenv
+import redis
+import pickle
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from modules.pronote.users import PronotifUser
@@ -28,7 +30,7 @@ sentry_sdk.init(
     enable_tracing=True,
     traces_sample_rate=1.0,
     environment="production",
-    release="v0.9",
+    release="v0.8.1",
     server_name="Server",
     ignore_errors=ignore_errors,
      _experiments={
@@ -155,12 +157,19 @@ _existing_users = {}  # Cache of user objects by ID
 # Lock for shared resources
 user_update_lock = asyncio.Lock()
 
+redis_client = redis.Redis(
+    host=os.getenv('REDIS_HOST'),
+    port=int(os.getenv('REDIS_PORT')),
+    db=int(os.getenv('REDIS_DB', '0')),
+    password=os.getenv('REDIS_PASSWORD', None),
+)
+
 async def load_active_users() -> list:
     """Load all active users from the database using connection pooling"""
     global _previous_user_hashes, _existing_users
     users = []
     
-    async with user_update_lock:  # Ensure thread-safe updates
+    async with user_update_lock:
         try:
             with get_db_connection() as connection:
                 cursor = connection.cursor(dictionary=True)
@@ -193,6 +202,27 @@ async def load_active_users() -> list:
                 for old_id in list(_existing_users.keys()):
                     if old_id not in current_user_hashes:
                         del _existing_users[old_id]
+                        #Remove from Redis too
+                        try:
+                            redis_client.delete(f"user_session:{old_id}")
+                        except Exception as e:
+                            logger.error(f"Failed to remove user from Redis: {e}")
+                
+                #Store user sessions in Redis for sharing with app.py
+                try:
+                    for user_hash, user in _existing_users.items():
+                        user_info = {
+                            'app_session_id': user.app_session_id,
+                            'user_hash': user.user_hash,
+                            'logged_in': user.client and user.client.logged_in if user.client else False
+                        }
+                        redis_client.setex(
+                            f"user_session:{user_hash}", 
+                            300,  # 5 minutes TTL
+                            pickle.dumps(user_info)
+                        )
+                except Exception as e:
+                    logger.error(f"Failed to store user sessions in Redis: {e}")
                 
                 # Only log if the set of users has changed
                 if current_user_hashes != _previous_user_hashes:
@@ -207,7 +237,7 @@ async def load_active_users() -> list:
             logger.error(f"Failed to load users: {e}")
             sentry_sdk.capture_exception(e)
             return []
-    
+
 async def check_internet_connection() -> bool:
     url = "http://www.google.com"
     try:
@@ -216,6 +246,98 @@ async def check_internet_connection() -> bool:
                 return resp.status == 200
     except Exception:
         return False
+    
+
+async def get_user_by_auth(app_session_id: str, app_token: str) -> PronotifUser:
+    """Get an existing PronotifUser instance by authentication credentials"""
+    
+    #first check local _existing_users 
+    for user_hash, user in _existing_users.items():
+        if user.app_session_id == app_session_id:
+            #Verify token matches
+            try:
+                with get_db_connection() as connection:
+                    cursor = connection.cursor(dictionary=True)
+                    query = f"""
+                    SELECT app_token FROM {table_name}
+                    WHERE app_session_id = %s AND is_active = 1
+                    """
+                    cursor.execute(query, (app_session_id, app_token))
+                    result = cursor.fetchone()
+                    
+                    if result and result['app_token'] == app_token:
+                        logger.success(f"Found user {user_hash} in local cache for session {app_session_id}")
+                        return user
+            except Exception as e:
+                logger.error(f"Error verifying user auth: {e}")
+    
+    try:
+        with get_db_connection() as connection:
+            cursor = connection.cursor(dictionary=True)
+            query = f"""
+            SELECT user_hash FROM {table_name}
+            WHERE app_session_id = %s AND app_token = %s AND is_active = 1
+            """
+            cursor.execute(query, (app_session_id, app_token))
+            result = cursor.fetchone()
+            
+            if not result:
+                logger.warning(f"User with session {app_session_id} not found in database or invalid token")
+                return None
+                
+            user_hash = result['user_hash']
+            
+            # Check if this user has an active session in Redis
+            try:
+                user_session_data = redis_client.get(f"user_session:{user_hash}")
+                if user_session_data:
+                    user_info = pickle.loads(user_session_data)
+                    if user_info.get('logged_in'):
+                        logger.success(f"Found active user session in Redis for {user_hash}")
+                        # Create a temporary user object for API use
+                        return await create_temp_user_for_api(user_hash, app_session_id, app_token)
+                    else:
+                        logger.warning(f"User {user_hash} found in Redis but not logged in")
+                else:
+                    logger.warning(f"User {user_hash} not found in Redis active sessions")
+            except Exception as e:
+                logger.error(f"Error checking Redis for user session: {e}")
+            
+            return None
+                
+    except Exception as e:
+        logger.error(f"Error verifying user auth: {e}")
+        return None
+
+async def create_temp_user_for_api(user_hash: str, app_session_id: str, app_token: str) -> PronotifUser:
+    """Create a temporary user for API access using existing session"""
+    try:
+        with get_db_connection() as connection:
+            cursor = connection.cursor(dictionary=True)
+            query = f"""
+            SELECT * FROM {table_name}
+            WHERE user_hash = %s AND app_session_id = %s AND app_token = %s AND is_active = 1
+            """
+            cursor.execute(query, (user_hash, app_session_id, app_token))
+            result = cursor.fetchone()
+            
+            if result:
+                # Create user and attempt login
+                temp_user = PronotifUser(result)
+                if await temp_user.login():
+                    logger.info(f"Created temporary user for API access: {user_hash}")
+                    return temp_user
+                else:
+                    logger.error(f"Failed to login temporary user for API: {user_hash}")
+                    return None
+            else:
+                logger.error(f"User data not found for hash: {user_hash}")
+                return None
+                
+    except Exception as e:
+        logger.error(f"Error creating temporary user: {e}")
+        return None
+
 
 async def user_process_loop(user:PronotifUser) -> None: 
     """Handle all checks and notifications for a single user with staggered timing"""
@@ -227,6 +349,21 @@ async def user_process_loop(user:PronotifUser) -> None:
         if not await user.login():
             logger.error(f"Failed to login user {user.user_hash}, skipping...")
             return
+            
+        # Update Redis with logged in status
+        try:
+            user_info = {
+                'app_session_id': user.app_session_id,
+                'user_hash': user.user_hash,
+                'logged_in': True
+            }
+            redis_client.setex(
+                f"user_session:{user.user_hash}", 
+                300,  # 5 minutes TTL
+                pickle.dumps(user_info)
+            )
+        except Exception as e:
+            logger.error(f"Failed to update Redis session for user {user.user_hash}: {e}")
             
         no_internet_message = False
         instance_not_reachable_message = False
@@ -251,6 +388,21 @@ async def user_process_loop(user:PronotifUser) -> None:
                         consecutive_failures = 0  # Reset failure counter
                     
                     await user.check_session()
+                    
+                    # Update Redis session status
+                    try:
+                        user_info = {
+                            'app_session_id': user.app_session_id,
+                            'user_hash': user.user_hash,
+                            'logged_in': user.client and user.client.logged_in if user.client else False
+                        }
+                        redis_client.setex(
+                            f"user_session:{user.user_hash}", 
+                            300,  # 5 minutes TTL
+                            pickle.dumps(user_info)
+                        )
+                    except Exception as e:
+                        logger.error(f"Failed to update Redis session: {e}")
                     
                     # Run all notification checks in parallel
                     await asyncio.gather(

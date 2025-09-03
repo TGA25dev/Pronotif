@@ -5,6 +5,7 @@ from loguru import logger
 import sentry_sdk
 import requests
 from datetime import datetime, timedelta
+from datetime import time as dt_time
 import aiohttp
 import pytz
 import sys
@@ -18,7 +19,7 @@ sentry_sdk.init(
     enable_tracing=True,
     traces_sample_rate=1.0,
     environment="production",
-    release="v0.9",
+    release="v0.8.1",
     server_name="Server",
     ignore_errors=ignore_errors,
 )
@@ -30,6 +31,7 @@ class PronotifUser:
         """Initialize user with data from database row"""
         # Core identifiers
         self.app_session_id = user_data['app_session_id']
+        self.app_token = user_data.get('app_token')
         self.user_hash = user_data.get('user_hash')
         
         # Client connection
@@ -310,6 +312,21 @@ class PronotifUser:
         changes_made = False
         changes = []  # List to track what changed
 
+        if user_data.get('app_token') != self.app_token:
+            self.app_token = user_data.get('app_token', self.app_token)
+            changes_made = True
+            changes.append('app_token')
+        
+        if user_data.get('app_session_id') != self.app_session_id:
+            self.app_session_id = user_data.get('app_session_id', self.app_session_id)
+            changes_made = True
+            changes.append('app_session_id')
+        
+        if user_data.get('user_hash') != self.user_hash:
+            self.user_hash = user_data.get('user_hash', self.user_hash)
+            changes_made = True
+            changes.append('user_hash')
+
         # Update student info
         if user_data.get('student_fullname') != self.student_fullname:
             self.student_fullname = user_data.get('student_fullname')
@@ -407,3 +424,116 @@ class PronotifUser:
         # Only log if something changed
         if changes_made:
             logger.debug(f"Updated user {self.user_hash} from database. Changes: {', '.join(changes)}")
+
+    async def get_current_lesson(self) -> dict:
+        """Get current lesson information"""
+        try:
+            today = datetime.now(self.timezone_obj).date()
+            lessons = self.client.lessons(date_from=today)
+            current_time = datetime.now(self.timezone_obj)
+            
+            for lesson in lessons:
+                # Ensure lesson times are timezone-aware
+                lesson_start = lesson.start
+                lesson_end = lesson.end
+                
+                # If lesson times are naive, make them timezone-aware
+                if lesson_start.tzinfo is None:
+                    lesson_start = self.timezone_obj.localize(lesson_start)
+                if lesson_end.tzinfo is None:
+                    lesson_end = self.timezone_obj.localize(lesson_end)
+                
+                if lesson_start <= current_time <= lesson_end and not lesson.canceled:
+                    return {
+                        'name': lesson.subject.name if lesson.subject else None,
+                        'room': lesson.classroom,
+                        'teacher': lesson.teacher_name if hasattr(lesson, 'teacher_name') else None,
+                        'start': lesson_start.strftime('%H:%M'),
+                        'end': lesson_end.strftime('%H:%M')
+                    }
+            return {}
+        except Exception as e:
+            logger.error(f"Error getting current lesson for user {self.user_hash}: {e}")
+            return {}
+    
+    async def get_next_lesson(self) -> dict:
+        """Get next lesson information"""
+        try:
+            today = datetime.now(self.timezone_obj).date()
+            tomorrow = today + timedelta(days=1)
+            current_time = datetime.now(self.timezone_obj)
+            
+            # Get lessons for today and tomorrow
+            lessons_today = self.client.lessons(date_from=today)
+            lessons_tomorrow = self.client.lessons(date_from=tomorrow) if datetime.now(self.timezone_obj).time() > dt_time(20, 0) else []
+            
+            all_lessons = lessons_today + lessons_tomorrow
+            
+            # Find next lesson
+            upcoming_lessons = []
+            for lesson in all_lessons:
+                if lesson.canceled:
+                    continue
+                    
+                # Ensure lesson start time is timezone-aware
+                lesson_start = lesson.start
+                if lesson_start.tzinfo is None:
+                    lesson_start = self.timezone_obj.localize(lesson_start)
+                
+                if lesson_start > current_time:
+                    upcoming_lessons.append((lesson, lesson_start))
+            
+            if upcoming_lessons:
+                # Sort by start time and get the earliest
+                next_lesson, next_lesson_start = min(upcoming_lessons, key=lambda x: x[1])
+                next_lesson_end = next_lesson.end
+                if next_lesson_end.tzinfo is None:
+                    next_lesson_end = self.timezone_obj.localize(next_lesson_end)
+                
+                return {
+                    'name': next_lesson.subject.name if next_lesson.subject else None,
+                    'room': next_lesson.classroom,
+                    'teacher': next_lesson.teacher_name if hasattr(next_lesson, 'teacher_name') else None,
+                    'start': next_lesson_start.strftime('%H:%M'),
+                    'end': next_lesson_end.strftime('%H:%M')
+                }
+            return {}
+        except Exception as e:
+            logger.error(f"Error getting next lesson for user {self.user_hash}: {e}")
+            return {}
+    
+    async def get_pronote_data(self, requested_fields: list) -> dict:
+        """Get Pronote data based on requested fields"""
+        data = {}
+        
+        try:
+            # Check session before fetching data
+            await self.check_session()
+            
+            if any(field.startswith('next_class_') for field in requested_fields):
+                next_lesson = await self.get_next_lesson()
+                data.update({
+                    'next_class_name': next_lesson.get('name'),
+                    'next_class_room': next_lesson.get('room'),
+                    'next_class_teacher': next_lesson.get('teacher'),
+                    'next_class_start': next_lesson.get('start'),
+                    'next_class_end': next_lesson.get('end')
+                })
+            
+            if any(field.startswith('current_class_') for field in requested_fields):
+                current_lesson = await self.get_current_lesson()
+                data.update({
+                    'current_class_name': current_lesson.get('name'),
+                    'current_class_room': current_lesson.get('room'),
+                    'current_class_teacher': current_lesson.get('teacher'),
+                    'current_class_start': current_lesson.get('start'),
+                    'current_class_end': current_lesson.get('end')
+                })
+                
+        except Exception as e:
+            logger.error(f"Error getting Pronote data for user {self.user_hash}: {e}")
+            for field in requested_fields:
+                if field.startswith(('next_class_', 'current_class_')):
+                    data[field] = None
+        
+        return {field: data.get(field) for field in requested_fields if field in data}
