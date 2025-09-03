@@ -1254,57 +1254,38 @@ def get_db_connection():
             cursor.fetchone()
             cursor.close()
             
-            yield connection
-            break  # If successful, exit the retry loop
+            # Yield the connection for use
+            try:
+                yield connection
+            finally:
+               
+                if connection:
+                    connection.close()
+            return 
             
         except mysql.connector.errors.PoolError as err:
-            # No available connections in pool
             retry_count += 1
             logger.warning(f"Pool error on attempt {retry_count}: {err}")
             sentry_sdk.capture_exception(err)
             
             if retry_count >= max_retries:
-                logger.error("Connection pool exhausted after retries")
+                logger.critical("Connection pool exhausted after retries")
                 raise
                 
-            # Wait before retrying (exponential backoff)
-            time.sleep(0.5 * (2 ** retry_count))
-            
-        except mysql.connector.errors.InterfaceError as err:
-            # Connection interface error (connection lost)
-            retry_count += 1
-            logger.warning(f"Connection interface error on attempt {retry_count}: {err}")
-            sentry_sdk.capture_exception(err)
-            
-            if retry_count >= max_retries:
-                logger.error("Failed to establish working connection after retries")
-                raise
-                
-            # Connection might be invalid, try to reset the pool
             if retry_count == max_retries - 1:
-                try:
-                    reset_connection_pool()
-                except Exception as e:
-                    logger.error(f"Failed to reset pool during retry: {e}")
-                    
-            time.sleep(0.5 * (2 ** retry_count))
+                reset_connection_pool()
+            
+            time.sleep(min(2 ** retry_count, 5))  #Backoff caped at 5 seconds
             
         except mysql.connector.Error as err:
-            # Other MySQL errors
             sentry_sdk.capture_exception(err)
             logger.error(f"Database error: {err}")
             raise
             
-        finally:
-            if connection:
-                try:
-                    connection.close()
-                except Exception as e:
-                    logger.error(f"Error closing connection: {e}")
-                    # Don't raise this exception, just log it
-    
-    if retry_count >= max_retries:
-        raise mysql.connector.Error("Failed to get a working database connection after multiple attempts")
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            logger.error(f"Unexpected error: {e}")
+            raise
 
 initialized = False
 
