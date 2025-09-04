@@ -51,7 +51,7 @@ html, body {
     height: 100%;
     margin: 0;
     padding: 0;
-    font-family: "FixelVariable", sans-serif;
+    font-family: "Satoshi", sans-serif;
     background: var(--background);
     color: var(--text);
 }
@@ -60,6 +60,10 @@ html, body {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+}
+
+a {
+    font-weight: 700;
 }
 
 .bento-container {
@@ -205,6 +209,11 @@ h1 {
     margin-top: 0.5rem;
     margin-bottom: 1rem;
     position: relative;
+}
+
+.header-content h1 {
+    font-family: "Cabinet";
+    font-weight: 900;
 }
 
 .features-grid {

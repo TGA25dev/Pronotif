@@ -1,0 +1,15 @@
+/* Global Fonts Manager */
+
+@font-face {
+  font-family: "Satoshi";
+  src: url('https://pronotif.tech/fonts/satoshivariable.ttf') format('truetype');
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Cabinet";
+  src: url('https://pronotif.tech/fonts/cabinetvariable.ttf') format('truetype');
+  font-style: normal;
+  font-display: swap;
+}
