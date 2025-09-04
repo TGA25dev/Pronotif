@@ -19,7 +19,7 @@ server_env_path = '/var/www/pronotif.tech/html/Pronotif/Server/.env'
 load_dotenv(server_env_path)
 
 sys.path.append('/var/www/pronotif.tech/html/Pronotif/Server')
-from modules.ratelimit.ratelimiter import limiter
+from modules.ratelimit.ratelimiter import limiter # type: ignore
 
 app = Flask(__name__, 
             template_folder='.',
