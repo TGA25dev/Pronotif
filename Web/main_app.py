@@ -194,25 +194,6 @@ def pwa_serve_script_file(filename):
 def pwa_serve_manifest_file():
     return send_from_directory("pwa/", "sw.js")
 
-#Global Fonts Handler
-@app.route('/fonts/<path:filename>')
-def serve_font(filename):
-    if not filename.lower().endswith(('.ttf')):
-        abort(404)
-    
-    #prevent directory traversal
-    if '..' in filename or '/' in filename:
-        abort(404)
-        
-    fonts_dir = os.path.join(os.path.dirname(__file__), 'fonts')
-    full_path = os.path.join(fonts_dir, filename)
-
-    if not os.path.isfile(full_path):
-        logger.warning(f"Font not found: {full_path}")
-        return jsonify({'error': 'Font not found'}), 404
-    
-    return send_from_directory(fonts_dir, filename)
-
 if __name__ == '__main__':    
     # Start the Flask app
     app.run(host=os.getenv('HOST'), port=os.getenv('WEBSITE_PORT'))
