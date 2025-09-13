@@ -2,7 +2,7 @@
 importScripts('https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.9.0/firebase-messaging-compat.js');
 
-const CACHE_NAME = 'pronotif-pwa-v25';
+const CACHE_NAME = 'pronotif-pwa-v28';
 
 // Global variable to store Firebase Messaging instance
 let messaging = null;
@@ -65,7 +65,7 @@ self.addEventListener('push', function(event) {
               payload.notification?.title || 'Pronot\'if',
               {
                   body: payload.notification?.body || 'Nouvelle notification',
-                  icon: '/Web/images/pwa/assets/icon-192x192.png',
+                  icon: '../assets/favicons/logo_pronotif_192.webp',
                   tag: 'pronotif-notification',
                   renotify: false,
                   data: { deep_link: deepLink },
@@ -97,14 +97,10 @@ self.addEventListener('notificationclick', function(event) {
 });
 
 const ASSETS_TO_CACHE = [
-    './',
     './index.htm',
     './offline.htm',
     './styles/pwa-style.css',
-    './styles/fonts.css',
     './styles/offline.css',
-    './fonts/FixelVariable.ttf',
-    './fonts/FixelVariableItalic.ttf',
     './scripts/pwa.js',
     './scripts/jsQR.js',
     './sw.js',

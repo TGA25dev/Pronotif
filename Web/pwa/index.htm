@@ -10,11 +10,13 @@
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black translucent">
         <meta name="apple-mobile-web-app-title" content="Pronot'if Mobile">
-        <link rel="manifest" href="../manifest.json">
-        <link rel="preload" href="fonts/FixelVariable.ttf" as="font" type="font/ttf" crossorigin>
-        <link rel="preload" href="fonts/FixelVariableItalic.ttf" as="font" type="font/ttf" crossorigin>
-        <link rel="stylesheet" href="styles/fonts.css">
-        <link rel="stylesheet" href="styles/pwa-style.css?byiVbububoiy68ttrdYRftTUycyuBNUIounoBYIcetyTVBni">
+        <link rel="manifest" href="https://pronotif.tech/manifest.json">
+        <link rel="icon" href="../assets/logo_pronotif_rounded_64.webp" type="image/webp">
+
+        <script src="https://kit.fontawesome.com/c1bbd01730.js" crossorigin="anonymous"></script>
+
+        <link rel="stylesheet" href="https://pronotif.tech/fonts_manager.css">
+        <link rel="stylesheet" href="styles/pwa-style.css?15sssssqdssdqsdsqqsqqn87dddqddqds987d876ssqshhqjsfddsdsnununihgfssredsdshjdssdshhbgdidsdujhnuylpokiuynuybtsoimpdsdsdsdkjhgsmdsdsmopopdsdspsplopkiuygqsqosjkiokioiunuiMPPnuuibylolokiiolloujionubybyreovtuuibyuivrcuvbniu">
         
 
         <!-- Sentry -->
@@ -61,36 +63,12 @@
 
         <!--jsQR Script-->
         <script src="scripts/jsQR.js"></script>
-        <!-- Skelly CSS -->
-        <link rel="stylesheet" href="https://unpkg.com/@midnight-theory/skelly/dist/bundle.min.css">
-        <!-- Skelly JS -->
-        <script src="https://unpkg.com/@midnight-theory/skelly/dist/bundle.min.js"></script>
         
     </head>
     <body>
         <div class="orientation-warning">
             <div class="warning-emoji">🦉</div>
             <p>Veuillez utiliser votre téléphone en mode portrait pour accéder à Pronot'if.</p>
-        </div>
-
-        <div id="betaCodeOverlay" class="beta-code-overlay">
-            <div class="beta-code-container">
-                <h1>Accès Bêta</h1>
-                <p>Entrez votre code d'accès pour continuer.</p>
-                <input 
-                    type="tel"
-                    id="betaCodeInput" 
-                    class="beta-code-input" 
-                    placeholder="XXX-XXX-XXX" 
-                    maxlength="11" 
-                    aria-label="Code d'accès"
-                />
-                <button id="betaCodeSubmit" class="beta-code-submit">Valider</button>
-                <p id="betaCodeError" class="beta-code-error hidden">Code invalide, veuillez réessayer.</p>
-                <p class="beta-info">
-                    Pas de code ?<br><a href="#">Revenez en septembre</a> pour l'accès public!<br><br><small>Plus d'informations sur la page téléchargement du site.</small>
-                </p>
-            </div>
         </div>
 
         <div class="main-container">
@@ -100,40 +78,61 @@
                     <p class="loading-text">Chargement en cours...</p>
                 </div>
             </div>    
-            <div id="loginView" class="view">
-                <div class="container">
-                    <div class="card">
-                        <div class="card-header">
-                            <h1>Pronot'if</h1>
-                            <p class="subtitle">On est en quelle salle ?</p>
-                        </div>
+            <div id="loginView" class="view loginView hidden">
+                    <div class="login-header-container">
+                        <h1 class="login-header-app-name">
+                            Pronot'if
+                        <span id="debugTrigger" class="debug-trigger"></span>
+                    </h1>
 
-                        <button id="cameraButton" class="primary-button">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M3 3h7v7H3V3zm11 0h7v7h-7V3zm0 11h7v7h-7v-7zM3 14h7v7H3v-7z" stroke="currentColor" stroke-width="2"/>
-                                <path d="M6 6h1v1H6V6zm11 0h1v1h-1V6zm0 11h1v1h-1v-1zM6 17h1v1H6v-1z" fill="currentColor"/>
-                            </svg>
-                            Scanner le QR Code
-                        </button>
                         
-                        <video id="cameraView" class="camera-view" autoplay playsinline muted></video>
-                        <canvas id="canvas" class="canvas"></canvas>
-                        <div id="feedbackMessage" class="feedback-message"></div>
-                        <div id="spinner" class="spinner"></div>
-
-                        <p id="infosQR" class="infos-qr">Scannez le QR Code de configuration que vous avez généré précedement.</p>
+                        <h1 class="login-header-app-title" id="loginHeaderAppTitle">Bonjour !</h1>
+                        <p class="login-header-app-subtitle" id="loginHeaderAppSubTitle">Selectionnez une méthode de connexion afin d’acceder à votre compte Pronote.</p>
                     </div>
-                    <a id="needHelpButton" class="help-button" href="https://docs.pronotif.tech" target="_blank">
-                        Besoin d'aide ?&nbsp;
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M8.5 5H15.5M21 12H3M15.5 19H8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </a>
-                    <span class="app-version">v0.8.1 beta 🐛</span>
-                </div>
-            </div>
 
-            <span id="debugTrigger" class="debug-trigger"></span>
+                    <div class="login-card-container">
+                        <h1 class="login-card-container-title" id="loginCardContainerTitle">Faites votre choix</h1>
+
+                        <input type="text" class="global-login-container-input" id="globalLoginContainerInput">
+                        <button class="global-login-container-button" id="globalLoginContainerButton"></button>
+
+                        <p class="login-username-label" id="loginUsernameLabel">Identifiant</p>
+                        <input type="text" class="login-username-input" id="loginUsernameInput" placeholder="Votre identifiant Pronote ou ENT">
+                        <p class="login-password-label" id="loginPasswordLabel">Mot de passe</p>
+                        <input type="password" class="login-password-input" id="loginPasswordInput" placeholder="Votre mot de passe">
+                        <button class="login-submit-button" id="loginSubmitButton">Se connecter</button>
+
+                        <div class="login-options-container" id="loginOptionsContainer">
+                            <button class="login-option-box" id="loginGeolocButton">
+                                <i class="fa-regular fa-compass"></i>
+                                <div class="option-text-container">
+                                    <h2 class="options-button-title">Utilisez la géolocalisation</h2>
+                                    <p class="options-button-subtitle">Activez la géolocalisation afin de localiser les établissements proches de vous</p>
+                                </div>
+                            </button>
+
+                            <button class="login-option-box">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <div class="option-text-container">
+                                    <h2 class="options-button-title" id="loginSearchCityButton">Recherchez votre ville</h2>
+                                    <p class="options-button-subtitle">Recherchez le nom de votre ville dans la barre de recherche</p>
+                                </div>
+                            </button>
+
+                            <button class="login-option-box" id="loginQRCodeButton">
+                                <i class="fa-solid fa-link"></i>
+                                <div class="option-text-container">
+                                    <h2 class="options-button-title">Vous avez un lien ?</h2>
+                                    <p class="options-button-subtitle">Utilisez le lien direct de votre établissement</p>
+                                </div>
+                            </button>
+                        </div>
+                        <p class="login-safety-text">
+                            Conformement à notre <u><a href="https://safety.pronotif.tech/docs/politique-de-confidentialite" target="_blank">politique de confidentialité</a></u> vos données de géolocalisation ne sont jamais enregistrées.
+                            <i class="fa-solid fa-lock"></i>
+                        </p>
+                    </div>
+            </div>
 
             <!-- Debug Panel (hidden by default) -->
             <div id="debugPanel" class="debug-panel hidden">
@@ -156,159 +155,83 @@
                     <button id="clearLogs" class="debug-button">Vider les logs</button>
                 </div>
             </div>
+            
+            <div id="dashboardView" class="view hidden">
+                <div class="dashboard-container">
+                    <!-- Welcome header with user info -->
+                    <div class="dashboard-header">
+                        <div class="welcome-section">
+                            <div class="welcome-text">
+                                <p class="welcome-greeting" id="welcomeGreeting">Bonjour {FirstName} !</p>
+                                <p class="welcome-subtitle" id="welcomeSubtitle">Voici un rapide aperçu de votre journée.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Next course card -->
+                    <div class="dashboard-card next-course-card">
+                        <div class="card-label">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+                                <path d="M12 7v5l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            Prochain cours
+                        </div>
+                        <div class="course-content">
+                            <h3 class="course-title">Chargement...</h3>
+                            <p class="course-details">Récupération des données...</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Homework section -->
+                    <div class="section-header">
+                        <h2>À faire ce soir</h2>
+                    </div>
+                    
+                    <!-- Homework items -->
+                    <div class="homework-list">
+                        <div class="homework-item">
+                            <div class="homework-content">
+                                <h3 class="homework-subject">{Title}</h3>
+                                <p class="homework-task">{Content}</p>
+                            </div>
+                            <div class="homework-due">Demain {Time}</div>
+                        </div>
+                        <div class="homework-item">
+                            <div class="homework-content">
+                                <h3 class="homework-subject">{Title}</h3>
+                                <p class="homework-task">{Content}</p>
+                            </div>
+                            <div class="homework-due">Demain {Time}</div>
+                        </div>
+                        
+                        <div class="homework-item">
+                            <div class="homework-content">
+                                <h3 class="homework-subject">{Title}</h3>
+                                <p class="homework-task">{Content}</p>
+                            </div>
+                            <div class="homework-due">Demain {Time}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- See more button -->
+                    <button class="see-more-button">Voir plus</button>
+                    
+                    <!-- Current class card -->
+                    <div class="dashboard-card current-class-card" style="display: none;">
+                        <h3 class="course-title">Cours en cours</h3>
+                        <p class="player-course-details">Chargement...</p>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%;"></div>
+                            <div class="progress-handle" style="left: 0%;"></div>
+                        </div>
+                    </div>
+                    <span class="app-version">v0.8.1 beta 🐛
+                        <span id="debugTrigger" class="debug-trigger"></span>
+                    </span>
+                </div>
+            </div>
         </div> 
-
-
-        <!--Skeleton Loader-->
-        <div id="skeletonView" class="view hidden">
-            <div class="skeleton-container">
-                <!-- Welcome header skeleton -->
-                <div class="dashboard-header">
-                    <div class="welcome-section">
-                        <div class="welcome-text">
-                            <div class="skelly-rectangle" data-width="220px" data-height="28px" data-radius="4px"></div>
-                            <div class="skelly-rectangle" data-width="280px" data-height="18px" data-radius="4px"></div>
-                        </div>
-                        <div class="user-avatar">
-                            <div class="skelly-circle" data-size="45px"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Next course card skeleton -->
-                <div class="dashboard-card next-course-card">
-                    <div class="card-label">
-                        <div class="skelly-rectangle" data-width="120px" data-height="18px" data-radius="4px"></div>
-                    </div>
-                    <div class="course-content">
-                        <div class="skelly-rectangle" data-width="80%" data-height="22px" data-radius="4px"></div>
-                        <div class="skelly-rectangle" data-width="60%" data-height="16px" data-radius="4px"></div>
-                    </div>
-                </div>
-                
-                <!-- Homework section skeleton -->
-                <div class="section-header">
-                    <div class="skelly-rectangle" data-width="140px" data-height="28px" data-radius="4px"></div>
-                </div>
-                
-                <!-- Homework items skeleton -->
-                <div class="homework-list">
-                    <div class="homework-item">
-                        <div class="homework-content">
-                            <div class="skelly-rectangle" data-width="120px" data-height="20px" data-radius="4px"></div>
-                            <div class="skelly-rectangle" data-width="90%" data-height="16px" data-radius="4px"></div>
-                        </div>
-                        <div class="skelly-rectangle" data-width="100px" data-height="16px" data-radius="4px"></div>
-                    </div>
-                    <div class="homework-item">
-                        <div class="homework-content">
-                            <div class="skelly-rectangle" data-width="100px" data-height="20px" data-radius="4px"></div>
-                            <div class="skelly-rectangle" data-width="85%" data-height="16px" data-radius="4px"></div>
-                        </div>
-                        <div class="skelly-rectangle" data-width="100px" data-height="16px" data-radius="4px"></div>
-                    </div>
-                    <div class="homework-item">
-                        <div class="homework-content">
-                            <div class="skelly-rectangle" data-width="110px" data-height="20px" data-radius="4px"></div>
-                            <div class="skelly-rectangle" data-width="80%" data-height="16px" data-radius="4px"></div>
-                        </div>
-                        <div class="skelly-rectangle" data-width="100px" data-height="16px" data-radius="4px"></div>
-                    </div>
-                </div>
-
-                <!-- See more button skeleton -->
-                <div>
-                    <div class="skelly-rectangle" data-width="80px" data-height="14px" data-radius="4px"></div>
-                </div>
-
-                <!-- Current class card skeleton-->
-                <div class="dashboard-card current-class-card">
-                    <div class="skelly-rectangle" data-width="70%" data-height="22px" data-radius="4px"></div>
-                    <div class="skelly-rectangle" data-width="80%" data-height="16px" data-radius="4px"></div>
-                    
-                    <div class="progress-bar">
-                        <div class="skelly-rectangle" data-width="40%" data-height="100%" data-radius="4px" data-color="rgba(69, 168, 168, 0.5)"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="dashboardView" class="view hidden">
-            <div class="dashboard-container">
-                <!-- Welcome header with user info -->
-                <div class="dashboard-header">
-                    <div class="welcome-section">
-                        <div class="welcome-text">
-                            <p class="welcome-greeting" id="welcomeGreeting">Bonjour {FirstName} !</p>
-                            <p class="welcome-subtitle" id="welcomeSubtitle">Voici un rapide aperçu de votre journée.</p>
-                        </div>
-                        <div class="user-avatar">
-                            <img src="images/default-avatar.jpg" alt="Avatar">
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Next course card -->
-                <div class="dashboard-card next-course-card">
-                    <div class="card-label">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
-                            <path d="M12 7v5l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                        Prochain cours
-                    </div>
-                    <div class="course-content">
-                        <h3 class="course-title">Chargement...</h3>
-                        <p class="course-details">Récupération des données...</p>
-                    </div>
-                </div>
-                
-                <!-- Homework section -->
-                <div class="section-header">
-                    <h2>À faire ce soir</h2>
-                </div>
-                
-                <!-- Homework items -->
-                <div class="homework-list">
-                    <div class="homework-item">
-                        <div class="homework-content">
-                            <h3 class="homework-subject">{Title}</h3>
-                            <p class="homework-task">{Content}</p>
-                        </div>
-                        <div class="homework-due">Demain {Time}</div>
-                    </div>
-                    <div class="homework-item">
-                        <div class="homework-content">
-                            <h3 class="homework-subject">{Title}</h3>
-                            <p class="homework-task">{Content}</p>
-                        </div>
-                        <div class="homework-due">Demain {Time}</div>
-                    </div>
-                    
-                    <div class="homework-item">
-                        <div class="homework-content">
-                            <h3 class="homework-subject">{Title}</h3>
-                            <p class="homework-task">{Content}</p>
-                        </div>
-                        <div class="homework-due">Demain {Time}</div>
-                    </div>
-                </div>
-                
-                <!-- See more button -->
-                <button class="see-more-button">Voir plus</button>
-                
-                <!-- Current class card -->
-                <div class="dashboard-card current-class-card" style="display: none;">
-                    <h3 class="course-title">Cours en cours</h3>
-                    <p class="player-course-details">Chargement...</p>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: 0%;"></div>
-                        <div class="progress-handle" style="left: 0%;"></div>
-                    </div>
-                </div>
-                <span class="app-version">v0.8.1 beta 🐛</span>
-            </div>
-        </div>
 
         <div class="notification-prompt">
             <h3 id="infoNotifTitle">
@@ -322,6 +245,6 @@
             <button id="laterButton" class="later-button">Plus tard</button>
         </div>
 
-        <script type="module" src="scripts/pwa.js?890hbijohl5yèg0bKJp0YUuhnnb7819HBLHBhuG789GUkgvbhLHBiuUGIihiGYUboukgvv" crossorigin="anonymous"></script>
+        <script type="module" src="scripts/pwa.js?6&&06611127732185000000078008700769987YGV8712905byvtyrtd87" crossorigin="anonymous"></script>
     </body>
 </html>

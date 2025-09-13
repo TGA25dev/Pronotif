@@ -1462,13 +1462,23 @@ def initialize():
             return jsonify({"error": "CSRF validation failed"}), 403
         
 @app.after_request
-def set_csrf(resp):
+def set_csrf_cookie(resp):
+    # Generate only if missing
     if not request.cookies.get("csrf_token"):
-        resp.set_cookie("csrf_token", secrets.token_urlsafe(16),
-                        secure=True, httponly=False, samesite="Strict", max_age=3600)
+        token = secrets.token_urlsafe(16)
+        resp.set_cookie(
+            "csrf_token",
+            token,
+            domain=".pronotif.tech",
+            secure=True,
+            httponly=False,
+            samesite="Strict",
+            max_age=3600,
+            path="/"
+        )
     return resp
 
-# Register blueprints (move this outside the if block)
+# Register blueprints
 app.register_blueprint(coquelicot_bp)
 app.register_blueprint(beta_bp)
 
