@@ -22,11 +22,18 @@ from flask_session import Session
 from redis import Redis
 import re
 import asyncio
+
 from modules.security.encryption import encrypt, decrypt
 from modules.admin.coquelicot import coquelicot_bp
 from modules.admin.beta import beta_bp
 from modules.ratelimit.ratelimiter import limiter
+
 from modules.pronote.notification_system import  get_user_by_auth
+
+#Login Part
+from modules.login.get_data_fetcher import get_schools_from_city
+from modules.login.temp_login.login import global_pronote_login
+from modules.login.verify_manual_link import verify
 
 version = "v0.8.1"
 sentry_sdk.init("https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992", 
@@ -82,12 +89,12 @@ cors_methods = [method.strip() for method in os.getenv('CORS_METHODS', '').split
 cors_headers = [header.strip() for header in os.getenv('CORS_HEADERS', '').split(',')]
 cors_credentials = os.getenv('CORS_CREDENTIALS', 'False')
 
-CORS(app, 
+CORS(app,
      resources={r"/*": {
          "origins": cors_origins,
-         "methods": cors_methods,
-         "allow_headers": cors_headers,
-         "supports_credentials": cors_credentials
+         "methods": cors_methods or ["GET","POST","HEAD","OPTIONS"],
+         "allow_headers": (cors_headers or []) + ["X-CSRF-Token"],
+         "supports_credentials": cors_credentials.lower() == "true"
      }}
 )
 
@@ -98,9 +105,20 @@ Talisman(app,
     session_cookie_http_only=True
 )
 
+_shared_loop = {"loop": None}
+def get_shared_loop():
+    loop = _shared_loop.get("loop")
+    if loop and loop.is_running():
+        return loop
+    loop = asyncio.new_event_loop()
+    threading.Thread(target=loop.run_forever, daemon=True).start()
+    _shared_loop["loop"] = loop
+    return loop
+
 # Setup logging
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
+logging.getLogger('pronotepy').setLevel(logging.WARNING)
 
 app.config['SESSION_TYPE'] = 'redis'
 app.config['SESSION_PERMANENT'] = False
@@ -142,7 +160,7 @@ auth_table_name = os.getenv('DB_AUTH_TABLE_NAME')
 student_table_name = os.getenv('DB_STUDENT_TABLE_NAME')
 beta_table_name = os.getenv('DB_BETA_TABLE_NAME')
 app.secret_key = os.getenv('FLASK_KEY')
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SAMESITE'] = 'Strict'
 app.config['SESSION_COOKIE_SECURE'] = True  #HTTPS
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 
@@ -215,6 +233,64 @@ def test_endpoint():
     client_ip = request.remote_addr
     logger.info(f"{client_ip} Pong !")
     return jsonify({"message": "Pong !"}), 200
+
+#PWA Login Endpoints
+@app.route("/v1/login/get_schools", methods=["GET", "HEAD"])
+@limiter.limit(str(os.getenv('SESSION_SETUP_LIMIT')) + " per minute")
+def get_school_names():
+    """
+    Endpoint get school names from a city name or coordinates.
+    """
+
+    if request.method == "HEAD":
+        return jsonify({"message": ""}), 200
+
+    with sentry_sdk.start_transaction(op="http.server", name="get_school_names"):
+        if request.method == "HEAD":
+            return jsonify({"message": ""}), 200
+
+        city_name = (request.args.get('city_name'))
+        coords = request.args.get('coords', 'false').lower() == 'true'
+        lat = request.args.get('lat')
+        lon = request.args.get('lon')
+
+        if coords and (not lat or not lon):
+            return jsonify({"error": "Latitude and longitude must be provided when coords is true"}), 400
+
+        if not coords and not city_name:
+            return jsonify({"error": "City name must be provided when coords is false"}), 400
+
+        try:
+            if coords:
+                lat = float(lat)
+                lon = float(lon)
+                if not (-90 <= lat <= 90) or not (-180 <= lon <= 180):
+                    return jsonify({"error": "Invalid latitude or longitude values"}), 400
+            else:
+                city_name = bleach.clean(city_name)
+                if len(city_name) < 2 or len(city_name) > 100:
+                    return jsonify({"error": "City name length must be between 2 and 100 characters"}), 400
+
+            schools = get_schools_from_city(city_name, coords, lat, lon)
+
+            if schools is None:
+                return jsonify({"error": "Failed to retrieve schools"}), 500
+
+            if isinstance(schools, str):
+                return jsonify({"error": schools}), 400
+
+            return jsonify({
+                "schools": schools,
+                "status": 200
+            })
+
+        except ValueError:
+            return jsonify({"error": "Invalid latitude or longitude format"}), 400
+        
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            logger.error(f"Unexpected error in get_school_names: {e}")
+            return jsonify({"error": "Internal server error"}), 500
 
 #Setup Endpoints
 
@@ -536,14 +612,15 @@ def get_firebase_config():
             logger.error(f"Unexpected error in firebase config endpoint: {e}")
             return jsonify({"error": "Internal server error"}), 500
 
-@app.route("/v1/app/qrscan", methods=["POST", "HEAD"])
+@app.route("/v1/login/verifylink", methods=["POST", "HEAD"])
 @limiter.limit(str(os.getenv('QR_CODE_SCAN_LIMIT')) + " per minute")
-@require_beta_access
-def process_qr_code():
+#@require_beta_access
+def verify_pronote_link():
     """
-    Process the data received from the QR code scan
+    Verify the given link is a valid Pronote link and return region
     """
-    with sentry_sdk.start_transaction(op="http.server", name="process_qr_code"):
+
+    with sentry_sdk.start_transaction(op="http.server", name="verify_pronote_link"):
         if request.method == "HEAD":
             return jsonify({"message": ""}), 200
 
@@ -558,98 +635,204 @@ def process_qr_code():
 
             # Define required fields
             required_fields = [
-                "session_id", "token", "login_page_link", "student_username", "student_password",
-                "student_fullname", "student_firstname", "student_class",
-                "ent_used", "qr_code_login", "uuid", "timezone",
-                "notification_delay", "evening_menu",
-                "unfinished_homework_reminder", "get_bag_ready_reminder"
+                "manual_pronote_link"
             ]
             
             # Validate all string fields
             for field in required_fields:
                 if field not in data:
                     return jsonify({"error": f"Missing {field}"}), 400
+                
                 if not isinstance(data[field], str):
                     return jsonify({"error": f"Invalid {field} type, expected string"}), 400
-
-            # Validate lunch_times
-            if 'lunch_times' not in data:
-                return jsonify({"error": "Missing lunch_times"}), 400
-            
-            if not validate_lunch_times(data['lunch_times']):
-                return jsonify({"error": "Invalid lunch_times format"}), 400
-
-            # Rate limit per session
-            rate_key = f"qrscan_rate:{data['session_id']}"
-            if redis_connection.exists(rate_key):
-                return jsonify({"error": "Too many attempts for this session"}), 429
-            redis_connection.setex(rate_key, 60, 1)
-
-            # Validate session and token
-            stored_token = redis_connection.get(f"session:{data['session_id']}")
-            if not stored_token or stored_token.decode('utf-8') != data['token']:
-                return jsonify({"error": "Invalid or expired session"}), 401
 
             # Sanitize all incoming string fields
             sanitized_payload = {}
             for key in required_fields:
-                sanitized_payload[key] = bleach.clean(data[key])
+                value = data[key]
+                # Convert null values to None
+                if value is None or (isinstance(value, str) and value.strip().lower() in ['null', 'none', '']):
+                    sanitized_payload[key] = None
+                else:
+                    sanitized_payload[key] = bleach.clean(str(value))
+
+            manual_pronote_link = sanitized_payload['manual_pronote_link']
+
+            result = verify(manual_pronote_link)
+            if not isinstance(result, dict):
+                return jsonify({"error": "Failed to verify link"}), 500
+
+            if result["isValid"] is False or not result.get("region") or result["isValid"] is None:
+                return jsonify({
+                    "error": "Invalid Pronote link",
+                    "region": None,
+                    "nomEtab": None,
+                    "isValid": False
+                }), 400
+
+            #strip whitespace at the end and start from region URL and nomEtab
+            if "region" in result and result["region"]:
+                result["region"] = result["region"].strip()
+            if "nomEtab" in result and result["nomEtab"]:
+                result["nomEtab"] = result["nomEtab"].strip()
             
-            # Parse lunch_times
-            try:
-                lunch_times = data['lunch_times'].replace("None", "null")
-                lunch_times = lunch_times.replace("'", '"')
-                lunch_times_dict = json.loads(lunch_times)
+            return jsonify({
+                "region": result["region"],
+                "nomEtab": result["nomEtab"],
+                "isValid": True,
+                "status": 200
+            })
+        
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            logger.error(f"Unexpected error in verify_pronote_link: {e}")
+            return jsonify({"error": "Internal server error"}), 500
+    
+
+@app.route("/v1/login/auth", methods=["POST", "HEAD"])
+@limiter.limit(str(os.getenv('QR_CODE_SCAN_LIMIT')) + " per minute")
+def login_user():
+    """
+    Logs the user in by passing the data to another script and then call final endpoint
+    """
+    with sentry_sdk.start_transaction(op="http.server", name="login_user"):
+        if request.method == "HEAD":
+            return jsonify({"message": ""}), 200
+
+        if not request.is_json:
+            return jsonify({"error": "Content-Type must be application/json"}), 400
+
+        try:
+            request.timeout = 60
+            data = request.get_json()
+            if not data:
+                return jsonify({"error": "Missing request data"}), 400
+
+            # Define required fields
+            required_fields = [
+                "student_username", "student_password", "login_page_link", 
+                "qr_code_login", "qrcode_data", "pin", "region"
+            ]
+            
+            # Validate all string fields
+            for field in required_fields:
+                if field not in data:
+                    return jsonify({"error": f"Missing {field}"}), 400
                 
-                # Sanitize lunch times
-                for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']:
-                    day_key = day.lower() + '_lunch'
-                    value = lunch_times_dict.get(day)
-                    sanitized_payload[day_key] = bleach.clean(str(value)) if value is not None else None
+                if not isinstance(data[field], str):
+                    return jsonify({"error": f"Invalid {field} type, expected string"}), 400
 
-            except Exception as e:
-                logger.error(f"Error processing lunch_times: {e}")
-                return jsonify({"error": "Invalid lunch_times format"}), 400
+            # Sanitize all incoming string fields
+            sanitized_payload = {}
+            for key in required_fields:
+                value = data[key]
+                # Convert null values to None
+                if value is None or (isinstance(value, str) and value.strip().lower() in ['null', 'none', '']):
+                    sanitized_payload[key] = None
+                else:
+                    sanitized_payload[key] = bleach.clean(str(value))
 
-            logger.debug(sanitized_payload)
+            login_page_link = sanitized_payload['login_page_link']
+            student_username = sanitized_payload['student_username']
+            student_password = sanitized_payload['student_password']
+            qr_code_login = sanitized_payload['qr_code_login']
+            qrcode_data = sanitized_payload['qrcode_data']
+            pin = sanitized_payload['pin']
+            region = sanitized_payload['region']
 
+            # Call the module to get user data
+            user_data = global_pronote_login(
+                login_page_link, 
+                student_username, 
+                student_password, 
+                qr_code_login, 
+                qrcode_data, 
+                pin, 
+                region,
+            )
+            
+            if not isinstance(user_data, dict):
+                return jsonify({"error": "Failed to retrieve user data"}), 500
+            
             app_session_id = secrets.token_urlsafe(16)
             app_token = secrets.token_urlsafe(32)
 
-            # Generate user hash
-            user_hash = generate_user_hash(sanitized_payload)
+            sanitized_payload.update(user_data)
 
+            # Generate user hash (unique logical identity)
+            user_hash = generate_user_hash(user_data)
             timestamp = datetime.now()
 
-            # Store the data
+            encrypted_username   = encrypt(sanitized_payload['student_username'])
+            encrypted_password   = encrypt(sanitized_payload['student_password'])
+            encrypted_fullname   = encrypt(sanitized_payload['student_fullname'])
+            encrypted_firstname  = encrypt(sanitized_payload['student_firstname'])
+            encrypted_class      = encrypt(sanitized_payload['student_class'])
+            encrypted_login_link = encrypt(sanitized_payload['login_page_link'])
+
             with get_db_connection() as connection:
-                cursor = connection.cursor()
-
+                cursor = connection.cursor(dictionary=True)
                 try:
-                    # Deactivate previous registration
-                    deactivate_previous_registrations(cursor, user_hash)
+                    # Look for existing user (latest active or inactive row)
+                    cursor.execute(
+                        f"SELECT app_session_id FROM {student_table_name} WHERE user_hash = %s ORDER BY timestamp DESC LIMIT 1",
+                        (user_hash,)
+                    )
+                    existing = cursor.fetchone()
 
-                    with sentry_sdk.start_span(op="db.query", description="Store student data"):
+                    if existing:
+                        old_app_session_id = existing['app_session_id']
+                        # Update existing record (overwrite credentials + metadata)
+                        update_query = f"""
+                            UPDATE {student_table_name}
+                            SET 
+                                app_session_id = %s,
+                                app_token = %s,
+                                login_page_link = %s,
+                                student_username = %s,
+                                student_password = %s,
+                                student_fullname = %s,
+                                student_firstname = %s,
+                                student_class = %s,
+                                ent_used = %s,
+                                qr_code_login = %s,
+                                uuid = %s,
+                                timezone = %s,
+                                is_active = 1,
+                                timestamp = %s
+                            WHERE app_session_id = %s
+                        """
+                        cursor.execute(update_query, (
+                            app_session_id,
+                            app_token,
+                            encrypted_login_link,
+                            encrypted_username,
+                            encrypted_password,
+                            encrypted_fullname,
+                            encrypted_firstname,
+                            encrypted_class,
+                            sanitized_payload['ent_used'],
+                            sanitized_payload['qr_code_login'],
+                            sanitized_payload['uuid'],
+                            sanitized_payload['timezone'],
+                            timestamp,
+                            old_app_session_id
+                        ))
+
+                        connection.commit()
+                        logger.info(f"User updated (overwrite) for hash: {user_hash[:12]}...")
+                    else:
+                        # Insert new record
                         insert_query = f"""
                             INSERT INTO {student_table_name} (
                                 app_session_id, app_token, login_page_link, student_username, student_password,
                                 student_fullname, student_firstname, student_class,
                                 ent_used, qr_code_login, uuid, timezone,
-                                notification_delay, evening_menu,
-                                unfinished_homework_reminder, get_bag_ready_reminder,
-                                monday_lunch, tuesday_lunch, wednesday_lunch, thursday_lunch, friday_lunch,
                                 user_hash, is_active, timestamp
                             ) VALUES (
-                                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 1, %s
                             )
                         """
-                        encrypted_username = encrypt(sanitized_payload['student_username'])
-                        encrypted_password = encrypt(sanitized_payload['student_password'])
-                        encrypted_fullname = encrypt(sanitized_payload['student_fullname'])
-                        encrypted_firstname = encrypt(sanitized_payload['student_firstname'])
-                        encrypted_class = encrypt(sanitized_payload['student_class'])
-                        encrypted_login_link = encrypt(sanitized_payload['login_page_link'])
-
                         cursor.execute(insert_query, (
                             app_session_id,
                             app_token,
@@ -663,65 +846,40 @@ def process_qr_code():
                             sanitized_payload['qr_code_login'],
                             sanitized_payload['uuid'],
                             sanitized_payload['timezone'],
-                            sanitized_payload['notification_delay'],
-                            sanitized_payload['evening_menu'],
-                            sanitized_payload['unfinished_homework_reminder'],
-                            sanitized_payload['get_bag_ready_reminder'],
-                            sanitized_payload['monday_lunch'],
-                            sanitized_payload['tuesday_lunch'],
-                            sanitized_payload['wednesday_lunch'],
-                            sanitized_payload['thursday_lunch'],
-                            sanitized_payload['friday_lunch'],
                             user_hash,
-                            1,  # is_active
                             timestamp
                         ))
-
-                        # Mark the session as used
-                        update_query = f"UPDATE {auth_table_name} SET used = TRUE WHERE session_id = %s"
-                        cursor.execute(update_query, (sanitized_payload['session_id'],))
-                        connection.commit()
-
-                        logger.info(f"Student data stored for session: {sanitized_payload['session_id']}")
+                        logger.info(f"User created for hash: {user_hash[:12]}...")
 
                 except mysql.connector.Error as err:
                     sentry_sdk.capture_exception(err)
                     logger.error(f"MySQL error: {err}")
                     return jsonify({"error": "Failed to store student data"}), 500
-
+                
                 finally:
                     cursor.close()
 
-                # Set HTTP-only cookies
-                response = make_response(jsonify({"message": "Authentication successful", "status": 200}))
-
-                # Set secure HTTP-only cookies
-                response.set_cookie(
-                    'app_session_id', 
-                    app_session_id,
-                    httponly=True,
-                    secure=True,  # Only sent over HTTPS
-                    samesite='Lax',
-                    max_age=60*60*24*30,  # 30 days expiration
-                    #domain="pronotif.tech"
-
-                )
-                
-                response.set_cookie(
-                    'app_token', 
-                    app_token,
-                    httponly=True,
-                    secure=True,
-                    samesite='Lax',
-                    max_age=60*60*24*30,
-                    #domain="pronotif.tech"
-                )
-                
-                return response
-
+            response = make_response(jsonify({"message": "Authentication successful", "status": 200, "success": True}))
+            response.set_cookie(
+                'app_session_id', 
+                app_session_id,
+                httponly=True,
+                secure=True,
+                samesite='Strict',
+                max_age=60*60*24*30
+            )
+            response.set_cookie(
+                'app_token', 
+                app_token,
+                httponly=True,
+                secure=True,
+                samesite='Strict',
+                max_age=60*60*24*30
+            )
+            return response
         except Exception as e:
             sentry_sdk.capture_exception(e)
-            logger.error(f"Unexpected error in process_qr_code: {e}")
+            logger.error(f"Unexpected error in login_user: {e}")
             return jsonify({"error": "Internal server error"}), 500
 
 
@@ -797,7 +955,7 @@ def refresh_credentials():
                     new_app_session_id,
                     httponly=True, 
                     secure=True, 
-                    samesite='Lax',
+                    samesite='Strict',
                     max_age=60*60*24*30,
                     #domain="pronotif.tech"
                 )
@@ -806,7 +964,7 @@ def refresh_credentials():
                     new_app_token,
                     httponly=True, 
                     secure=True, 
-                    samesite='Lax',
+                    samesite='Strict',
                     max_age=60*60*24*30,
                     #domain="pronotif.tech"
                 )
@@ -930,27 +1088,26 @@ def fetch_student_data():
         # Get Pronote fields from existing user session if requested
         if pronote_fields:
             try:
-                # Run async function in new event loop
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                try:
-                    user = loop.run_until_complete(get_user_by_auth(app_session_id, app_token))
-                    if user and user.client and user.client.logged_in:
-                        pronote_data = loop.run_until_complete(user.get_pronote_data(pronote_fields))
-                        response_data.update(pronote_data)
-                        logger.debug(f"Retrieved Pronote data for user {app_session_id[:4]}****")
-                    else:
-                        logger.warning(f"User session not active in notification system for {app_session_id[:4]}****")
-                        # Return None for Pronote fields if user session not active
-                        for field in pronote_fields:
-                            response_data[field] = None
-                finally:
-                    loop.close()
-                    
+                shared_loop = get_shared_loop()
+                # Fetch user object with timeout
+                fut_user = asyncio.run_coroutine_threadsafe(
+                    get_user_by_auth(app_session_id, app_token),
+                    shared_loop
+                )
+                user = fut_user.result(timeout=8)
+                if user and user.client and user.client.logged_in:
+                    fut_data = asyncio.run_coroutine_threadsafe(
+                        user.get_pronote_data(pronote_fields),
+                        shared_loop
+                    )
+                    pronote_data = fut_data.result(timeout=8)
+                    response_data.update(pronote_data)
+                else:
+                    for field in pronote_fields:
+                        response_data[field] = None
             except Exception as e:
                 logger.error(f"Error fetching Pronote data: {e}")
                 sentry_sdk.capture_exception(e)
-                # Return None for Pronote fields on error
                 for field in pronote_fields:
                     response_data[field] = None
 
@@ -1100,7 +1257,7 @@ def consume_code():
                                 '1',
                                 httponly=True,
                                 secure=True,
-                                samesite='Lax',
+                                samesite='Strict',
                                 max_age=60*60*24*365  # 1 year
                                 # domain="pronotif.tech"
                             )
@@ -1289,12 +1446,27 @@ def get_db_connection():
 
 initialized = False
 
+_background_started = False
 @app.before_request
 def initialize():
-    global initialized
+    global initialized, _background_started
     if not initialized:
-        start_background_tasks()
         initialized = True
+    if not _background_started and os.getenv("RUN_BG_TASKS", "1") == "1":
+        _background_started = True
+        start_background_tasks()
+    if request.method in ("POST","PUT","PATCH","DELETE") and request.endpoint not in ("login_user", "verify_code", "consume_code"):
+        c_cookie = request.cookies.get("csrf_token")
+        c_header = request.headers.get("X-CSRF-Token")
+        if not c_cookie or not c_header or c_cookie != c_header:
+            return jsonify({"error": "CSRF validation failed"}), 403
+        
+@app.after_request
+def set_csrf(resp):
+    if not request.cookies.get("csrf_token"):
+        resp.set_cookie("csrf_token", secrets.token_urlsafe(16),
+                        secure=True, httponly=False, samesite="Strict", max_age=3600)
+    return resp
 
 # Register blueprints (move this outside the if block)
 app.register_blueprint(coquelicot_bp)
