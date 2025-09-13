@@ -9,17 +9,18 @@
     "orientation": "portrait",
     "prefer_related_applications": false,
     "icons": [
-        {
-            "src": "../images/pwa/assets/logo.jpg",
-            "sizes": "192x192",
-            "type": "image/jpg",
-            "purpose": "any maskable"
-        },
-        {
-            "src": "../images/pwa/assets/logo.jpg",
-            "sizes": "512x512",
-            "type": "image/jpg",
-            "purpose": "any maskable"
-        }
+    {
+        "src": "../assets/favicons/logo_pronotif_192.webp",
+        "sizes": "192x192",
+        "type": "image/webp",
+        "purpose": "any maskable"
+    },
+    {
+        "src": "../assets/favicons/logo_pronotif_256.webp",
+        "sizes": "256x256",
+        "type": "image/webp",
+        "purpose": "any maskable"
+    }
     ]
+
 }
