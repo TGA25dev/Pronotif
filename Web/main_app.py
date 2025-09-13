@@ -132,6 +132,10 @@ def website_index():
     cache_buster = datetime.now().strftime("%Y%m%d%H%M%S")
     return render_template('website/index.html', cache_buster=cache_buster)
 
+@app.route('/fonts_manager.css', methods=['GET'])
+def website_serve_fonts_manager():
+    return send_from_directory("/", "fonts_manager.css")
+
 @app.route('/<filename>', methods=['GET'])
 @limiter.limit("50 per minute")
 def website_index2(filename):
