@@ -1,6 +1,5 @@
 const CACHE_NAME = 'pronotif-v4';
 const ASSETS_TO_CACHE = [
-  '/',
   '/download.html',
   '/scripts/download.js',
   '/styles/download-style.css',

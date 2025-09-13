@@ -10,7 +10,7 @@ sentry_sdk.init(
     enable_tracing=True,
     traces_sample_rate=1.0,
     environment="production",
-    release="v0.9",
+    release="v0.8.1",
     server_name="Server",
     ignore_errors=ignore_errors,
      _experiments={
