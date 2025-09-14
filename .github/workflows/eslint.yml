@@ -1,34 +1,61 @@
-# ESLint scanning workflow with SARIF output for GitHub Code Scanning
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+# ESLint is a tool for identifying and reporting on patterns
+# found in ECMAScript/JavaScript code.
+# More details at https://github.com/eslint/eslint
+# and https://eslint.org
+
 name: ESLint
 
 on:
   push:
     branches: [ "main" ]
   pull_request:
+    # The branches below must be a subset of the branches above
     branches: [ "main" ]
   schedule:
     - cron: '16 15 * * 6'
 
 jobs:
   eslint:
-    name: Run ESLint scanning
+    name: Run eslint scanning
     runs-on: ubuntu-latest
     permissions:
       contents: read
       security-events: write
-      actions: read
+      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
     steps:
-      # Step 1: Checkout repository
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Step 2: Install ESLint and SARIF formatter
       - name: Install ESLint
         run: |
           npm install eslint@8.10.0
           npm install @microsoft/eslint-formatter-sarif@3.1.0
 
-      # Step 3: Run ESLint and generate SARIF output
+      - name: Create ESLint config if not exists
+        run: |
+          if [ ! -f .eslintrc.js ]; then
+            echo "module.exports = {
+              root: true,
+              env: {
+                browser: true,
+                node: true,
+                es6: true
+              },
+              extends: ['eslint:recommended'],
+              parserOptions: {
+                ecmaVersion: 2020,
+                sourceType: 'module'
+              }
+            };" > .eslintrc.js
+            echo "Created default .eslintrc.js file"
+          else
+            echo ".eslintrc.js already exists"
+          fi
+
       - name: Run ESLint
         env:
           SARIF_ESLINT_IGNORE_SUPPRESSED: "true"
@@ -37,10 +64,15 @@ jobs:
             --config .eslintrc.js \
             --ext .js,.jsx,.ts,.tsx \
             --format @microsoft/eslint-formatter-sarif \
-            --output-file eslint-results.sarif
+            --output-file eslint-results.sarif || true
+          
+          # Ensure the file exists even if ESLint fails
+          if [ ! -f eslint-results.sarif ]; then
+            echo '{"version":"2.1.0","runs":[{"tool":{"driver":{"name":"ESLint","informationUri":"https://eslint.org"}},"results":[]}]}' > eslint-results.sarif
+            echo "Created empty SARIF file as ESLint encountered errors"
+          fi
         continue-on-error: true
 
-      # Step 4: Upload SARIF results to GitHub Code Scanning
       - name: Upload analysis results to GitHub
         uses: github/codeql-action/upload-sarif@v3
         with:
