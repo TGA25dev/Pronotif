@@ -4,6 +4,9 @@ const VAPID_KEY = 'BMwPi20UcpJRPkeiE1ktEjuv2tNPHhMmc1M-xvIWXSuAEVmU0ct96APLCXDl5
 
 const nativeFetch = window.fetch.bind(window);
 
+let app = null;
+let messaging = null;
+
 // Custom debug logger
 const originalConsole = {
     log: console.log.bind(console),
@@ -1446,6 +1449,234 @@ if (navigator.serviceWorker) {
     });
 }
 
+let lastSentToken = localStorage.getItem('fcmToken') || null;
+
+async function checkNotifEnabled() {
+    const notifPrompt = document.querySelector(".notification-prompt");
+    const allowNotifButton = document.getElementById('allowNotifButton');
+    const infoNotifText = document.getElementById('infoNotifText');
+    const infoNotifTitle = document.getElementById('infoNotifTitle');
+    const laterButton = document.getElementById('laterButton');
+
+    if (!('Notification' in window)) {
+        console.warn('This browser does not support notifications !');
+        allowNotifButton.style.display = 'none';
+        return false;
+    }
+    if (Notification.permission === 'granted') {
+        allowNotifButton.style.display = 'none';
+
+        try {
+            if (!app) return false;
+
+            // Get the Firebase config
+            const firebaseConfig = await fetchFirebaseConfig();
+
+            // Wait for service worker to be fully registered and active
+            const swRegistration = await navigator.serviceWorker.ready;
+
+            // Pass Firebase config to service worker
+            swRegistration.active.postMessage({
+                type: 'FIREBASE_CONFIG',
+                config: firebaseConfig
+            });
+
+            console.log('[PWA] Firebase config sent to service worker');
+
+            // Wait a moment for the service worker to process the config
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            const messaging = getMessaging(app);
+
+            // Get the token
+            const currentToken = await getToken(messaging, { 
+                VAPID_KEY, 
+                serviceWorkerRegistration: swRegistration 
+            });
+
+            if (currentToken) {
+                console.log('FCM Registration Token:', currentToken);
+                sendFCMTokenToServer(currentToken);
+                return true;
+            } else {
+                console.warn('No registration token available');
+                return false;
+            }
+
+        } catch (error) {
+            console.error('Error getting FCM token:', error);
+            return false;
+        }
+    }    
+
+    if (Notification.permission === 'default') {
+        console.log('Permission is default, checking if we should show popup...');
+        const isDashboard = document.getElementById('dashboardView') && 
+                            !document.getElementById('dashboardView').classList.contains('hidden');
+
+        console.log('Dashboard visible:', isDashboard);
+        console.log('Notification dismissed cookie:', document.cookie.includes("notifDismissed=true"));
+        console.log('Notification prompt element exists:', !!notifPrompt);
+
+        if (isDashboard) {
+            // Check if the user has already dismissed the notification
+            if (document.cookie.includes("notifDismissed=true")) {
+                return; // Don't show the prompt again
+            }
+
+            // Show the notification prompt
+            notifPrompt.classList.add("visible");
+
+            //"Later" button
+            laterButton.addEventListener("click", () => {
+                document.cookie = "notifDismissed=true; path=/; max-age=31536000"; // 1 year
+                notifPrompt.classList.add("fade-out");
+                setTimeout(() => notifPrompt.classList.remove("visible"), 300);
+            });
+        }
+    }
+
+    console.log('Notification permission:', Notification.permission);
+    return false;
+}
+
+if (allowNotifButton) {
+    allowNotifButton.addEventListener('click', async () => {
+        const notifPrompt = document.querySelector(".notification-prompt");
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        await Notification.requestPermission();
+        console.info("Requesting notification permission...");
+
+        // Wait until Notification.permission is no longer "default"
+        function waitForPermissionChange(resolve) {
+            if (Notification.permission !== 'default') {
+                resolve(Notification.permission);
+            } else {
+                setTimeout(() => waitForPermissionChange(resolve), 100);
+            }
+        }
+        const finalPermission = await new Promise(waitForPermissionChange);
+
+        if (finalPermission === 'granted') {
+            console.log('Notification permission granted!');
+            
+            allowNotifButton.style.display = 'none';
+            laterButton.style.display = 'none';
+            infoNotifTitle.textContent = 'Notifications activées ! 🎉';
+            infoNotifText.textContent = 'Vous recevrez maintenant des notifications pour vos cours et devoirs.';
+            
+            const currentPermission = Notification.permission;
+
+            // Update stored permission
+            localStorage.setItem('notificationPermission', currentPermission);
+
+            if (isIOS) {
+                console.log('iOS detected, showing success message then reloading');
+                infoNotifText.textContent = "L'application va redémarrer pour finaliser l'activation des notifications.";
+                // Show success message for 5 seconds and reload
+                setTimeout(() => {
+                    window.location.reload();
+                }, 5000);
+                return;
+            }
+
+            // For non-iOS: show success message then hide modal
+            setTimeout(() => {
+                notifPrompt.classList.add("fade-out");
+                setTimeout(() => notifPrompt.classList.remove("visible"), 300);
+            }, 5000);
+
+            // Non iOS devices, follow as planned
+            try {
+                // Get the Firebase config
+                const firebaseConfig = await fetchFirebaseConfig();
+                
+                // Wait for service worker to be fully registered and active
+                const swRegistration = await navigator.serviceWorker.ready;
+                
+                // Pass Firebase config to service worker
+                if (swRegistration.active) {
+                    swRegistration.active.postMessage({
+                        type: 'FIREBASE_CONFIG',
+                        config: firebaseConfig
+                    });
+                    console.log('[PWA] Firebase config sent to service worker');
+                } else {
+                    console.warn('[PWA] No active service worker to send config');
+                }
+                
+                // Wait a moment for the service worker to process the config
+                await new Promise(resolve => setTimeout(resolve, 500));
+                const messaging = getMessaging(app);
+                
+                // Get the token
+                const currentToken = await getToken(messaging, { 
+                    VAPID_KEY, 
+                    serviceWorkerRegistration: swRegistration 
+                });
+                
+                if (currentToken) {
+                    console.log('FCM Registration Token:', currentToken);
+                    sendFCMTokenToServer(currentToken);
+                } else {
+                    console.warn('No registration token available');
+                }
+                
+            } catch (error) {
+                console.error('Error getting FCM token after permission granted:', error);
+            }
+        } else if (finalPermission === "denied") {
+            console.log('Notification permission denied');
+            localStorage.setItem('notificationPermission', finalPermission);
+            document.cookie = "notifDismissed=true; path=/; max-age=31536000"; // 1 year
+
+            allowNotifButton.style.display = 'none';
+            laterButton.style.display = 'none';
+            infoNotifTitle.textContent = 'Notifications désactivées ! 😢';
+            infoNotifText.textContent = 'Pour les activer à nouveau rendez-vous dans les paramètres de votre appareil.';
+
+            setTimeout(() => {
+                //Fade out
+                notifPrompt.classList.add("fade-out");
+                
+                // Hide it 
+                setTimeout(() => {
+                    notifPrompt.classList.remove("visible");
+                }, 500);
+            }, 5000);
+        }
+    });
+}
+
+async function fetchFirebaseConfig() {
+    // Check for cached config
+    const cachedConfig = localStorage.getItem('firebaseConfig');
+    const cachedTimestamp = localStorage.getItem('firebaseConfigTimestamp');
+    const cacheTTL = 3600 * 1000; // 1 hour cache lifetime
+    
+    if (cachedConfig && cachedTimestamp && 
+        (Date.now() - parseInt(cachedTimestamp) < cacheTTL)) {
+        console.log('Using cached Firebase config');
+        return JSON.parse(cachedConfig);
+    }
+
+    const response = await wrapFetch('https://api.pronotif.tech/v1/app/firebase-config', {
+        credentials: 'include'
+    });
+    
+    if (!response.ok) throw new Error('Failed to get Firebase config');
+    
+    const config = await response.json();
+
+    // Cache the result
+    localStorage.setItem('firebaseConfig', JSON.stringify(config));
+    localStorage.setItem('firebaseConfigTimestamp', Date.now().toString());
+    
+    return config;
+    return response.json();
+}
+
+
 document.addEventListener('DOMContentLoaded', async () => {
 
     // Store initial notification permission
@@ -1454,8 +1685,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Initialize Firebase
-    const app = await initializeFirebase();
-    let messaging = null;
+    app = await initializeFirebase();
     
     if (app) {
         try {
@@ -1593,18 +1823,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     }
-    // Initialize DOM elements
-    const cameraButton = document.getElementById('cameraButton');
-    const cameraView = document.getElementById('cameraView');
-    const feedbackMessage = document.getElementById('feedbackMessage');
-    const spinner = document.getElementById('spinner');
-    const infosQR = document.getElementById('infosQR');
-    const notifPrompt = document.querySelector(".notification-prompt");
-    const allowNotifButton = document.getElementById('allowNotifButton');
-    const infoNotifText = document.getElementById('infoNotifText');
-    const infoNotifTitle = document.getElementById('infoNotifTitle');
-    const laterButton = document.getElementById('laterButton');
-    let lastSentToken = localStorage.getItem('fcmToken') || null;
 
     function checkExistingSession(retryCount = 0) {
         // Check if demo mode is enabled
@@ -1665,94 +1883,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 setTimeout(() => showLoginView(), 1000);
             }
         });
-    }
-
-    function checkNotifEnabled() {
-    if (Notification.permission === 'default') {
-        console.log('Permission is default, checking if we should show popup...');
-        const isDashboard = document.getElementById('dashboardView') && 
-                            !document.getElementById('dashboardView').classList.contains('hidden');
-
-        console.log('Dashboard visible:', isDashboard);
-        console.log('Notification dismissed cookie:', document.cookie.includes("notifDismissed=true"));
-        console.log('Notification prompt element exists:', !!notifPrompt);
-
-        if (isDashboard) {
-            // Check if the user has already dismissed the notification
-            if (document.cookie.includes("notifDismissed=true")) {
-                return; // Don't show the prompt again
-            }
-
-            // Show the notification prompt
-            notifPrompt.classList.add("visible");
-
-            //"Later" button
-            laterButton.addEventListener("click", () => {
-                document.cookie = "notifDismissed=true; path=/; max-age=31536000"; // 1 year
-                notifPrompt.classList.add("fade-out");
-                setTimeout(() => notifPrompt.classList.remove("visible"), 300);
-            });
-        }
-    }
-
-
-    async function fetchFirebaseConfig() {
-        // Check for cached config
-        const cachedConfig = localStorage.getItem('firebaseConfig');
-        const cachedTimestamp = localStorage.getItem('firebaseConfigTimestamp');
-        const cacheTTL = 3600 * 1000; // 1 hour cache lifetime
-        
-        if (cachedConfig && cachedTimestamp && 
-            (Date.now() - parseInt(cachedTimestamp) < cacheTTL)) {
-            console.log('Using cached Firebase config');
-            return JSON.parse(cachedConfig);
-        }
-
-        const response = await wrapFetch('https://api.pronotif.tech/v1/app/firebase-config', {
-            credentials: 'include'
-        });
-        
-        if (!response.ok) throw new Error('Failed to get Firebase config');
-        
-        const config = await response.json();
-
-        // Cache the result
-        localStorage.setItem('firebaseConfig', JSON.stringify(config));
-        localStorage.setItem('firebaseConfigTimestamp', Date.now().toString());
-        
-        return config;
-        return response.json();
-    }
-
-        if (Notification.permission === 'default') {
-            console.log('Permission is default, checking if we should show popup...');
-            const isDashboard = document.getElementById('dashboardView') && 
-                                !document.getElementById('dashboardView').classList.contains('hidden');
-
-            console.log('Dashboard visible:', isDashboard);
-            console.log('Notification dismissed cookie:', document.cookie.includes("notifDismissed=true"));
-            console.log('Notification prompt element exists:', !!notifPrompt);
-
-            if (isDashboard) {
-                // Check if the user has already dismissed the notification
-                if (document.cookie.includes("notifDismissed=true")) {
-                    return; // Don't show the prompt again
-                }
-
-                // Show the notification prompt
-                notifPrompt.classList.add("visible");
-
-                //"Later" button
-                laterButton.addEventListener("click", () => {
-                    document.cookie = "notifDismissed=true; path=/; max-age=31536000"; // 1 year
-                    notifPrompt.classList.add("fade-out");
-                    setTimeout(() => notifPrompt.classList.remove("visible"), 300);
-                });
-            }
-        }
-
-        console.log('Notification permission:', Notification.permission);
-        return false;
     }
 
     // Show only loading view initially

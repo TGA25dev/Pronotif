@@ -402,7 +402,7 @@ def deactivate_previous_registrations(cursor, user_hash):
 
 @app.route("/v1/app/revoke-fcm-token", methods=["POST", "HEAD"])    
 @limiter.limit(str(os.getenv('REVOKE_FCM_TOKEN_LIMIT')) + " per minute")
-@require_beta_access
+#@require_beta_access
 def revoke_fcm_token():
     """
     Revoke the Firebase Cloud Messaging token for the authenticated user
@@ -454,7 +454,7 @@ def revoke_fcm_token():
 
 @app.route("/v1/app/fcm-token", methods=["POST", "HEAD"])
 @limiter.limit(str(os.getenv('FCM_TOKEN_LIMIT')) + " per minute")
-@require_beta_access
+#@require_beta_access
 def save_fcm_token():
     """
     Endpoint to receive and store Firebase Cloud Messaging token for a user
@@ -539,7 +539,7 @@ def save_fcm_token():
 
 @app.route("/v1/app/firebase-config", methods=["GET"])
 @limiter.limit(str(os.getenv('FIREBASE_CONFIG_LIMIT', '10')) + " per minute")
-@require_beta_access
+#@require_beta_access
 def get_firebase_config():
     """
     Send the Firebase configuration to the authenticated user
@@ -885,7 +885,7 @@ def login_user():
 
 @app.route('/v1/app/auth/refresh', methods=['POST', 'HEAD'])
 @limiter.limit(str(os.getenv('REFRESH_CRED_LIMIT')) + " per minute")
-@require_beta_access
+#@require_beta_access
 def refresh_credentials():
     """
     Refresh the authentication tokens for the user
