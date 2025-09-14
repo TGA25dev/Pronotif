@@ -91,7 +91,7 @@ def get_schools_from_city(
     try:
         schools_raw = search_school_from_coords(str(latitude), str(longitude))
     except Exception as e:
-        logger.error(f"School search failed ({latitude},{longitude}): {e}")
+        logger.error(f"School search failed {e}")
         return None
 
     try:

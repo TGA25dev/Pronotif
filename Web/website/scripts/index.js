@@ -10,7 +10,15 @@ function initializeUrlHandling() {
     buttons.forEach(button => {
         button.addEventListener('click', () => {
             const baseUrl = button.getAttribute('data-href');
-            window.location.href = baseUrl + config.urlSuffix;
+            
+            // Validate URL before navigation
+            if (baseUrl.startsWith('/') || 
+                baseUrl.startsWith('http://') || 
+                baseUrl.startsWith('https://')) {
+                window.location.href = baseUrl + config.urlSuffix;
+            } else {
+                console.error('Invalid URL detected:', baseUrl);
+            }
         });
     });
 }
