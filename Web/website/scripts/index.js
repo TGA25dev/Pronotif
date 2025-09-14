@@ -11,13 +11,17 @@ function initializeUrlHandling() {
         button.addEventListener('click', () => {
             const baseUrl = button.getAttribute('data-href');
             
-            // Validate URL before navigation
-            if (baseUrl.startsWith('/') || 
-                baseUrl.startsWith('http://') || 
-                baseUrl.startsWith('https://')) {
-                window.location.href = baseUrl + config.urlSuffix;
-            } else {
-                console.error('Invalid URL detected:', baseUrl);
+            if (baseUrl) {
+                // Safer URL validation: trim whitespace, prevent protocol-relative and dangerous schemes
+                const safeBaseUrl = baseUrl.trim();
+                
+                if ((safeBaseUrl.startsWith('/') && !safeBaseUrl.startsWith('//')) || 
+                    safeBaseUrl.startsWith('http://') || 
+                    safeBaseUrl.startsWith('https://')) {
+                    window.location.href = safeBaseUrl + config.urlSuffix;
+                } else {
+                    console.error('Invalid or potentially unsafe URL detected:', baseUrl);
+                }
             }
         });
     });

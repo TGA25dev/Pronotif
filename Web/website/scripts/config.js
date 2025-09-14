@@ -8,21 +8,26 @@ const config = {
     },
     
     handleUrlNavigation: function(button) {
-        const path = button.getAttribute('data-href');
-        if (path) {
-            // Validate URL before navigation
-            if (path === '/' || path.startsWith('/') || 
-                path.startsWith('http://') || path.startsWith('https://')) {
+        const baseUrl = button.getAttribute('data-href');
+        
+        if (baseUrl) {
+            // Safer URL validation: trim whitespace, prevent protocol-relative and dangerous schemes
+            const safeBaseUrl = baseUrl.trim();
+            
+            if ((safeBaseUrl.startsWith('/') && !safeBaseUrl.startsWith('//')) || 
+                safeBaseUrl.startsWith('http://') || 
+                safeBaseUrl.startsWith('https://')) {
                 
-                const suffix = this.getUrlSuffix(path);
+                const suffix = this.getUrlSuffix(safeBaseUrl);
+                
                 // For home page in dev, we need the full path
-                if (this.isDevelopment && path === '/') {
+                if (this.isDevelopment && safeBaseUrl === '/') {
                     window.location.href = 'index.html';
                 } else {
-                    window.location.href = path + suffix;
+                    window.location.href = safeBaseUrl + suffix;
                 }
             } else {
-                console.error('Invalid URL detected:', path);
+                console.error('Invalid or potentially unsafe URL detected:', baseUrl);
             }
         }
     },
