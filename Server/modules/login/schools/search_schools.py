@@ -9,7 +9,7 @@ def search_school_from_coords(latitude: str, longitude: str):
     headers = {"Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"}
     payload = f'data={{"nomFonction":"geoLoc","lat":"{latitude}","long":"{longitude}"}}'
 
-    response = requests.post(url, data=payload, headers=headers)
+    response = requests.post(url, data=payload, headers=headers, timeout=15)
 
     if response.ok:
         return response.text  # JSON of PRONOTE instances

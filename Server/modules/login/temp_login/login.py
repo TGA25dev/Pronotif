@@ -13,7 +13,7 @@ def check_if_ent(link: str) ->bool:
     Check if the provided link is an ENT link.
     """
 
-    response = requests.get(link, allow_redirects=False)
+    response = requests.get(link, allow_redirects=False, timeout=15)
 
     if response.status_code == 302: #ENT redirection
        return True
