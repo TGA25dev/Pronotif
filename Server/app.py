@@ -769,6 +769,7 @@ def login_user():
             encrypted_firstname  = encrypt(sanitized_payload['student_firstname'])
             encrypted_class      = encrypt(sanitized_payload['student_class'])
             encrypted_login_link = encrypt(sanitized_payload['login_page_link'])
+            encrypted_region     = encrypt(sanitized_payload['region'])
 
             with get_db_connection() as connection:
                 cursor = connection.cursor(dictionary=True)
@@ -799,7 +800,8 @@ def login_user():
                                 uuid = %s,
                                 timezone = %s,
                                 is_active = 1,
-                                timestamp = %s
+                                timestamp = %s,
+                                region = %s
                             WHERE app_session_id = %s
                         """
                         cursor.execute(update_query, (
@@ -816,6 +818,7 @@ def login_user():
                             sanitized_payload['uuid'],
                             sanitized_payload['timezone'],
                             timestamp,
+                            encrypted_region,
                             old_app_session_id
                         ))
 
@@ -828,9 +831,9 @@ def login_user():
                                 app_session_id, app_token, login_page_link, student_username, student_password,
                                 student_fullname, student_firstname, student_class,
                                 ent_used, qr_code_login, uuid, timezone,
-                                user_hash, is_active, timestamp
+                                user_hash, is_active, timestamp, region
                             ) VALUES (
-                                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 1, %s
+                                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 1, %s, %s
                             )
                         """
                         cursor.execute(insert_query, (
@@ -847,7 +850,8 @@ def login_user():
                             sanitized_payload['uuid'],
                             sanitized_payload['timezone'],
                             user_hash,
-                            timestamp
+                            timestamp,
+                            encrypted_region
                         ))
                         logger.info(f"User created for hash: {user_hash[:12]}...")
 

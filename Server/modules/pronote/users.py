@@ -12,6 +12,8 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from modules.security.encryption import decrypt
 
+from ..login.temp_login.pronotepy_monlycee import ile_de_france
+
 # Initialize Sentry
 ignore_errors = [KeyboardInterrupt]
 sentry_sdk.init(
@@ -66,6 +68,7 @@ class PronotifUser:
         # Time settings
         self.timezone = user_data.get('timezone', 'Europe/Paris')
         self.timezone_obj = pytz.timezone(self.timezone)
+        self.region = decrypt(user_data.get("region"))
         
         # Lunch time
         self.lunch_times = {
@@ -125,6 +128,14 @@ class PronotifUser:
                     password=self.password,
                     uuid=self.uuid
                 )
+            elif self.ent_used and self.region:
+                if self.region == "Île-de-France" or self.region == "https://psn.monlycee.net":
+                    self.client = pronotepy.Client(
+                        self.login_page_link,
+                        ent=ile_de_france,
+                        username=self.username, 
+                        password=self.password
+                    )
             else:
                 self.client = pronotepy.Client(
                     self.login_page_link, 
