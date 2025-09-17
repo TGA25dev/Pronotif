@@ -1,7 +1,7 @@
 > [!IMPORTANT]
 >**Projet indépendant** <br>
 >Pronot'if **n'est pas affilié** à Index Education ni à l'application **Pronote**.  
->Il s'agit d'un projet **indépendant**, sans lien avec les services officiels de Pronote.
+>Il s'agit d'un projet **indépendant**, sans lien avec les services officiels de Pronote
 
 
 # Pronot'if <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Books.png" alt="Books" width="25" height="25" />
