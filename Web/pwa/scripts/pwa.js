@@ -525,9 +525,6 @@ const loginHandler = {
         
         wrapFetch(apiUrl, {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
         })
         .then(response => {
             if (!response.ok) {
@@ -585,7 +582,6 @@ const loginHandler = {
                 const apiUrl = `https://api.pronotif.tech/v1/login/get_schools?coords=true&lat=${latitude}&lon=${longitude}`;
                 wrapFetch(apiUrl, {
                     method: 'GET',
-                    headers: { 'Content-Type': 'application/json' }
                 })
                 .then(response => {
                     if (!response.ok) {
@@ -1096,9 +1092,6 @@ async function fetchDashboardData() {
         // Fetch student info and Pronote data
         const response = await wrapFetch("https://api.pronotif.tech/v1/app/fetch?fields=student_firstname,next_class_name,next_class_room,next_class_teacher,next_class_start,next_class_end,current_class_name,current_class_room,current_class_teacher,current_class_start,current_class_end", {
             method: 'GET',
-            headers: { 
-                'Content-Type': 'application/json',
-            },
             credentials: 'include',
             signal: controller.signal,
             cache: 'no-store'
@@ -1576,7 +1569,7 @@ if (allowNotifButton) {
                 // Show success message for 5 seconds and reload
                 setTimeout(() => {
                     window.location.reload();
-                }, 5000);
+                }, 3000);
                 return;
             }
 

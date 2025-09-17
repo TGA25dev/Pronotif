@@ -1284,40 +1284,6 @@ def consume_code():
             return jsonify({"success": False, "error": "Internal server error"}), 500
 
 # Background tasks
-def cleanup_auth_sessions():
-    while True:
-        try:
-            with sentry_sdk.start_transaction(op="background_task", name="cleanup_auth_sessions") as transaction:
-                with get_db_connection() as connection:
-                    cursor = connection.cursor()
-                    current_time = datetime.now()
-
-                    with sentry_sdk.start_span(description="Delete expired sessions"):
-                        delete_query = f"""
-                            DELETE FROM {auth_table_name} 
-                            WHERE expires_at <= %s 
-                            AND used = FALSE
-                        """
-                        
-                        cursor.execute(delete_query, (current_time,))
-                        deleted_count = cursor.rowcount
-                        
-                        if deleted_count > 0:
-                            connection.commit()
-                            logger.info(f"Cleaned up {deleted_count} expired and inactive sessions")
-                
-        except mysql.connector.Error as err:
-            sentry_sdk.capture_exception(err)
-            logger.error(f"MySQL error in cleanup task: {err}")
-
-        except Exception as e:
-            sentry_sdk.capture_exception(e)
-            logger.error(f"Unexpected error in cleanup task: {e}")
-
-        finally:
-            cursor.close()
-            time.sleep(600) # every 10 minutes
-
 def cleanup_inactive_students():
     while True:
         try:
@@ -1391,11 +1357,9 @@ def reset_connection_pool():
         sentry_sdk.capture_exception(e)      
 
 def start_background_tasks():
-    session_cleanup_thread = threading.Thread(target=cleanup_auth_sessions, daemon=True)
     student_cleanup_thread = threading.Thread(target=cleanup_inactive_students, daemon=True)
     pool_monitor_thread = threading.Thread(target=monitor_pool, daemon=True)
     
-    session_cleanup_thread.start()
     student_cleanup_thread.start()
     pool_monitor_thread.start()
 
