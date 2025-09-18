@@ -1,11 +1,12 @@
 import firebase_admin
 from firebase_admin import messaging, credentials
 from firebase_admin.exceptions import FirebaseError
-from dotenv import load_dotenv
 import os
 import sentry_sdk
 import requests
 import logging
+
+from modules.secrets.secrets_manager import get_secret
 
 ignore_errors = [KeyboardInterrupt]
 sentry_sdk.init(
@@ -23,10 +24,8 @@ sentry_sdk.init(
 )
 logger = logging.getLogger(__name__)
 
-load_dotenv()
-
 script_dir = os.path.dirname(os.path.abspath(__file__))
-cred_path = os.path.join(script_dir, os.getenv('FB_CREDENTIALS_PATH'))
+cred_path = os.path.join(script_dir, get_secret('FB_CREDENTIALS_PATH'))
 
 if not os.path.exists(cred_path):
     raise FileNotFoundError(f"Firebase credentials file not found at: {cred_path}")
@@ -43,7 +42,7 @@ def invalid_token(token):
     Mark a Firebase token as invalid in the database
     """
     try:
-        api_key = os.getenv('INTERNAL_API_KEY')
+        api_key = get_secret('INTERNAL_API_KEY')
         api_url = f"https://api.pronotif.tech/v1/internal/invalid_token"
         
         headers = {

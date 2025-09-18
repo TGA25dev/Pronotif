@@ -15,10 +15,11 @@ import aiohttp
 import aiofiles
 import json
 import random
-from dotenv import load_dotenv
 import redis
 import pickle
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
+from modules.secrets.secrets_manager import get_secret
 
 from modules.pronote.users import PronotifUser
 from modules.messaging.firebase import send_notification_to_device
@@ -39,8 +40,6 @@ sentry_sdk.init(
 
 )
 
-load_dotenv() # Load environment variables
-
 # Send Loguru logs to Sentry
 def sentry_sink(message):
     record = message.record
@@ -58,17 +57,17 @@ logger.add("notif_system_logs.log", level="TRACE", rotation="500 MB")  # File lo
 logger.add(sentry_sink, level="DEBUG")  # Forward important logs to Sentry
 
 DB_CONFIG = {
-    "host": os.getenv('DB_HOST'),
-    "user": os.getenv('DB_USER'),
-    "password": os.getenv('DB_PASSWORD'),
-    "database": os.getenv('DB_NAME')
+    "host": get_secret('DB_HOST'),
+    "user": get_secret('DB_USER'),
+    "password": get_secret('DB_PASSWORD'),
+    "database": get_secret('DB_NAME')
 }
-table_name = os.getenv('DB_STUDENT_TABLE_NAME')
+table_name = get_secret('DB_STUDENT_TABLE_NAME')
 
 # Connection pool configuration
 DB_POOL_CONFIG = {
     "pool_name": "client_pool",
-    "pool_size": int(os.getenv('DB_POOL_SIZE', '10')),
+    "pool_size": int(get_secret('DB_POOL_SIZE', '10')),
     "pool_reset_session": True,
     **DB_CONFIG,
     "connect_timeout": 30,
@@ -158,10 +157,10 @@ _existing_users = {}  # Cache of user objects by ID
 user_update_lock = asyncio.Lock()
 
 redis_client = redis.Redis(
-    host=os.getenv('REDIS_HOST'),
-    port=int(os.getenv('REDIS_PORT')),
-    db=int(os.getenv('REDIS_DB', '0')),
-    password=os.getenv('REDIS_PASSWORD', None),
+    host=get_secret('REDIS_HOST'),
+    port=int(get_secret('REDIS_PORT')),
+    db=int(get_secret('REDIS_DB', '0')),
+    password=get_secret('REDIS_PASSWORD', None),
 )
 
 async def load_active_users() -> list:

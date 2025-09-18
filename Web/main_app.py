@@ -2,7 +2,6 @@ from flask import Flask, jsonify, render_template, send_from_directory, abort
 import logging
 from datetime import timedelta
 import redis
-from dotenv import load_dotenv
 import os
 import re
 from flask_cors import CORS
@@ -14,11 +13,10 @@ from datetime import datetime
 from jinja2 import TemplateNotFound
 import sys
 
-
-server_env_path = '/var/www/pronotif.tech/html/Pronotif/Server/.env'
-load_dotenv(server_env_path)
-
 sys.path.append('/var/www/pronotif.tech/html/Pronotif/Server')
+
+from modules.secrets.secrets_manager import get_secret # type: ignore
+
 from modules.ratelimit.ratelimiter import limiter # type: ignore
 
 app = Flask(__name__, 
@@ -27,10 +25,10 @@ app = Flask(__name__,
             static_url_path='')
 
 redis_connection = redis.Redis(
-    host=os.getenv('REDIS_HOST'),
-    port=int(os.getenv('REDIS_PORT')),
-    db=int(os.getenv('REDIS_DB')),
-    password=os.getenv('REDIS_PASSWORD')
+    host=get_secret('REDIS_HOST'),
+    port=int(get_secret('REDIS_PORT')),
+    db=int(get_secret('REDIS_DB')),
+    password=get_secret('REDIS_PASSWORD')
 )
 
 initialized = False
@@ -47,10 +45,10 @@ app.wsgi_app = ProxyFix(
     x_prefix=0     # Number of proxies setting X-Forwarded-Prefix
 )
 # Parse CORS settings
-cors_origins = [origin.strip() for origin in os.getenv('CORS_ORIGINS', '').split(',')]
-cors_methods = [method.strip() for method in os.getenv('CORS_METHODS', '').split(',')]
-cors_headers = [header.strip() for header in os.getenv('CORS_HEADERS', '').split(',')]
-cors_credentials = os.getenv('CORS_CREDENTIALS', 'False')
+cors_origins = [origin.strip() for origin in get_secret('CORS_ORIGINS', '').split(',')]
+cors_methods = [method.strip() for method in get_secret('CORS_METHODS', '').split(',')]
+cors_headers = [header.strip() for header in get_secret('CORS_HEADERS', '').split(',')]
+cors_credentials = get_secret('CORS_CREDENTIALS', 'False')
 
 if not cors_origins or not cors_methods or not cors_headers:
     raise RuntimeError("CORS_ORIGINS, CORS_METHODS, and CORS_HEADERS environment variables must be set.")
@@ -77,10 +75,10 @@ app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
 app.config['SESSION_KEY_PREFIX'] = 'session:'
 app.config['SESSION_REDIS'] = Redis(
-    host=os.getenv('REDIS_HOST'),
-    port=int(os.getenv('REDIS_PORT')),
-    db=int(os.getenv('REDIS_DB')),
-    password=os.getenv('REDIS_PASSWORD')
+    host=get_secret('REDIS_HOST'),
+    port=int(get_secret('REDIS_PORT')),
+    db=int(get_secret('REDIS_DB')),
+    password=get_secret('REDIS_PASSWORD')
 )
 
 Session(app)
@@ -95,7 +93,7 @@ file_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 file_handler.setFormatter(file_formatter)
 logger.addHandler(file_handler)
 
-app.secret_key = os.getenv('FLASK_KEY')
+app.secret_key = get_secret('FLASK_KEY')
 app.config['SESSION_COOKIE_SAMESITE'] = 'Strict'
 app.config['SESSION_COOKIE_SECURE'] = True  #HTTPS
 app.config['SESSION_COOKIE_HTTPONLY'] = True
@@ -200,4 +198,4 @@ def pwa_serve_manifest_file():
 
 if __name__ == '__main__':    
     # Start the Flask app
-    app.run(host=os.getenv('HOST'), port=os.getenv('WEBSITE_PORT'))
+    app.run(host=get_secret('HOST'), port=get_secret('WEBSITE_PORT'))

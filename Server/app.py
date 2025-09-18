@@ -5,8 +5,6 @@ from mysql.connector import pooling
 import logging
 from datetime import datetime, timedelta
 import redis
-from dotenv import load_dotenv
-import os
 import secrets
 import threading
 import time
@@ -22,6 +20,8 @@ from flask_session import Session
 from redis import Redis
 import re
 import asyncio
+
+from modules.secrets.secrets_manager import get_secret
 
 from modules.security.encryption import encrypt, decrypt
 from modules.admin.coquelicot import coquelicot_bp
@@ -43,8 +43,6 @@ sentry_sdk.init("https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.inge
                 release=version,
                 server_name="Server")
 
-load_dotenv()
-
 def validate_env_vars():
     required_vars = {
         'DB_HOST': str,
@@ -59,7 +57,7 @@ def validate_env_vars():
     }
     
     for var, type_ in required_vars.items():
-        value = os.getenv(var)
+        value = get_secret(var)
         if not value:
             raise ValueError(f"Missing required environment variable: {var}")
         try:
@@ -84,10 +82,10 @@ app.wsgi_app = ProxyFix(
     x_prefix=0     # Number of proxies setting X-Forwarded-Prefix
 )
 # Parse CORS settings
-cors_origins = [origin.strip() for origin in os.getenv('CORS_ORIGINS', '').split(',')]
-cors_methods = [method.strip() for method in os.getenv('CORS_METHODS', '').split(',')]
-cors_headers = [header.strip() for header in os.getenv('CORS_HEADERS', '').split(',')]
-cors_credentials = os.getenv('CORS_CREDENTIALS', 'False')
+cors_origins = [origin.strip() for origin in get_secret('CORS_ORIGINS').split(',')]
+cors_methods = [method.strip() for method in get_secret('CORS_METHODS').split(',')]
+cors_headers = [header.strip() for header in get_secret('CORS_HEADERS').split(',')]
+cors_credentials = get_secret('CORS_CREDENTIALS')
 
 CORS(app,
      resources={r"/*": {
@@ -125,10 +123,10 @@ app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
 app.config['SESSION_KEY_PREFIX'] = 'session:'
 app.config['SESSION_REDIS'] = Redis(
-    host=os.getenv('REDIS_HOST'),
-    port=int(os.getenv('REDIS_PORT')),
-    db=int(os.getenv('REDIS_DB')),
-    password=(os.getenv("REDIS_PASSWORD"))
+    host=get_secret('REDIS_HOST'),
+    port=int(get_secret('REDIS_PORT')),
+    db=int(get_secret('REDIS_DB')),
+    password=(get_secret("REDIS_PASSWORD"))
 )
 
 Session(app)
@@ -141,13 +139,13 @@ logger.addHandler(file_handler)
 
 # MySQL Connection Pool
 default_connection_pool_settings ={
-    "pool_name": os.getenv('DB_POOL_NAME'),
-    "pool_size": int(os.getenv('DB_POOL_SIZE')),
-    "pool_reset_session": os.getenv('DB_POOL_RESET_SESSION'),
-    "host": os.getenv('DB_HOST'),
-    "user": os.getenv('DB_USER'),
-    "password": os.getenv('DB_PASSWORD'),
-    "database": os.getenv('DB_NAME'),
+    "pool_name": get_secret('DB_POOL_NAME'),
+    "pool_size": int(get_secret('DB_POOL_SIZE')),
+    "pool_reset_session": get_secret('DB_POOL_RESET_SESSION'),
+    "host": get_secret('DB_HOST'),
+    "user": get_secret('DB_USER'),
+    "password": get_secret('DB_PASSWORD'),
+    "database": get_secret('DB_NAME'),
     "connect_timeout": 30,
     "get_warnings": True,
     "autocommit": True,
@@ -155,21 +153,20 @@ default_connection_pool_settings ={
 }
 connection_pool = pooling.MySQLConnectionPool(**default_connection_pool_settings)
 
-authcode = os.getenv('AUTHCODE')
-auth_table_name = os.getenv('DB_AUTH_TABLE_NAME')
-student_table_name = os.getenv('DB_STUDENT_TABLE_NAME')
-beta_table_name = os.getenv('DB_BETA_TABLE_NAME')
-app.secret_key = os.getenv('FLASK_KEY')
+auth_table_name = get_secret('DB_AUTH_TABLE_NAME')
+student_table_name = get_secret('DB_STUDENT_TABLE_NAME')
+beta_table_name = get_secret('DB_BETA_TABLE_NAME')
+app.secret_key = get_secret('FLASK_KEY')
 app.config['SESSION_COOKIE_SAMESITE'] = 'Strict'
 app.config['SESSION_COOKIE_SECURE'] = True  #HTTPS
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 
 # Flask-Limiter and Redis Configuration
 redis_connection = redis.Redis(
-    host=os.getenv('REDIS_HOST'),
-    port=int(os.getenv('REDIS_PORT')),
-    db=int(os.getenv('REDIS_DB')),
-    password=(os.getenv("REDIS_PASSWORD"))
+    host=get_secret('REDIS_HOST'),
+    port=int(get_secret('REDIS_PORT')),
+    db=int(get_secret('REDIS_DB')),
+    password=(get_secret("REDIS_PASSWORD"))
 )
 
 initialized = False
@@ -227,7 +224,7 @@ def page_not_found(error):
 # API Endpoints
 
 @app.route('/ping', methods=['GET'])
-@limiter.limit(str(os.getenv('PING_LIMIT')) + " per minute")
+@limiter.limit(str(get_secret('PING_LIMIT')) + " per minute")
 def test_endpoint():
     """Ping endpoint to test server availability"""
     client_ip = request.remote_addr
@@ -236,7 +233,7 @@ def test_endpoint():
 
 #PWA Login Endpoints
 @app.route("/v1/login/get_schools", methods=["GET", "HEAD"])
-@limiter.limit(str(os.getenv('SESSION_SETUP_LIMIT')) + " per minute")
+@limiter.limit(str(get_secret('SESSION_SETUP_LIMIT')) + " per minute")
 def get_school_names():
     """
     Endpoint get school names from a city name or coordinates.
@@ -329,7 +326,7 @@ def deactivate_previous_registrations(cursor, user_hash):
     cursor.execute(update_query, (user_hash,))
 
 @app.route("/v1/app/revoke-fcm-token", methods=["POST", "HEAD"])    
-@limiter.limit(str(os.getenv('REVOKE_FCM_TOKEN_LIMIT')) + " per minute")
+@limiter.limit(str(get_secret('REVOKE_FCM_TOKEN_LIMIT')) + " per minute")
 #@require_beta_access
 def revoke_fcm_token():
     """
@@ -381,7 +378,7 @@ def revoke_fcm_token():
             return jsonify({"error": "Internal server error"}), 500                
 
 @app.route("/v1/app/fcm-token", methods=["POST", "HEAD"])
-@limiter.limit(str(os.getenv('FCM_TOKEN_LIMIT')) + " per minute")
+@limiter.limit(str(get_secret('FCM_TOKEN_LIMIT')) + " per minute")
 #@require_beta_access
 def save_fcm_token():
     """
@@ -466,7 +463,7 @@ def save_fcm_token():
             return jsonify({"error": "Internal server error"}), 500
 
 @app.route("/v1/app/firebase-config", methods=["GET"])
-@limiter.limit(str(os.getenv('FIREBASE_CONFIG_LIMIT', '10')) + " per minute")
+@limiter.limit(str(get_secret('FB_CONFIG_LIMIT')) + " per minute")
 #@require_beta_access
 def get_firebase_config():
     """
@@ -509,12 +506,12 @@ def get_firebase_config():
                     
                         # User is authenticated, return Firebase config
                         firebase_config = {
-                            "apiKey": os.getenv('FB_API_KEY'),
-                            "authDomain": os.getenv('FB_AUTH_DOMAIN'),
-                            "projectId": os.getenv('FB_PROJECT_ID'),
-                            "storageBucket": os.getenv('FB_STORAGE_BUCKET'),
-                            "messagingSenderId": os.getenv('FB_MESSAGING_SENDER_ID'),
-                            "appId": os.getenv('FB_APP_ID')
+                            "apiKey": get_secret('FB_API_KEY'),
+                            "authDomain": get_secret('FB_AUTH_DOMAIN'),
+                            "projectId": get_secret('FB_PROJECT_ID'),
+                            "storageBucket": get_secret('FB_STORAGE_BUCKET'),
+                            "messagingSenderId": get_secret('FB_MESSAGING_SENDER_ID'),
+                            "appId": get_secret('FB_APP_ID')
                         }
                         
                         # Log the successful access
@@ -522,7 +519,7 @@ def get_firebase_config():
                         
                         # Return the config
                         response = jsonify(firebase_config)
-                        cache_seconds = int(os.getenv('FIREBASE_CONFIG_CACHE_SECONDS', '3600'))
+                        cache_seconds = int(get_secret('FIREBASE_CONFIG_CACHE_SECONDS'))
                         response.headers['Cache-Control'] = f'private, max-age={cache_seconds}'
                         response.headers['X-Content-Type-Options'] = 'nosniff'
                         return response
@@ -541,7 +538,7 @@ def get_firebase_config():
             return jsonify({"error": "Internal server error"}), 500
 
 @app.route("/v1/login/verifylink", methods=["POST", "HEAD"])
-@limiter.limit(str(os.getenv('QR_CODE_SCAN_LIMIT')) + " per minute")
+@limiter.limit(str(get_secret('QR_CODE_SCAN_LIMIT')) + " per minute")
 #@require_beta_access
 def verify_pronote_link():
     """
@@ -618,7 +615,7 @@ def verify_pronote_link():
     
 
 @app.route("/v1/login/auth", methods=["POST", "HEAD"])
-@limiter.limit(str(os.getenv('QR_CODE_SCAN_LIMIT')) + " per minute")
+@limiter.limit(str(get_secret('QR_CODE_SCAN_LIMIT')) + " per minute")
 def login_user():
     """
     Logs the user in by passing the data to another script and then call final endpoint
@@ -816,7 +813,7 @@ def login_user():
 
 
 @app.route('/v1/app/auth/refresh', methods=['POST', 'HEAD'])
-@limiter.limit(str(os.getenv('REFRESH_CRED_LIMIT')) + " per minute")
+@limiter.limit(str(get_secret('REFRESH_CRED_LIMIT')) + " per minute")
 #@require_beta_access
 def refresh_credentials():
     """
@@ -914,7 +911,7 @@ def refresh_credentials():
             return jsonify({"error": "Internal server error"}), 500    
             
 @app.route("/v1/app/fetch", methods=["GET"])
-@limiter.limit(str(os.getenv('FETCH_DATA_LIMIT')) + " per minute")
+@limiter.limit(str(get_secret('FETCH_DATA_LIMIT')) + " per minute")
 #@require_beta_access
 def fetch_student_data():
     """
@@ -1059,7 +1056,7 @@ def fetch_student_data():
 
 # BETA ENDPOINTS
 @app.route('/v1/beta/verify-access', methods=['GET'])
-@limiter.limit(str(os.getenv('BETA_VERIFY_LIMIT')) + " per minute")
+@limiter.limit(str(get_secret('BETA_VERIFY_LIMIT')) + " per minute")
 def verify_beta_access():
     """
     Verify if the user has beta access based on a cookie
@@ -1075,7 +1072,7 @@ def verify_beta_access():
         return jsonify({'hasAccess': False})
     
 @app.route("/v1/beta/verify", methods=["POST", "HEAD"])
-@limiter.limit(str(os.getenv('BETA_VERIFY_LIMIT')) + " per minute")
+@limiter.limit(str(get_secret('BETA_VERIFY_LIMIT')) + " per minute")
 def verify_code():
     """
     Verify a beta code
@@ -1134,7 +1131,7 @@ def verify_code():
             return jsonify({"success": False, "error": "Internal server error"}), 500
 
 @app.route("/v1/beta/consume", methods=["POST", "HEAD"])
-@limiter.limit(str(os.getenv('BETA_CONSUME_LIMIT')) + " per hour")
+@limiter.limit(str(get_secret('BETA_CONSUME_LIMIT')) + " per hour")
 def consume_code():
     """
     Consume a beta code
@@ -1296,7 +1293,7 @@ def monitor_pool():
         try:
             if hasattr(connection_pool, '_cnx_queue'):
                 available = connection_pool._cnx_queue.qsize()
-                total = int(os.getenv('DB_POOL_SIZE'))
+                total = int(get_secret('DB_POOL_SIZE'))
                 used = total - available
                 
                 # Potential connection leak
@@ -1394,10 +1391,10 @@ def initialize():
     global initialized, _background_started
     if not initialized:
         initialized = True
-    if not _background_started and os.getenv("RUN_BG_TASKS", "1") == "1":
+    if not _background_started and get_secret("RUN_BG_TASKS") == "1":
         _background_started = True
         start_background_tasks()
-    if request.method in ("POST","PUT","PATCH","DELETE") and request.endpoint not in ("login_user", "verify_code", "consume_code"):
+    if request.method in ("POST","PUT","PATCH","DELETE") and request.endpoint not in ("login_user", "verify_code", "consume_code", "invalid_token"):
         c_cookie = request.cookies.get("csrf_token")
         c_header = request.headers.get("X-CSRF-Token")
         if not c_cookie or not c_header or c_cookie != c_header:
@@ -1426,4 +1423,4 @@ app.register_blueprint(beta_bp)
 
 if __name__ == '__main__':    
     # Start the Flask app
-    app.run(host=os.getenv('HOST'), port=os.getenv('MAIN_PORT'))
+    app.run(host=get_secret('HOST'), port=get_secret('MAIN_PORT'))
