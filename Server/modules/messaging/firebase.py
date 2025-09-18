@@ -1,8 +1,11 @@
 import firebase_admin
 from firebase_admin import messaging, credentials
+from firebase_admin.exceptions import FirebaseError
 from dotenv import load_dotenv
 import os
 import sentry_sdk
+import requests
+import logging
 
 ignore_errors = [KeyboardInterrupt]
 sentry_sdk.init(
@@ -18,6 +21,7 @@ sentry_sdk.init(
     },
 
 )
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -29,10 +33,41 @@ if not os.path.exists(cred_path):
 try: 
     cred = credentials.Certificate(cred_path)
     default_app = firebase_admin.initialize_app(cred) # Initialize Firebase
-    print("Firebase Initialized Successfully, user: ", default_app.name)
+    logger.info("Firebase Initialized Successfully, user: ", default_app.name)
 
 except Exception as e:
     raise RuntimeError(f"Failed to initialize Firebase: {e}")
+
+def invalid_token(token):
+    """
+    Mark a Firebase token as invalid in the database
+    """
+    try:
+        api_key = os.getenv('INTERNAL_API_KEY')
+        api_url = f"https://api.pronotif.tech/v1/internal/invalid_token"
+        
+        headers = {
+            'Content-Type': 'application/json',
+            'X-Internal-Auth': api_key
+        }
+        
+        payload = {
+            'fcm_token': token
+        }
+        
+        response = requests.post(api_url, json=payload, headers=headers, timeout=5)
+        
+        if response.status_code == 200:
+            logger.info(f"Successfully marked token as invalid: {token[:10]}...")
+            return True
+        else:
+            logger.error(f"Failed to mark token as invalid. Status: {response.status_code} \nResponse: {response.text}")
+            return False
+            
+    except Exception as e:
+        logger.error(f"Error marking token as invalid: {e}")
+        sentry_sdk.capture_exception(e)
+        return False
 
 def send_notification_to_device(registration_token, title, body):
     """
@@ -52,12 +87,16 @@ def send_notification_to_device(registration_token, title, body):
         response = messaging.send(message)
         return response
     
-    except messaging.FirebaseError as e:
-        # Firebase-specific errors
-        print(f"Firebase error: {e}")
+    except FirebaseError as e:
+        #Handle Firebase-specific errors
+        if "Requested entity was not found" in str(e):
+            logger.warning(f"Invalid FCM token: {registration_token[:10]}... : Token is no longer valid")
+            invalid_token(registration_token) #Mark token as invalid
+
+        else:
+            logger.error(f"Firebase error: {e}")
         return None
-    
     except Exception as e:
         #Other exceptions
-        print(f"Error sending notification: {e}")
+        logger.error(f"Error sending notification: {e}")
         return None

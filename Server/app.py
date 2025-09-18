@@ -1283,6 +1283,52 @@ def consume_code():
             logger.error(f"Unexpected error in consume_code: {e}")
             return jsonify({"success": False, "error": "Internal server error"}), 500
 
+#Internal endpoints
+@app.route("/v1/internal/invalid_token", methods=["POST"])
+@limiter.limit(str(get_secret('INTERNAL_ENDPOINTS_LIMIT')) + "per hour")
+def invalid_token():
+    """
+    Internal endpoint to mark a user's firebase token as invalid
+    """
+    # Require internal auth
+    auth_header = request.headers.get('X-Internal-Auth')
+    if not auth_header or auth_header != get_secret('INTERNAL_API_KEY'):
+        return jsonify({"error": "Unauthorized"}), 401
+        
+    if not request.is_json:
+        return jsonify({"error": "Content-Type must be application/json"}), 400
+        
+    data = request.get_json()
+    if not data or 'fcm_token' not in data:
+        return jsonify({"error": "Missing FCM token"}), 400
+        
+    fcm_token = bleach.clean(data['fcm_token'])
+    
+    with get_db_connection() as connection:
+        cursor = connection.cursor()
+        try:
+            # Update all records with this token
+            query = f"""
+                UPDATE {student_table_name}
+                SET fcm_token = NULL, token_updated_at = NOW()
+                WHERE fcm_token = %s
+            """
+            cursor.execute(query, (fcm_token,))
+            connection.commit()
+
+            logger.info(f"FCM token invalidated for {cursor.rowcount} records")
+            return jsonify({"success": True, "records_updated": cursor.rowcount}), 200
+            
+        except mysql.connector.Error as err:
+            sentry_sdk.capture_exception(err)
+            logger.error(f"MySQL error in invalid_token: {err}")
+            return jsonify({"error": "Database error"}), 500
+            
+        finally:
+            cursor.close()
+
+
+
 # Background tasks
 def cleanup_inactive_students():
     while True:
