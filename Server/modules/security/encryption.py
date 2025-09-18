@@ -18,7 +18,7 @@ class EncryptionManager:
         """Initialize encryption key - either load existing or generate new one"""
         
         key_var = get_secret('ENCRYPTION_KEY')
-        logger.info(f"Loaded ENCRYPTION_KEY: {key_var}")
+        logger.info("Succesfully loading encryption key")
         
         if not key_var:
             logger.warning("No encryption key found in environment. Generating a new one.")
