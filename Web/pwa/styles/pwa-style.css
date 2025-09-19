@@ -394,6 +394,50 @@ body::before {
     box-shadow: 0 0 0 2px rgba(69, 168, 168, 0.2);
 }
 
+.password-input-wrapper {
+    position: relative;
+    width: 100%;
+    display: none;
+    margin-bottom: 1.25rem;
+}
+
+.password-input-wrapper .login-password-input {
+    width: 100%;
+    padding-right: 3.5rem;
+    margin-bottom: 0;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-light);
+    font-size: 1.2rem;
+    padding: 0.5rem;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    z-index: 5;
+}
+
+.toggle-password:hover {
+    color: var(--primary);
+}
+
+.toggle-password:active {
+    transform: translateY(-50%) scale(0.98);
+}
+
+.toggle-password i {
+    pointer-events: none;
+}
+
 .login-submit-button {
     display: none;
     width: 100%;

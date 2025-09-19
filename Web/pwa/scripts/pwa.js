@@ -778,6 +778,8 @@ const loginHandler = {
         const loginPasswordLabel = document.getElementById('loginPasswordLabel');
         const loginPasswordInput = document.getElementById('loginPasswordInput');
         const loginSubmitButton = document.getElementById('loginSubmitButton');
+        const passwordWrapper = document.querySelector('.password-input-wrapper');
+        const togglePasswordBtn = document.getElementById('togglePassword');
 
         if (loginUsernameLabel && loginUsernameInput && loginPasswordLabel && loginPasswordInput && loginSubmitButton) {
             loginUsernameLabel.style.display = "block";
@@ -785,6 +787,13 @@ const loginHandler = {
             loginPasswordLabel.style.display = "block";
             loginPasswordInput.style.display = "block";
             loginSubmitButton.style.display = "block";
+
+            if (passwordWrapper) passwordWrapper.style.display = "block";
+            if (togglePasswordBtn) togglePasswordBtn.style.display = "inline-flex";
+
+            if (togglePasswordBtn) {
+                togglePasswordBtn.style.display = "flex";
+            }
 
             //Submit Handler
 
@@ -1802,6 +1811,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                         // Initialize login buttons
                         loginHandler.init();
                         console.log('[Login] Login view displayed and buttons initialized');
+
+                        // Password visibility toggle (eye icon)
+                        const togglePasswordBtn = document.getElementById('togglePassword');
+                        const passwordInput = document.getElementById('loginPasswordInput');
+                        if (togglePasswordBtn && passwordInput) {
+                           if (!togglePasswordBtn.dataset.bound) {
+                               togglePasswordBtn.addEventListener('click', () => {
+                                   const isHidden = passwordInput.type === 'password';
+                                   passwordInput.type = isHidden ? 'text' : 'password';
+                                   const icon = togglePasswordBtn.querySelector('i');
+                                   if (icon) {
+                                       icon.classList.toggle('fa-eye');
+                                       icon.classList.toggle('fa-eye-slash');
+                                   }
+                                   togglePasswordBtn.setAttribute('aria-label', isHidden ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
+                               });
+                               togglePasswordBtn.dataset.bound = 'true';
+                           }
+                        }
                     }
                     resolve();
                 }, 600);
