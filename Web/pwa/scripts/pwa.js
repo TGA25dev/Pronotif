@@ -27,20 +27,31 @@ const debugLogger = {
     formatMessage(message) {
         if (message === undefined) return 'undefined';
         if (message === null) return 'null';
-        
-        // Better error handling
-        if (message instanceof Error || 
-           (typeof message === 'object' && message.message && message.stack)) {
-            return `Error: ${message.message}\n${message.stack || ''}`;
-        }
-        
-        if (typeof message === 'object') {
+    
+        if (message instanceof Error || typeof message === 'object') {
             try {
-                return JSON.stringify(message, null, 2);
+                const plain = {};
+                // include own property names (enumerable + non-enumerable)
+                Object.getOwnPropertyNames(message).forEach(key => {
+                    try { plain[key] = message[key]; } catch(e) { plain[key] = `<<unreadable:${e.message}>>`; }
+                });
+                // also include symbol keys if any
+                Object.getOwnPropertySymbols(message).forEach(sym => {
+                    try { plain[sym.toString()] = message[sym]; } catch(e) { plain[sym.toString()] = `<<unreadable:${e.message}>>`; }
+                });
+                // Ensure common error fields are present
+                if ('message' in message && !plain.message) plain.message = message.message;
+                if ('code' in message && !plain.code) plain.code = message.code;
+                if ('name' in message && !plain.name) plain.name = message.name;
+                if ('stack' in message && !plain.stack) plain.stack = message.stack;
+
+                return JSON.stringify(plain, null, 2);
             } catch (e) {
+                // Fallback to string conversion
                 return String(message);
             }
         }
+        
         return String(message);
     },
     
@@ -563,53 +574,132 @@ const loginHandler = {
     // Geolocation button handler
     handleGeolocationButtonClick() {
         console.log("Geolocation button pressed!");
+
+        const citySearchButton = document.getElementById('loginSearchCityButton');
+        const geolocButton = document.getElementById('loginGeolocButton');
+        const directLinkButton = document.getElementById('loginLinkButton');
+
+        const geolocButtonSubtitle = document.getElementById('geolocButtonSubtitle');
+        const geolocButtonTitle = document.getElementById('geolocButtonTitle');
         
-        if (!('geolocation' in navigator)) {
-            console.error("Geolocation is not supported by this browser.");
-            showFeedback("La géolocalisation n'est pas disponible sur cet appareil.", "error");
-            return;
+
+        const modal = document.getElementById('geolocRationaleModal');
+        const proceedBtn = document.getElementById('geolocProceedBtn');
+        const cancelBtn = document.getElementById('geolocCancelBtn');
+
+        if (!modal || !proceedBtn || !cancelBtn) {
+            console.warn('[GEO] Rationale modal missing, proceeding without it.');
+            return startGeolocation.call(this);
         }
 
-        const geolocButton = document.getElementById('loginGeolocButton');
-        geolocButton.disabled = true;
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
 
-        navigator.geolocation.getCurrentPosition(
-            position => {
-                const { latitude, longitude } = position.coords;
-                console.log(`[GEO] Got position: lat=${latitude}, lon=${longitude}`);
+        const closeModal = () => {
+            modal.classList.remove('show');
+            modal.setAttribute('aria-hidden', 'true');
+        };
+
+        if (!modal.dataset.bound) {
+            //click outside to cancel
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+            modal.dataset.bound = 'true';
+        }
+
+        cancelBtn.onclick = () => {
+            closeModal();
+            console.log('[GEO] User cancelled geolocation rationale.');
+        };
+
+        proceedBtn.onclick = () => {
+            closeModal();
+            startGeolocation.call(this);
+        };
+
+        function startGeolocation() {
+            //disable primary options
+            geolocButton.disabled = true;
+            citySearchButton.disabled = true;
+            directLinkButton.disabled = true;
+
+            geolocButton.style.cursor = "not-allowed";
+            citySearchButton.style.cursor = "not-allowed";
+            directLinkButton.style.cursor = "not-allowed";
+
+            citySearchButton.style.opacity = "0.6";
+            directLinkButton.style.opacity = "0.6";
+
+            console.log("[GEO] Requesting geolocation...");
+
+            if (!('geolocation' in navigator)) {
+                console.error("Geolocation is not supported by this browser.");
+                alert("La géolocalisation n'est pas disponible sur cet appareil.");
+                resetButtons();
+                return;
+            }
+
+            geolocButtonTitle.textContent = "Recherche en cours...";
+            geolocButtonSubtitle.textContent = "Veuillez patienter";
+            
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    const { latitude, longitude } = position.coords;
+                    console.log(`[GEO] Got position: lat=${latitude}, lon=${longitude}`);
 
                 // API call to get schools by coordinates
-                const apiUrl = `https://api.pronotif.tech/v1/login/get_schools?coords=true&lat=${latitude}&lon=${longitude}`;
+                    const apiUrl = `https://api.pronotif.tech/v1/login/get_schools?coords=true&lat=${latitude}&lon=${longitude}`;
                 wrapFetch(apiUrl, {
                     method: 'GET',
                 })
-                .then(response => {
+                    .then(response => {
                     if (!response.ok) {
                         throw new Error(`Error ${response.status}: ${response.statusText}`);
                     }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log("[GEO] Results:", data);
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log("[GEO] Results:", data);
                     
                     const self = this;
                     self.handleScoolResultsDisplay(data);
-                })
-                .catch(error => {
-                    console.error("[GEO] Failed getting data:", error);
-                })
-                .finally(() => {
-                    geolocButton.disabled = false;
+                    })
+                    .catch(error => {
+                        console.error("[GEO] Failed getting data:", error);
+                    })
+                    .finally(resetButtons);
+                },
+                error => {
+                    console.error("[GEO] Geolocation error:", error);
 
-                });
-            },
-            error => {
-                console.error("[GEO] Geolocation error:", error);
+                    if (error.message === "User denied Geolocation") {
+                        alert("Vous avez refusé la demande de géolocalisation. Veuillez autoriser la géolocalisation ou utiliser la recherche manuelle.");
+                    } else {
+                        alert("Une erreur est survenue lors de la géolocalisation. Veuillez réessayer ou utiliser la recherche manuelle.");
+                    }
 
+                    resetButtons();
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+
+            function resetButtons() {
                 geolocButton.disabled = false;
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
+                citySearchButton.disabled = false;
+                directLinkButton.disabled = false;
+
+                geolocButton.style.cursor = "pointer";
+                citySearchButton.style.cursor = "pointer";
+                directLinkButton.style.cursor = "pointer";
+
+                citySearchButton.style.opacity = "1";
+                directLinkButton.style.opacity = "1";
+
+                geolocButtonTitle.textContent = "Utilisez la géolocalisation";
+                geolocButtonSubtitle.textContent = "Activez la géolocalisation afin de localiser les établissements proches de vous";
+            }
+        }
     },
 
     handleScoolResultsDisplay(data) {
@@ -909,7 +999,7 @@ const loginHandler = {
         // City search button
         const citySearchButton = document.getElementById('loginSearchCityButton');
         const geolocButton = document.getElementById('loginGeolocButton');
-        const qrCodeButton = document.getElementById('loginQRCodeButton');
+        const directLinkButton = document.getElementById('loginLinkButton');
         
         this.loginHeaderAppTitle = document.getElementById('loginHeaderAppTitle');
         this.loginHeaderAppSubTitle = document.getElementById('loginHeaderAppSubTitle');
@@ -926,8 +1016,8 @@ const loginHandler = {
             geolocButton.addEventListener('click', this.handleGeolocationButtonClick.bind(this));
         }
 
-        if (qrCodeButton) {
-            qrCodeButton.addEventListener('click', this.handleDirectLinkButtonClick.bind(this));
+        if (directLinkButton) {
+            directLinkButton.addEventListener('click', this.handleDirectLinkButtonClick.bind(this));
         }
     }
 };

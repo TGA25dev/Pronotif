@@ -1279,6 +1279,67 @@ body::before {
     color: var(--primary-dark);
 }
 
+/* Geoloc rationale modal */
+.geoloc-modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.5);
+    z-index: 1200;
+    padding: 1rem;
+}
+.geoloc-modal.show { display: flex; }
+.geoloc-modal-content {
+    width: 100%;
+    max-width: 420px;
+    background: var(--card-bg);
+    color: var(--text);
+    border-radius: 1rem;
+    padding: 1rem 1rem 0.75rem 1rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+.geoloc-modal-content h2 {
+    font-family: "Cabinet";
+    font-weight: 800;
+    font-size: 1.25rem;
+    margin: 0 0 0.5rem 0;
+}
+.geoloc-modal-content p { margin: 0.25rem 0; color: var(--text-light); }
+.geoloc-modal-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+.geoloc-modal-btn {
+    flex: 1;
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+    border: 1px solid transparent;
+    font-family: "Satoshi";
+    font-weight: 700;
+    cursor: pointer;
+}
+.geoloc-modal-btn.primary { background: var(--primary); color: #fff; }
+.geoloc-modal-btn.primary:hover { background: var(--primary-dark); }
+.geoloc-modal-btn.secondary {
+    background: transparent;
+    color: var(--primary);
+    border-color: var(--primary);
+}
+.geoloc-modal-btn.secondary:hover { background: var(--primary-light); }
+.geoloc-modal-footnote {
+    margin-top: 0.75rem;
+    font-size: 0.75rem;
+    color: var(--text-light);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-top: 1px solid var(--primary-light);
+    padding-top: 0.5rem;
+}
+
 .demo-mode-indicator {
     position: fixed;
     top: 0;

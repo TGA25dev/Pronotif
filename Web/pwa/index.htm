@@ -16,7 +16,7 @@
         <script src="https://kit.fontawesome.com/c1bbd01730.js" crossorigin="anonymous"></script>
 
         <link rel="stylesheet" href="https://pronotif.tech/fonts_manager.css">
-        <link rel="stylesheet" href="styles/pwa-style.css?11225sssssqdssdqsdsqqsqqn87dddqddqds987d876ssqshhqjsfddsdsnununihgfssredsdshjdssdshhbgdidsdujhnuylpokiuynuybtsoimpdsdsdsdkjhgsmdsdsmopopdsdspsplopkiuygqsqosjkiokioiunuiMPPnuuibylolokiiolloujionubybyreovtuuibyuivrcuvbniu">
+        <link rel="stylesheet" href="styles/pwa-style.css?1122578ssfdsssqdssdqsdDDsqqsqqn87djjddqddqds987d876ssqshhqjsfddsdsnununihgfssredsdshjdssdshhbgdidsdujhnuylpokiuynuybtsoimpdsdsdsdkjhgsmdsdsmopopdsdspsplopkiuygqsqosjkiokioiunuiMPPnuuibylolokiiolloujionubybyreovtuuibyuivrcuvbniu">
         
 
         <!-- Sentry -->
@@ -115,20 +115,20 @@
                             <button class="login-option-box" id="loginGeolocButton">
                                 <i class="fa-regular fa-compass"></i>
                                 <div class="option-text-container">
-                                    <h2 class="options-button-title">Utilisez la géolocalisation</h2>
-                                    <p class="options-button-subtitle">Activez la géolocalisation afin de localiser les établissements proches de vous</p>
+                                    <h2 class="options-button-title" id="geolocButtonTitle">Utilisez la géolocalisation</h2>
+                                    <p class="options-button-subtitle" id="geolocButtonSubtitle">Activez la géolocalisation afin de localiser les établissements proches de vous</p>
                                 </div>
                             </button>
 
-                            <button class="login-option-box">
+                            <button class="login-option-box" id="loginSearchCityButton">
                                 <i class="fa-solid fa-magnifying-glass"></i>
                                 <div class="option-text-container">
-                                    <h2 class="options-button-title" id="loginSearchCityButton">Recherchez votre ville</h2>
+                                    <h2 class="options-button-title">Recherchez votre ville</h2>
                                     <p class="options-button-subtitle">Recherchez le nom de votre ville dans la barre de recherche</p>
                                 </div>
                             </button>
 
-                            <button class="login-option-box" id="loginQRCodeButton">
+                            <button class="login-option-box" id="loginLinkButton">
                                 <i class="fa-solid fa-link"></i>
                                 <div class="option-text-container">
                                     <h2 class="options-button-title">Vous avez un lien ?</h2>
@@ -254,6 +254,27 @@
             <button id="laterButton" class="later-button">Plus tard</button>
         </div>
 
-        <script type="module" src="scripts/pwa.js?112890288870708921187678967887798788890906&&06611127732185000000078008700769987YGV8712905byvtyrtd87" crossorigin="anonymous"></script>
+        <!-- Geolocation rationale modal -->
+        <div id="geolocRationaleModal" class="geoloc-modal" role="dialog" aria-labelledby="geolocModalTitle" aria-describedby="geolocModalDesc" aria-modal="true" aria-hidden="true">
+            <div class="geoloc-modal-content">
+                <h2 id="geolocModalTitle">Autoriser la géolocalisation ?</h2>
+                <p id="geolocModalDesc">
+                    Nous utilisons votre position uniquement pour trouver les établissements à proximité.<br>
+                    <b><u>Vos coordonnées ne sont jamais enregistrées.</b></u>
+                </p>
+
+                <div class="geoloc-modal-actions">
+                    <button id="geolocCancelBtn" class="geoloc-modal-btn secondary" type="button">Annuler</button>
+                    <button id="geolocProceedBtn" class="geoloc-modal-btn primary" type="button">Continuer</button>
+                </div>
+
+                <p class="geoloc-modal-footnote">
+                    <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                    Vous pourrez toujours utiliser la recherche manuelle si vous le souhaitez.
+                </p>
+            </div>
+        </div>
+
+        <script type="module" src="scripts/pwa.js?2112Dfd8879Hj02288870708921dddsfd187678967887fd798788890906&&06611127732185000000078008700769987YGV8712905byvtyrtd87" crossorigin="anonymous"></script>
     </body>
 </html>
