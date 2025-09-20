@@ -2,7 +2,6 @@ import pronotepy
 import os
 import asyncio
 from loguru import logger
-import sentry_sdk
 import requests
 from datetime import datetime, timedelta
 from datetime import time as dt_time
@@ -15,16 +14,7 @@ from modules.security.encryption import decrypt
 from ..login.temp_login.pronotepy_monlycee import ile_de_france
 
 # Initialize Sentry
-ignore_errors = [KeyboardInterrupt]
-sentry_sdk.init(
-    "https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992", 
-    enable_tracing=True,
-    traces_sample_rate=1.0,
-    environment="production",
-    release="v0.8.1",
-    server_name="Server",
-    ignore_errors=ignore_errors,
-)
+from modules.sentry.sentry_config import sentry_sdk
 
 table_name = os.getenv('DB_STUDENT_TABLE_NAME')
 

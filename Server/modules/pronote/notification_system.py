@@ -1,9 +1,6 @@
 import asyncio
 import os
 import time
-from loguru import logger
-import sentry_sdk
-from sentry_sdk import logger as sentry_logger
 import sys
 import mysql.connector
 from mysql.connector import pooling
@@ -24,21 +21,9 @@ from modules.secrets.secrets_manager import get_secret
 from modules.pronote.users import PronotifUser
 from modules.messaging.firebase import send_notification_to_device
 
-# Initialize Sentry
-ignore_errors = [KeyboardInterrupt]
-sentry_sdk.init(
-    "https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992", 
-    enable_tracing=True,
-    traces_sample_rate=1.0,
-    environment="production",
-    release="v0.8.1",
-    server_name="Server",
-    ignore_errors=ignore_errors,
-     _experiments={
-        "enable_logs": True,
-    },
+from modules.sentry.sentry_config import get_logger_enabled_sentry
 
-)
+sentry_sdk, sentry_logger, logger = get_logger_enabled_sentry()
 
 # Send Loguru logs to Sentry
 def sentry_sink(message):
@@ -530,7 +515,7 @@ async def lesson_check(user):
     
     # Function to fetch lessons from Pronote
     async def fetch_lessons(user_obj):  # Accept user parameter
-        return user_obj.client.lessons(date_from=today)
+        return user_obj.client.lessons(date_from=today) #DEBUG (Switch to 'today' in prod)
     
     try:
         lessons = await retry_with_backoff(fetch_lessons, user)

@@ -14,13 +14,13 @@ from flask_cors import CORS
 from flask_talisman import Talisman
 from werkzeug.middleware.proxy_fix import ProxyFix
 import hashlib
-import sentry_sdk
 from contextlib import contextmanager
 from flask_session import Session
 from redis import Redis
 import re
 import asyncio
 
+from modules.sentry.sentry_config import sentry_sdk
 from modules.secrets.secrets_manager import get_secret
 
 from modules.security.encryption import encrypt, decrypt
@@ -34,14 +34,6 @@ from modules.pronote.notification_system import  get_user_by_auth
 from modules.login.get_data_fetcher import get_schools_from_city
 from modules.login.temp_login.login import global_pronote_login
 from modules.login.verify_manual_link import verify
-
-version = "v0.8.1"
-sentry_sdk.init("https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992", 
-                enable_tracing=True,
-                traces_sample_rate=1.0,
-                environment="production",
-                release=version,
-                server_name="Server")
 
 def validate_env_vars():
     required_vars = {

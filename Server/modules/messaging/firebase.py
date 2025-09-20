@@ -2,27 +2,12 @@ import firebase_admin
 from firebase_admin import messaging, credentials
 from firebase_admin.exceptions import FirebaseError
 import os
-import sentry_sdk
 import requests
-import logging
 
 from modules.secrets.secrets_manager import get_secret
+from modules.sentry.sentry_config import get_logger_enabled_sentry
 
-ignore_errors = [KeyboardInterrupt]
-sentry_sdk.init(
-    "https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992", 
-    enable_tracing=True,
-    traces_sample_rate=1.0,
-    environment="production",
-    release="v0.8.1",
-    server_name="Server",
-    ignore_errors=ignore_errors,
-     _experiments={
-        "enable_logs": True,
-    },
-
-)
-logger = logging.getLogger(__name__)
+sentry_sdk, sentry_logger, logger = get_logger_enabled_sentry()
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 cred_path = os.path.join(script_dir, get_secret('FB_CREDENTIALS_PATH'))

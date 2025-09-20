@@ -1,11 +1,12 @@
 import os
-import sentry_sdk
 from datetime import datetime
 import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from modules.pronote.users import PronotifUser
 from modules.pronote.notification_system import _existing_users, user_update_lock
+
+from modules.sentry.sentry_config import sentry_sdk
 
 async def fetch_pronote_data(user_hash, data_type):
     """
