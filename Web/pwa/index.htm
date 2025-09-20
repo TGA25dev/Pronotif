@@ -28,10 +28,52 @@
         ></script>
 
         <script>
+            function scrubObject(obj) {
+                    if (!obj || typeof obj !== "object") return obj;
+
+                    const scrubbed = Array.isArray(obj) ? [] : {};
+                    for (const key in obj) {
+                        if (!obj.hasOwnProperty(key)) continue;
+
+                        //skip sensitive fields
+                        if (["cookies", "headers", "data", "student", "user", "email", "name", "ip_address"].includes(key)) {
+                            continue; // omit these fields
+                        }
+
+                        // Recurse into nested objects
+                        scrubbed[key] = scrubObject(obj[key]);
+                    }
+                    return scrubbed;
+            }
+
             Sentry.init({
                 dsn: "https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992",
                 release: "v0.8.1",
                 environment: "production",
+                sendDefaultPii: false,
+
+                tracesSampleRate: 0.0,
+                replaysSessionSampleRate: 0.0,
+                replaysOnErrorSampleRate: 0.0,
+
+                beforeSend(event) {
+                    //scrub request and user fields
+                    if (event.request) event.request = scrubObject(event.request);
+                    if (event.user) event.user = {};
+                    if (event.student) event.student = {};
+                    return event;
+                },
+
+                beforeSendTransaction(event) {
+                    if (event.request && event.request.url) {
+                    try {
+                        const url = new URL(event.request.url);
+                        event.request.url = url.origin + url.pathname;
+                    } catch (e) {}
+                    }
+                    return event;
+                },
+
 
                 integrations: [
                 Sentry.feedbackIntegration({
@@ -59,6 +101,7 @@
                 })
                 ]
             });
+            console.log("[SENTRY] Sentry succesfully initialised !");
         </script>
 
         <!--jsQR Script-->
