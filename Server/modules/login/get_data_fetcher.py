@@ -80,41 +80,58 @@ def get_schools_from_city(
         if not city_name:
             logger.warning("Neither city name nor coordinates provided")
             return None
+        
         city_coords = get_city_coords(city_name)
         if not city_coords:
             return None
+
+    #Check if the school is international
+    is_international_school = False
+
+    if city_coords and "country" in city_coords:
+
+        country = city_coords.get("country")
+        if country and country.lower() != "france":
+
+            is_international_school = True
+            logger.info(f"International school detected in: {country}")
 
     latitude = city_coords["latitude"]
     longitude = city_coords["longitude"]
     postal_code = city_coords.get("postal_code")
 
-    try:
-        schools_raw = search_school_from_coords(str(latitude), str(longitude))
-    except Exception as e:
-        logger.error(f"School search failed {e}")
-        return None
+    city_schools = []
 
-    try:
-        if isinstance(schools_raw, str):
-            schools = json.loads(schools_raw)
+    if is_international_school == False: #If school is in France, search for schools (API doesnt support other countries)
+        try:
+            schools_raw = search_school_from_coords(str(latitude), str(longitude))
+        except Exception as e:
+            logger.error(f"School search failed {e}")
+            return None
+
+        try:
+            if isinstance(schools_raw, str):
+                schools = json.loads(schools_raw)
+            else:
+                schools = schools_raw
+
+        except (TypeError, json.JSONDecodeError) as e:
+            logger.error(f"Failed parsing school search result: {e}")
+            return None
+
+        if not isinstance(schools, list):
+            logger.warning("Unexpected school search result structure")
+            return None
+
+        if postal_code:
+            city_schools = [s for s in schools if s.get("cp") == postal_code]
         else:
-            schools = schools_raw
-    except (TypeError, json.JSONDecodeError) as e:
-        logger.error(f"Failed parsing school search result: {e}")
-        return None
-
-    if not isinstance(schools, list):
-        logger.warning("Unexpected school search result structure")
-        return None
-
-    if postal_code:
-        city_schools = [s for s in schools if s.get("cp") == postal_code]
-    else:
-        city_schools = schools  #fallback
+            city_schools = schools  #fallback
 
     return {
         "schools": city_schools,
         "region": city_coords["region"],
         "country": city_coords["country"],
-        "timezone": city_coords["timezone"]
+        "timezone": city_coords["timezone"],
+        "is_international": is_international_school
     }

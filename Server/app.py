@@ -579,7 +579,7 @@ def verify_pronote_link():
             if not isinstance(result, dict):
                 return jsonify({"error": "Failed to verify link"}), 500
 
-            if result["isValid"] is False or not result.get("region") or result["isValid"] is None:
+            if result["isValid"] is False or not result.get("nomEtab") or result["isValid"] is None:
                 return jsonify({
                     "error": "Invalid Pronote link",
                     "region": None,

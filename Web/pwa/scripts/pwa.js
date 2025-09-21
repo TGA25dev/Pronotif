@@ -734,10 +734,23 @@ const loginHandler = {
         
         const schools = data.schools.schools || [];
         
-        if (schools.length === 0) {
+        if (schools.length === 0 && data.schools.is_international === true) {
             const noResults = document.createElement('div');
             noResults.className = 'no-results-message';
-            noResults.textContent = "Aucun établissement trouvé. Essayez une autre ville.";
+            noResults.innerHTML = "Cette ville ne semble pas être en France...<br><br>Utilisez le lien Pronote de votre établissement afin de vous connecter.";
+            schoolsContainer.appendChild(noResults);
+
+            const backButton = document.createElement('button');
+            backButton.className = 'back-button';
+            backButton.textContent = "Utiliser le lien manuel";
+            backButton.onclick = () => this.handleDirectLinkButtonClick();
+            schoolsContainer.appendChild(backButton);
+            return;
+
+        } else if (schools.length === 0) {
+            const noResults = document.createElement('div');
+            noResults.className = 'no-results-message';
+            noResults.innerHTML = "Aucun établissement trouvé dans cette zone.<br><br>Essayez une autre ville.";
             schoolsContainer.appendChild(noResults);
 
             const backButton = document.createElement('button');
@@ -746,6 +759,7 @@ const loginHandler = {
             backButton.onclick = () => this.handleCitySearchButtonClick();
             schoolsContainer.appendChild(backButton);
             return;
+
         }
         
         //create school option boxes
@@ -973,6 +987,8 @@ const loginHandler = {
         const globalLoginContainerButton = document.getElementById('globalLoginContainerButton');
         const globalLoginContainerInput = document.getElementById('globalLoginContainerInput');
 
+        globalLoginContainerInput.value = "";
+
         loginHeaderAppTitle.textContent = "C'est parti !";
         loginHeaderAppSubTitle.textContent = "Etape 1 sur 3";
 
@@ -982,7 +998,7 @@ const loginHandler = {
         globalLoginContainerButton.style.display = "block";
         globalLoginContainerInput.style.display = "block";
 
-        globalLoginContainerButton.textContent = "Recherchez";
+        globalLoginContainerButton.textContent = "Rechercher";
         globalLoginContainerInput.placeholder = "Entrez votre lien Pronote";
         
         const self = this;
