@@ -19,6 +19,7 @@ from flask_session import Session
 from redis import Redis
 import re
 import asyncio
+import os
 
 from modules.sentry.sentry_config import sentry_sdk
 from modules.secrets.secrets_manager import get_secret
@@ -930,8 +931,6 @@ def fetch_student_data():
         "wednesday_lunch", "thursday_lunch", "friday_lunch",
         "next_class_name", "next_class_room", "next_class_teacher", 
         "next_class_start", "next_class_end",
-        "current_class_name", "current_class_room", "current_class_teacher", 
-        "current_class_start", "current_class_end",
         "fcm_token", "token_updated_at", "timestamp", "is_active"
     }
 
@@ -946,8 +945,8 @@ def fetch_student_data():
         app_token = bleach.clean(app_token)
 
         # Separate DB fields from Pronote fields
-        db_fields = [f for f in fields if not f.startswith(('next_class_', 'current_class_'))]
-        pronote_fields = [f for f in fields if f.startswith(('next_class_', 'current_class_'))]
+        db_fields = [f for f in fields if not f.startswith(('next_class_'))]
+        pronote_fields = [f for f in fields if f.startswith(('next_class_'))]
         
         response_data = {}
 
@@ -1044,6 +1043,54 @@ def fetch_student_data():
     except Exception as e:
         sentry_sdk.capture_exception(e)
         logger.error(f"Unexpected error in fetch_student_data: {e}")
+        return jsonify({"error": "Internal server error"}), 500
+
+@app.route("/v1/app/dynamic-banner", methods=["GET"])
+@limiter.limit(str(get_secret('FETCH_DATA_LIMIT')) + " per minute")
+#@require_beta_access
+def get_banner_content():
+    """
+    Get the dynamic banner content from a JSON file
+    """
+
+    try:
+        banner_file_path = os.path.join(os.path.dirname(__file__), 'banner.json')
+        if not os.path.isfile(banner_file_path):
+            return jsonify({"error": "Banner file not found"}), 404
+
+        with open(banner_file_path, 'r', encoding='utf-8') as f:
+            try:
+                banner_data = json.load(f)
+            except json.JSONDecodeError as e:
+                logger.error(f"Error decoding banner JSON: {e}")
+                return jsonify({"error": "Invalid banner data"}), 500
+
+        # Validate banner data structure
+        if not isinstance(banner_data, dict):
+            return jsonify({"error": "Invalid banner data format"}), 500
+
+        required_keys = {"message", "type", "link", "icon"}
+        if not required_keys.issubset(banner_data.keys()):
+            return jsonify({"error": "Incomplete banner data"}), 500
+
+        # Sanitize banner content
+        sanitized_banner = {
+            "message": bleach.clean(banner_data.get("message", "")),
+            "type": bleach.clean(banner_data.get("type", "")),
+            "icon": bleach.clean(banner_data.get("icon", "")),
+            "link": bleach.clean(banner_data.get("link", ""))
+        }
+
+        response = jsonify({
+            "data": sanitized_banner,
+            "status": 200
+        })
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        return response
+
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        logger.error(f"Unexpected error in get_banner_content: {e}")
         return jsonify({"error": "Internal server error"}), 500
 
 # BETA ENDPOINTS
