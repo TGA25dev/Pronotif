@@ -94,7 +94,7 @@ def get_schools_from_city(
         if country and country.lower() != "france":
 
             is_international_school = True
-            logger.info(f"International school detected in: {country}")
+            logger.debug(f"International school detected.")
 
     latitude = city_coords["latitude"]
     longitude = city_coords["longitude"]
