@@ -405,6 +405,56 @@ function getSubtitle() {
     return subtitles[Math.floor(Math.random() * subtitles.length)];
 }
 
+async function upateDynamicBanner() {
+    const bannerText = document.getElementById('bannerText');
+    const bannerIcon = document.getElementById('bannerIcon');
+    const bannerInfoBtn = document.getElementById('bannerInfoBtn');
+
+    try {
+        const response = await wrapFetch("https://api.pronotif.tech/v1/app/dynamic-banner", {
+            method: 'GET',
+            cache: 'no-store'
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error ${response.status}`);
+        }
+        console.log("[BANNER] Fetched dynamic banner data");
+
+        const result = await response.json();
+        if (result && result.data.message) {
+            console.log("[BANNER] Updating banner message:", result.data.message);
+
+            bannerText.textContent = result.data.message;
+            bannerText.style.display = "block";
+
+            // Update icon if provided
+            if (result.data.icon) {
+                bannerIcon.innerHTML = `<i class="${result.data.icon}"></i>`;
+            } else {
+                bannerIcon.innerHTML = `<i class="fa-solid fa-info"></i>`;
+            }
+
+            // Update button link if provided
+            if (result.data.link) {
+                bannerInfoBtn.onclick = () => {
+                    window.open(result.data.link, '_blank', 'noopener');
+                };
+            } else {
+                bannerInfoBtn.onclick = null;
+            }
+
+        } else {
+            bannerText.style.display = "none";
+        }
+    } catch (error) {
+        if (bannerText) {
+            bannerText.style.display = "none";
+        }
+        console.error("Failed to update dynamic banner:", error);
+    }
+}
+
 async function initializeFirebase() {
     try {
         const response = await fetch('https://api.pronotif.tech/v1/app/firebase-config', {
@@ -1131,6 +1181,7 @@ function showDashboard() {
                         // Check notifications since dashboard is actually visible
                         setTimeout(() => {
                             checkNotifEnabled();
+                            upateDynamicBanner();
                         }, 200);
                     }
                 }, 600);
@@ -1164,11 +1215,6 @@ function loadDemoData() {
         }
     }
 
-    // Current class card (hide in demo)
-    const currentClassCard = document.querySelector('.current-class-card');
-    if (currentClassCard) {
-        currentClassCard.style.display = 'none';
-    }
 
     // Homework section
     const homeworkList = document.querySelector('.homework-list');
@@ -1205,7 +1251,7 @@ async function fetchDashboardData() {
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
         // Fetch student info and Pronote data
-        const response = await wrapFetch("https://api.pronotif.tech/v1/app/fetch?fields=student_firstname,next_class_name,next_class_room,next_class_teacher,next_class_start,next_class_end,current_class_name,current_class_room,current_class_teacher,current_class_start,current_class_end", {
+        const response = await wrapFetch("https://api.pronotif.tech/v1/app/fetch?fields=student_firstname,next_class_name,next_class_room,next_class_teacher,next_class_start,next_class_end", {
             method: 'GET',
             credentials: 'include',
             signal: controller.signal,
@@ -1260,8 +1306,7 @@ function updateDashboardWithData(data) {
         }
     }
 
-    updateNextCourseCard(data);         
-    updateCurrentClassCard(data);
+    updateNextCourseCard(data);
     
     console.log('Dashboard update completed');
 }
@@ -1306,87 +1351,6 @@ function updateNextCourseCard(data) {
         if (courseDetails) courseDetails.textContent = "Profitez de votre temps libre";
         nextCourseCard.style.display = 'block';
     }
-}
-
-function updateCurrentClassCard(data) {
-    const currentClassCard = document.querySelector('.current-class-card');
-    
-    if (!currentClassCard) {
-        console.warn('Current class card element not found');
-        return;
-    }
-    
-    // Check if we have valid current class data (not null/undefined/empty string)
-    if (data.current_class_name && data.current_class_name !== null && data.current_class_name !== '') {
-        const courseTitle = currentClassCard.querySelector('.course-title');
-        const courseDetails = currentClassCard.querySelector('.course-details');
-        
-        let titleText = data.current_class_name;
-        if (data.current_class_teacher && data.current_class_teacher !== null && data.current_class_teacher !== '') {
-            titleText += ` avec ${data.current_class_teacher}`;
-        }
-        
-        let detailsText = '';
-        if (data.current_class_room && data.current_class_room !== null && data.current_class_room !== '') {
-            detailsText += `Salle ${data.current_class_room}`;
-        }
-        if (data.current_class_end && data.current_class_end !== null && data.current_class_end !== '') {
-            if (detailsText) detailsText += ' · ';
-            detailsText += `Fin à ${data.current_class_end}`;
-        }
-        
-        // Calculate progress if we have time data
-        const progressFill = currentClassCard.querySelector('.progress-fill');
-        const progressHandle = currentClassCard.querySelector('.progress-handle');
-        
-        if (data.current_class_start && data.current_class_end && 
-            data.current_class_start !== null && data.current_class_end !== null &&
-            data.current_class_start !== '' && data.current_class_end !== '') {
-            const now = new Date();
-            const startTime = parseTimeString(data.current_class_start);
-            const endTime = parseTimeString(data.current_class_end);
-            
-            if (startTime && endTime) {
-                const totalDuration = endTime - startTime;
-                const elapsed = now.getTime() - startTime.getTime();
-                const progress = Math.max(0, Math.min(100, (elapsed / totalDuration) * 100));
-                
-                if (progressFill) {
-                    progressFill.style.width = `${progress}%`;
-                }
-                if (progressHandle) {
-                    progressHandle.style.left = `${progress}%`;
-                }
-                
-                // Add remaining time to details
-                const remainingMinutes = Math.max(0, Math.ceil((endTime - now) / (1000 * 60)));
-                if (remainingMinutes > 0) {
-                    detailsText += ` | ${remainingMinutes} minutes restantes`;
-                }
-            }
-        }
-        
-        if (courseTitle) courseTitle.textContent = titleText;
-        if (courseDetails) courseDetails.textContent = detailsText || 'Cours en cours...';
-        
-        currentClassCard.style.display = 'block';
-        console.log('Current class card shown:', titleText);
-    } else {
-        // No current class - hide the card
-        currentClassCard.style.display = 'none';
-        console.log('Current class card hidden - no current class');
-    }
-}
-
-function parseTimeString(timeStr) {
-    if (!timeStr || typeof timeStr !== 'string') return null;
-    
-    const [hours, minutes] = timeStr.split(':').map(num => parseInt(num, 10));
-    if (isNaN(hours) || isNaN(minutes)) return null;
-    
-    const now = new Date();
-    const timeDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
-    return timeDate;
 }
 
 function showDataFetchError() {

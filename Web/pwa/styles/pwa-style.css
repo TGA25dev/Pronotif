@@ -1,12 +1,14 @@
 :root {
     /* Colors */
-    --primary: #45a8a8;
+    --primary: #00A6A6;
     --primary-dark: #3a8f8f;
     --primary-light: #e6f7f7;
     --background: #f8fafc;
     --card-bg: #ffffff;
-    --text: #0f172a;
-    --text-light: #64748b;
+    --text: #F0F0F0;
+    --text-light: #F0F0F0; /* TODO: Change name "light" to white, can be confusing */
+    --text-dark: #1E2D2D;
+    --subtitle-dark: #444444;
     --success: #22c55e;
     --error: #ef4444;
     --error-bg: #fee2e2;
@@ -14,6 +16,8 @@
 
     --login-view-bg: #00A6A6;
     --login-view-main-card: #FFEEDB;
+
+    --box-accent-color: #FFECD6;
 
     --title-large: clamp(3rem, 10vw, 4rem);
     --title-medium: clamp(1.7rem, 5vw, 2.3rem);
@@ -30,7 +34,6 @@
     
     /* Dynamic sizes */
     --container-width: min(420px, 95vw);
-    --camera-height: min(15rem, 50vh);
     --header-size: clamp(3.5rem, 15vw, 7rem);
     --subtitle-size: clamp(1.1rem, 4vw, 1.4rem);
 
@@ -59,6 +62,7 @@ html, body {
 body {
     font-family: 'Satoshi', sans-serif;
     color: var(--text);
+    background-color: var(--primary);
     min-height: 100vh;
     display: flex;
     align-items: stretch;
@@ -95,6 +99,19 @@ body::before {
     flex-direction: column;
     background: var(--login-view-bg);
     overflow: hidden;
+}
+
+.dashboard-bottom-part {
+    margin-top: auto;
+    padding: 0;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0));
+    width: 100%;
+    min-height: 60%; /* Box placement (height*/
+    background: var(--login-view-main-card);
+    border-radius: 2rem 2rem 0 0;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
 }
 
 .login-card-container {
@@ -163,7 +180,7 @@ body::before {
 }
 
 .login-option-box {
-    background-color: #FFECD6;
+    background-color: var(--box-accent-color);
     border: 1px solid rgba(0, 0, 0, 0.05);
     border-radius: 1rem;
     min-height: 5rem;
@@ -415,7 +432,7 @@ body::before {
     background: transparent;
     border: none;
     cursor: pointer;
-    color: var(--text-light);
+    color: var(--text-dark);
     font-size: 1.2rem;
     padding: 0.5rem;
     display: none;
@@ -601,50 +618,6 @@ body::before {
     100% { transform: rotate(360deg); }
 }
 
-.camera-view.loading {
-    position: relative;
-}
-
-.camera-view.loading::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
-    z-index: 5;
-}
-
-.help-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text);
-    text-decoration: none;
-    font-size: 0.9rem;
-    transition: all 0.2s ease;
-    padding: var(--spacing-sm);
-    background: var(--card-bg);
-    border-radius: 0.75rem;
-    box-shadow: 0 2px 8px rgba(69, 168, 168, 0.1);
-    border: 2px solid rgba(69, 168, 168, 0.1);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    margin-top: 0;
-    margin-bottom: 1rem;
-    position: relative;
-    width: min(19rem, 90vw);
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.help-button:hover {
-    color: var(--primary);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(69, 168, 168, 0.15);
-}
-
 .button-disabled {
     opacity: 0.6;
     cursor: not-allowed;
@@ -653,17 +626,6 @@ body::before {
 
 .button-disabled:hover {
     background-color: var(--text-light);
-}
-
-.infos-qr {
-    display: none;
-    padding: 0.5rem;
-    text-align: center;
-    font-size: 0.9rem;
-    color: var(--text-light);
-    margin-top: 1rem;
-    margin-bottom: 0rem;
-    width: 100%;
 }
 
 .orientation-warning {
@@ -686,7 +648,7 @@ body::before {
 }
 
 .orientation-warning p {
-    color: var(--text);
+    color: var(--text-dark);
     font-size: 1.1rem;
     max-width: 300px;
 }
@@ -765,7 +727,7 @@ body::before {
     background: none;
     border: none;
     font-size: 1.5rem;
-    color: var(--text);
+    color: var(--text-dark);
     cursor: pointer;
 }
 
@@ -779,7 +741,7 @@ body::before {
 
 .debug-section h3 {
     margin-bottom: 0.5rem;
-    color: var(--text);
+    color: var(--text-dark);
     font-size: 1rem;
     font-weight: 500;
 }
@@ -789,7 +751,7 @@ body::before {
     padding: 0.75rem;
     border-radius: 0.5rem;
     font-size: 0.9rem;
-    color: var(--text);
+    color: var(--text-dark);
     border: 1px solid var(--primary-light);
     white-space: pre-wrap;
 }
@@ -800,7 +762,7 @@ body::before {
     border-radius: 0.5rem;
     font-size: 0.8rem;
     font-family: monospace;
-    color: var(--text);
+    color: var(--text-dark);
     border: 1px solid var(--primary-light);
     height: 300px;
     overflow-y: auto;
@@ -811,6 +773,7 @@ body::before {
     display: flex;
     gap: 0.5rem;
     margin-top: 1rem;
+    margin-bottom: 1.5rem;
 }
 
 .debug-button {
@@ -885,35 +848,40 @@ body::before {
 /* Dashboard Styles */
 #dashboardView {
     position: relative;
-    width: 100%;
-    max-width: 100vw;
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden;
+    height: 100%;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    display: flex;
+    flex-direction: column;
+    background: var(--login-view-bg);
+    overflow: hidden;
 }
 
 .dashboard-container {
     width: 100%;
     max-width: 100%;
-    padding: 1rem 0;
+    padding: 1rem 0 0;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
     box-sizing: border-box;
     overflow-x: hidden;
+    flex: 1 1 auto;
+    min-height: 0; 
 }
 
-.next-course-card, 
-.homework-item, 
-.section-header,
-.welcome-section, 
-.see-more-button,
-.homework-list {
-    width: calc(100% - 2rem) !important;
-    max-width: 480px;
-    margin-left: auto !important;
-    margin-right: auto !important;
+.dashboard-top-part {
+    padding: 1rem;
+}
+
+.dashboard-top-part > * {
+    max-width: var(--container-width);
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
     box-sizing: border-box;
 }
 
@@ -927,48 +895,126 @@ body::before {
     flex-direction: column;
     align-items: flex-start;
     justify-content: flex-start;
-    width: calc(100% - 2rem) !important;
-    max-width: 480px;
-    margin: 0.5rem auto 1rem auto !important;
-    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100%;
+    margin: 0 0 1rem 0 !important;
+    padding: 0em !important;
     box-sizing: border-box;
     text-align: left;
 }
 
 .welcome-text {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
     width: 100%;
     text-align: left;
+    align-items: flex-start;
+    padding: 0;
+    margin: 0;
+}
+
+.welcome-section,
+.welcome-text {
+    margin-top: 1rem;
+    align-items: flex-start !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
 }
 
 .welcome-greeting {
-    font-size: 2rem;
-    font-weight: 600;
+    font-family: "Cabinet";
+    font-size: 2.3rem;
+    font-weight: 900;
     margin: 0;
     color: var(--text);
     text-align: left;
 }
 
 .welcome-subtitle {
+    font-family: "Satoshi";
     color: var(--text-light);
     font-size: 1rem;
-    margin: 0.5rem 0 0 0;
+    font-weight: 400;
+    margin: 0.2rem 0 0 0;
     text-align: left;
 }
 
+/* Dynamic banner */
+.dynamic-banner {
+    display: flex;
+    width: 100%;
+    max-width: var(--container-width);
+    margin: 1rem auto 0.1rem;
+    padding: 0.6rem 1rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    background: var(--login-view-main-card);
+    color: var(--text-dark);
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
+}
+
+.dynamic-banner .banner-icon {
+    width: 1.2rem;
+    height: 1.2rem;
+    display: inline-flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    color: var(--subtitle-dark);
+    margin-right: 0.6rem;
+    flex: 0 0 auto;
+    margin-left: -0.2rem;
+}
+
+.banner-icon {
+    font-size: 1.2rem !important;
+}
+
+.banner-text {
+    margin: 0;
+    font-weight: 600;
+    color: var(--subtitle-dark);
+    text-align: left;
+    flex: 1 1 auto;
+    font-size: 0.9rem;
+}
+
+.banner-info-btn {
+    font-family: "Satoshi";
+    font-weight: 500;
+    background: var(--login-view-main-card);
+    border: none;
+    outline: none;
+    color: var(--subtitle-dark);
+    border-radius: 999px;
+    box-shadow: 0px 1px 3px 0px rgba(0,0,0,0.25);
+    padding: 0.25rem 0.8rem;
+    margin-left: auto;
+    margin-right: -0.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.8rem;
+    gap: 0.5rem;
+    transition: background 0.15s;
+}
+
+.banner-info-btn i {
+    font-size: 0.8rem;
+    pointer-events: none;
+}
+
 .dashboard-card {
-    background: var(--card-bg);
     border-radius: 0.75rem; 
     padding: 0.75rem;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.25);
     margin-bottom: 0rem;
 }
 
 .next-course-card {
-    background: var(--primary);
-    color: white;
+    background: var(--login-view-main-card);
+    color: var(--text-dark);
     position: relative;
 }
 
@@ -979,12 +1025,13 @@ body::before {
     font-size: 0.85rem;
     font-weight: 500;
     margin-bottom: 0.5rem;
-    color: rgba(255, 255, 255, 0.9);
-    background: rgba(255, 255, 255, 0.2);
+    color: var(--subtitle-dark);
+    background: var(--login-view-main-card);
     padding: 0.25rem 0.75rem;
     border-radius: 1rem;
     align-self: flex-start;
     display: inline-flex;
+    box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.25);
 }
 
 .course-content {
@@ -992,16 +1039,20 @@ body::before {
 }
 
 .course-title {
+    font-family: "Cabinet";
     font-size: 1.5rem;
-    font-weight: 600;
+    font-weight: 800;
     margin: 0 0 0.25rem 0;
 }
 
 .course-details {
+    font-family: "Satoshi";
+    font-weight: 500;
     font-size: 1rem;
     opacity: 0.9;
     margin: 0;
     margin-bottom: 0.8rem;
+    color: var(--subtitle-dark);
 }
 
 .section-header {
@@ -1013,10 +1064,24 @@ body::before {
 }
 
 .section-header h2 {
+    font-family: "Cabinet";
     font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--text);
+    font-weight: 700;
+    color: var(--text-dark);
     margin: 0;
+    display: flex;
+    align-items: center;
+    padding-left: 0.35rem;
+}
+
+.section-header-icon {
+    font-size: 1rem;
+    color: var(--text-dark);
+    vertical-align: middle;
+    margin-right: 0.4rem;
+    margin-left: 0.1rem;
+    position: relative;
+    top: -2px;
 }
 
 .homework-list {
@@ -1029,14 +1094,13 @@ body::before {
 }
 
 .homework-item {
-    background: var(--card-bg);
+    background: var(--login-view-main-card);
     border-radius: 0.75rem;
     padding: 0.75rem 1rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.25);
     margin-bottom: 0.75rem;
 }
 
@@ -1051,34 +1115,37 @@ body::before {
 }
 
 .homework-subject {
+    font-family: "Cabinet";
     font-size: 1rem;
-    font-weight: 600;
+    font-weight: 800;
     margin: 0 0 0.25rem 0;
-    color: var(--text);
+    color: var(--text-dark);
 }
 
 .homework-task {
     font-size: 0.85rem;
-    color: var(--text-light);
+    color: var(--subtitle-dark);
     margin: 0;
 }
 
 .homework-due {
     font-size: 0.75rem;
-    color: var(--text-light);
-    background: rgba(0, 0, 0, 0.05);
+    color: var(--subtitle-dark);
+    background: var(--box-accent-color);
     padding: 0.25rem 0.5rem;
     border-radius: 1rem;
     white-space: nowrap;
     margin-left: 0.5rem;
+    box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.25);
 }
 
 .see-more-button {
-    background: transparent;
+    background: var(--primary);
     border: none;
     color: var(--text-light);
-    font-size: 0.9rem;
-    padding: 0.5rem;
+    font-size: 1rem;
+    padding: 0.5rem 1.25rem;
+    border-radius: 20px;
     margin: 0 auto;
     cursor: pointer;
     display: block;
@@ -1088,84 +1155,8 @@ body::before {
 
 .see-more-button:hover {
     color: var(--primary);
+    background-color: var(--login-view-main-card);
 }
-
-.current-class-card {
-    background: var(--primary);
-    color: white;
-    position: fixed;
-    bottom: 1.5rem;
-    left: 1.5rem; 
-    right: 1.5rem;
-    width: calc(100% - 3rem);
-    z-index: 100;
-    border-radius: 0.75rem;
-    padding: 0.75rem 0; 
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    margin: 0;
-}
-
-.current-class-card .course-title {
-    font-size: 1rem;
-    padding: 0 1rem;
-    margin: 0 0 0.25rem 0;
-}
-
-.player-course-details {
-    font-size: 0.8rem;
-    padding: 0 1rem;
-    margin: 0 0 0.25rem 0;
-}
-
-.progress-handle {
-    position: absolute;
-    top: 50%;
-    left: 35%;
-    transform: translate(-50%, -50%);
-    width: 10px;
-    height: 10px;
-    background: white;
-    border-radius: 50%;
-    z-index: 15;
-    margin-left: 2px; 
-    pointer-events: none;
-}
-
-
-.progress-fill::after {
-    display: none;
-}
-
-.progress-bar {
-    height: 4px;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 4px;
-    overflow: visible;
-    position: relative;
-    margin: 1.25rem 1rem 0.5rem 1rem;
-    width: calc(100% - 2rem);
-    z-index: 5;
-}
-
-.progress-fill {
-    height: 100%;
-    background: white;
-    border-radius: 4px;
-    position: relative;
-    width: 35%;
-    min-width: 10px; 
-}
-
-.progress-bar::before,
-.progress-bar::after {
-    display: none;
-}
-
-.user-avatar img {
-    background-color: #e2e8f0;
-}
-
 /* Notification specific animations */
 
 @keyframes notifFadeIn {
@@ -1197,7 +1188,7 @@ body::before {
     right: 0;
     margin-left: auto;
     margin-right: auto;
-    background: var(--primary-light);
+    background: #FFECD6;
     color: var(--text);
     padding: 1rem;
     border-radius: 0.75rem;
@@ -1228,7 +1219,7 @@ body::before {
     font-size: 1rem;
     font-weight: 600;
     margin: 0;
-    color: var(--text);
+    color: var(--text-dark);
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -1242,7 +1233,7 @@ body::before {
 
 .notification-prompt p {
     font-size: 0.9rem;
-    color: var(--text-light);
+    color: var(--subtitle-dark);
     margin: 0;
 }
 
@@ -1390,29 +1381,6 @@ body::before {
     border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
-.progress-handle {
-    position: absolute;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    width: 12px;
-    height: 12px;
-    background: white;
-    border-radius: 50%;
-    z-index: 15;
-    pointer-events: none;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: left 0.3s ease;
-}
-
-.progress-fill {
-    height: 100%;
-    background: white;
-    border-radius: 4px;
-    position: relative;
-    transition: width 0.3s ease;
-    min-width: 8px;
-}
-
 .refresh-data-btn {
     position: absolute;
     top: 10px;
@@ -1433,22 +1401,28 @@ body::before {
 }
 
 @media screen and (max-height: 667px) {
+    :root {
+        --spacing-md: 1rem;
+        --spacing-lg: 1.5rem;
+        --header-size: clamp(2.2rem, 7vw, 3rem);
+        --subtitle-size: clamp(0.9rem, 2.5vw, 1rem);
+    }
+
+    .welcome-greeting,
+    .login-header-app-title,
+    .section-header h2 {
+        margin-top: 0.5rem !important;
+    }
+    .dashboard-top-part {
+        padding-top: calc(0.5rem + env(safe-area-inset-top, 0));
+    }
+
     .connection-indicator {
         width: 1.5rem;
         height: 1.5rem;
         font-size: 0.8rem;
         top: 0.25rem;
         right: 0.25rem;
-    }
-}
-
-@media screen and (max-height: 667px) {
-    :root {
-        --spacing-md: 1rem;
-        --spacing-lg: 1.5rem;
-        --camera-height: min(13rem, 35vh);
-        --header-size: clamp(2.2rem, 7vw, 3rem);
-        --subtitle-size: clamp(0.9rem, 2.5vw, 1rem);
     }
 
     .card {
@@ -1464,10 +1438,6 @@ body::before {
         margin-bottom: var(--spacing-lg);
     }
 
-    .camera-view {
-        height: min(14rem, 35vh);
-    }
-
     .welcome-greeting {
         font-size: 1.5rem;
     }
@@ -1479,13 +1449,6 @@ body::before {
     
     .welcome-subtitle {
         font-size: 0.9rem;
-    }
-    
-    .user-avatar {
-        width: 40px;
-        height: 40px;
-        position: relative;
-        top: -10px;
     }
     
 
@@ -1508,29 +1471,6 @@ body::before {
         font-size: 1.2rem;
     }
     
-
-    .current-class-card {
-        bottom: 1rem;
-        left: 1rem; 
-        right: 1rem;
-        width: calc(100% - 2rem);
-        padding: 0.6rem 0;
-    }
-    
-    .current-class-card .course-title {
-        font-size: 0.9rem;
-    }
-    
-    .player-course-details {
-        font-size: 0.75rem;
-    }
-    
-
-    .progress-bar {
-        margin: 1rem 0.75rem 0.4rem 0.75rem;
-        width: calc(100% - 1.5rem);
-    }
-
     .homework-list .homework-item:nth-child(2) {
         display: none;
     }
@@ -1554,20 +1494,6 @@ body::before {
 
 }
 
-@media screen and (max-height: 568px) {
-    :root {
-        --spacing-sm: 0.5rem;
-        --spacing-md: 0.75rem;
-        --spacing-xl: 1.5rem;
-        --camera-height: min(11rem, 30vh);
-    }
-
-    .primary-button {
-        padding: 0.75rem;
-        font-size: 1rem;
-    }
-}
-
 @media (orientation: landscape) {
     .orientation-warning {
         display: flex;
@@ -1586,11 +1512,12 @@ body::before {
   }
 
 /* Notched phones */
-@supports (padding: env(safe-area-inset-top)) {
-    .container {
-        padding-top: env(safe-area-inset-top);
-        padding-bottom: env(safe-area-inset-bottom);
-        padding-left: env(safe-area-inset-left);
-        padding-right: env(safe-area-inset-right);
-    }
+.dashboard-container,
+.main-container,
+.dashboard-top-part,
+.dashboard-bottom-part {
+    padding-top: env(safe-area-inset-top, 0);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    padding-left: env(safe-area-inset-left, 0);
+    padding-right: env(safe-area-inset-right, 0);
 }
