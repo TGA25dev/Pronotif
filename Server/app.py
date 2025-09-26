@@ -800,9 +800,16 @@ def login_user():
             )
             return response
         except Exception as e:
-            sentry_sdk.capture_exception(e)
-            logger.error(f"Unexpected error in login_user: {e}")
-            return jsonify({"error": "Internal server error"}), 500
+            err_msg = str(e).lower()
+
+            if "username / password is invalid" not in err_msg and "ent login failed" not in err_msg and "pronote login failed" not in err_msg:
+                sentry_sdk.capture_exception(e)
+                logger.error(f"Unexpected error in login_user: {e}")
+                return jsonify({"error": "Internal server error"}), 500
+            else:
+                logger.info(f"Login failed due to invalid credentials: {e}")
+                return jsonify({"error": "Invalid username or password"}), 401
+                
 
 
 @app.route('/v1/app/auth/refresh', methods=['POST', 'HEAD'])

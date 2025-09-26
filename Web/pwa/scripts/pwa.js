@@ -966,8 +966,7 @@ const loginHandler = {
                     loginSubmitButton.disabled = false;
                     loginSubmitButton.style.cursor = "pointer";
                     loginSubmitButton.style.opacity = "1";
-                    loginSubmitButton.textContent = "Se connexion";
-
+                    loginSubmitButton.textContent = "Se connecter";
                     return;
                 }
                 // Call backend API
@@ -985,16 +984,25 @@ const loginHandler = {
                     }),
                     credentials: 'include'
                 })
-                .then(response => response.json())
-                .then(data => {
-                    // Handle login response
-                    if (data.success) {
+                .then(async response => {
+                    const data = await response.json().catch(() => ({}));
+
+                    if (response.status === 401) {
+                        alert("Identifiant ou mot de passe incorrect.", "error");
+                        console.error("Wrong credentials provided.");
+
+                        loginSubmitButton.disabled = false;
+                        loginSubmitButton.style.cursor = "pointer";
+                        loginSubmitButton.style.opacity = "1";
+                        loginSubmitButton.textContent = "Se connecter";
+
+                    } else if (data.success) {
                         console.log("Login successful!");
 
                         loginSubmitButton.disabled = false;
                         loginSubmitButton.style.cursor = "pointer";
                         loginSubmitButton.style.opacity = "1";
-                        loginSubmitButton.textContent = "Se connexion";
+                        loginSubmitButton.textContent = "Se connecter";
 
                         try {
                             showDashboard();
@@ -1011,14 +1019,6 @@ const loginHandler = {
                         loginSubmitButton.style.opacity = "1";
                         loginSubmitButton.textContent = "Se connecter";
                     }
-                })
-                .catch(err => {
-                    alert("Erreur réseau.");
-
-                    loginSubmitButton.disabled = false;
-                    loginSubmitButton.style.cursor = "pointer";
-                    loginSubmitButton.style.opacity = "1";
-                    loginSubmitButton.textContent = "Se connecter";
                 });
             };
         }
