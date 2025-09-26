@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from functools import partial
 
 import logging
+import threading
 
 from pronotepy import ENTLoginError
 
@@ -13,6 +14,9 @@ logger = logging.getLogger(__name__)
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:73.0) Gecko/20100101 Firefox/73.0"
 }
+
+MAX_RETRIES = 3  # Number of retries
+RETRY_DELAY = 5  # Delay between retries in seconds
 
 @typing.no_type_check
 def _monlycee_net(
@@ -50,25 +54,45 @@ def _monlycee_net(
     logger.info(f"[ENT {url}] Logging in a user...")
 
     # ENT Connection
-    with requests.Session() as session:
-        response = session.get(url, headers=HEADERS)
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            with requests.Session() as session:
+                response = session.get(url, headers=HEADERS, timeout=20)
+                if response.status_code != 200:
+                    raise ENTLoginError(f"Failed to fetch login page. Status code: {response.status_code}")
 
-        soup = BeautifulSoup(response.text, "html.parser")
-        form = soup.find(id="kc-form-login")
+                html = response.text
+                soup = BeautifulSoup(html, "html.parser")
+                form = soup.find(id="kc-form-login")
 
-        if form is None:
-            raise ENTLoginError("Login form is missing")
+                if form is None:
+                    raise ENTLoginError("Login form is missing")
 
-        payload = {"username": username, "password": password}
+                payload = {"username": username, "password": password}
+                action_url = form.get("action")
 
-        r = session.post(form.get("action"), data=payload, headers=HEADERS)
+                r = session.post(action_url, data=payload, headers=HEADERS, timeout=20)
+                if r.status_code != 200:
+                    raise ENTLoginError(f"Login failed. Status code: {r.status_code}")
 
-        soup = BeautifulSoup(r.text, "html.parser")
-        username_input = soup.find(id="username")
-        if username_input is not None and username_input.get("aria-invalid") == "true":
-            raise ENTLoginError("Username / Password is invalid")
+                html = r.text
+                soup = BeautifulSoup(html, "html.parser")
+                username_input = soup.find(id="username")
 
-        return session.cookies
+                if username_input is not None and username_input.get("aria-invalid") == "true":
+                    raise ENTLoginError("Username / Password is invalid")
+
+                logger.info(f"User {username} logged in successfully.")
+                return session.cookies
+
+        except requests.RequestException as e:
+            logger.warning(f"Attempt {attempt} failed for user {username}: {e}")
+            if attempt < MAX_RETRIES:
+                delay_event = threading.Event()
+                delay_event.wait(RETRY_DELAY)
+
+            else:
+                raise ENTLoginError(f"Failed to connect to {url} after {MAX_RETRIES} attempts") from e
 
 ile_de_france = partial(_monlycee_net)
 
