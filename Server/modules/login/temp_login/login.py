@@ -36,8 +36,8 @@ def get_student_data(client: pronotepy.Client, ent_used:bool, qr_code_login:bool
         timezone = get_timezone_from_state(region)
         
     except Exception as e:
-        logger.error(f"An error occurred while trying to get the timezone from state: {e}")
-        timezone = None
+        logger.error(f"An error occurred while trying to get the timezone from state: '{e}' -> (Timezone set to default)")
+        timezone = "Europe/Paris"
 
     if student_fullname:
         # Split the name into words
@@ -51,7 +51,7 @@ def get_student_data(client: pronotepy.Client, ent_used:bool, qr_code_login:bool
                 break
 
             else:
-                student_firstname = None
+                student_firstname = "None"
 
     return {
         "student_fullname": student_fullname,
