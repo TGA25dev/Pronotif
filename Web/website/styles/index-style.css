@@ -461,6 +461,10 @@ h2 {
         0 4px 15px var(--download-shadow),
         inset 0 1px 1px rgba(255, 255, 255, 0.3);
     font-family: "Satoshi", sans-serif;
+
+    user-select: none;
+    opacity: 0.4;
+    cursor: not-allowed !important;
 }
 
 .download-btn:hover {
