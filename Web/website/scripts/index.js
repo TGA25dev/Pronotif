@@ -12,12 +12,15 @@ function initializeUrlHandling() {
             const baseUrl = button.getAttribute('data-href');
             
             if (baseUrl) {
-                // Safer URL validation: trim whitespace, prevent protocol-relative and dangerous schemes
                 const safeBaseUrl = baseUrl.trim();
                 
-                if ((safeBaseUrl.startsWith('/') && !safeBaseUrl.startsWith('//')) || 
-                    safeBaseUrl.startsWith('http://') || 
-                    safeBaseUrl.startsWith('https://')) {
+                if (
+                    (safeBaseUrl.startsWith('/') && !safeBaseUrl.startsWith('//')) ||
+                    safeBaseUrl.startsWith('http://') ||
+                    safeBaseUrl.startsWith('https://') ||
+                    /^[a-zA-Z0-9_\-\/]+$/.test(safeBaseUrl)
+                    
+                ) {
                     window.location.href = safeBaseUrl + config.urlSuffix;
                 } else {
                     console.error('Invalid or potentially unsafe URL detected:', baseUrl);
