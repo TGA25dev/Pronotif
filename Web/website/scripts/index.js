@@ -86,7 +86,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Language handling
 let translations = {};
-let currentLang = localStorage.getItem('language') || 'fr';
+
+//Get browser language, fallback to fr
+function getDefaultLang() {
+    const navLang = navigator.language || navigator.userLanguage || 'fr';
+    console.log("Browser language detected:", navLang);
+    const shortLang = navLang.split('-')[0].toLowerCase();
+    // Supported languages
+    const supported = ['fr', 'en', 'es'];
+    return supported.includes(shortLang) ? shortLang : 'fr';
+}
+
+let currentLang = localStorage.getItem('language') || getDefaultLang();
 
 async function loadTranslations(lang) {
     try {
@@ -179,9 +190,8 @@ document.addEventListener('click', (e) => {
 
 // Initialize language on page load
 document.addEventListener("DOMContentLoaded", async () => {
-    const savedLanguage = localStorage.getItem('language') || 'fr';
-    document.documentElement.lang = savedLanguage;
-    activeLang.textContent = savedLanguage.toUpperCase();
-    updateSelectedLanguage(savedLanguage);
-    await updateLanguage(savedLanguage);
+    document.documentElement.lang = currentLang;
+    activeLang.textContent = currentLang.toUpperCase();
+    updateSelectedLanguage(currentLang);
+    await updateLanguage(currentLang);
 });
