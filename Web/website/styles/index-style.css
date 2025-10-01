@@ -464,7 +464,7 @@ h2 {
 
     user-select: none;
     opacity: 0.4;
-    cursor: not-allowed !important;
+    pointer-events: none;
 }
 
 .download-btn:hover {
