@@ -156,7 +156,6 @@ const debugLogger = {
                 permission: Notification.permission,
                 available: 'Notification' in window,
                 serviceWorker: 'serviceWorker' in navigator,
-                messaging: typeof firebase !== 'undefined' && firebase.messaging ? 'available' : 'not initialized'
             },
             device: {
                 platform: /iPhone|iPad|iPod/.test(navigator.userAgent) ? 'iOS' : 
@@ -174,15 +173,6 @@ const debugLogger = {
                     storage: 'storage' in navigator && 'estimate' in navigator.storage
                 }
             },
-            connection: navigator.connection ? {
-                type: navigator.connection.effectiveType,
-                speed: `${navigator.connection.downlink}Mbps`,
-                saveData: navigator.connection.saveData
-            } : 'Not available',
-            storage: {
-                quota: 'Checking...',
-                usage: 'Checking...'
-            }
         };
 
         // Add FCM token age if available
@@ -202,24 +192,6 @@ const debugLogger = {
                 }
             });
         }
-        
-        // Update storage info if available
-        if (info.device.features.storage) {
-            navigator.storage.estimate().then(({usage, quota}) => {
-                info.storage = {
-                    quota: `${Math.round(quota / 1024 / 1024)} MB`,
-                    usage: `${Math.round(usage / 1024 / 1024)} MB`,
-                    percentage: `${Math.round((usage / quota) * 100)}%`
-                };
-                
-                const deviceInfoEl = document.getElementById('deviceInfo');
-                if (deviceInfoEl) {
-                    deviceInfoEl.innerText = JSON.stringify(info, null, 2);
-                }
-            });
-        }
-        
-        return info;
     }
 };
 
@@ -1750,6 +1722,190 @@ async function fetchFirebaseConfig() {
 
 
 document.addEventListener('DOMContentLoaded', async () => {
+    function updateCookieContainer() {
+        const cookieContainer = document.getElementById('cookieContainer');
+        if (cookieContainer) {
+            const cookies = document.cookie.split(';').map(c => c.trim()).filter(Boolean);
+            if (cookies.length === 0) {
+                cookieContainer.textContent = "Aucun cookie trouvé.";
+            } else {
+                cookieContainer.innerHTML = cookies.map(cookie => {
+                    const [key, ...val] = cookie.split('=');
+                    return `<div><strong>${key}</strong>: ${decodeURIComponent(val.join('='))}</div>`;
+                }).join('');
+            }
+        }
+    }
+
+    function updateLocalStorageContainer() {
+        const localStorageContainer = document.getElementById('localStorageContainer');
+        if (localStorageContainer) {
+            if (localStorage.length === 0) {
+                localStorageContainer.textContent = "Aucune donnée localStorage.";
+            } else {
+                localStorageContainer.innerHTML = Object.keys(localStorage).map(key => {
+                    let value = localStorage.getItem(key);
+                    
+                    try {
+                        value = JSON.stringify(JSON.parse(value), null, 2);
+                    } catch {}
+                    return `<div><strong>${key}</strong>: <pre style="display:inline">${value}</pre></div>`;
+                }).join('');
+            }
+        }
+    }
+
+    updateLocalStorageContainer();
+    updateCookieContainer();
+
+    const clearCacheBtn = document.getElementById('clearCacheButton');
+    if (clearCacheBtn) {
+        clearCacheBtn.addEventListener('click', async () => {
+            // Remove localStorage and sessionStorage
+            localStorage.clear();
+            sessionStorage.clear();
+
+            // Unregister all service workers
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (const reg of registrations) {
+                    await reg.unregister();
+                }
+            }
+
+            // Remove all caches
+            if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                for (const name of cacheNames) {
+                    await caches.delete(name);
+                }
+            }
+
+            alert('Cache supprimé !');
+            window.location.reload();
+        });
+    }
+
+    const simulateNotifBtn = document.getElementById('simulateNotifButton');
+    const simulateNotifButtonSubTitle = document.getElementById('simulateNotifButtonSubTitle');
+
+    if (simulateNotifBtn) {
+        simulateNotifBtn.addEventListener('click', async () => {
+            simulateNotifBtn.disabled = true;
+            simulateNotifButtonSubTitle.textContent = "Envoi en cours...";
+            try {
+                const response = await wrapFetch('https://api.pronotif.tech/v1/app/send-test-notif', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    alert("Notification de test envoyée !");
+                    console.log("Test notification succesfully sent ! ", data.message_id);
+                } else {
+                    alert("Erreur lors de l'envoi de la notification.");
+                    console.error("Test notification error:", data.error);
+                }
+            } catch (err) {
+                alert("Erreur réseau.");
+                console.error("Network error sending test notification:", err);
+            } finally {
+                simulateNotifBtn.disabled = false;
+                simulateNotifButtonSubTitle.textContent = "Simuler une notification";
+            }
+        });
+    }
+
+    const resetFCMTokenButton = document.getElementById('resetFCMTokenButton');
+    const resetFCMTokenButtonSubTitle = document.getElementById('resetFCMTokenButtonSubTitle');
+
+    if (resetFCMTokenButton) {
+        resetFCMTokenButton.addEventListener('click', async () => {
+            resetFCMTokenButton.disabled = true;
+            resetFCMTokenButtonSubTitle.textContent = "Suppression en cours...";
+            
+            await revokeFCMToken();
+            localStorage.removeItem('fcmToken');
+            localStorage.removeItem('fcmTokenTimestamp');
+
+            alert('Token FCM supprimé. Un nouveau sera généré au demarrage si les notifications sont activées.');
+            resetFCMTokenButton.disabled = false;
+            resetFCMTokenButtonSubTitle.textContent = "Réinitialiser le token FCM";
+        });
+    }
+
+    const debugLogoutButton = document.getElementById('debugLogoutButton');
+    const debugLogoutButtonSubTitle = document.getElementById('debugLogoutButtonSubTitle');
+
+    if (debugLogoutButton) {
+        debugLogoutButton.addEventListener('click', async () => {
+            debugLogoutButton.disabled = true;
+            debugLogoutButtonSubTitle.textContent = "Déconnexion en cours...";
+
+            try {
+                const response = await wrapFetch('https://api.pronotif.tech/v1/app/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    console.log('Logged out successfully');
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    if ('serviceWorker' in navigator) {
+                        const registrations = await navigator.serviceWorker.getRegistrations();
+                        for (const reg of registrations) {
+                            await reg.unregister();
+                        }
+                    }
+                    if ('caches' in window) {
+                        const cacheNames = await caches.keys();
+                        for (const name of cacheNames) {
+                            await caches.delete(name);
+                        }
+                    }
+                    alert('Vous avez été déconnecté avec succès !');
+                    window.location.reload();
+                } else {
+                    console.error('Logout failed:', response.statusText);
+                    alert('Échec de la déconnexion. Veuillez réessayer.');
+                }
+            } catch (error) {
+                console.error('Network error during logout:', error);
+                alert('Erreur réseau lors de la déconnexion. Veuillez réessayer.');
+            } finally {
+                debugLogoutButton.disabled = false;
+                debugLogoutButtonSubTitle.textContent = "Se déconnecter";
+            }
+            
+        });
+    }
+
+    const resetNotifGrantButton = document.getElementById('resetNotifGrantButton');
+    const resetNotifGrantButtonSubTitle = document.getElementById('resetNotifGrantButtonSubTitle');
+
+    if (resetNotifGrantButton) {
+        resetNotifGrantButton.addEventListener('click', async () => {
+            resetNotifGrantButton.disabled = true;
+            resetNotifGrantButtonSubTitle.textContent = "Réinitialisation en cours...";
+
+            // Clear notification permission state
+            localStorage.setItem('notificationPermission', 'default');
+            document.cookie = "notifDismissed=false; path=/; max-age=31536000"; //Reset dismissed cookie
+
+            if (Notification.permission === 'denied') {
+                alert("Les notifications sont actuellement bloquées dans les paramètres de votre navigateur. Veuillez les activer manuellement dans les paramètres de votre appareil.");
+            }
+
+            alert("L'état des notifications a été réinitialisé. Vous pouvez maintenant les réactiver si besoin.");
+            resetNotifGrantButton.disabled = false;
+            resetNotifGrantButtonSubTitle.textContent = "Réinitialiser l'état des notifications";
+        });
+    }
+
+    
+
 
     // Store initial notification permission
     if (!localStorage.getItem('notificationPermission')) {
@@ -1806,6 +1962,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         debugPanel.classList.toggle('hidden');
         debugPanel.classList.toggle('visible');
         debugLogger.updateDebugPanel();
+        updateCookieContainer();
+        updateLocalStorageContainer();
     }
     
     if (closeDebug) {

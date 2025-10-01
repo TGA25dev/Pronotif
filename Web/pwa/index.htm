@@ -16,7 +16,7 @@
         <script src="https://kit.fontawesome.com/c1bbd01730.js" crossorigin="anonymous"></script>
 
         <link rel="stylesheet" href="https://pronotif.tech/fonts_manager.css">
-        <link rel="stylesheet" href="styles/pwa-style.css?s1k2djd9ffkfdfffdddfddfdffdfffffffffdfffdfffkdkffffffdfkffffdffffdjjkjfffdfffffgffgffgdffff122578ssfdsssqdssdjkqsdDDsqqsqqn87djjddqddqds987d876ssqshhqjsfddsdsnununihgfssredsdshjdssdshhbgdidsdujhnuylpokiuynuybtsoimpdsdsdsdkjhgsmdsdsmopopdsdspsplopkiuygqsqosjkiokioiunuiMPPnuuibylolokiiolloujionubybyreovtuuibyuivrcuvbniu">
+        <link rel="stylesheet" href="styles/pwa-style.css?s1k2djd9ffhhjjkfdfffdddfddfdffdfhgfffbhfffffdfffdfffkdkfjfffffdfkffffdffffdjjkjfffdfffffgffgffgdffff122578ssfdsssqdssdjkqsdDDsqqsqqn87djjddqddqds987d876ssqshhqjsfddsdsnununihgfssredsdshjdssdshhbgdidsdujhnuylpokiuynuybtsoimpdsdsdsdkjhgsmdsdsmopopdsdspsplopkiuygqsqosjkiokioiunujiMPPnuuibylolokiiolloujionubybyreovtuuibyuivrcuvbniu">
         
 
         <!-- Sentry -->
@@ -197,7 +197,44 @@
                         <h3>Infos sur l'appareil</h3>
                         <div id="deviceInfo" class="debug-info"></div>
                     </div>
-                </div>    
+                </div>
+
+                <div class="debug-section">
+                    <h3>Cookies</h3>
+                    <div id="cookieContainer" class="debug-info"></div>
+                </div>
+
+                <div class="debug-section">
+                    <h3>localStorage</h3>
+                    <div id="localStorageContainer" class="debug-info"></div>
+                </div>
+
+                <div class="debug-section">
+                    <h3>Actions</h3>
+                    <div id="debugActionsContainer" class="debug-actions">
+                        <button id="clearCacheButton" class="debug-action-btn">
+                            <span class="action-btn-title">Vider le cache</span>
+                            <span class="action-btn-subtitle">Supprime les données stockées localement</span>
+                        </button>
+                        <button id="simulateNotifButton" class="debug-action-btn">
+                            <span class="action-btn-title" id="simulateNotifButtonTitle">Simuler une notification</span>
+                            <span class="action-btn-subtitle" id="simulateNotifButtonSubTitle">Envoie une notification de test</span>
+                        </button>
+                        <button id="resetFCMTokenButton" class="debug-action-btn">
+                            <span class="action-btn-title" id="resetFCMTokenButtonTitle">Réinitialiser le token FCM</span>
+                            <span class="action-btn-subtitle" id="resetFCMTokenButtonSubTitle">Réinitialise le token Firebase Cloud Messaging</span>
+                        </button>
+                        <button id="resetNotifGrantButton" class="debug-action-btn">
+                            <span class="action-btn-title" id="resetNotifGrantButtonTitle">Réinitialiser les permissions de notifications</span>
+                            <span class="action-btn-subtitle" id="resetNotifGrantButtonSubTitle">Réinitialise la clé localStorage pour les permissions de notifications.</span>
+                        </button>
+                        <button id="debugLogoutButton" class="debug-action-btn">
+                            <span class="action-btn-title" id="debugLogoutButtonTitle">Se déconnecter</span>
+                            <span class="action-btn-subtitle" id="debugLogoutButtonSubTitle">Vous déconnecte de la session actuelle et force la reconnexion.</span>
+                        </button>
+                    </div>
+                </div>
+
                 <div class="debug-section">
                     <h3>Logs</h3>
                     <div id="logContainer" class="log-container"></div>
@@ -328,6 +365,6 @@
             </div>
         </div>
 
-        <script type="module" src="scripts/pwa.js?njjf&&06611127f7321850f00000078008700769987YGV8712905hddffdsdbyvtyrtd87" crossorigin="anonymous"></script>
+        <script type="module" src="scripts/pwa.js?njjf&&066111h27f7h3218n50f00h000jjjjh07800jj8700hhbh769987YhGV8712905hddffdsdbyvtyrtd87" crossorigin="anonymous"></script>
     </body>
 </html>

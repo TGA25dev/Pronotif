@@ -686,6 +686,8 @@ body::before {
     transition: transform 0.3s ease;
     transform: translateX(100%);
     box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 
@@ -742,8 +744,9 @@ body::before {
 .debug-section h3 {
     margin-bottom: 0.5rem;
     color: var(--text-dark);
-    font-size: 1rem;
+    font-size: 1.3rem;
     font-weight: 500;
+    margin-left: 1rem;
 }
 
 .debug-info {
@@ -771,7 +774,8 @@ body::before {
 
 .debug-actions {
     display: flex;
-    gap: 0.5rem;
+    flex-direction: column;
+    gap: 0.3rem;
     margin-top: 1rem;
     margin-bottom: 1.5rem;
 }
@@ -821,6 +825,49 @@ body::before {
     gap: 1rem;
     margin-bottom: 2rem;
     margin-top: 0;
+}
+
+.debug-action-btn {
+    display: block;
+    width: calc(100% - 1.2rem);
+    min-width: unset;
+    max-width: unset;
+    padding: 0.35rem 1rem;
+    font-size: 0.85rem;
+    font-family: "Satoshi", sans-serif;
+    font-weight: 600;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    margin-bottom: 0.4rem;
+    margin-left: 0.6rem;
+    margin-right: 0.6rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    transition: background 0.2s;
+    text-align: left;
+}
+
+.debug-action-btn:hover {
+    background: var(--primary-dark);
+}
+
+.action-btn-title {
+    display: block;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.1rem;
+}
+
+.action-btn-subtitle {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: #e6f7f7;
+    opacity: 0.85;
+    line-height: 1.2;
+    margin-top: 0.1rem;
 }
 
 @keyframes slideIn {
