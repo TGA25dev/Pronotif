@@ -31,6 +31,9 @@ from modules.ratelimit.ratelimiter import limiter
 
 from modules.pronote.notification_system import  get_user_by_auth
 
+#Firebase
+from modules.messaging.firebase import send_notification_to_device
+
 #Login Part
 from modules.login.get_data_fetcher import get_schools_from_city
 from modules.login.temp_login.login import global_pronote_login
@@ -236,8 +239,6 @@ def get_school_names():
         return jsonify({"message": ""}), 200
 
     with sentry_sdk.start_transaction(op="http.server", name="get_school_names"):
-        if request.method == "HEAD":
-            return jsonify({"message": ""}), 200
 
         city_name = (request.args.get('city_name'))
         coords = request.args.get('coords', 'false').lower() == 'true'
@@ -351,10 +352,10 @@ def revoke_fcm_token():
                         connection.commit()
 
                         if cursor.rowcount > 0:
-                            logger.info(f"FCM token revoked for user: {app_session_id}")
+                            logger.info(f"FCM token revoked for user: {app_session_id[:4]}****")
                             return jsonify({"message": "FCM token revoked", "status": 200})
                         else:
-                            logger.error(f"Failed to revoke FCM token for user: {app_session_id}")
+                            logger.error(f"Failed to revoke FCM token for user: {app_session_id[:4]}****")
                             return jsonify({"error": "Failed to revoke FCM token"}), 500
                         
                 except mysql.connector.Error as err:
@@ -420,7 +421,7 @@ def save_fcm_token():
                         result = cursor.fetchone()
                         
                         if not result:
-                            logger.warning(f"FCM token update attempt with invalid credentials: {app_session_id}")
+                            logger.warning(f"FCM token update attempt with invalid credentials: {app_session_id[:4]}****")
                             return jsonify({"error": "Invalid credentials"}), 401
                         
                         # Update the user record with the FCM token
@@ -433,13 +434,13 @@ def save_fcm_token():
                         connection.commit()
                         
                         if cursor.rowcount > 0:
-                            logger.info(f"FCM token updated for user: {app_session_id}")
+                            logger.info(f"FCM token updated for user: {app_session_id[:4]}****")
                             return jsonify({
                                 "message": "FCM token saved successfully",
                                 "status": 200
                             })
                         else:
-                            logger.error(f"Failed to update FCM token for user: {app_session_id}")
+                            logger.error(f"Failed to update FCM token for user: {app_session_id[:4]}****")
                             return jsonify({"error": "Failed to save FCM token"}), 500
                 
                 except mysql.connector.Error as err:
@@ -494,7 +495,7 @@ def get_firebase_config():
                         result = cursor.fetchone()
                         
                         if not result or result['count'] == 0:
-                            logger.warning(f"!!Firebase config access attempt with invalid credentials: {app_session_id}!!")
+                            logger.warning(f"Firebase config access attempt with invalid credentials: {app_session_id[:4]}****")
                             return jsonify({"error": "Invalid credentials"}), 401
                     
                         # User is authenticated, return Firebase config
@@ -508,7 +509,7 @@ def get_firebase_config():
                         }
                         
                         # Log the successful access
-                        logger.info(f"Firebase config provided to authenticated user: {app_session_id}")
+                        logger.info(f"Firebase config provided to authenticated user: {app_session_id[:4]}****")
                         
                         # Return the config
                         response = jsonify(firebase_config)
@@ -529,6 +530,83 @@ def get_firebase_config():
             sentry_sdk.capture_exception(e)
             logger.error(f"Unexpected error in firebase config endpoint: {e}")
             return jsonify({"error": "Internal server error"}), 500
+
+@app.route("/v1/app/send-test-notif", methods=["POST", "HEAD"])
+@limiter.limit(str(get_secret('SEND_TEST_NOTIF_LIMIT')) + " per minute")
+def send_test_notification():
+    """
+    Send a test notification to the authenticated user's device
+    """
+
+    if request.method == "HEAD":
+        return "", 200
+    
+    app_session_id = request.cookies.get('app_session_id')
+    app_token = request.cookies.get('app_token')
+
+    if not app_session_id or not app_token:
+        return jsonify({"error": "Authentication required"}), 401
+
+    with get_db_connection() as connection:
+        cursor = connection.cursor(dictionary=True)
+        try:
+            query = f"""
+                SELECT fcm_token FROM {student_table_name}
+                WHERE app_session_id = %s AND app_token = %s AND is_active = TRUE
+            """
+            cursor.execute(query, (app_session_id, app_token))
+            result = cursor.fetchone()
+            if not result or not result['fcm_token']:
+                return jsonify({"error": "No FCM token found"}), 400
+
+            # Send notification
+            response = send_notification_to_device(
+                result['fcm_token'],
+                "✅ Notification de test",
+                "Si vous voyez ça c'est que tout fontionne correctement ! 🎉"
+            )
+            if response:
+                return jsonify({"success": True, "message_id": response}), 200
+            else:
+                return jsonify({"success": False, "error": "Failed to send notification"}), 500
+        finally:
+            cursor.close()
+
+@app.route("/v1/app/logout", methods=["POST", "HEAD"])
+@limiter.limit(str(get_secret('LOGOUT_LIMIT')) + " per minute")
+def logout():
+    """
+    Log out the user by invalidating the session and expiring cookies.
+    """
+
+    if request.method == "HEAD":
+        return "", 200
+
+    app_session_id = request.cookies.get('app_session_id')
+    app_token = request.cookies.get('app_token')
+
+    if not app_session_id or not app_token:
+        return jsonify({"error": "Authentication required"}), 401
+    # Clear Flask session (if used)
+    session.clear()
+
+    # Prepare response
+    response = jsonify({"success": True, "message": "Déconnexion effectuée."})
+
+    # Expire authentication cookies
+    response.set_cookie(
+        'app_session_id', '', expires=0, path='/', secure=True, httponly=True, samesite='Strict'
+    )
+    response.set_cookie(
+        'app_token', '', expires=0, path='/', secure=True, httponly=True, samesite='Strict'
+    )
+
+    #Optionally expire CSRF cookie
+    response.set_cookie(
+        'csrf_token', '', expires=0, path='/', secure=True, httponly=False, samesite='Strict'
+    )
+
+    return response
 
 @app.route("/v1/login/verifylink", methods=["POST", "HEAD"])
 @limiter.limit(str(get_secret('QR_CODE_SCAN_LIMIT')) + " per minute")
@@ -851,7 +929,7 @@ def refresh_credentials():
                 result = cursor.fetchone()
 
                 if not result:
-                    logger.warning(f"!!! Failed auth attempt: {app_session_id} !!!")
+                    logger.warning(f"Failed auth attempt: {app_session_id[:4]}****")
                     return jsonify({"error": "Invalid credentials"}), 401
 
                 # Success - create new tokens and update database
@@ -1101,7 +1179,7 @@ def get_banner_content():
         return jsonify({"error": "Internal server error"}), 500
 
 # BETA ENDPOINTS
-@app.route('/v1/beta/verify-access', methods=['GET'])
+@app.route('/v1/beta/verify-access', methods=['GET', 'HEAD'])
 @limiter.limit(str(get_secret('BETA_VERIFY_LIMIT')) + " per minute")
 def verify_beta_access():
     """
