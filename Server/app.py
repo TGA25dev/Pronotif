@@ -617,7 +617,7 @@ def logout():
         path='/',
         secure=True,
         httponly=True,
-        samesite='Strict
+        samesite='Strict'
     )
 
     return response
