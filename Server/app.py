@@ -595,15 +595,29 @@ def logout():
 
     # Expire authentication cookies
     response.set_cookie(
-        'app_session_id', '', expires=0, path='/', secure=True, httponly=True, samesite='Strict'
+        'app_session_id', '', 
+        expires=0, 
+        path='/', 
+        secure=True, 
+        httponly=True, 
+        samesite='Strict'
     )
     response.set_cookie(
-        'app_token', '', expires=0, path='/', secure=True, httponly=True, samesite='Strict'
+        'app_token', '', 
+        expires=0, path='/', 
+        secure=True, 
+        httponly=True, 
+        samesite='Strict'
     )
 
-    #Optionally expire CSRF cookie
+    # Expire CSRF cookie
     response.set_cookie(
-        'csrf_token', '', expires=0, path='/', secure=True, httponly=False, samesite='Strict'
+        'csrf_token', '',
+        expires=0,
+        path='/',
+        secure=True,
+        httponly=True,
+        samesite='Strict
     )
 
     return response
