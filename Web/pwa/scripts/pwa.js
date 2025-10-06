@@ -1093,6 +1093,49 @@ function initializeDashboard() {
         return Promise.resolve();
     }
 
+    // Update welcome section
+    try {
+        const welcomeElement = document.getElementById('welcomeGreeting');
+        const welcomeSubtitle = document.getElementById('welcomeSubtitle');
+        const studentFirstName = localStorage.getItem('student_firstname') || null; 
+        
+        if (welcomeElement) {
+            if (studentFirstName) {
+                welcomeElement.textContent = `${getGreeting()} ${studentFirstName} ! ${getTimeEmoji()}`;
+            } else {
+                welcomeElement.textContent = `${getGreeting()} ! ${getTimeEmoji()}`;
+            }
+        }
+        
+        if (welcomeSubtitle) {
+            welcomeSubtitle.textContent = getSubtitle();
+        }
+        
+        // If no cached student data, fetch from API
+        if (!studentFirstName) {
+            wrapFetch('https://api.pronotif.tech/v1/app/fetch?fields=student_firstname', {
+                method: 'GET',
+                credentials: 'include',
+                cache: 'no-store'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.data && data.data.student_firstname) {
+                    const name = data.data.student_firstname.split(' ')[0];
+                    console.log('Fetched student name:', name);
+                    localStorage.setItem('student_firstname', name);
+                    if (welcomeElement) {
+                        welcomeElement.textContent = `${getGreeting()} ${name} ! ${getTimeEmoji()}`;
+                    }
+                }
+            })
+            .catch(error => {
+                console.warn('Failed to fetch student name:', error);
+            });
+        }
+    } catch (error) {
+        console.error('Error updating welcome section:', error);
+    }
     // Real mode - fetch data from API
     return fetchDashboardData();
 }
@@ -1106,7 +1149,6 @@ function showDashboard() {
 
     const loginView = document.getElementById('loginView');
     const loadingView = document.getElementById('loadingView');
-    const skeletonView = document.getElementById('skeletonView');
     const dashboardView = document.getElementById('dashboardView');
 
     // Start fade-out for login or loading views if they are visible
@@ -1207,7 +1249,7 @@ async function fetchDashboardData() {
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
         // Fetch student info and Pronote data
-        const response = await wrapFetch("https://api.pronotif.tech/v1/app/fetch?fields=student_firstname,next_class_name,next_class_room,next_class_teacher,next_class_start,next_class_end", {
+        const response = await wrapFetch("https://api.pronotif.tech/v1/app/fetch?fields=next_class_name,next_class_room,next_class_teacher,next_class_start,next_class_end", {
             method: 'GET',
             credentials: 'include',
             signal: controller.signal,
@@ -1247,21 +1289,6 @@ async function fetchDashboardData() {
 function updateDashboardWithData(data) {
     console.log('Updating dashboard with data:', data);
     
-    // Update welcome section
-    const welcomeElement = document.getElementById('welcomeGreeting');
-    const welcomeSubtitle = document.getElementById('welcomeSubtitle');
-    
-    if (welcomeElement) {
-        if (data.student_firstname) {
-            welcomeElement.textContent = `${getGreeting()} ${data.student_firstname} ! ${getTimeEmoji()}`;
-        } else {
-            welcomeElement.textContent = `${getGreeting()} ! ${getTimeEmoji()}`;
-        }
-        if (welcomeSubtitle) {
-            welcomeSubtitle.textContent = getSubtitle();
-        }
-    }
-
     updateNextCourseCard(data);
     
     console.log('Dashboard update completed');
@@ -2114,6 +2141,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 setTimeout(() => checkExistingSession(retryCount + 1), 1000);
             } else {
                 setTimeout(() => showLoginView(), 1000);
+
             }
         });
     }
