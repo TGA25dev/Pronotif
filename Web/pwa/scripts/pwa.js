@@ -1122,7 +1122,7 @@ function showDashboard() {
         initialFadeOutOccurred = true;
     }
 
-    const initialFadeOutDuration = initialFadeOutOccurred ? 600 : 0;
+    const initialFadeOutDuration = initialFadeOutOccurred ? 400 : 0;
 
     setTimeout(() => {
         // Hide all views
@@ -1132,39 +1132,23 @@ function showDashboard() {
         });
         console.log('[UI] All previous views hidden.');
 
-        // Initialize dashboard content (demo or real)
+        // Show the dashboard immediately while data is being fetched
+        if (dashboardView) {
+            dashboardView.classList.remove('hidden');
+            dashboardView.classList.add('fade-in');
+            console.log('[UI] Dashboard view is now visible.');
+        }
+
         initializeDashboard()
-            .then(() => {
-                return new Promise((resolve) => {
-                    setTimeout(resolve, 400); // Small delay to avoid flicker
-                });
-            })
-            .then(() => {
-                console.log('[UI] Data ready');
-                setTimeout(() => {
-                    console.log('[UI] Showing dashboard view.');
 
-                    // Show the dashboard view (which has been prepared by initializeDashboard)
-                    if (dashboardView) {
-                        dashboardView.classList.remove('hidden');
-                        dashboardView.classList.add('fade-in');
-                        console.log('[UI] Dashboard view is now visible.');
+        // Lightweight pre-update
+        setTimeout(() => {
+            try { checkNotifEnabled(); } catch (e) { /* ignore */ }
+            try { upateDynamicBanner(); } catch (e) { /* ignore */ }
+        }, 200);
 
-                        // Check notifications since dashboard is actually visible
-                        setTimeout(() => {
-                            checkNotifEnabled();
-                            upateDynamicBanner();
-                        }, 200);
-                    }
-                }, 600);
-            })
-            .catch(err => {
-                console.error('[UI] Dashboard init failed:', err);
-                // Handle error
-            });
     }, initialFadeOutDuration);
 }
-
 
 function loadDemoData() {
     // Welcome section
