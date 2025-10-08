@@ -1317,6 +1317,150 @@ body::before {
     color: var(--primary-dark);
 }
 
+/*Toaster Notification*/
+.toast-container {
+    position: fixed;
+    bottom: 1rem;
+    left: 1rem;
+    right: 1rem;
+    z-index: 2000;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+}
+
+.toast {
+    background: var(--login-view-main-card);
+    color: var(--text-dark);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    width: 100%;
+    pointer-events: auto;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateY(100px);
+    opacity: 0;
+    backdrop-filter: blur(10px);
+}
+
+.toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.toast.hide {
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+.toast-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    flex-shrink: 0;
+    font-size: 0.875rem;
+    margin-top: 0.125rem;
+}
+
+.toast-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.toast-title {
+    font-family: "Cabinet";
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin: 0 0 0.25rem 0;
+    line-height: 1.3;
+    color: var(--text-dark);
+}
+
+.toast-message {
+    font-family: "Satoshi";
+    font-weight: 400;
+    font-size: 0.85rem;
+    margin: 0;
+    line-height: 1.4;
+    color: var(--subtitle-dark);
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-top: 0.125rem;
+    transition: background-color 0.2s ease;
+    flex-shrink: 0;
+}
+
+.toast-close:hover {
+    background: var(--box-accent-color);
+}
+
+.toast-close i {
+    font-size: 0.75rem;
+    color: var(--subtitle-dark);
+    opacity: 0.8;
+}
+
+.toast.success {
+    border-left: 4px solid var(--success);
+    background: var(--login-view-main-card);
+}
+
+.toast.success .toast-icon {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--success);
+}
+
+.toast.error {
+    border-left: 4px solid var(--error);
+    background: var(--login-view-main-card);
+}
+
+.toast.error .toast-icon {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--error);
+}
+
+.toast.warning {
+    border-left: 4px solid #f59e0b;
+    background: var(--login-view-main-card);
+}
+
+.toast.warning .toast-icon {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+
+.toast.info {
+    border-left: 4px solid var(--primary);
+    background: var(--login-view-main-card);
+}
+
+.toast.info .toast-icon {
+    background: rgba(0, 166, 166, 0.15);
+    color: var(--primary);
+}
+
 /* Geoloc rationale modal */
 .geoloc-modal {
     position: fixed;
@@ -1540,6 +1684,31 @@ body::before {
     }
 
 }
+
+@media (prefers-color-scheme: dark) {
+    .toast {
+        background: var(--login-view-main-card);
+        color: var(--text-dark);
+        border-color: rgba(0, 0, 0, 0.1);
+    }
+    
+    .toast-close:hover {
+        background: var(--box-accent-color);
+    }
+    
+    .toast-close i {
+        color: var(--subtitle-dark);
+    }
+    
+    .toast-title {
+        color: var(--text-dark);
+    }
+    
+    .toast-message {
+        color: var(--subtitle-dark);
+    }
+}
+
 
 @media (orientation: landscape) {
     .orientation-warning {

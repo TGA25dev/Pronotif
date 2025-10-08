@@ -224,6 +224,151 @@ console.info = function(message, ...args) {
     debugLogger.info(message, ...args);
 };
 
+// Toast Notification System
+class ToastManager {
+    constructor() {
+        this.container = null;
+        this.toasts = [];
+        this.maxToasts = 3;
+        this.init();
+    }
+    
+    init() {
+        // Create toast container
+        if (!document.querySelector('.toast-container')) {
+            this.container = document.createElement('div');
+            this.container.className = 'toast-container';
+            document.body.appendChild(this.container);
+        } else {
+            this.container = document.querySelector('.toast-container');
+        }
+    }
+    
+    show(options = {}) {
+        const {
+            title = 'Notification',
+            message = '',
+            type = 'info', // success, error, warning, info
+            duration = 5000,
+            persistent = false,
+            icon = null
+        } = options;
+        
+        // Remove oldest toast if too many
+        if (this.toasts.length >= this.maxToasts) {
+            this.hide(this.toasts[0]);
+        }
+        
+        const toast = this.createToast({ title, message, type, duration, persistent, icon });
+        this.container.appendChild(toast);
+        this.toasts.push(toast);
+        
+        toast.offsetHeight;
+        
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                toast.classList.add('show');
+            });
+        });
+        
+        // Auto-hide after duration if not persistent
+        if (!persistent && duration > 0) {
+            setTimeout(() => {
+                this.hide(toast);
+            }, duration);
+        }
+        
+        return toast;
+    }
+
+    
+    createToast({ title, message, type, duration, persistent, icon }) {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        
+        const defaultIcons = {
+            success: 'fa-solid fa-check',
+            error: 'fa-solid fa-exclamation-triangle',
+            warning: 'fa-solid fa-exclamation',
+            info: 'fa-solid fa-info'
+        };
+        
+        const iconClass = icon || defaultIcons[type] || defaultIcons.info;
+        
+        toast.innerHTML = `
+            <div class="toast-icon">
+                <i class="${iconClass}"></i>
+            </div>
+            <div class="toast-content">
+                <div class="toast-title">${title}</div>
+                ${message ? `<div class="toast-message">${message}</div>` : ''}
+            </div>
+            <button class="toast-close" aria-label="Fermer la notification">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        `;
+        
+        const closeBtn = toast.querySelector('.toast-close');
+        closeBtn.addEventListener('click', () => {
+            this.hide(toast);
+        });
+        
+        toast.addEventListener('click', (e) => {
+            if (!e.target.closest('.toast-close') && !persistent) {
+                this.hide(toast);
+            }
+        });
+        
+        return toast;
+    }
+    
+    hide(toast) {
+        if (!toast || !toast.parentNode) return;
+        
+        toast.classList.remove('show');
+        toast.classList.add('hide');
+        
+        //Remove from array
+        const index = this.toasts.indexOf(toast);
+        if (index > -1) {
+            this.toasts.splice(index, 1);
+        }
+        
+        //Remove from DOM after animation completes
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 400);
+    }
+    
+    hideAll() {
+        this.toasts.forEach(toast => this.hide(toast));
+    }
+    
+    success(title, message, options = {}) {
+        return this.show({ ...options, title, message, type: 'success' });
+    }
+    
+    error(title, message, options = {}) {
+        return this.show({ ...options, title, message, type: 'error' });
+    }
+    
+    warning(title, message, options = {}) {
+        return this.show({ ...options, title, message, type: 'warning' });
+    }
+    
+    info(title, message, options = {}) {
+        return this.show({ ...options, title, message, type: 'info' });
+    }
+}
+
+// Create global toast manager instance
+const toast = new ToastManager();
+
+// Make it globally available
+window.toast = toast;
+
 window.fetch = async function(...args) {
     const start = performance.now();
     try {
@@ -502,7 +647,7 @@ const loginHandler = {
 
         if (!manualPronoteLink) {
             console.error("[MANUAL LINK] Error: Empty Pronote link");
-            alert("Veuillez entrer le lien Pronote de votre établissement.");
+            toast.warning("Lien manquant", "Veuillez entrer le lien Pronote de votre établissement.");
             return;
         }
 
@@ -541,7 +686,7 @@ const loginHandler = {
         
         if (!cityName) {
             console.error("[SEARCH] Error: Empty city name");
-            alert("Veuillez entrer le nom de votre ville.");
+            toast.warning("Attention", "Veuillez entrer le nom de votre ville.");
             return;
         }
         
@@ -580,7 +725,7 @@ const loginHandler = {
         })
         .catch(error => {
             console.error("[SEARCH] Search failed:", error);
-            alert("Une erreur est survenue lors de la recherche. Veuillez réessayer plus tard.");
+            toast.error("Une erreur est survenue lors de la recherche.", "Veuillez réessayer plus tard.");
         })
         .finally(() => {
             
@@ -657,7 +802,7 @@ const loginHandler = {
 
             if (!('geolocation' in navigator)) {
                 console.error("Geolocation is not supported by this browser.");
-                alert("La géolocalisation n'est pas disponible sur cet appareil.");
+                toast.error("Erreur", "La géolocalisation n'est pas disponible sur cet appareil.");
                 resetButtons();
                 return;
             }
@@ -696,9 +841,9 @@ const loginHandler = {
                     console.error("[GEO] Geolocation error:", error);
 
                     if (error.message === "User denied Geolocation") {
-                        alert("Vous avez refusé la demande de géolocalisation. Veuillez autoriser la géolocalisation ou utiliser la recherche manuelle.");
+                        toast.warning("Vous avez refusé la demande de géolocalisation.", "Veuillez autoriser la géolocalisation ou utiliser la recherche manuelle.");
                     } else {
-                        alert("Une erreur est survenue lors de la géolocalisation. Veuillez réessayer ou utiliser la recherche manuelle.");
+                        toast.error("Une erreur est survenue lors de la géolocalisation.", "Veuillez réessayer ou utiliser la recherche manuelle.");
                     }
 
                     resetButtons();
@@ -858,15 +1003,15 @@ const loginHandler = {
                     nomEtab: data.nomEtab || data.nom_etab || ""
                 };
             } else if (data.isValid === false) {
-                alert("Le lien Pronote fourni n'est pas valide. Veuillez vérifier et réessayer.", "error");
+                toast.warning("Le lien Pronote fourni n'est pas valide.", "Veuillez vérifier et réessayer.");
                 return { isValid: false };
             } else {
-                alert(data.message || "Erreur de connexion.", "error");
+                toast.error(data.message || "Erreur de connexion.", "Veuillez réessayer plus tard.");
                 return { isValid: false };
             }
         })
         .catch(() => {
-            alert("Erreur réseau.");
+            toast.error("Erreur", "Erreur réseau.");
             return { isValid: false };
         });
     },
@@ -933,7 +1078,7 @@ const loginHandler = {
                 const student_password = loginPasswordInput.value;
 
                 if (!student_username || !student_password) {
-                    alert("Veuillez remplir tous les champs.");
+                    toast.warning("Attention", "Veuillez remplir tous les champs.");
 
                     loginSubmitButton.disabled = false;
                     loginSubmitButton.style.cursor = "pointer";
@@ -960,7 +1105,7 @@ const loginHandler = {
                     const data = await response.json().catch(() => ({}));
 
                     if (response.status === 401) {
-                        alert("Identifiant ou mot de passe incorrect.", "error");
+                        toast.warning("Oups..", "Identifiant ou mot de passe incorrect.");
                         console.error("Wrong credentials provided.");
 
                         loginSubmitButton.disabled = false;
@@ -980,11 +1125,11 @@ const loginHandler = {
                             showDashboard();
                         } catch(err) {
                             console.error("Error while showing dashboard after login:", err);
-                            alert("Une erreur est survenue, veuillez réessayer plus tard.", "error");
+                            toast.error("Une erreur est survenue", "Veuillez réessayer plus tard.");
                         }
 
                     } else {
-                        alert(data.message || "Erreur de connexion.", "error");
+                        toast.error(data.message || "Erreur de connexion.", "Veuillez réessayer plus tard.");
 
                         loginSubmitButton.disabled = false;
                         loginSubmitButton.style.cursor = "pointer";
@@ -1352,17 +1497,6 @@ function showDataFetchError() {
         };
         nextCourseCard.appendChild(refreshButton);
     }
-}
-
-//Generic Feedback function TODO: UPDATE THE FEEDBACK SYSTEM AND THE MESSAGE
-function showFeedback(message, type) {
-    const feedbackEl = document.getElementById('feedbackMessage');
-    if (!feedbackEl) return;
-    
-    feedbackEl.innerHTML = message;
-    feedbackEl.className = 'feedback-message';
-    feedbackEl.classList.add(type);
-    feedbackEl.style.display = 'block';
 }
 
 // Check if notification permission has change
@@ -1792,7 +1926,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
 
-            alert('Cache supprimé !');
+            toast.success('Cache supprimé !', "L'application va redémarrer.");
             window.location.reload();
         });
     }
@@ -1812,14 +1946,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 const data = await response.json();
                 if (data.success) {
-                    alert("Notification de test envoyée !");
+                    toast.success("Notification de test envoyée !", "Vérifiez que vous l'avez bien reçue.");
                     console.log("Test notification succesfully sent ! ", data.message_id);
                 } else {
-                    alert("Erreur lors de l'envoi de la notification.");
+                    toast.error("Erreur", "Erreur lors de l'envoi de la notification.");
                     console.error("Test notification error:", data.error);
                 }
             } catch (err) {
-                alert("Erreur réseau.");
+                toast.error("Erreur réseau.", "Impossible de contacter le serveur.");
                 console.error("Network error sending test notification:", err);
             } finally {
                 simulateNotifBtn.disabled = false;
@@ -1840,7 +1974,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             localStorage.removeItem('fcmToken');
             localStorage.removeItem('fcmTokenTimestamp');
 
-            alert('Token FCM supprimé. Un nouveau sera généré au demarrage si les notifications sont activées.');
+            toast.success("Token FCM supprimé !", "Un nouveau sera généré au demarrage si les notifications sont activées.");
             resetFCMTokenButton.disabled = false;
             resetFCMTokenButtonSubTitle.textContent = "Réinitialiser le token FCM";
         });
@@ -1876,15 +2010,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                             await caches.delete(name);
                         }
                     }
-                    alert('Vous avez été déconnecté avec succès !');
+                    toast.success('Vous avez été déconnecté avec succès !', "L'application va redémarrer.");
                     window.location.reload();
                 } else {
                     console.error('Logout failed:', response.statusText);
-                    alert('Échec de la déconnexion. Veuillez réessayer.');
+                    toast.error("Échec de la déconnexion.", "Veuillez réessayer.");
                 }
             } catch (error) {
                 console.error('Network error during logout:', error);
-                alert('Erreur réseau lors de la déconnexion. Veuillez réessayer.');
+                toast.error("Erreur réseau lors de la déconnexion.", "Veuillez réessayer.");
             } finally {
                 debugLogoutButton.disabled = false;
                 debugLogoutButtonSubTitle.textContent = "Se déconnecter";
@@ -1906,10 +2040,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.cookie = "notifDismissed=false; path=/; max-age=31536000"; //Reset dismissed cookie
 
             if (Notification.permission === 'denied') {
-                alert("Les notifications sont actuellement bloquées dans les paramètres de votre navigateur. Veuillez les activer manuellement dans les paramètres de votre appareil.");
+                toast.warning("Notifications bloquées !", "Veuillez les activer manuellement dans les paramètres de votre appareil.");
             }
 
-            alert("L'état des notifications a été réinitialisé. Vous pouvez maintenant les réactiver si besoin.");
+            toast.success("L'état des notifications a été réinitialisé", "Vous pouvez maintenant les réactiver si besoin.");
             resetNotifGrantButton.disabled = false;
             resetNotifGrantButtonSubTitle.textContent = "Réinitialiser l'état des notifications";
         });
@@ -2006,22 +2140,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             debugLogger.clear();
             console.info('Logs cleared');
         });
-    }
-
-    // Global functions
-    function showFeedback(message, type) {
-        const feedbackEl = document.getElementById('feedbackMessage');
-        if (!feedbackEl) return;
-        
-        feedbackEl.innerHTML = message;
-        feedbackEl.className = 'feedback-message';
-        feedbackEl.classList.add(type);
-        feedbackEl.style.display = 'block';
-    }
-
-    function hideFeedback() {
-        const feedbackEl = document.getElementById('feedbackMessage');
-        if (feedbackEl) feedbackEl.style.display = 'none';
     }
 
     // Function to show login view
