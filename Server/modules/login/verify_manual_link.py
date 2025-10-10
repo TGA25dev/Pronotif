@@ -1,3 +1,10 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Portions of this file are adapted from Pawnote.js:
+# - cleanURL: https://github.com/LiterateInk/Pawnote.js/blob/46535542c0b50afe8af565d719956076eb13ae57/src/api/helpers/clean-url.ts
+# - instance: https://github.com/LiterateInk/Pawnote.js/blob/46535542c0b50afe8af565d719956076eb13ae57/src/api/instance.ts
+# Original authors: LiterateInk contributors (GPL-3.0)
+# Translated and modified for this project by TGA25dev, 2025. Licensed under AGPL-3.0.
+
 from urllib.parse import urlparse, urlunparse
 import requests
 import re

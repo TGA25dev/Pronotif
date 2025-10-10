@@ -20,6 +20,7 @@ Vous notifie sur votre téléphone quelques minutes avant chaque cours.
 - [Installation](https://github.com/TGA25dev/Pronotif#installation-)
 - [Screenshots](https://github.com/TGA25dev/Pronotif#screenshots-)
 - [Contribution](https://github.com/TGA25dev/Pronotif#contribution-)
+- [Attribution](https://github.com/TGA25dev/Pronotif#attribution-)
 - [Licence](https://github.com/TGA25dev/Pronotif#licence-)
 
 ## Fonctionalités  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Glowing%20Star.png" alt="Glowing Star" width="25" height="25" />
@@ -41,25 +42,6 @@ Vous notifie sur votre téléphone quelques minutes avant chaque cours.
 
 **Les étapes sur comment installer Pronot'if sont disponibles [ici](https://docs.pronotif.tech).**
 
-## Roadmap <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Light%20Bulb.png" alt="Light Bulb" width="25" height="25" />
-
-- **Assistant de configuration**
-  - [x] Connexion via Pronote
-  - [x] Connexion via un ENT
-  - [x] Connexion avec un qr code
-  - [x] Systeme de logs
- 
-- **Systeme de notifications** 
-  - **Global**
-    - [x] Hébérgement cloud
-    - [x] Base de données utilisateurs
-
-  - **Contenu des notifications (cours)**
-    - [x] Nom de la salle
-    - [x] Nom de matière plus clair
-    - [x] Accord entre le nom de la matière et le déterminant
-    - [x] Amélioration du système d'emojis aléatoires
-    
 ## Screenshots <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Camera%20with%20Flash.png" alt="Camera with Flash" width="25" height="25" />
 
 [![pronote-notif1.png](https://i.postimg.cc/ryPRpXkS/pronote-notif1.png)](https://postimg.cc/Cdbxv2d1)
@@ -69,6 +51,12 @@ Vous notifie sur votre téléphone quelques minutes avant chaque cours.
 ## Contribution <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Laptop.png" alt="Laptop" width="25" height="25" />
 Toutes les informations sur comment nous aider sont disponibles sur la documentation du projet ([docs.pronotif.tech](https://docs.pronotif.tech)). 
 
+## Attribution
+
+Certaines parties de ce projet ont été apdatées de :
+- [Pawnote.js](https://github.com/LiterateInk/Pawnote.js) (GPL-3.0)
+
+Ce projet est distribué sous licence AGPL-3.0. Voir [LICENSE](./LICENSE).
 
 ## Licence <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Page%20with%20Curl.png" alt="Page with Curl" width="25" height="25" />
 

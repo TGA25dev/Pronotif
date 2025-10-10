@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# This file is adapted from Pawnote.js:
+# - geolocation https://github.com/LiterateInk/Pawnote.js/blob/f2da3df464be324ceb9aeb8d8ce3b983e55664d7/src/api/geolocation.ts#L12
+# Original authors: LiterateInk contributors (GPL-3.0)
+# Translated and modified for this project by TGA25dev, 2025. Licensed under AGPL-3.0.
+
 import requests
 
 def search_school_from_coords(latitude: str, longitude: str):
