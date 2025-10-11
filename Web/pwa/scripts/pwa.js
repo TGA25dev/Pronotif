@@ -470,7 +470,7 @@ function getSubtitle() {
     if (isWeekend) {
         // Weekend subtitles
         subtitles = [
-            "Profitez de votre temps libre",
+            "Reposez-vous bien",
             "Une pause bien méritée",
             "C'est le week-end !",
             "C’est enfin le week-end",
