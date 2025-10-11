@@ -2203,6 +2203,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function checkExistingSession(retryCount = 0) {
+        const startTime = Date.now();
+        let transitioned = false;
+
+        //show spinner if loading takes too long
+        const spinnerTimeout = setTimeout(() => {
+            if (!transitioned) {
+                const spinner = document.querySelector('.spinner-large');
+                if (spinner) {
+                    spinner.classList.add('show');
+                    console.log('[Loading] Spinner shown');
+                } else {
+                    console.warn('[Loading] Spinner element not found');
+                }
+            }
+        }, 1500);
+
+
+        function handleTransition(callback) {
+            transitioned = true;
+            clearTimeout(spinnerTimeout);
+            
+            // Hide spinnes
+            const spinner = document.querySelector('.spinner-large');
+            if (spinner && spinner.classList.contains('show')) {
+                spinner.classList.remove('show');
+                console.log('[Loading] Spinner hidden');
+            }
+            
+            callback();
+        }
+
         // Check if demo mode is enabled
         const isDemoMode = localStorage.getItem('demoMode') === 'true' || 
                         new URLSearchParams(window.location.search).get('demo') === 'true';
@@ -2216,8 +2247,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (new URLSearchParams(window.location.search).get('demo') === 'true') {
                 localStorage.setItem('demoMode', 'true');
             }
-            // Go directly to dashboard
-            setTimeout(() => showDashboard(), 1000);
+            handleTransition(() => showDashboard());
             return;
         }
 
@@ -2226,10 +2256,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (!navigator.onLine) {
             console.warn('[Auth] Device is offline, showing login view');
-            setTimeout(() => showLoginView(), 1000);
+            handleTransition(() => showLoginView());
             return;
         }
-    
+
         console.info('[Auth] Checking session...');
         wrapFetch('https://api.pronotif.tech/v1/app/auth/refresh', {
             method: 'POST',
@@ -2248,7 +2278,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         })
         .then(() => {
             console.info('[Auth] Session refreshed successfully');
-            setTimeout(() => showDashboard(), 1000);
+            handleTransition(() => showDashboard());
         })
         .catch(error => {
             console.warn('[Auth] Session check failed:', error.message);
@@ -2258,8 +2288,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.info(`[Auth] Retrying session check (${retryCount + 1}/3)...`);
                 setTimeout(() => checkExistingSession(retryCount + 1), 1000);
             } else {
-                setTimeout(() => showLoginView(), 1000);
-
+                handleTransition(() => showLoginView());
             }
         });
     }
@@ -2268,7 +2297,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('.view').forEach(view => {
         view.classList.add('hidden');
     });
-    document.getElementById('loadingView').classList.remove('hidden');
+
+    const loadingView = document.getElementById('loadingView');
+    if (loadingView) {
+        loadingView.classList.remove('hidden');
+        console.log('[Loading] Loading view displayed');
+    }
     
     // check session
     checkExistingSession();
