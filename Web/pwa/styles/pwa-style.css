@@ -8,7 +8,7 @@
     --text: #F0F0F0;
     --text-light: #F0F0F0; /* TODO: Change name "light" to white, can be confusing */
     --text-dark: #1E2D2D;
-    --text-app-name: #FFE2C2
+    --text-app-name: #FFE2C2;
     --subtitle-dark: #444444;
     --success: #22c55e;
     --error: #ef4444;
@@ -170,7 +170,7 @@ body::before {
 .login-header-app-name {
     font-family: "Cabinet";
     font-weight: 900;
-    color: var(--login-view-main-card);
+    color: var(--text-app-name);
     font-size: 2.5rem;
     text-align: right;
     letter-spacing: -0.5px;
@@ -183,7 +183,7 @@ body::before {
 .login-header-app-title {
     font-family: "Cabinet";
     font-weight: 900;
-    color: var(--text-app-name);
+    color: var(--text-light);
     font-size: var(--title-large);
     text-align: left;
     letter-spacing: -0.5px;
@@ -612,7 +612,7 @@ body::before {
     font-size: 3rem;
     font-family: "Cabinet";
     font-weight: 900;
-    color: var(--login-view-main-card);
+    color: var(--text-app-name);
     margin: 0;
     text-align: center;
     white-space: nowrap;
@@ -1521,7 +1521,7 @@ body::before {
     width: 100%;
     max-width: 420px;
     background: var(--card-bg);
-    color: var(--text);
+    color: var(--text-dark);
     border-radius: 1rem;
     padding: 1rem 1rem 0.75rem 1rem;
     box-shadow: 0 10px 30px rgba(0,0,0,0.2);
@@ -1532,7 +1532,7 @@ body::before {
     font-size: 1.25rem;
     margin: 0 0 0.5rem 0;
 }
-.geoloc-modal-content p { margin: 0.25rem 0; color: var(--text-light); }
+.geoloc-modal-content p { margin: 0.25rem 0; color: var(--text-dark); }
 .geoloc-modal-actions {
     display: flex;
     gap: 0.5rem;
