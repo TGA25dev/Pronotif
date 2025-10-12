@@ -1,6 +1,6 @@
 :root {
     /* Colors */
-    --primary: #00A6A6;
+    --primary: #07A19F;
     --primary-dark: #3a8f8f;
     --primary-light: #e6f7f7;
     --background: #f8fafc;
@@ -8,13 +8,14 @@
     --text: #F0F0F0;
     --text-light: #F0F0F0; /* TODO: Change name "light" to white, can be confusing */
     --text-dark: #1E2D2D;
+    --text-app-name: #FFE2C2
     --subtitle-dark: #444444;
     --success: #22c55e;
     --error: #ef4444;
     --error-bg: #fee2e2;
     --error-text: #ef4444;
 
-    --login-view-bg: #00A6A6;
+    --login-view-bg: #07A19F;
     --login-view-main-card: #FFEEDB;
 
     --box-accent-color: #FFECD6;
@@ -182,7 +183,7 @@ body::before {
 .login-header-app-title {
     font-family: "Cabinet";
     font-weight: 900;
-    color: #F0F0F0;
+    color: var(--text-app-name);
     font-size: var(--title-large);
     text-align: left;
     letter-spacing: -0.5px;
