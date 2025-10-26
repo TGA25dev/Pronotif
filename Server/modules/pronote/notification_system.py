@@ -438,14 +438,18 @@ async def retry_with_backoff(func, user, *args, max_attempts=5) -> None:
             
             # If previously reported a timeout and now succeeded, mark it as resolved
             if timeout_incident_id:
-                with sentry_sdk.new_scope() as scope:
+                with sentry_sdk.push_scope() as scope:
+                    scope.set_tag("error_type", "timeout")
+                    scope.set_tag("function", func.__name__)
                     scope.set_tag("status", "resolved")
                     scope.set_tag("user_id", user.user_hash)
+                    scope.fingerprint = ["pronotif", "timeout", func.__name__, user.user_hash]
                     sentry_sdk.capture_message(
                         f"Timeout resolved for {func.__name__} after {attempt} retries",
                         level="info"
                     )
                 logger.success(f"Function {func.__name__} recovered for user {user.user_hash} after {attempt} retries")
+                
             # Only log success if it's not the first attempt
             elif attempt > 0:
                 logger.success(f"Function {func.__name__} succeeded for user {user.user_hash} after {attempt} retries")
@@ -461,26 +465,26 @@ async def retry_with_backoff(func, user, *args, max_attempts=5) -> None:
             
             wait_time = 10 * (2 ** attempt)
             
-            # On first timeout, create an incident in Sentry
             if attempt == 0:
-                with sentry_sdk.new_scope() as scope:
+                with sentry_sdk.push_scope() as scope:
                     scope.set_tag("error_type", "timeout")
                     scope.set_tag("function", func.__name__)
                     scope.set_tag("status", "ongoing")
                     scope.set_tag("user_id", user.user_hash)
+                    scope.fingerprint = ["pronotif", "timeout", func.__name__, user.user_hash]
                     timeout_incident_id = sentry_sdk.capture_message(
                         f"Timeout occurred in {func.__name__} for user {user.user_hash}",
                         level="error"
                     )
             
             if attempt == max_attempts - 1:
-                # Update the incident
-                with sentry_sdk.new_scope() as scope:
+                with sentry_sdk.push_scope() as scope:
                     scope.set_tag("error_type", "timeout")
                     scope.set_tag("function", func.__name__)
                     scope.set_tag("status", "failed")
                     scope.set_tag("total_retries", str(max_attempts))
                     scope.set_tag("user_id", user.user_hash)
+                    scope.fingerprint = ["pronotif", "timeout", func.__name__, user.user_hash]
                     sentry_sdk.capture_message(
                         f"All retry attempts failed for {func.__name__} for user {user.user_hash}",
                         level="error"
