@@ -35,6 +35,9 @@ class PronotifUser:
         self.refresh_timestamps = []
         self.max_refreshes_per_window = 5
         self.refresh_window_minutes = 30
+
+        #Pronote API Suspension Tracking
+        self.suspended_until = None
         
         # Student info
         self.student_fullname = user_data.get('student_fullname')
@@ -80,7 +83,7 @@ class PronotifUser:
         self.class_message_printed_today = False
         self.menu_message_printed_today = False
         
-        logger.debug(f"Initialized user {self.user_hash}")
+        logger.debug(f"Initialized user {self.user_hash[:4]}**** from database")
     
     def _should_force_relogin(self) -> bool:
         """Check if we should force a full relogin based on refresh frequency"""
@@ -99,18 +102,29 @@ class PronotifUser:
         self.refresh_timestamps.append(now)
         self.session_refresh_count += 1
         
-        logger.debug(f"Session refresh #{len(self.refresh_timestamps)} for user {self.user_hash} "
+        logger.debug(f"Session refresh #{len(self.refresh_timestamps)} for user {self.user_hash[:4]}****"
                     f"in last {self.refresh_window_minutes} minutes")
     
     def _reset_refresh_counter(self) -> None:
         """Reset the refresh counter after successful relogin"""
         self.refresh_timestamps.clear()
         self.session_refresh_count = 0
-        logger.debug(f"Reset session refresh counter for user {self.user_hash}")
+        logger.debug(f"Reset session refresh counter for user {self.user_hash[:4]}****")
+
+    def is_suspended(self) -> bool:
+        """Return True if this user/session is currently suspended"""
+        if not self.suspended_until:
+            return False
+        return datetime.now(self.timezone_obj) < self.suspended_until
 
     async def login(self) -> bool:
         """Attempt to log in to Pronote with user credentials"""
         try:
+            #if suspended skip login attempt
+            if self.is_suspended():
+                logger.warning(f"Skipping login for user {self.user_hash[:4]}**** — suspended until {self.suspended_until}")
+                return False
+            
             if self.qr_code_login:
                 self.client = pronotepy.Client.token_login(
                     self.login_page_link, 
@@ -134,20 +148,29 @@ class PronotifUser:
                 )
                 
             if self.client.logged_in:
-                logger.success(f"User {self.user_hash} successfully logged in!")
+                logger.success(f"User {self.user_hash[:4]}**** successfully logged in!")
                 self._reset_refresh_counter()  # Reset counter on successful login
                 if self.qr_code_login:
                     # Update password for future logins
                     await self._save_password()
                 return True
             else:
-                logger.error(f"Failed to log in user {self.user_hash}")
+                logger.error(f"Failed to log in user {self.user_hash[:4]}****")
                 return False
                 
         except Exception as e:
-            logger.error(f"Login error for user {self.user_hash} : {e}")
-            sentry_sdk.capture_exception(e)
-            return False
+            msg = str(e).lower()
+            # Detect suspended IP error and set a pause window
+            if "suspended" in msg or "ip address is suspended" in msg:
+                self.suspended_until = datetime.now(self.timezone_obj) + timedelta(minutes=10)
+                logger.critical(f"Login error for user {self.user_hash[:4]}**** : {e} -- IP suspended. Pausing tasks until {self.suspended_until}")
+                sentry_sdk.capture_message(f"IP suspended for user {self.user_hash}; paused until {self.suspended_until}")
+                return False
+
+            else:
+                logger.error(f"Login error for user {self.user_hash[:4]}**** : {e}")
+                sentry_sdk.capture_exception(e)
+                return False
             
     async def _save_password(self, db_connection=None) -> None:
         """Save updated token password to database"""
@@ -176,12 +199,12 @@ class PronotifUser:
             db_connection.commit()
             
             if cursor.rowcount > 0:
-                logger.success(f"Updated token password for user {self.user_hash}")
+                logger.success(f"Updated token password for user {self.user_hash[:4]}****")
             else:
-                logger.warning(f"Failed to update token password for user {self.user_hash}")
+                logger.warning(f"Failed to update token password for user {self.user_hash[:4]}****")
                 
         except Exception as e:
-            logger.error(f"Error saving new password for user {self.user_hash}: {e}")
+            logger.error(f"Error saving new password for user {self.user_hash[:4]}**** : {e}")
             sentry_sdk.capture_exception(e)
         
         finally:
@@ -190,6 +213,11 @@ class PronotifUser:
         
     async def check_session(self) -> None:
         """Check and refresh user's session if needed"""
+
+        if self.is_suspended():
+            logger.warning(f"Skipping session check for user {self.user_hash[:4]}****  suspended until {self.suspended_until}")
+            return
+    
         if self.first_login:
             self.first_login = False
             return
@@ -199,7 +227,7 @@ class PronotifUser:
             was_refreshed = self.client.session_check()
             
             if was_refreshed:
-                logger.info(f"Session was automatically refreshed for user {self.user_hash}")
+                logger.info(f"Session was automatically refreshed for user {self.user_hash[:4]}****")
                 self._record_session_refresh()
                 
                 # For QR code users -> save the updated password
@@ -207,28 +235,28 @@ class PronotifUser:
                     await self._save_password()
             
         except Exception as e:
-            logger.error(f"Session check failed for user {self.user_hash}: {e}")
+            logger.error(f"Session check failed for user {self.user_hash[:4]}****: {e}")
             
             # Check if we should force a full relogin
             if self._should_force_relogin():
                 logger.warning(f"User {self.user_hash} exceeded refresh limit. Forcing full relogin...")
                 if await self.login():
-                    logger.success(f"Forced relogin successful for user {self.user_hash}")
+                    logger.success(f"Forced relogin successful for user {self.user_hash[:4]}****")
 
                 else:
-                    logger.error(f"Forced relogin failed for user {self.user_hash}")
+                    logger.error(f"Forced relogin failed for user {self.user_hash[:4]}****")
             else:
                 # Manual refresh
                 try:
                     self.client.refresh()
-                    logger.success(f"Manual refresh successful for user {self.user_hash}")
+                    logger.success(f"Manual refresh successful for user {self.user_hash[:4]}****")
                     self._record_session_refresh()
                     
                     if self.qr_code_login:
                         await self._save_password()
                         
                 except Exception as refresh_error:
-                    logger.error(f"Manual refresh failed for user {self.user_hash}: {refresh_error}")
+                    logger.error(f"Manual refresh failed for user {self.user_hash[:4]}**** : {refresh_error}")
                     await self.handle_error_with_relogin(refresh_error)
     
     async def _reload_password(self) -> str:
@@ -255,7 +283,7 @@ class PronotifUser:
                 return self.password  # Current password as fallback
                 
         except Exception as e:
-            logger.error(f"Failed to reload password for user {self.user_hash}: {e}")
+            logger.error(f"Failed to reload password for user {self.user_hash[:4]}**** : {e}")
             sentry_sdk.capture_exception(e)
             return self.password  # Current password as fallback
             
@@ -265,18 +293,27 @@ class PronotifUser:
             
     async def handle_error_with_relogin(self, error) -> bool:
         """Handle errors by attempting to relogin"""
-        logger.error(f"Error for user {self.user_hash}: {error}. Attempting relogin...")
+        logger.error(f"Error for user {self.user_hash[4:]}**** : {error}. Attempting relogin...")
+
+        # If currently suspended, wait until suspension expires then try once
+        if self.is_suspended():
+            wait_seconds = (self.suspended_until - datetime.now(self.timezone_obj)).total_seconds()
+            if wait_seconds > 0:
+                logger.info(f"User {self.user_hash[:4]}**** suspended. Waiting {int(wait_seconds)}s before attempting relogin.")
+                await asyncio.sleep(wait_seconds)
+
+                self.suspended_until = None
         
         for attempt in range(5):
             try:
                 if attempt > 0:
                     wait_time = 5 * (2 ** attempt)
-                    logger.info(f"Retry attempt {attempt+1}/5 for user {self.user_hash} after waiting {wait_time} seconds...")
+                    logger.info(f"Retry attempt {attempt+1}/5 for user {self.user_hash[:4]}**** after waiting {wait_time} seconds...")
                     await asyncio.sleep(wait_time)
                     
                 # Check if server is reachable
                 if not await self.check_pronote_server():
-                    logger.warning(f"Pronote server unreachable for user {self.user_hash} (attempt {attempt+1}/5)")
+                    logger.warning(f"Pronote server unreachable for user {self.user_hash[:4]}**** (attempt {attempt+1}/5)")
                     continue
                     
                 # Attempt relogin
@@ -285,13 +322,13 @@ class PronotifUser:
                     
             except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectTimeout, 
                     requests.exceptions.ConnectionError) as e:
-                logger.warning(f"Connection error during relogin for user {self.user_hash}: {e}")
+                logger.warning(f"Connection error during relogin for user {self.user_hash[:4]}**** : {e}")
                 
             except Exception as e:
-                logger.critical(f"Failed relogin for user {self.user_hash}: {e}")
+                logger.critical(f"Failed relogin for user {self.user_hash[:4]}**** : {e}")
                 sentry_sdk.capture_exception(e)
                 
-        logger.error(f"All relogin attempts failed for user {self.user_hash}")
+        logger.error(f"All relogin attempts failed for user {self.user_hash[:4]}****")
         return False
         
     async def check_pronote_server(self) -> bool:
@@ -301,11 +338,11 @@ class PronotifUser:
                 async with session.get(self.login_page_link, timeout=20) as resp:
                     return resp.status == 200
         except (aiohttp.ClientError, asyncio.TimeoutError, aiohttp.ServerTimeoutError) as e:
-            logger.warning(f"Pronote server check failed for {self.user_hash}: {e}")
+            logger.warning(f"Pronote server check failed for {self.user_hash[:4]}**** : {e}")
             return False
         
         except Exception as e:
-            logger.error(f"Unexpected error checking Pronote server for {self.user_hash}: {e}")
+            logger.error(f"Unexpected error checking Pronote server for {self.user_hash[:4]}**** : {e}")
             return False
     
     def update_from_db(self, user_data) -> None:
@@ -424,7 +461,7 @@ class PronotifUser:
 
         # Only log if something changed
         if changes_made:
-            logger.debug(f"Updated user {self.user_hash} from database. Changes: {', '.join(changes)}")
+            logger.debug(f"Updated user {self.user_hash[:4]}**** from database. Changes: {', '.join(changes)}")
 
     async def get_current_lesson(self) -> dict:
         """Get current lesson information"""
@@ -454,7 +491,7 @@ class PronotifUser:
                     }
             return {}
         except Exception as e:
-            logger.error(f"Error getting current lesson for user {self.user_hash}: {e}")
+            logger.error(f"Error getting current lesson for user {self.user_hash[4:]}**** : {e}")
             return {}
     
     async def get_next_lesson(self) -> dict:
@@ -500,7 +537,7 @@ class PronotifUser:
                 }
             return {}
         except Exception as e:
-            logger.error(f"Error getting next lesson for user {self.user_hash}: {e}")
+            logger.error(f"Error getting next lesson for user {self.user_hash[:4]}**** : {e}")
             return {}
     
     async def get_pronote_data(self, requested_fields: list) -> dict:
@@ -532,7 +569,7 @@ class PronotifUser:
                 })
                 
         except Exception as e:
-            logger.error(f"Error getting Pronote data for user {self.user_hash}: {e}")
+            logger.error(f"Error getting Pronote data for user {self.user_hash[:4]}**** : {e}")
             for field in requested_fields:
                 if field.startswith(('next_class_', 'current_class_')):
                     data[field] = None
