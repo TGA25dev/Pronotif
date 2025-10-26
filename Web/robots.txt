@@ -1,0 +1,12 @@
+# All crawlers
+User-agent: *
+
+# Disallowed paths
+Disallow: /pwa/
+Disallow: /*?*
+Disallow: /*.php$
+
+Allow: /
+
+# Sitemap
+Sitemap: https://www.pronotif.tech/sitemap.xml

@@ -134,6 +134,12 @@ def website_index():
 def website_serve_fonts_manager():
     return send_from_directory("/", "fonts_manager.css")
 
+@app.route('/<filename>')
+def website_serve_seo_files(filename):
+    if filename not in ['robots.txt', 'sitemap.xml', 'favicon.ico']:
+        abort(404)
+    return send_from_directory('.', filename)
+
 @app.route('/<filename>', methods=['GET'])
 @limiter.limit("50 per minute")
 def website_index2(filename):
