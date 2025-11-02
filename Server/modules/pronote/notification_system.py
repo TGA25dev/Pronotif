@@ -506,6 +506,37 @@ async def retry_with_backoff(func, user, *args, max_attempts=5) -> None:
                 return [] if func.__name__ in ['fetch_lessons', 'fetch_menus'] else None
             raise
 
+def inform_user_relogin_is_needed(user):
+    """
+    Inform the user that relogin in the app is needed via notification
+    """
+
+    send_notification_to_device(
+        user.fcm_token,
+        title="Vous avez été déconnecté(e)",
+        body=f"Pour continuer, veuillez vous reconnecter à votre compte. Cela peut se produire si votre mot de passe a changé récemment ou si une erreur inconnue est survenue."
+    )
+    
+    # Clear session data from database
+    try:
+        with get_db_connection() as connection:
+            cursor = connection.cursor()
+            query = f"""
+            UPDATE {table_name}
+            SET app_session_id = NULL, 
+                app_token = NULL
+            WHERE user_hash = %s
+            """
+            cursor.execute(query, (user.user_hash,))
+            connection.commit()
+            logger.success(f"Cleared session data for user {user.user_hash[:4]}****")
+
+    except Exception as e:
+        logger.error(f"Failed to clear session data for user {user.user_hash[:4]}****: {e}")
+        sentry_sdk.capture_exception(e)
+    
+    logger.info(f"Informed user {user.user_hash[4:]}**** about error that needed relogin")
+
 async def lesson_check(user):
     """Check for upcoming lessons and send notifications"""
     today = datetime.now(user.timezone_obj).date()

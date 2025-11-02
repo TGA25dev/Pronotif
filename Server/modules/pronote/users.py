@@ -11,6 +11,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from modules.security.encryption import decrypt
 
+from modules.pronote.notification_system import inform_user_relogin_is_needed
 from ..login.temp_login.pronotepy_monlycee import ile_de_france
 
 # Initialize Sentry
@@ -82,6 +83,7 @@ class PronotifUser:
         self.last_check_date = None
         self.class_message_printed_today = False
         self.menu_message_printed_today = False
+        self.relogin_needed_notified = False
         
         logger.debug(f"Initialized user {self.user_hash[:4]}**** from database")
     
@@ -149,6 +151,7 @@ class PronotifUser:
                 
             if self.client.logged_in:
                 logger.success(f"User {self.user_hash[:4]}**** successfully logged in!")
+                self.relogin_needed_notified = False
                 self._reset_refresh_counter()  # Reset counter on successful login
                 if self.qr_code_login:
                     # Update password for future logins
@@ -169,6 +172,11 @@ class PronotifUser:
 
             else:
                 logger.error(f"Login error for user {self.user_hash[:4]}**** : {e}")
+
+                if "page html is different than expected" in msg and not self.relogin_needed_notified:
+                    inform_user_relogin_is_needed(self)
+                    self.relogin_needed_notified = True
+
                 sentry_sdk.capture_exception(e)
                 return False
             
@@ -229,6 +237,7 @@ class PronotifUser:
             if was_refreshed:
                 logger.info(f"Session was automatically refreshed for user {self.user_hash[:4]}****")
                 self._record_session_refresh()
+                self.relogin_needed_notified = False
                 
                 # For QR code users -> save the updated password
                 if self.qr_code_login:
@@ -251,6 +260,8 @@ class PronotifUser:
                     self.client.refresh()
                     logger.success(f"Manual refresh successful for user {self.user_hash[:4]}****")
                     self._record_session_refresh()
+
+                    self.relogin_needed_notified = False
                     
                     if self.qr_code_login:
                         await self._save_password()
