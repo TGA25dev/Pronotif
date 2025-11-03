@@ -1394,7 +1394,7 @@ async function fetchDashboardData() {
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
         // Fetch student info and Pronote data
-        const response = await wrapFetch("https://api.pronotif.tech/v1/app/fetch?fields=next_class_name,next_class_room,next_class_teacher,next_class_start,next_class_end", {
+        const response = await wrapFetch("https://api.pronotif.tech/v1/app/fetch?fields=next_class_name,next_class_room,next_class_teacher,next_class_start,next_class_end,homeworks", {
             method: 'GET',
             credentials: 'include',
             signal: controller.signal,
@@ -1435,6 +1435,7 @@ function updateDashboardWithData(data) {
     console.log('Updating dashboard with data:', data);
     
     updateNextCourseCard(data);
+    updateHomeworkSection(data);
     
     console.log('Dashboard update completed');
 }
@@ -1479,6 +1480,73 @@ function updateNextCourseCard(data) {
         if (courseDetails) courseDetails.textContent = "Profitez de votre temps libre";
         nextCourseCard.style.display = 'block';
     }
+}
+
+function updateHomeworkSection(data) {
+    const homeworkList = document.querySelector('.homework-list');
+    
+    if (!homeworkList) {
+        console.warn('Homework list element not found');
+        return;
+    }
+    
+    //Clear existing content
+    homeworkList.innerHTML = '';
+    
+    if (!data.homeworks || !Array.isArray(data.homeworks) || data.homeworks.length === 0) {
+        homeworkList.innerHTML = `
+            <div class="homework-item empty-state">
+                <div class="homework-content">
+                    <h3 class="homework-subject">Aucun devoir</h3>
+                    <p class="homework-task">Vous n'avez pas de devoirs pour cette semaine</p>
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    //Populate homework items
+    data.homeworks.forEach(homework => {
+        const dueDate = new Date(homework.due_date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        let dueDateText = '';
+        const dayDiff = Math.floor((dueDate - today) / (1000 * 60 * 60 * 24));
+        
+        if (dayDiff === 0) {
+            dueDateText = 'Aujourd\'hui';
+        } else if (dayDiff === 1) {
+            dueDateText = 'Demain';
+        } else if (dayDiff > 1 && dayDiff <= 7) {
+            const daysOfWeek = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+            dueDateText = daysOfWeek[dueDate.getDay()];
+        } else {
+            dueDateText = homework.due_date;
+        }
+        
+        const homeworkItem = document.createElement('div');
+        homeworkItem.className = `homework-item ${homework.done ? 'completed' : 'pending'}`;
+
+        const statusIcon = homework.done 
+            ? '<i class="fa-solid fa-check-circle"></i>' 
+            : '<i class="fa-regular fa-circle"></i>';
+        
+        homeworkItem.innerHTML = `
+            <div class="homework-status">
+                ${statusIcon}
+            </div>
+            <div class="homework-content">
+                <h3 class="homework-subject">${homework.subject || 'Sans matière'}</h3>
+                <p class="homework-task">${homework.description || 'Pas de description'}</p>
+            </div>
+            <div class="homework-due">${dueDateText}</div>
+        `;
+        
+        homeworkList.appendChild(homeworkItem);
+    });
+    
+    console.log('Homework section updated with', data.homeworks.length, 'items');
 }
 
 function showDataFetchError() {

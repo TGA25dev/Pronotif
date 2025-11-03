@@ -550,6 +550,37 @@ class PronotifUser:
         except Exception as e:
             logger.error(f"Error getting next lesson for user {self.user_hash[:4]}**** : {e}")
             return {}
+
+    async def get_homeworks(self, count: int = 5) -> list:
+        """Get a defined count of upcoming homeworks"""
+        try:
+            today = datetime.now(self.timezone_obj).date()
+            next_week = today + timedelta(days=7)
+
+            homeworks = self.client.homework(date_from=today, date_to=next_week)
+            upcoming_homeworks = []
+
+            for hw in homeworks:
+                if hw.date is None:
+                    continue
+                
+                #only homeworks with due dates >= today
+                if hw.date >= today:
+                    upcoming_homeworks.append({
+                        'subject': hw.subject.name if hw.subject else None,
+                        'description': hw.description,
+                        'due_date': hw.date.strftime('%Y-%m-%d'),
+                        'done': hw.done
+                    })
+            
+            #Sorted by due date
+            return sorted(upcoming_homeworks, key=lambda x: x['due_date'])[:count]
+                
+        except Exception as e:
+            logger.error(f"Error getting upcoming homeworks for user {self.user_hash[:4]}**** : {e}")
+            sentry_sdk.capture_exception(e)
+            return []
+
     
     async def get_pronote_data(self, requested_fields: list) -> dict:
         """Get Pronote data based on requested fields"""
@@ -578,6 +609,10 @@ class PronotifUser:
                     'current_class_start': current_lesson.get('start'),
                     'current_class_end': current_lesson.get('end')
                 })
+
+            if 'homeworks' in requested_fields:
+                homeworks = await self.get_homeworks()
+                data['homeworks'] = homeworks
                 
         except Exception as e:
             logger.error(f"Error getting Pronote data for user {self.user_hash[:4]}**** : {e}")
