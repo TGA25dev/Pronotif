@@ -13,7 +13,6 @@ import aiofiles
 import json
 import random
 import redis
-import pickle
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from modules.secrets.secrets_manager import get_secret
@@ -203,7 +202,7 @@ async def load_active_users() -> list:
                         redis_client.setex(
                             f"user_session:{user_hash}", 
                             300,  # 5 minutes TTL
-                            pickle.dumps(user_info)
+                            json.dumps(user_info)
                         )
                 except Exception as e:
                     logger.error(f"Failed to store user sessions in Redis: {e}")
@@ -275,7 +274,7 @@ async def get_user_by_auth(app_session_id: str, app_token: str) -> PronotifUser:
             try:
                 user_session_data = redis_client.get(f"user_session:{user_hash}")
                 if user_session_data:
-                    user_info = pickle.loads(user_session_data)
+                    user_info = json.loads(user_session_data)
                     if user_info.get('logged_in'):
                         logger.success(f"Found active user session in Redis for {user_hash}")
                         # Create a temporary user object for API use
@@ -344,7 +343,7 @@ async def user_process_loop(user:PronotifUser) -> None:
             redis_client.setex(
                 f"user_session:{user.user_hash}", 
                 300,  # 5 minutes TTL
-                pickle.dumps(user_info)
+                json.dumps(user_info)
             )
         except Exception as e:
             logger.error(f"Failed to update Redis session for user {user.user_hash}: {e}")
@@ -383,7 +382,7 @@ async def user_process_loop(user:PronotifUser) -> None:
                         redis_client.setex(
                             f"user_session:{user.user_hash}", 
                             300,  # 5 minutes TTL
-                            pickle.dumps(user_info)
+                            json.dumps(user_info)
                         )
                     except Exception as e:
                         logger.error(f"Failed to update Redis session: {e}")

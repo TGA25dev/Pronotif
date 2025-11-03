@@ -867,7 +867,6 @@ def login_user():
 
                         try:
                             from modules.pronote.notification_system import redis_client
-                            import pickle
                             
                             user_info = {
                                 'app_session_id': app_session_id,
@@ -877,7 +876,7 @@ def login_user():
                             redis_client.setex(
                                 f"user_session:{user_hash}",
                                 300,  #5 min TTL
-                                pickle.dumps(user_info)
+                                json.dumps(user_info)
                             )
 
                             logger.info(f"User {user_hash[:12]}... added to Redis immediately after login")
