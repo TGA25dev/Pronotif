@@ -82,7 +82,7 @@ def _monlycee_net(
                 if username_input is not None and username_input.get("aria-invalid") == "true":
                     raise ENTLoginError("Username / Password is invalid")
 
-                logger.info(f"User {username} logged in successfully.")
+                logger.info(f"User logged in successfully.")
                 return session.cookies
 
         except requests.RequestException as e:
