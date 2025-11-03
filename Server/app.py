@@ -865,6 +865,30 @@ def login_user():
                         ))
                         logger.info(f"User created for hash: {user_hash[:12]}...")
 
+                        try:
+                            from modules.pronote.notification_system import redis_client
+                            import pickle
+                            
+                            user_info = {
+                                'app_session_id': app_session_id,
+                                'user_hash': user_hash,
+                                'logged_in': False  #will be set to True when notification system logs them
+                            }
+                            redis_client.setex(
+                                f"user_session:{user_hash}",
+                                300,  #5 min TTL
+                                pickle.dumps(user_info)
+                            )
+
+                            logger.info(f"User {user_hash[:12]}... added to Redis immediately after login")
+
+                        except Exception as e:
+                            logger.error(f"Failed to add user to Redis after login: {e}")
+                            sentry_sdk.capture_exception(e)
+
+
+
+
                 except mysql.connector.Error as err:
                     sentry_sdk.capture_exception(err)
                     logger.error(f"MySQL error: {err}")
@@ -1029,7 +1053,7 @@ def fetch_student_data():
         "get_bag_ready_reminder", "monday_lunch", "tuesday_lunch", 
         "wednesday_lunch", "thursday_lunch", "friday_lunch",
         "next_class_name", "next_class_room", "next_class_teacher", 
-        "next_class_start", "next_class_end",
+        "next_class_start", "next_class_end", "homeworks",
         "fcm_token", "token_updated_at", "timestamp", "is_active"
     }
 
@@ -1044,8 +1068,8 @@ def fetch_student_data():
         app_token = bleach.clean(app_token)
 
         # Separate DB fields from Pronote fields
-        db_fields = [f for f in fields if not f.startswith(('next_class_'))]
-        pronote_fields = [f for f in fields if f.startswith(('next_class_'))]
+        db_fields = [f for f in fields if not f.startswith(('next_class_', "homeworks"))]
+        pronote_fields = [f for f in fields if f.startswith(('next_class_', "homeworks"))]
         
         response_data = {}
 
