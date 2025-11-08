@@ -1325,6 +1325,7 @@ function showDashboard() {
             dashboardView.classList.add('fade-in');
             console.log('[UI] Dashboard view is now visible.');
         }
+        showHomeworkLoadingState();
 
         initializeDashboard()
 
@@ -1363,21 +1364,30 @@ function loadDemoData() {
     const homeworkList = document.querySelector('.homework-list');
     if (homeworkList) {
         homeworkList.innerHTML = `
-            <div class="homework-item">
+            <div class="homework-item pending">
+                <div class="homework-status">
+                    <i class="fa-regular fa-circle"></i>
+                </div>
                 <div class="homework-content">
                     <h3 class="homework-subject">Mathématiques</h3>
                     <p class="homework-task">Exercices 5 à 12 page 47</p>
                 </div>
                 <div class="homework-due">Demain 8h</div>
             </div>
-            <div class="homework-item">
+            <div class="homework-item pending">
+                <div class="homework-status">
+                    <i class="fa-regular fa-circle"></i>
+                </div>
                 <div class="homework-content">
                     <h3 class="homework-subject">Histoire</h3>
                     <p class="homework-task">Apprendre la leçon sur la Révolution française</p>
                 </div>
                 <div class="homework-due">Vendredi 10h</div>
             </div>
-            <div class="homework-item">
+            <div class="homework-item pending">
+                <div class="homework-status">
+                    <i class="fa-regular fa-circle"></i>
+                </div>
                 <div class="homework-content">
                     <h3 class="homework-subject">Anglais</h3>
                     <p class="homework-task">Compléter la fiche de vocabulaire</p>
@@ -1391,7 +1401,7 @@ function loadDemoData() {
 async function fetchDashboardData() {
     try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
         // Fetch student info and Pronote data
         const response = await wrapFetch("https://api.pronotif.tech/v1/app/fetch?fields=next_class_name,next_class_room,next_class_teacher,next_class_start,next_class_end,homeworks", {
@@ -1482,6 +1492,27 @@ function updateNextCourseCard(data) {
     }
 }
 
+function showHomeworkLoadingState() {
+    const homeworkList = document.querySelector('.homework-list');
+    
+    if (!homeworkList) {
+        console.warn('Homework list element not found');
+        return;
+    }
+    
+    homeworkList.innerHTML = `
+        <div class="homework-item">
+            <div class="homework-status">
+                <i class="fa-solid fa-spinner" style="animation: spin 2s linear infinite;"></i>
+            </div>
+            <div class="homework-content">
+                <h3 class="homework-subject">Chargement...</h3>
+                <p class="homework-task">Veuillez patienter</p>
+            </div>
+        </div>
+    `;
+}
+
 function updateHomeworkSection(data) {
     const homeworkList = document.querySelector('.homework-list');
     
@@ -1527,6 +1558,7 @@ function updateHomeworkSection(data) {
         
         const homeworkItem = document.createElement('div');
         homeworkItem.className = `homework-item ${homework.done ? 'completed' : 'pending'}`;
+        homeworkItem.dataset.homeworkId = homework.id || Math.random();
 
         const statusIcon = homework.done 
             ? '<i class="fa-solid fa-check-circle"></i>' 
@@ -1544,9 +1576,201 @@ function updateHomeworkSection(data) {
         `;
         
         homeworkList.appendChild(homeworkItem);
+        
+        const swipeHint = document.createElement('div');
+        swipeHint.className = `homework-item-swipe-hint ${homework.done ? 'unmark-hint' : 'mark-hint'}`;
+        
+        if (homework.done) {
+            swipeHint.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+        } else {
+            swipeHint.innerHTML = '<i class="fa-solid fa-check"></i>';
+        }
+        
+        document.body.appendChild(swipeHint);
+        
+        attachSwipeListeners(homeworkItem, homework, swipeHint);
     });
     
     console.log('Homework section updated with', data.homeworks.length, 'items');
+}
+
+function attachSwipeListeners(element, homework, hintElement) {
+    let startX = 0;
+    let currentX = 0;
+    let isDragging = false;
+    const threshold = 50; //Minimum swipe distance in pixels
+    let elementRectStart = null; //store initial position
+    let hasMovedSignificantly = false;
+
+    element.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        isDragging = true;
+        elementRectStart = element.getBoundingClientRect();
+        hasMovedSignificantly = false;
+        
+        element.classList.remove('swiping-active');
+        
+        if (hintElement) {
+            hintElement.style.transform = '';
+            hintElement.style.transition = '';
+        }
+        
+        document.querySelectorAll('.homework-item-swipe-hint').forEach(hint => {
+            if (hint !== hintElement) {
+                hint.style.opacity = '0';
+            }
+        });
+    }, false);
+
+    element.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        
+        currentX = e.touches[0].clientX;
+        const diff = startX - currentX;
+        
+        if (diff > 0) {
+            if (diff > 5) {
+                e.preventDefault();
+                document.body.style.overflow = 'hidden';
+                document.documentElement.style.overflow = 'hidden';
+                document.body.style.touchAction = 'none';
+            }
+            
+            if (diff > 10) {
+                hasMovedSignificantly = true;
+            }
+            
+            element.style.transform = `translateX(-${Math.min(diff, 100)}px)`;
+            
+            if (diff > 10) {
+                if (!element.classList.contains('swiping-active')) {
+                    element.classList.add('swiping');
+                    element.classList.add('swiping-active');
+                }
+            }
+            
+            if (hintElement) {
+                const currentRect = element.getBoundingClientRect();
+                const hintWidth = Math.min(diff, 100);
+                
+                hintElement.style.height = currentRect.height + 'px';
+                hintElement.style.width = hintWidth + 'px';
+                
+                hintElement.style.left = currentRect.right + 'px';
+                hintElement.style.top = currentRect.top + 'px';
+                
+                if (diff > threshold) {
+                    hintElement.style.opacity = '1';
+                } else {
+                    hintElement.style.opacity = Math.max(0, diff / threshold) * 0.7;
+                }
+            }
+        }
+    }, false);
+
+    element.addEventListener('touchend', (e) => {
+        if (!isDragging) return;
+        
+        isDragging = false;
+        const diff = startX - currentX;
+        
+        if (diff > threshold) {
+            
+            element.classList.remove('swiping');
+            element.classList.add('swiping-reset');
+            element.style.transform = 'translateX(0)';
+            
+            const rect = element.getBoundingClientRect();
+            
+            if (hintElement) {
+                hintElement.style.height = rect.height + 'px';
+                hintElement.style.left = rect.right + 'px';
+                hintElement.style.top = rect.top + 'px';
+                hintElement.style.opacity = '0';
+                hintElement.style.transform = 'translateX(50px)';
+                hintElement.style.transition = 'all 0.3s ease-out';
+            }
+            
+            setTimeout(() => {
+                if (homework.done) {
+                    homework.done = false;
+                    element.classList.remove('completed');
+                    element.classList.add('pending');
+                    
+                    const statusIcon = element.querySelector('.homework-status');
+                    if (statusIcon) {
+                        statusIcon.innerHTML = '<i class="fa-regular fa-circle"></i>';
+                    }
+                    
+                    hintElement.className = `homework-item-swipe-hint mark-hint`;
+                    hintElement.innerHTML = '<i class="fa-solid fa-check"></i>';
+                    
+                    // Call unmark
+                    unmarkHomeworkAsDone(homework);
+                } else {
+                    homework.done = true;
+                    element.classList.add('completed');
+                    element.classList.remove('pending');
+                    
+                    const statusIcon = element.querySelector('.homework-status');
+                    if (statusIcon) {
+                        statusIcon.innerHTML = '<i class="fa-solid fa-check-circle"></i>';
+                    }
+                    
+                    hintElement.className = `homework-item-swipe-hint unmark-hint`;
+                    hintElement.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+                    
+                    //Done
+                    markHomeworkAsDone(homework);
+                }
+            }, 300);
+        } else {
+            // Reset position
+            element.classList.remove('swiping');
+            element.classList.add('swiping-reset');
+            element.style.transform = 'translateX(0)';
+            
+            const rect = element.getBoundingClientRect();
+            
+            if (hintElement) {
+                hintElement.style.height = rect.height + 'px';
+                hintElement.style.left = rect.right + 'px';
+                hintElement.style.top = rect.top + 'px';
+                hintElement.style.opacity = '0';
+                hintElement.style.transform = 'translateX(50px)';
+                hintElement.style.transition = 'all 0.3s ease-out';
+            }
+        }
+        
+        setTimeout(() => {
+            element.classList.remove('swiping');
+            element.classList.remove('swiping-reset');
+            element.classList.remove('swiping-active');
+            document.body.style.overflow = '';
+            document.documentElement.style.overflow = '';
+            document.body.style.touchAction = 'auto';
+        }, 300);
+    }, false);
+
+    element.addEventListener('touchcancel', () => {
+        isDragging = false;
+        element.style.transform = 'translateX(0)';
+        if (hintElement) {
+            hintElement.style.opacity = '0';
+        }
+        element.classList.remove('swiping');
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
+        document.body.style.touchAction = 'auto';
+    }, false);
+}
+//TODO: Implement actual API calls to mark/unmark homework
+async function markHomeworkAsDone(homework) {
+    console.log('Marking homework as done:', homework);
+}
+
+async function unmarkHomeworkAsDone(homework) {
+    console.log('Unmarking homework as done:', homework);
 }
 
 function showDataFetchError() {
