@@ -1372,7 +1372,7 @@ function loadDemoData() {
                     <h3 class="homework-subject">Mathématiques</h3>
                     <p class="homework-task">Exercices 5 à 12 page 47</p>
                 </div>
-                <div class="homework-due">Demain 8h</div>
+                <div class="homework-due">Demain</div>
             </div>
             <div class="homework-item pending">
                 <div class="homework-status">
@@ -1382,7 +1382,7 @@ function loadDemoData() {
                     <h3 class="homework-subject">Histoire</h3>
                     <p class="homework-task">Apprendre la leçon sur la Révolution française</p>
                 </div>
-                <div class="homework-due">Vendredi 10h</div>
+                <div class="homework-due">Vendredi</div>
             </div>
             <div class="homework-item pending">
                 <div class="homework-status">
@@ -1392,7 +1392,7 @@ function loadDemoData() {
                     <h3 class="homework-subject">Anglais</h3>
                     <p class="homework-task">Compléter la fiche de vocabulaire</p>
                 </div>
-                <div class="homework-due">Lundi 9h</div>
+                <div class="homework-due">Lundi</div>
             </div>
         `;
     }
