@@ -2599,6 +2599,86 @@ document.addEventListener('DOMContentLoaded', async () => {
     // check session
     checkExistingSession();
 
+    //Navbar
+    const navbarHomeBtn = document.getElementById('navbarHomeBtn');
+    const bottomNavbar = document.querySelector('.bottom-navbar');
+    
+    if (navbarHomeBtn) {
+        navbarHomeBtn.addEventListener('click', () => {
+            //scroll to top of dashboard
+            const dashboardContainer = document.querySelector('.dashboard-container');
+            if (dashboardContainer) {
+                dashboardContainer.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+            
+            document.querySelectorAll('.navbar-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            navbarHomeBtn.classList.add('active');
+            
+            console.log('[Navbar] Home button clicked');
+        });
+        
+        const observer = new MutationObserver(() => {
+            const dashboardView = document.getElementById('dashboardView');
+            if (dashboardView && !dashboardView.classList.contains('hidden')) {
+                if (bottomNavbar) {
+                    bottomNavbar.style.display = 'flex';
+                }
+                navbarHomeBtn.classList.add('active');
+            } else {
+                if (bottomNavbar) {
+                    bottomNavbar.style.display = 'none';
+                }
+                navbarHomeBtn.classList.remove('active');
+            }
+        });
+        
+        if (document.getElementById('dashboardView')) {
+            observer.observe(document.getElementById('dashboardView'), { 
+                attributes: true, 
+                attributeFilter: ['class'] 
+            });
+        }
+    }
+
+    const navbarScheduleBtn = document.getElementById('navbarScheduleBtn');
+    const navbarHomeworkBtn = document.getElementById('navbarHomeworkBtn');
+    
+    if (navbarScheduleBtn) {
+        navbarScheduleBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (toast) {
+                toast.info('Patience !', 'Cette section arrive très bientôt...');
+            }
+            console.log('[Navbar] Schedule button clicked - coming soon');
+        });
+    }
+    
+    if (navbarHomeworkBtn) {
+        navbarHomeworkBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (toast) {
+                toast.info('Patience', 'Cette section arrive très bientôt...');
+            }
+            console.log('[Navbar] Homework button clicked - coming soon');
+        });
+    }
+
+    const navbarSettingsBtn = document.getElementById('navbarSettingsBtn');
+    if (navbarSettingsBtn) {
+        navbarSettingsBtn.addEventListener('click', () => {
+            //Update active state
+            document.querySelectorAll('.navbar-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            navbarSettingsBtn.classList.add('active');
+            
+            console.log('[Navbar] Settings button clicked');
+            //TODO: Navigate to settings page
+        });
+    }
+
     // Check if device is mobile
     function isMobileDevice() {
         const checks = {

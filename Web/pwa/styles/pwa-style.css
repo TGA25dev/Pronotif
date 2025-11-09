@@ -1438,6 +1438,11 @@ body::before {
     align-items: stretch;
     gap: 0.5rem;
 }
+/* Toast position on dashboard */
+#dashboardView:not(.hidden) ~ .main-container .toast-container,
+body:has(#dashboardView:not(.hidden)) .toast-container {
+    bottom: calc(3.5rem + env(safe-area-inset-bottom, 0) + 1rem);
+}
 
 .toast {
     background: var(--login-view-main-card);
@@ -1844,4 +1849,99 @@ body::before {
     padding-bottom: env(safe-area-inset-bottom, 0);
     padding-left: env(safe-area-inset-left, 0);
     padding-right: env(safe-area-inset-right, 0);
+}
+
+/*Navbar style*/
+.bottom-navbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(3.5rem + env(safe-area-inset-bottom, 0));
+    background: var(--login-view-main-card);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    display: none;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 0.25rem 0 env(safe-area-inset-bottom, 0);
+    z-index: 100;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Show navbar only on dashboard*/
+#dashboardView:not(.hidden) ~ .bottom-navbar,
+body:has(#dashboardView:not(.hidden)) .bottom-navbar {
+    display: flex;
+}
+
+/*Android device margin for system navbar */
+@supports (padding: max(0px)) {
+    .bottom-navbar {
+        padding-bottom: max(env(safe-area-inset-bottom, 0), 2rem);
+    }
+}
+
+.navbar-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: none;
+    color: var(--subtitle-dark);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: "Satoshi", sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 0.5rem;
+    min-width: fit-content;
+}
+
+.navbar-item:hover:not(:disabled) {
+    background: transparent;
+    color: var(--subtitle-dark);
+}
+
+.navbar-item:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.navbar-item:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.navbar-item i {
+    font-size: 1.2rem;
+    transition: all 0.2s ease;
+}
+
+.navbar-label {
+    display: block;
+    font-size: 0.7rem;
+    white-space: nowrap;
+}
+
+.navbar-item.active {
+    color: var(--subtitle-dark);
+    background: transparent;
+}
+
+.navbar-item.active i {
+    color: var(--primary);
+}
+
+.navbar-item.active:not(:disabled) i {
+    color: var(--primary);
+}
+
+.dashboard-container {
+    padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0)) !important;
+}
+
+.homework-list {
+    margin-bottom: calc(1rem + env(safe-area-inset-bottom, 0)) !important;
 }
