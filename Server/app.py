@@ -709,6 +709,175 @@ def delete_account():
         logger.error(f"Unexpected error in delete_account: {e}")
         return jsonify({"error": "An unexpected error occurred"}), 500
 
+@app.route("/v1/app/set-settings", methods=["POST", "HEAD"])
+@limiter.limit(str(get_secret('SET_SETTINGS_LIMIT')) + " per minute")
+def set_settings():
+    """
+    Update user notification and reminder settings
+    """
+    
+    if request.method == "HEAD":
+        return jsonify({"message": ""}), 200
+    
+    # Get authentication cookies
+    app_session_id = request.cookies.get('app_session_id')
+    app_token = request.cookies.get('app_token')
+    
+    if not app_session_id or not app_token:
+        logger.warning("Settings update denied - missing authentication")
+        return jsonify({"error": "Authentication required"}), 401
+    
+    try:
+        # Sanitize inputs
+        app_session_id = bleach.clean(app_session_id)
+        app_token = bleach.clean(app_token)
+        
+        #Parse settings from query parameters or JSON body
+        settings_to_update = {}
+
+        if request.is_json:
+            data = request.get_json() or {}
+        else:
+            data = request.args.to_dict()
+        
+        #Define allowed boolean settings
+        boolean_settings = [
+            'unfinished_homework_reminder',
+            'get_bag_ready_reminder',
+            'evening_menu',
+            'lunch_menu',
+            'class_reminder'
+        ]
+        
+        #Define time settings (HH:MM format)
+        time_settings = [
+            'unfinished_homework_reminder_time',
+            'get_bag_ready_reminder_time'
+        ]
+        
+        #Define text settings
+        text_settings = [
+            'student_firstname'
+        ]
+        
+        for setting in boolean_settings:
+            if setting in data:
+                value = data[setting]
+                
+                #Convert string to boolean
+                if isinstance(value, str):
+                    if value.lower() in ['true', '1', 'yes']:
+                        settings_to_update[setting] = True
+                    elif value.lower() in ['false', '0', 'no']:
+                        settings_to_update[setting] = False
+                    else:
+                        return jsonify({"error": f"Invalid value for {setting}. Expected true/false"}), 400
+                elif isinstance(value, bool):
+                    settings_to_update[setting] = value
+                else:
+                    return jsonify({"error": f"Invalid type for {setting}"}), 400
+        
+        for setting in time_settings:
+            if setting in data:
+                value = data[setting]
+                if isinstance(value, str):
+                    value = value.strip()
+                    #Validate time format
+                    if not value or not re.match(r'^([01]?[0-9]|2[0-3]):[0-5][0-9]$', value):
+                        return jsonify({"error": f"Invalid time format for {setting}. Expected HH:MM"}), 400
+                    settings_to_update[setting] = value
+                else:
+                    return jsonify({"error": f"Invalid type for {setting}. Expected string"}), 400
+        
+        for setting in text_settings:
+            if setting in data:
+                value = data[setting]
+                if isinstance(value, str):
+                    value = value.strip()
+                    #Validate student_firstname
+                    if setting == 'student_firstname':
+                        if not value or len(value) > 50:
+                            return jsonify({"error": f"Invalid {setting}. Must be 1-50 characters"}), 400
+                        #Sanitize and encrypt the name
+                        sanitized_value = bleach.clean(value)
+                        settings_to_update[setting] = encrypt(sanitized_value)
+                    else:
+                        settings_to_update[setting] = bleach.clean(value)
+                else:
+                    return jsonify({"error": f"Invalid type for {setting}. Expected string"}), 400
+        
+        if 'notification_delay' in data:
+            try:
+                delay = int(data['notification_delay'])
+                #Validate delay range (1-10 minutes)
+                if delay < 1 or delay > 10:
+                    return jsonify({"error": "Delay must be between 1 and 10 minutes"}), 400
+                settings_to_update['notification_delay'] = delay
+            except (ValueError, TypeError):
+                return jsonify({"error": "Delay must be an integer"}), 400
+        
+        if not settings_to_update:
+            return jsonify({"error": "No valid settings provided"}), 400
+        
+        update_fields = []
+        update_values = []
+        
+        for setting, value in settings_to_update.items():
+            update_fields.append(f"{setting} = %s")
+            update_values.append(value)
+        
+        update_values.append(app_session_id)
+        update_values.append(app_token)
+        
+        with get_db_connection() as connection:
+            cursor = connection.cursor(dictionary=True)
+            try:
+                with sentry_sdk.start_span(op="db.query", description="Update user settings"):
+                    #First verify user exists
+                    query = f"""
+                        SELECT app_session_id FROM {student_table_name}
+                        WHERE app_session_id = %s AND app_token = %s AND is_active = TRUE
+                    """
+                    cursor.execute(query, (app_session_id, app_token))
+                    user = cursor.fetchone()
+                    
+                    if not user:
+                        logger.warning(f"Settings update attempt with invalid credentials: {app_session_id[:4]}****")
+                        return jsonify({"error": "Invalid credentials"}), 401
+                    
+                    # Update settings
+                    update_query = f"""
+                        UPDATE {student_table_name}
+                        SET {', '.join(update_fields)}
+                        WHERE app_session_id = %s AND app_token = %s AND is_active = TRUE
+                    """
+                    cursor.execute(update_query, update_values)
+                    connection.commit()
+                    
+                    if cursor.rowcount > 0:
+                        logger.info(f"Settings updated for user: {app_session_id[:4]}**** - {list(settings_to_update.keys())}")
+                        return jsonify({
+                            "message": "Settings updated successfully",
+                            "updated_settings": settings_to_update,
+                            "status": 200
+                        }), 200
+                    else:
+                        logger.error(f"Failed to update settings for user: {app_session_id[:4]}****")
+                        return jsonify({"error": "Failed to update settings"}), 500
+                        
+            except mysql.connector.Error as err:
+                sentry_sdk.capture_exception(err)
+                logger.error(f"MySQL error in set_settings: {err}")
+                return jsonify({"error": "Internal server error"}), 500
+                
+            finally:
+                cursor.close()
+                
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        logger.error(f"Unexpected error in set_settings: {e}")
+        return jsonify({"error": "Internal server error"}), 500
+
 @app.route("/v1/login/verifylink", methods=["POST", "HEAD"])
 @limiter.limit(str(get_secret('QR_CODE_SCAN_LIMIT')) + " per minute")
 #@require_beta_access
@@ -1140,7 +1309,8 @@ def fetch_student_data():
         "wednesday_lunch", "thursday_lunch", "friday_lunch",
         "next_class_name", "next_class_room", "next_class_teacher", 
         "next_class_start", "next_class_end", "homeworks",
-        "fcm_token", "token_updated_at", "timestamp", "is_active"
+        "fcm_token", "token_updated_at", "timestamp", "is_active",
+        "class_reminder", "lunch_menu", "unfinished_homework_reminder_time", "get_bag_ready_reminder_time"
     }
 
     # Validate and sanitize requested fields
@@ -1190,7 +1360,16 @@ def fetch_student_data():
                                 sentry_sdk.capture_exception(e)
                                 response_data[field] = None
                         else:
-                            response_data[field] = result[field]
+                            #Handle special types that aren't JSON serializable
+                            value = result[field]
+                            if isinstance(value, timedelta):
+                                # Convert timedelta to total seconds or ISO format
+                                response_data[field] = str(value)
+                            elif isinstance(value, datetime):
+                                #Convert datetime to ISO format string
+                                response_data[field] = value.isoformat()
+                            else:
+                                response_data[field] = value
 
                 except mysql.connector.Error as err:
                     sentry_sdk.capture_exception(err)
