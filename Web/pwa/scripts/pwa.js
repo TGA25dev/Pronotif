@@ -3009,6 +3009,108 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    //Theme Management
+    function initializeTheme() {
+        const savedTheme = localStorage.getItem('appTheme') || 'system';
+        applyTheme(savedTheme);
+        updateThemeLabel(savedTheme);
+    }
+
+    function applyTheme(theme) {
+        const root = document.documentElement;
+        
+        if (theme === 'system') {
+            //Use system preference
+            if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                root.style.colorScheme = 'dark';
+            } else {
+                root.style.colorScheme = 'light';
+            }
+        } else if (theme === 'dark') {
+            root.style.colorScheme = 'dark';
+        } else if (theme === 'light') {
+            root.style.colorScheme = 'light';
+        }
+        
+        localStorage.setItem('appTheme', theme);
+        console.log('[Theme] Applied theme:', theme);
+    }
+
+    function updateThemeLabel(theme) {
+        const labelMap = {
+            'light': 'Clair',
+            'dark': 'Sombre',
+            'system': 'Système'
+        };
+        const settingsAppearanceLabel = document.querySelector('#settingsAppearanceItem .settings-item-label');
+        if (settingsAppearanceLabel) {
+            settingsAppearanceLabel.textContent = labelMap[theme] || 'Système';
+        }
+    }
+
+    const settingsAppearanceItem = document.getElementById('settingsAppearanceItem');
+    if (settingsAppearanceItem) {
+        settingsAppearanceItem.addEventListener('click', async () => {
+            console.log('[Settings] Appearance button clicked');
+            const modal = document.getElementById('themeSelectorModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+
+                const currentTheme = localStorage.getItem('appTheme') || 'system';
+                document.querySelectorAll('.theme-option').forEach(option => {
+                    option.classList.remove('selected');
+                });
+                const selectedButton = document.getElementById('theme' + currentTheme.charAt(0).toUpperCase() + currentTheme.slice(1));
+                if (selectedButton) {
+                    selectedButton.classList.add('selected');
+                }
+            }
+        });
+    }
+
+    //Theme option buttons
+    const themeOptions = document.querySelectorAll('.theme-option');
+    themeOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            const theme = option.getAttribute('data-theme');
+            applyTheme(theme);
+            updateThemeLabel(theme);
+            
+            themeOptions.forEach(opt => opt.classList.remove('selected'));
+            option.classList.add('selected');
+            
+            console.log('[Theme] Theme changed to:', theme);
+            
+            const modal = document.getElementById('themeSelectorModal');
+            if (modal) {
+                modal.classList.add('closing');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('closing');
+                }, 300);
+            }
+        });
+    });
+
+    const themeOverlay = document.querySelector('.theme-overlay');
+    if (themeOverlay) {
+        themeOverlay.addEventListener('click', (e) => {
+            if (e.target === themeOverlay) {
+                const modal = document.getElementById('themeSelectorModal');
+                if (modal) {
+                    modal.classList.add('closing');
+                    setTimeout(() => {
+                        modal.classList.add('hidden');
+                        modal.classList.remove('closing');
+                    }, 300);
+                }
+            }
+        });
+    }
+
+    //Initialize theme on page load
+    initializeTheme();
+
     //settings name edit button
     const settingsNameItem = document.getElementById('settingsNameItem');
     if (settingsNameItem) {
