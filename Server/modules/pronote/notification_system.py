@@ -280,9 +280,13 @@ async def get_user_by_auth(app_session_id: str, app_token: str) -> PronotifUser:
                         # Create a temporary user object for API use
                         return await create_temp_user_for_api(user_hash, app_session_id, app_token)
                     else:
-                        logger.warning(f"User {user_hash} found in Redis but not logged in")
+                        logger.warning(f"User {user_hash} found in Redis but not logged in - attempting direct login")
+                        #Try direct login for immediate API access
+                        return await create_temp_user_for_api(user_hash, app_session_id, app_token)
                 else:
-                    logger.warning(f"User {user_hash} not found in Redis active sessions")
+                    logger.info(f"User {user_hash} not found in Redis active sessions - attempting direct login")
+                    # User not in Redis yet, create temporary user from database
+                    return await create_temp_user_for_api(user_hash, app_session_id, app_token)
             except Exception as e:
                 logger.error(f"Error checking Redis for user session: {e}")
             
