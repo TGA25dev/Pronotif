@@ -819,11 +819,31 @@ def set_settings():
         if not settings_to_update:
             return jsonify({"error": "No valid settings provided"}), 400
         
+        #Whitelist of allowed settings
+        ALLOWED_SETTINGS_WHITELIST = {
+            'unfinished_homework_reminder',
+            'get_bag_ready_reminder',
+            'evening_menu',
+            'lunch_menu',
+            'class_reminder',
+            'unfinished_homework_reminder_time',
+            'get_bag_ready_reminder_time',
+            'student_firstname',
+            'notification_delay'
+        }
+        
+        #Validate all field names against whitelist
+        for setting in settings_to_update.keys():
+            if setting not in ALLOWED_SETTINGS_WHITELIST:
+                logger.warning(f"Attempted to update invalid setting: {setting}")
+                return jsonify({"error": "Invalid settings"}), 400
+        
         update_fields = []
         update_values = []
         
         for setting, value in settings_to_update.items():
-            update_fields.append(f"{setting} = %s")
+            #Backstick field names
+            update_fields.append(f"`{setting}` = %s")
             update_values.append(value)
         
         update_values.append(app_session_id)
