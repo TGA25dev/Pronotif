@@ -2173,7 +2173,7 @@ body:has(#settingsView:not(.hidden)) .toast-container {
     border-top: 1px solid rgba(0, 0, 0, 0.08);
     display: none;
     align-items: flex-start;
-    justify-content: flex-start;
+    justify-content: space-around;
     padding: 0.25rem 0 env(safe-area-inset-bottom, 0);
     z-index: 100;
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
