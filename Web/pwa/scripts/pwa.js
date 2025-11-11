@@ -522,6 +522,127 @@ function getSubtitle() {
     return subtitles[Math.floor(Math.random() * subtitles.length)];
 }
 
+async function updateSettings(settingsObj) {
+    try {
+        const response = await wrapFetch('https://api.pronotif.tech/v1/app/set-settings', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(settingsObj)
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            console.log('Settings updated successfully:', result.updated_settings);
+            toast.success('Paramètres sauvegardés', 'Vos modifications ont été enregistrées.');
+            return true;
+        } else {
+            const error = await response.json();
+            console.error('Settings update failed:', error);
+            toast.error('Erreur', error.error || 'Impossible de sauvegarder les paramètres.');
+            return false;
+        }
+    } catch (error) {
+        console.error('Network error during settings update:', error);
+        toast.error('Erreur réseau', 'Veuillez réessayer.');
+        return false;
+    }
+}
+
+async function fetchSettings() {
+    //fetch all user settings on page loading
+    try {
+        console.log('[Settings] Fetching user settings from backend...');
+        const response = await wrapFetch('https://api.pronotif.tech/v1/app/fetch?fields=class_reminder,lunch_menu,unfinished_homework_reminder,unfinished_homework_reminder_time,get_bag_ready_reminder,get_bag_ready_reminder_time,notification_delay,student_firstname', {
+            method: 'GET',
+            credentials: 'include',
+            cache: 'no-store'
+        });
+        
+        if (!response.ok) {
+            console.warn('[Settings] Failed to fetch settings:', response.status);
+            return null;
+        }
+        
+        const result = await response.json();
+        if (result.data) {
+            if (result.data.student_firstname) {
+                localStorage.setItem('student_firstname', result.data.student_firstname);
+                console.log('[Settings] Updated student_firstname in localStorage');
+            }
+            console.log('[Settings] Settings loaded:', result.data);
+            populateSettingsUI(result.data);
+            return result.data;
+        }
+    } catch (error) {
+        console.error('[Settings] Error fetching settings:', error);
+    }
+    return null;
+}
+
+function populateSettingsUI(settings) {
+    console.log('[Settings] Populating UI with settings:', settings);
+    
+    const settingMappings = {
+        'class_reminder': 'settingsNotificationsItem',
+        'lunch_menu': 'settingsMenuDuJourItem',
+        'unfinished_homework_reminder': 'settingsHomeworkNotDoneItem',
+        'get_bag_ready_reminder': 'settingsPackBackpackItem'
+    };
+    
+    // Update toggle switches
+    for (const [settingName, itemId] of Object.entries(settingMappings)) {
+        if (settingName in settings) {
+            const settingsItem = document.getElementById(itemId);
+            if (settingsItem) {
+                const toggle = settingsItem.querySelector('.settings-toggle-input');
+                if (toggle) {
+                    const value = settings[settingName];
+                    const isChecked = value === true || value === '1' || value === 'true' || value === 1;
+                    toggle.checked = isChecked;
+                    console.log(`[Settings] Set ${settingName} toggle to ${isChecked}`);
+                }
+            }
+        }
+    }
+    
+    //Update notification delay buttons
+    if ('notification_delay' in settings) {
+        const delayValue = parseInt(settings.notification_delay);
+        const delayButtons = document.querySelectorAll('.settings-time-option');
+        delayButtons.forEach(button => {
+            const btnTime = parseInt(button.getAttribute('data-time'));
+            if (btnTime === delayValue) {
+                button.classList.add('selected');
+                console.log(`[Settings] Set delay to ${delayValue} minutes`);
+            } else {
+                button.classList.remove('selected');
+            }
+        });
+    }
+    
+    // Update time pills
+    if ('unfinished_homework_reminder_time' in settings && settings.unfinished_homework_reminder_time) {
+        const timeStr = settings.unfinished_homework_reminder_time;
+        const timePill = document.querySelector('#settingsHomeworkNotDoneItem .settings-item-time-pill');
+        if (timePill && timeStr) {
+            const [hours, minutes] = timeStr.split(':');
+            timePill.textContent = `${hours}h${minutes}`;
+            console.log(`[Settings] Set homework reminder time to ${hours}h${minutes}`);
+        }
+    }
+    
+    if ('get_bag_ready_reminder_time' in settings && settings.get_bag_ready_reminder_time) {
+        const timeStr = settings.get_bag_ready_reminder_time;
+        const timePill = document.querySelector('#settingsPackBackpackItem .settings-item-time-pill');
+        if (timePill && timeStr) {
+            const [hours, minutes] = timeStr.split(':');
+            timePill.textContent = `${hours}h${minutes}`;
+            console.log(`[Settings] Set backpack reminder time to ${hours}h${minutes}`);
+        }
+    }
+}
+
 async function performLogout() {
     try {
         const response = await wrapFetch('https://api.pronotif.tech/v1/app/logout', {
@@ -1466,6 +1587,7 @@ function showDashboard() {
         setTimeout(() => {
             try { checkNotifEnabled(); } catch (e) { /* ignore */ }
             try { upateDynamicBanner(); } catch (e) { /* ignore */ }
+            try { fetchSettings(); } catch (e) { console.error('[Settings] Error fetching settings on dashboard load:', e); }
         }, 200);
 
     }, initialFadeOutDuration);
@@ -2818,7 +2940,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const navbarSettingsBtn = document.getElementById('navbarSettingsBtn');
     if (navbarSettingsBtn) {
-        navbarSettingsBtn.addEventListener('click', () => {
+        navbarSettingsBtn.addEventListener('click', async () => {
             //Update active state
             document.querySelectorAll('.navbar-item').forEach(item => {
                 item.classList.remove('active');
@@ -2838,6 +2960,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 settingsView.classList.remove('hidden');
                 updateThemeColor('settings');
                 console.log('[Settings] Settings view classes:', settingsView.className);
+                
+                // Fetch and populate settings when settings view is opened
+                await fetchSettings();
             } else {
                 console.warn('[Settings] Settings view not found!');
             }
@@ -2884,10 +3009,114 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    //settings name edit button
+    const settingsNameItem = document.getElementById('settingsNameItem');
+    if (settingsNameItem) {
+        settingsNameItem.addEventListener('click', async () => {
+            console.log('[Settings] Name edit button clicked');
+            const modal = document.getElementById('nameEditModal');
+            const input = document.getElementById('nameEditInput');
+            
+            if (!modal || !input) {
+                console.error('[Settings] Name edit modal elements not found');
+                return;
+            }
+        
+            const currentName = localStorage.getItem('student_firstname') || '';
+            input.value = currentName;
+            input.focus();
+            
+            modal.classList.remove('hidden');
+            setTimeout(() => input.focus(), 100);
+        });
+    }
+    const nameEditCancel = document.getElementById('nameEditCancel');
+    if (nameEditCancel) {
+        nameEditCancel.addEventListener('click', () => {
+            const modal = document.getElementById('nameEditModal');
+            if (modal) {
+                modal.classList.add('closing');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('closing');
+                    document.getElementById('nameEditInput').value = '';
+                }, 300);
+            }
+        });
+    }
+
+    const nameEditSave = document.getElementById('nameEditSave');
+    if (nameEditSave) {
+        nameEditSave.addEventListener('click', async () => {
+            const input = document.getElementById('nameEditInput');
+            const newName = input.value.trim();
+            
+            if (!newName) {
+                toast.error('Erreur', 'Veuillez entrer un nom');
+                return;
+            }
+            
+            if (newName.length > 50) {
+                toast.error('Erreur', 'Le nom ne doit pas dépasser 50 caractères');
+                return;
+            }
+            
+            console.log('[Settings] Saving name:', newName);
+ 
+            const success = await updateSettings({ student_firstname: newName });
+            
+            if (success) {
+                localStorage.setItem('student_firstname', newName);
+                console.log('[Settings] Name saved to localStorage:', newName);
+                
+
+                const welcomeElement = document.getElementById('welcomeGreeting');
+                if (welcomeElement) {
+                    const greeting = getGreeting();
+                    const emoji = getTimeEmoji();
+                    welcomeElement.textContent = `${greeting} ${newName} ${emoji}`;
+                    console.log('[Settings] Updated welcome greeting');
+                }
+            }
+            
+            //close modal
+            const modal = document.getElementById('nameEditModal');
+            if (modal) {
+                modal.classList.add('closing');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('closing');
+                    document.getElementById('nameEditInput').value = '';
+                }, 300);
+            }
+        });
+    }
+
+    const nameEditInput = document.getElementById('nameEditInput');
+    if (nameEditInput) {
+        nameEditInput.addEventListener('keypress', async (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const saveBtn = document.getElementById('nameEditSave');
+                if (saveBtn) saveBtn.click();
+            }
+        });
+    }
+
+    const nameEditOverlay = document.querySelector('.name-edit-overlay');
+    if (nameEditOverlay) {
+        nameEditOverlay.addEventListener('click', (e) => {
+            if (e.target === nameEditOverlay) {
+                const cancelBtn = document.getElementById('nameEditCancel');
+                if (cancelBtn) cancelBtn.click();
+            }
+        });
+    }
+
     //Delay selector
     const delayButtons = document.querySelectorAll('.settings-time-option');
     delayButtons.forEach(button => {
-        button.addEventListener('click', (e) => {
+        button.addEventListener('click', async (e) => {
             e.preventDefault();
             const selectedTime = button.getAttribute('data-time');
             
@@ -2899,6 +3128,47 @@ document.addEventListener('DOMContentLoaded', async () => {
             //Add selected class to clicked button
             button.classList.add('selected');
             console.log(`[Settings] Delay updated to ${selectedTime} minutes`);
+            
+            await updateSettings({ notification_delay: parseInt(selectedTime) });
+        });
+    });
+
+    //Settings toggle handlers
+    const settingsToggles = document.querySelectorAll('.settings-toggle-input');
+    settingsToggles.forEach(toggle => {
+        toggle.addEventListener('change', async (e) => {
+            const settingsItem = toggle.closest('.settings-item');
+            if (!settingsItem) return;
+            
+            const itemId = settingsItem.id;
+            const isChecked = toggle.checked;
+            
+            let settingName = '';
+            let settingValue = isChecked;
+            
+            //map names
+            switch(itemId) {
+                case 'settingsNotificationsItem':
+                    settingName = 'class_reminder';
+                    break;
+                case 'settingsMenuDuJourItem':
+                    settingName = 'lunch_menu';
+                    break;
+                case 'settingsHomeworkNotDoneItem':
+                    settingName = 'unfinished_homework_reminder';
+                    break;
+                case 'settingsPackBackpackItem':
+                    settingName = 'get_bag_ready_reminder';
+                    break;
+                default:
+                    console.warn(`Unknown settings item: ${itemId}`);
+                    return;
+            }
+            
+            if (settingName) {
+                console.log(`[Settings] ${settingName} toggled to ${settingValue}`);
+                await updateSettings({ [settingName]: settingValue });
+            }
         });
     });
 
@@ -2988,7 +3258,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         //Listeners
         timePickerListeners.scroll = updateSelection;
         
-        timePickerListeners.done = () => {
+        timePickerListeners.done = async () => {
             console.log('[Time Picker] Done button clicked');
             const hourIdx = Math.round(hoursWheel.scrollTop / ITEM_HEIGHT);
             const minIdx = Math.round(minutesWheel.scrollTop / ITEM_HEIGHT);
@@ -2996,11 +3266,31 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentHours = MIN_HOUR + hourIdx;
             currentMinutes = minIdx;
             const formatted = `${currentHours}h${String(currentMinutes).padStart(2, '0')}`;
+            const timeFormatHHMM = `${String(currentHours).padStart(2, '0')}:${String(currentMinutes).padStart(2, '0')}`;
             
-            console.log(`[Time Picker] Selected time: ${formatted}`);
+            console.log(`[Time Picker] Selected time: ${formatted} (${timeFormatHHMM})`);
             
             if (currentTimePill) {
+                const settingsItem = currentTimePill.closest('.settings-item');
+                const itemId = settingsItem?.id;
+                
+                let settingName = '';
+                
+                //Map items
+                if (itemId === 'settingsHomeworkNotDoneItem') {
+                    settingName = 'unfinished_homework_reminder_time';
+                } else if (itemId === 'settingsPackBackpackItem') {
+                    settingName = 'get_bag_ready_reminder_time';
+                }
+                
+                console.log(`[Time Picker] Setting ${settingName} to ${timeFormatHHMM}`);
+                
                 currentTimePill.textContent = formatted;
+                
+                if (settingName) {
+                    await updateSettings({ [settingName]: timeFormatHHMM });
+                }
+                
                 currentTimePill = null;
             }
             
