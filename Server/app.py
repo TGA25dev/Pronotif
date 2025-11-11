@@ -622,6 +622,93 @@ def logout():
 
     return response
 
+@app.route("/v1/app/delete-account", methods=["POST", "HEAD"])
+@limiter.limit(str(get_secret('LOGOUT_LIMIT')) + " per minute")
+def delete_account():
+    """
+    Delete the user account and all associated data.
+    """
+
+    if request.method == "HEAD":
+        return "", 200
+
+    app_session_id = request.cookies.get('app_session_id')
+    app_token = request.cookies.get('app_token')
+
+    if not app_session_id or not app_token:
+        return jsonify({"error": "Authentication required"}), 401
+
+    try:
+        app_session_id = bleach.clean(app_session_id)
+        app_token = bleach.clean(app_token)
+
+        with get_db_connection() as connection:
+            cursor = connection.cursor(dictionary=True)
+            try:
+                query = f"""
+                    SELECT app_session_id, app_token FROM {student_table_name}
+                    WHERE app_session_id = %s AND app_token = %s AND is_active = TRUE
+                """
+                cursor.execute(query, (app_session_id, app_token))
+                user = cursor.fetchone()
+
+                if not user:
+                    logger.warning(f"Delete account attempt with invalid credentials from {request.remote_addr}")
+                    return jsonify({"error": "Authentication failed"}), 401
+
+                #Delete the user record from database
+                delete_query = f"DELETE FROM {student_table_name} WHERE app_session_id = %s"
+                cursor.execute(delete_query, (app_session_id,))
+
+                logger.info(f"User account deleted: {app_session_id[:4]}**** from {request.remote_addr}")
+
+            except mysql.connector.Error as err:
+                sentry_sdk.capture_exception(err)
+                logger.error(f"Database error during account deletion: {err}")
+                return jsonify({"error": "Failed to delete account"}), 500
+            finally:
+                cursor.close()
+
+        #Clear Flask session
+        session.clear()
+
+        response = make_response(jsonify({"success": True, "message": "Compte supprimé avec succès."}))
+
+        #Expire authentication cookies
+        response.set_cookie(
+            'app_session_id', '',
+            expires=0,
+            path='/',
+            secure=True,
+            httponly=True,
+            samesite='Strict'
+        )
+        response.set_cookie(
+            'app_token', '',
+            expires=0,
+            path='/',
+            secure=True,
+            httponly=True,
+            samesite='Strict'
+        )
+
+        #Expire CSRF cookie
+        response.set_cookie(
+            'csrf_token', '',
+            expires=0,
+            path='/',
+            secure=True,
+            httponly=True,
+            samesite='Strict'
+        )
+
+        return response
+
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        logger.error(f"Unexpected error in delete_account: {e}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
+
 @app.route("/v1/login/verifylink", methods=["POST", "HEAD"])
 @limiter.limit(str(get_secret('QR_CODE_SCAN_LIMIT')) + " per minute")
 #@require_beta_access

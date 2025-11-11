@@ -522,6 +522,139 @@ function getSubtitle() {
     return subtitles[Math.floor(Math.random() * subtitles.length)];
 }
 
+async function performLogout() {
+    try {
+        const response = await wrapFetch('https://api.pronotif.tech/v1/app/logout', {
+            method: 'POST',
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            console.log('Logged out successfully');
+            
+            //Save toast to localStorage 
+            localStorage.setItem('postReloadToast', JSON.stringify({
+                title: 'Vous avez été déconnecté avec succès.',
+                message: "Bon retour parmi nous !",
+                type: 'success'
+            }));
+            
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            //Re-save after clearing
+            localStorage.setItem('postReloadToast', JSON.stringify({
+                title: 'Vous avez été déconnecté avec succès.',
+                message: "Bon retour parmi nous !",
+                type: 'success'
+            }));
+            
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (const reg of registrations) {
+                    await reg.unregister();
+                }
+            }
+            if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                for (const name of cacheNames) {
+                    await caches.delete(name);
+                }
+            }
+            
+            //invisible overlay to prevent user interactions
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: transparent;
+                z-index: 9999;
+                pointer-events: auto;
+            `;
+            document.body.appendChild(overlay);
+            
+            window.location.reload();
+        } else {
+            console.error('Logout failed:', response.statusText);
+            toast.error("Échec de la déconnexion.", "Veuillez réessayer.");
+        }
+    } catch (error) {
+        console.error('Network error during logout:', error);
+        toast.error("Erreur réseau lors de la déconnexion.", "Veuillez réessayer.");
+    }
+}
+
+async function performDeleteAccount() {
+    try {
+        const confirmed = confirm("⚠️ Êtes-vous sûr(e) de vouloir supprimer votre compte ? Cette action est irréversible.");
+        if (!confirmed) {
+            console.log('Account deletion cancelled by user');
+            return;
+        }
+
+        const response = await wrapFetch('https://api.pronotif.tech/v1/app/delete-account', {
+            method: 'POST',
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            console.log('Account deleted successfully');
+            
+            localStorage.setItem('postReloadToast', JSON.stringify({
+                title: 'Compte supprimé avec succès !',
+                message: "Toutes vos données ont été supprimées de nos serveurs.",
+                type: 'success'
+            }));
+            
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            localStorage.setItem('postReloadToast', JSON.stringify({
+                title: 'Compte supprimé avec succès !',
+                message: "Toutes vos données ont été supprimées de nos serveurs.",
+                type: 'success'
+            }));
+            
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (const reg of registrations) {
+                    await reg.unregister();
+                }
+            }
+            if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                for (const name of cacheNames) {
+                    await caches.delete(name);
+                }
+            }
+            
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: transparent;
+                z-index: 9999;
+                pointer-events: auto;
+            `;
+            document.body.appendChild(overlay);
+            
+            setTimeout(() => window.location.reload(), 2000);
+        } else {
+            console.error('Account deletion failed:', response.statusText);
+            toast.error("Échec de la suppression du compte.", "Veuillez réessayer.");
+        }
+    } catch (error) {
+        console.error('Network error during account deletion:', error);
+        toast.error("Erreur réseau lors de la suppression du compte.", "Veuillez réessayer.");
+    }
+}
+
 async function upateDynamicBanner() {
     const bannerText = document.getElementById('bannerText');
     const bannerIcon = document.getElementById('bannerIcon');
@@ -2159,6 +2292,27 @@ async function fetchFirebaseConfig() {
 
 
 document.addEventListener('DOMContentLoaded', async () => {
+    //Check for post reload toast
+    const postReloadToastData = localStorage.getItem('postReloadToast');
+    if (postReloadToastData) {
+        try {
+            const toastData = JSON.parse(postReloadToastData);
+            setTimeout(() => {
+                if (toastData.type === 'success') {
+                    toast.success(toastData.title, toastData.message);
+                } else if (toastData.type === 'error') {
+                    toast.error(toastData.title, toastData.message);
+                } else {
+                    toast.info(toastData.title, toastData.message);
+                }
+            }, 500);
+            localStorage.removeItem('postReloadToast');
+        } catch (e) {
+            console.error('Failed to parse post-reload toast:', e);
+            localStorage.removeItem('postReloadToast');
+        }
+    }
+
     function updateCookieContainer() {
         const cookieContainer = document.getElementById('cookieContainer');
         if (cookieContainer) {
@@ -2280,42 +2434,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             debugLogoutButton.disabled = true;
             debugLogoutButtonSubTitle.textContent = "Déconnexion en cours...";
 
-            try {
-                const response = await wrapFetch('https://api.pronotif.tech/v1/app/logout', {
-                    method: 'POST',
-                    credentials: 'include'
-                });
-                
-                if (response.ok) {
-                    console.log('Logged out successfully');
-                    localStorage.clear();
-                    sessionStorage.clear();
-                    if ('serviceWorker' in navigator) {
-                        const registrations = await navigator.serviceWorker.getRegistrations();
-                        for (const reg of registrations) {
-                            await reg.unregister();
-                        }
-                    }
-                    if ('caches' in window) {
-                        const cacheNames = await caches.keys();
-                        for (const name of cacheNames) {
-                            await caches.delete(name);
-                        }
-                    }
-                    toast.success('Vous avez été déconnecté avec succès !', "L'application va redémarrer.");
-                    window.location.reload();
-                } else {
-                    console.error('Logout failed:', response.statusText);
-                    toast.error("Échec de la déconnexion.", "Veuillez réessayer.");
-                }
-            } catch (error) {
-                console.error('Network error during logout:', error);
-                toast.error("Erreur réseau lors de la déconnexion.", "Veuillez réessayer.");
-            } finally {
-                debugLogoutButton.disabled = false;
-                debugLogoutButtonSubTitle.textContent = "Se déconnecter";
-            }
+            await performLogout();
             
+            debugLogoutButton.disabled = false;
+            debugLogoutButtonSubTitle.textContent = "Se déconnecter";
         });
     }
 
@@ -2742,6 +2864,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.error('[Settings] Error opening feedback:', error);
                 toast.error("Erreur", "Impossible d'ouvrir le formulaire de rapport.");
             }
+        });
+    }
+
+    // Settings logout button
+    const settingsLogoutItem = document.getElementById('settingsLogoutItem');
+    if (settingsLogoutItem) {
+        settingsLogoutItem.addEventListener('click', async () => {
+            await performLogout();
+        });
+    }
+
+    // Settings delete account button
+    const settingsDeleteAccountItem = document.getElementById('settingsDeleteAccountItem');
+    if (settingsDeleteAccountItem) {
+        settingsDeleteAccountItem.addEventListener('click', async () => {
+            console.log('[Settings] Delete account button clicked');
+            await performDeleteAccount();
         });
     }
 
