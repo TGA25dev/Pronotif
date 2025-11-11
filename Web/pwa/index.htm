@@ -108,7 +108,7 @@
                     enableScreenshot: true,
                     useSentryUser: true,
                     colorScheme: "system",
-                    autoInject: true, 
+                    autoInject: false, 
                     position: "bottom-right",
                     triggerLabel: "Donner un avis",
                     triggerAriaLabel: "Donner un avis",
@@ -273,6 +273,198 @@
                 </div>
             </div>
             
+            <div id="settingsView" class="view hidden">
+                <div class="settings-container">
+                    <div class="settings-header">
+                        <h1 class="settings-title">Paramètres</h1>
+                    </div>
+                    
+                    <h2 class="settings-section-title">Personnalisation</h2>
+
+                    <div class="settings-section">
+                        <button class="settings-item" id="settingsAppearanceItem">
+                            <div class="settings-item-icon">
+                                <i class="fa-solid fa-palette"></i>
+                            </div>
+                            <div class="settings-item-content">
+                                <h3 class="settings-item-title">Apparence</h3>
+                                <p class="settings-item-subtitle">Changez le thème de l'application.</p>
+                            </div>
+                            <div class="settings-item-action">
+                                <span class="settings-item-label">Système</span>
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </div>
+                        </button>
+                        
+                        <button class="settings-item" id="settingsNameItem">
+                            <div class="settings-item-icon">
+                                <i class="fa-solid fa-pen"></i>
+                            </div>
+                            <div class="settings-item-content">
+                                <h3 class="settings-item-title">Mon Nom</h3>
+                                <p class="settings-item-subtitle">Modifiez votre nom dans Pronot'if.</p>
+                            </div>
+                            <div class="settings-item-action">
+                                <span class="settings-item-label">Changer</span>
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </div>
+                        </button>
+                    </div>
+
+                    <h2 class="settings-section-title">Notifications</h2>
+                    
+                    <div class="settings-section">
+                        <div class="settings-item" id="settingsNotificationsItem">
+                            <div class="settings-item-icon">
+                                <i class="fa-solid fa-bell"></i>
+                            </div>
+                            <div class="settings-item-content">
+                                <h3 class="settings-item-title">Rappels de cours</h3>
+                                <p class="settings-item-subtitle">Vous recevrez des rappels avant chaque cours de votre journée.</p>
+                            </div>
+                            <div class="settings-item-action">
+                                <label class="settings-toggle">
+                                    <input type="checkbox" class="settings-toggle-input" checked>
+                                    <span class="settings-toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-item settings-item-expanded" id="settingsDelayItem">
+                            <div class="settings-item-icon">
+                                <i class="fa-solid fa-hourglass-end"></i>
+                            </div>
+                            <div class="settings-item-content">
+                                <h3 class="settings-item-title">Délai</h3>
+                                <p class="settings-item-subtitle">Le délai avant lequel vous recevez ces rappels.</p>
+                                <div class="settings-time-selector">
+                                    <button class="settings-time-option" data-time="1">1 min</button>
+                                    <button class="settings-time-option" data-time="3">3 min</button>
+                                    <button class="settings-time-option selected" data-time="5">5 min</button>
+                                    <button class="settings-time-option" data-time="10">10 min</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-item" id="settingsMenuDuJourItem">
+                            <div class="settings-item-icon">
+                                <i class="fa-solid fa-utensils"></i>
+                            </div>
+                            <div class="settings-item-content">
+                                <h3 class="settings-item-title">Menu du jour</h3>
+                                <p class="settings-item-subtitle">Vous recevrez une notification avec le menu du jour à l'heure de manger.</p>
+                            </div>
+                            <div class="settings-item-action">
+                                <label class="settings-toggle">
+                                    <input type="checkbox" class="settings-toggle-input" checked>
+                                    <span class="settings-toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="settings-item settings-item-with-time" id="settingsHomeworkNotDoneItem">
+                            <div class="settings-item-icon">
+                                <i class="fa-solid fa-clipboard"></i>
+                            </div>
+                            <div class="settings-item-content">
+                                <h3 class="settings-item-title">Devoirs non faits</h3>
+                                <p class="settings-item-subtitle">Chaque soir vous recevrez une notification si des devoirs marqués comme non faits sont à rendre pour le lendemain.</p>
+                            </div>
+                            <div class="settings-item-action">
+                                <label class="settings-toggle">
+                                    <input type="checkbox" class="settings-toggle-input" checked>
+                                    <span class="settings-toggle-slider"></span>
+                                </label>
+                                <div class="settings-item-time-pill">18h00</div>
+                            </div>
+                        </div>
+
+                        <div class="settings-item settings-item-with-time" id="settingsPackBackpackItem">
+                            <div class="settings-item-icon">
+                                <i class="fa-solid fa-lock"></i>
+                            </div>
+                            <div class="settings-item-content">
+                                <h3 class="settings-item-title">Faire son sac</h3>
+                                <p class="settings-item-subtitle">Chaque soir recevez une notification pour ne pas oublier de faire votre sac.</p>
+                            </div>
+                            <div class="settings-item-action">
+                                <label class="settings-toggle">
+                                    <input type="checkbox" class="settings-toggle-input">
+                                    <span class="settings-toggle-slider"></span>
+                                </label>
+                                <div class="settings-item-time-pill">19h30</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h2 class="settings-section-title">Compte & Sécurité</h2>
+                    
+                    <div class="settings-section">
+                        <button class="settings-item" id="settingsLogoutItem">
+                            <div class="settings-item-icon">
+                                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                            </div>
+                            <div class="settings-item-content">
+                                <h3 class="settings-item-title">Se déconnecter</h3>
+                                <p class="settings-item-subtitle">Vous déconnecte de votre compte Pronot'if</p>
+                            </div>
+                            <div class="settings-item-action">
+                                <span class="settings-item-label">Déconnexion</span>
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </div>
+                        </button>
+
+                        <button class="settings-item" id="settingsDeleteAccountItem">
+                            <div class="settings-item-icon">
+                                <i class="fa-solid fa-trash"></i>
+                            </div>
+                            <div class="settings-item-content">
+                                <h3 class="settings-item-title">Supprimer mon compte</h3>
+                                <p class="settings-item-subtitle">Vous déconnecte et efface votre compte de nos serveurs. Attention cette action est irréversible.</p>
+                            </div>
+                            <div class="settings-item-action">
+                                <span class="settings-item-label">Effacer</span>
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </div>
+                        </button>
+                    </div>
+
+                    <h2 class="settings-section-title">À Propos</h2>
+                    
+                    <div class="settings-section">
+                        <button class="settings-item" id="settingsDonateItem">
+                            <div class="settings-item-icon">
+                                <i class="fa-solid fa-heart"></i>
+                            </div>
+                            <div class="settings-item-content">
+                                <h3 class="settings-item-title">Faire un Don</h3>
+                                <p class="settings-item-subtitle">Pronot'if est un projet étudiant à but non lucratif, nous ne gagnons pas d'argent avec le projet alors si vous aimez cette appli n'hésitez pas à nous aider.</p>
+                            </div>
+                            <div class="settings-item-action">
+                                <span class="settings-item-label">Faire un don</span>
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </div>
+                        </button>
+
+                        <button class="settings-item" id="settingsReportBugItem">
+                            <div class="settings-item-icon">
+                                <i class="fa-solid fa-bug"></i>
+                            </div>
+                            <div class="settings-item-content">
+                                <h3 class="settings-item-title">Reporter un bug</h3>
+                                <p class="settings-item-subtitle">Vous avez trouvé un bug ? Dites-nous comment l'améliorer.</p>
+                            </div>
+                            <div class="settings-item-action">
+                                <span class="settings-item-label">Reporter</span>
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </div>
+                        </button>
+                    </div>
+
+                    <span class="app-version">v0.9 beta 🐛</span>
+                </div>
+            </div>
+            
             <div id="dashboardView" class="view hidden">
                 <div class="dashboard-container">
                     <div class="dashboard-top-part">
@@ -350,9 +542,6 @@
                         </div>
 
                     </div>
-                    <span class="app-version">v0.8.1 beta 🐛
-                        <span id="debugTrigger" class="debug-trigger"></span>
-                    </span>
                 </div>
             </div>
         </div>
@@ -407,6 +596,22 @@
                     <i class="fa-solid fa-lock" aria-hidden="true"></i>
                     Vous pourrez toujours utiliser la recherche manuelle si vous le souhaitez.
                 </p>
+            </div>
+        </div>
+
+        <!--Time Picker-->
+        <div id="timePickerModal" class="time-picker-modal hidden" role="dialog" aria-modal="true">
+            <div class="time-picker-overlay"></div>
+            <div class="time-picker-container">
+                <div class="time-picker-header">
+                    <button class="time-picker-cancel" id="timePickerCancel">Annuler</button>
+                    <button class="time-picker-done" id="timePickerDone">Définir</button>
+                </div>
+                <div class="time-picker-wheel-container">
+                    <div class="time-picker-wheel" id="timePickerHours"></div>
+                    <div class="time-picker-divider">:</div>
+                    <div class="time-picker-wheel" id="timePickerMinutes"></div>
+                </div>
             </div>
         </div>
 

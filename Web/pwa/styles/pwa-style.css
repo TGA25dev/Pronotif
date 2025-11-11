@@ -74,8 +74,8 @@
 }
 
 #sentry-feedback {
-        --font-family: {var(--font-family)};
-        --accent-foreground: (#ffffff);
+        --font-family: var(--font-family);
+        --accent-foreground: #ffffff;
         --accent-background: var(--primary);
 }
 
@@ -708,13 +708,18 @@ body::before {
 }
 
 .debug-trigger {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    position: fixed;
+    bottom: 0.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+    height: auto;
     z-index: 10;
     cursor: pointer;
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+    opacity: 0;
+    pointer-events: none;
 }
 
 .debug-panel {
@@ -740,15 +745,22 @@ body::before {
 }
 
 .app-version {
-    position: fixed;
     display: block;
     z-index: 50;
     font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-    color: var(--text-light);
+    padding: 1rem;
+    color: var(--text-dark);
     opacity: 0.8;
-    top: 0.5rem;
-    left: 0.5rem;
+    text-align: center;
+    width: 100%;
+    margin-top: 0rem;
+    cursor: pointer;
+    user-select: none;
+    transition: opacity 0.2s ease;
+}
+
+.app-version:active {
+    opacity: 0.6;
 }
 
 .debug-header {
@@ -1312,6 +1324,299 @@ body::before {
     margin-left: 0.5rem;
     box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.25);
 }
+
+/*Settings View*/
+#settingsView {
+    position: relative;
+    height: 100%;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    display: flex !important;
+    flex-direction: column;
+    background: var(--login-view-bg);
+    overflow: hidden;
+}
+
+#settingsView.hidden {
+    display: none !important;
+}
+
+.settings-container {
+    width: 100%;
+    padding: 1rem 0 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    overflow-y: auto;
+    flex: 1 1 100%;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0));
+    background: var(--login-view-main-card);
+}
+
+.settings-header {
+    padding: 1.5rem 1rem 0.75rem;
+    max-width: 100%;
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.settings-title {
+    font-family: "Cabinet";
+    font-size: 2rem;
+    font-weight: 800;
+    margin: 0 0 0.5rem 0;
+    color: var(--text-dark);
+    text-align: left;
+}
+
+/* Settings Section*/
+.settings-section {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    gap: 0;
+    background: var(--login-view-main-card);
+    border-radius: 0.5rem;
+    overflow: visible;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    margin: 0 1rem 1.5rem 1rem;
+    width: calc(100% - 2rem);
+}
+
+.settings-section-title {
+    font-family: "Cabinet";
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin: 0 0 0.6rem 1rem;
+    padding: 0;
+}
+
+.settings-item {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.8rem 0;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: flex-start;
+}
+
+.settings-item:last-child {
+    border-bottom: none;
+}
+
+.settings-item:active {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.settings-item-expanded {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    padding-top: 0.8rem;
+    padding-bottom: 0.8rem;
+}
+
+.settings-item-expanded .settings-item-icon {
+    margin-top: 0.2rem;
+}
+
+.settings-item-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.8rem;
+    height: 1.8rem;
+    background: transparent;
+    border-radius: 0.4rem;
+    flex-shrink: 0;
+    margin-left: 0.8rem;
+}
+
+.settings-item-icon i {
+    font-size: 1.1rem;
+    color: var(--text-dark);
+}
+
+.settings-item-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    flex: 1;
+    text-align: left;
+    align-items: flex-start;
+}
+
+.settings-item-expanded .settings-item-content {
+    width: calc(100% - 1.8rem - 0.8rem);
+}
+
+.settings-item-title {
+    font-family: "Cabinet";
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+    padding: 0;
+}
+
+.settings-item-subtitle {
+    font-family: "Satoshi";
+    font-size: 0.75rem;
+    color: #999999;
+    margin: 0;
+    padding: 0;
+    font-weight: 500;
+}
+
+.settings-item-action {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+    margin-left: auto;
+    margin-right: 0.8rem;
+}
+
+.settings-item-with-time .settings-item-action {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+.settings-item-time-display {
+    font-family: "Satoshi";
+    font-size: 0.75rem;
+    color: #888888;
+    font-weight: 500;
+}
+
+.settings-item-time-pill {
+    font-family: "Satoshi";
+    font-size: 0.75rem;
+    color: var(--text-dark);
+    font-weight: 500;
+    background: var(--box-accent-color);
+    padding: 0.4rem 0.75rem;
+    border-radius: 1rem;
+    margin-top: 0.2rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    display: block;
+    border: none;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+}
+
+.settings-item-time-pill:hover {
+    background: #FFE0CC;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+}
+
+.settings-item-label {
+    font-family: "Satoshi";
+    font-size: 0.8rem;
+    color: #888888;
+    font-weight: 400;
+}
+
+.settings-item-action i {
+    font-size: 0.65rem;
+    color: #CCCCCC;
+}
+
+/* Toggle Switch Styles */
+.settings-toggle {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+}
+
+.settings-toggle-input {
+    display: none;
+}
+
+.settings-toggle-slider {
+    width: 2.2rem;
+    height: 1.2rem;
+    background: #CCCCCC;
+    border-radius: 0.6rem;
+    position: relative;
+    transition: background 0.3s ease;
+    display: inline-block;
+}
+
+.settings-toggle-slider::after {
+    content: '';
+    position: absolute;
+    width: 0.95rem;
+    height: 0.95rem;
+    background: white;
+    border-radius: 50%;
+    top: 0.125rem;
+    left: 0.125rem;
+    transition: left 0.3s ease;
+}
+
+.settings-toggle-input:checked + .settings-toggle-slider {
+    background: var(--primary);
+}
+
+.settings-toggle-input:checked + .settings-toggle-slider::after {
+    left: 1.05rem;
+}
+
+/* Time Selector*/
+.settings-time-selector {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 0.6rem;
+    width: 100%;
+}
+
+.settings-time-option {
+    padding: 0.4rem 0.75rem;
+    border: 1.5px solid #CCCCCC;
+    background: transparent;
+    border-radius: 0.4rem;
+    font-family: "Satoshi", sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #888888;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.settings-time-option:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.settings-time-option.selected {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+
+
 /* Notification specific animations */
 
 @keyframes notifFadeIn {
@@ -1441,6 +1746,12 @@ body::before {
 /* Toast position on dashboard */
 #dashboardView:not(.hidden) ~ .main-container .toast-container,
 body:has(#dashboardView:not(.hidden)) .toast-container {
+    bottom: calc(3.5rem + env(safe-area-inset-bottom, 0) + 1rem);
+}
+
+
+#settingsView:not(.hidden) ~ .main-container .toast-container,
+body:has(#settingsView:not(.hidden)) .toast-container {
     bottom: calc(3.5rem + env(safe-area-inset-bottom, 0) + 1rem);
 }
 
@@ -1868,10 +2179,10 @@ body:has(#dashboardView:not(.hidden)) .toast-container {
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
 }
 
-/* Show navbar only on dashboard*/
-#dashboardView:not(.hidden) ~ .bottom-navbar,
-body:has(#dashboardView:not(.hidden)) .bottom-navbar {
-    display: flex;
+/* Show navbar only on dashboard and settings*/
+body:has(#dashboardView:not(.hidden)) .bottom-navbar,
+body:has(#settingsView:not(.hidden)) .bottom-navbar {
+    display: flex !important;
 }
 
 /*Android device margin for system navbar */
@@ -1944,4 +2255,177 @@ body:has(#dashboardView:not(.hidden)) .bottom-navbar {
 
 .homework-list {
     margin-bottom: calc(1rem + env(safe-area-inset-bottom, 0)) !important;
+}
+
+.time-picker-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    z-index: 10000;
+}
+
+.time-picker-modal.hidden {
+    display: none !important;
+}
+
+.time-picker-modal.closing {
+    animation: fadeOut 0.3s ease-out forwards;
+}
+
+.time-picker-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: transparent;
+    animation: fadeIn 0.3s ease-out;
+    pointer-events: auto;
+    z-index: 0;
+}
+
+.time-picker-modal.closing .time-picker-overlay {
+    animation: fadeOut 0.3s ease-out forwards;
+}
+
+.time-picker-modal.closing .time-picker-container {
+    animation: slideDown 0.3s ease-out forwards;
+}
+
+.time-picker-container {
+    background: var(--card-bg);
+    border-radius: 12px 12px 0 0;
+    padding: 0;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+    animation: slideUp 0.3s ease-out;
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(0);
+    }
+    to {
+        transform: translateY(100%);
+    }
+}
+
+.time-picker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.time-picker-cancel,
+.time-picker-done {
+    font-family: "Satoshi", "sans-serif";
+    background: none;
+    border: none;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 6px;
+    transition: background 0.2s ease;
+}
+
+.time-picker-cancel {
+    color: #999;
+}
+
+.time-picker-cancel:active {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.time-picker-done {
+    color: var(--primary);
+}
+
+.time-picker-done:active {
+    background: rgba(7, 161, 159, 0.1);
+}
+
+.time-picker-wheel-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 180px;
+    position: relative;
+    background: transparent;
+    overflow: hidden;
+    padding: 0 16px;
+    gap: 0;
+}
+
+.time-picker-divider {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin: 0 12px;
+    line-height: 1;
+}
+
+.time-picker-wheel {
+    width: 70px;
+    height: 180px;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    display: flex;
+    flex-direction: column;
+    scroll-behavior: smooth;
+    position: relative;
+    padding: 72px 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    overflow-x: hidden;
+}
+
+.time-picker-wheel::-webkit-scrollbar {
+    display: none;
+}
+
+.time-picker-wheel {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.time-picker-item {
+    font-family: "Satoshi", "sans-serif";
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: #ccc;
+    flex-shrink: 0;
+    user-select: none;
+    opacity: 0.5;
+    transition: opacity 0.2s ease, color 0.2s ease, font-weight 0.2s ease;
+}
+
+.time-picker-item.selected {
+    color: var(--text-dark);
+    font-weight: 700;
+    opacity: 1;
 }

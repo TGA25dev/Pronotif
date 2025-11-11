@@ -2378,7 +2378,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     document.addEventListener('click', (e) => {
-        if (e.target.id === 'debugTrigger' || e.target.classList.contains('login-header-app-name')) {
+        if (e.target.id === 'debugTrigger' || e.target.classList.contains('login-header-app-name') || e.target.classList.contains('app-version')) {
             e.preventDefault();
             tapCount++;
             
@@ -2599,16 +2599,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     // check session
     checkExistingSession();
 
+    //Theme color management
+    function updateThemeColor(viewType) {
+        const themeColorLight = document.getElementById('themeColorLight');
+        const themeColorDark = document.getElementById('themeColorDark');
+        const themeColorDefault = document.getElementById('themeColorDefault');
+        
+        if (viewType === 'settings') {
+            themeColorLight?.setAttribute('content', '#FFEEDB');
+            themeColorDark?.setAttribute('content', '#FFEEDB');
+            themeColorDefault?.setAttribute('content', '#FFEEDB');
+        } else {
+            themeColorLight?.setAttribute('content', '#07A19F');
+            themeColorDark?.setAttribute('content', '#07A19F');
+            themeColorDefault?.setAttribute('content', '#07A19F');
+        }
+    }
+
     //Navbar
     const navbarHomeBtn = document.getElementById('navbarHomeBtn');
     const bottomNavbar = document.querySelector('.bottom-navbar');
     
     if (navbarHomeBtn) {
         navbarHomeBtn.addEventListener('click', () => {
-            //scroll to top of dashboard
-            const dashboardContainer = document.querySelector('.dashboard-container');
-            if (dashboardContainer) {
-                dashboardContainer.scrollTo({ top: 0, behavior: 'smooth' });
+            //Hide all views
+            document.querySelectorAll('.view').forEach(view => {
+                view.classList.add('hidden');
+            });
+            
+            //Show dashboard
+            const dashboardView = document.getElementById('dashboardView');
+            if (dashboardView) {
+                dashboardView.classList.remove('hidden');
+                updateThemeColor('dashboard');
+
+                //scroll to top
+                const dashboardContainer = document.querySelector('.dashboard-container');
+                if (dashboardContainer) {
+                    dashboardContainer.scrollTo({ top: 0, behavior: 'smooth' });
+                }
             }
             
             document.querySelectorAll('.navbar-item').forEach(item => {
@@ -2675,9 +2704,215 @@ document.addEventListener('DOMContentLoaded', async () => {
             navbarSettingsBtn.classList.add('active');
             
             console.log('[Navbar] Settings button clicked');
-            //TODO: Navigate to settings page
+            
+            //same as upper settings button
+            document.querySelectorAll('.view').forEach(view => {
+                view.classList.add('hidden');
+            });
+
+            const settingsView = document.getElementById('settingsView');
+            if (settingsView) {
+                console.log('[Settings] Showing settings view');
+                settingsView.classList.remove('hidden');
+                updateThemeColor('settings');
+                console.log('[Settings] Settings view classes:', settingsView.className);
+            } else {
+                console.warn('[Settings] Settings view not found!');
+            }
         });
     }
+
+    //Report bug button
+    const reportBugItem = document.getElementById('settingsReportBugItem');
+    if (reportBugItem) {
+        reportBugItem.addEventListener('click', async () => {
+            console.log('[Settings] Opening Sentry feedback');
+            try {
+                const feedback = window.Sentry?.getFeedback?.();
+                if (feedback) {
+
+                    const form = await feedback.createForm();
+                    form.appendToDom();
+                    form.open();
+                } else {
+                    toast.warning("Erreur", "Le système de rapport n'est pas disponible.");
+                    console.warn('[Settings] Sentry feedback not available');
+                }
+            } catch (error) {
+                console.error('[Settings] Error opening feedback:', error);
+                toast.error("Erreur", "Impossible d'ouvrir le formulaire de rapport.");
+            }
+        });
+    }
+
+    //Delay selector
+    const delayButtons = document.querySelectorAll('.settings-time-option');
+    delayButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            const selectedTime = button.getAttribute('data-time');
+            
+            //Remove selected class from all buttons
+            delayButtons.forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            
+            //Add selected class to clicked button
+            button.classList.add('selected');
+            console.log(`[Settings] Delay updated to ${selectedTime} minutes`);
+        });
+    });
+
+    //Time Picker Configuration Constants
+    const TIME_PICKER_CONFIG = {
+        ITEM_HEIGHT: 36,
+        MIN_HOUR: 16,
+        MAX_HOUR: 23,
+        MIN_MINUTE: 0,
+        MAX_MINUTE: 59
+    };
+
+    //time Picker State
+    let currentTimePill = null;
+    let currentHours = TIME_PICKER_CONFIG.MIN_HOUR;
+    let currentMinutes = TIME_PICKER_CONFIG.MIN_MINUTE;
+    let timePickerListeners = {};
+    
+    window.showTimePicker = function() {
+        const modal = document.getElementById('timePickerModal');
+        const overlay = document.querySelector('.time-picker-overlay');
+        const hoursWheel = document.getElementById('timePickerHours');
+        const minutesWheel = document.getElementById('timePickerMinutes');
+        const doneBtn = document.getElementById('timePickerDone');
+        const cancelBtn = document.getElementById('timePickerCancel');
+        
+        if (!modal || !overlay || !hoursWheel || !minutesWheel || !doneBtn || !cancelBtn) {
+            console.error('[Time Picker] Required modal elements not found !');
+            return;
+        }
+        
+        const { ITEM_HEIGHT, MIN_HOUR, MAX_HOUR, MIN_MINUTE, MAX_MINUTE } = TIME_PICKER_CONFIG;
+        
+        const cleanup = () => {
+            hoursWheel.removeEventListener('scroll', timePickerListeners.scroll);
+            minutesWheel.removeEventListener('scroll', timePickerListeners.scroll);
+            doneBtn.removeEventListener('click', timePickerListeners.done);
+            cancelBtn.removeEventListener('click', timePickerListeners.cancel);
+            overlay.removeEventListener('click', timePickerListeners.overlayClick);
+        };
+        
+        //clean up old listeners first
+        cleanup();
+        
+        const populateWheel = (wheel, min, max) => {
+            wheel.innerHTML = '';
+            for (let i = min; i <= max; i++) {
+                const item = document.createElement('div');
+                item.className = 'time-picker-item';
+                item.textContent = String(i).padStart(2, '0');
+                item.dataset.value = i;
+                wheel.appendChild(item);
+            }
+        };
+        
+        populateWheel(hoursWheel, MIN_HOUR, MAX_HOUR);
+        populateWheel(minutesWheel, MIN_MINUTE, MAX_MINUTE);
+        
+        //Set initial scroll positions
+        hoursWheel.scrollTop = (currentHours - MIN_HOUR) * ITEM_HEIGHT;
+        minutesWheel.scrollTop = currentMinutes * ITEM_HEIGHT;
+        
+        const updateSelection = () => {
+            const hourIdx = Math.round(hoursWheel.scrollTop / ITEM_HEIGHT);
+            const minIdx = Math.round(minutesWheel.scrollTop / ITEM_HEIGHT);
+            
+            hoursWheel.querySelectorAll('.time-picker-item').forEach((item, idx) => {
+                item.classList.toggle('selected', idx === hourIdx);
+            });
+            minutesWheel.querySelectorAll('.time-picker-item').forEach((item, idx) => {
+                item.classList.toggle('selected', idx === minIdx);
+            });
+        };
+        
+        //Close modal function
+        const closeModal = () => {
+            console.log('[Time Picker] Closing modal');
+            modal.classList.add('closing');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('closing');
+                cleanup();
+            }, 300);
+        };
+        
+        //Listeners
+        timePickerListeners.scroll = updateSelection;
+        
+        timePickerListeners.done = () => {
+            console.log('[Time Picker] Done button clicked');
+            const hourIdx = Math.round(hoursWheel.scrollTop / ITEM_HEIGHT);
+            const minIdx = Math.round(minutesWheel.scrollTop / ITEM_HEIGHT);
+            
+            currentHours = MIN_HOUR + hourIdx;
+            currentMinutes = minIdx;
+            const formatted = `${currentHours}h${String(currentMinutes).padStart(2, '0')}`;
+            
+            console.log(`[Time Picker] Selected time: ${formatted}`);
+            
+            if (currentTimePill) {
+                currentTimePill.textContent = formatted;
+                currentTimePill = null;
+            }
+            
+            closeModal();
+        };
+        
+        timePickerListeners.cancel = () => {
+            console.log('[Time Picker] Cancel button clicked');
+            currentTimePill = null;
+            closeModal();
+        };
+        
+        timePickerListeners.overlayClick = (e) => {
+            if (e.target === overlay) {
+                console.log('[Time Picker] Overlay clicked');
+                timePickerListeners.cancel();
+            }
+        };
+        
+        hoursWheel.addEventListener('scroll', timePickerListeners.scroll, { passive: true });
+        minutesWheel.addEventListener('scroll', timePickerListeners.scroll, { passive: true });
+        
+        doneBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            timePickerListeners.done();
+        });
+        
+        cancelBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            timePickerListeners.cancel();
+        });
+        
+        overlay.addEventListener('click', timePickerListeners.overlayClick);
+        
+        //Display and initialize
+        modal.classList.remove('hidden');
+        updateSelection();
+    };
+    
+    // Time Pill Click Handler
+    const timePills = document.querySelectorAll('.settings-item-time-pill');
+    timePills.forEach((pill, index) => {
+        pill.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            currentTimePill = this;
+            window.showTimePicker();
+        });
+    });
 
     // Check if device is mobile
     function isMobileDevice() {
