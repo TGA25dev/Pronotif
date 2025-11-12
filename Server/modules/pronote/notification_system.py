@@ -863,8 +863,21 @@ async def check_reminder_notifications(user):
     
     current_time = datetime.now(user.timezone_obj).time()
     tomorrow_date = (datetime.now(user.timezone_obj) + timedelta(days=1)).date()
-    
+
+    unfinished_homework_reminder_time = user.unfinished_homework_reminder_time
+    bag_ready_reminder_time = user.get_bag_ready_reminder_time
+
     try:
+        #Helper function to convert timedelta to time object
+        def timedelta_to_time(td):
+            """Convert timedelta to time object"""
+            if isinstance(td, timedelta):
+                total_seconds = int(td.total_seconds())
+                hours = total_seconds // 3600
+                minutes = (total_seconds % 3600) // 60
+                return dt_time(hours, minutes)
+            return td
+
         # Check if there are classes tomorrow
         class_checker = []
         for attempt in range(5):  # max_retries
@@ -873,14 +886,15 @@ async def check_reminder_notifications(user):
                 break
             except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError) as e:
                 if attempt < 4:  # max_retries - 1
-                    logger.warning(f"Connection timeout during lesson check for user {user.user_hash} (attempt {attempt + 1}/5). Retrying in 3 seconds...")
+                    logger.warning(f"Connection timeout during lesson check for user {user.user_hash[:4]}**** (attempt {attempt + 1}/5). Retrying in 3 seconds...")
                     await asyncio.sleep(3 * (2 ** attempt))
                 else:
-                    logger.error(f"Failed to check lessons after 5 attempts for user {user.user_hash}")
+                    logger.error(f"Failed to check lessons after 5 attempts for user {user.user_hash[:4]}****: {e}")
                     sentry_sdk.capture_exception(e)
                     class_checker = []
+
             except Exception as e:
-                logger.error(f"Unexpected error checking lessons for user {user.user_hash}: {e}")
+                logger.error(f"Unexpected error checking lessons for user {user.user_hash[:4]}****: {e}")
                 if not await user.handle_error_with_relogin(e):
                     return
                 class_checker = []
@@ -888,9 +902,14 @@ async def check_reminder_notifications(user):
 
         class_tomorrow = bool(class_checker)
 
-        # Bag ready reminder at 19:35
-        if (current_time.hour == 19 and current_time.minute == 35 and
-            user.get_bag_ready_reminder and class_tomorrow):
+        #Convert timedelta to time object for comparison
+        bag_reminder_time = timedelta_to_time(bag_ready_reminder_time)
+        homework_reminder_time = timedelta_to_time(unfinished_homework_reminder_time)
+
+        # Bag ready reminder at defined time (HH:MM)
+        #if -> current time matches reminder time and setting is enabled and there are classes tomorrow
+
+        if (current_time.hour == bag_reminder_time.hour and current_time.minute == bag_reminder_time.minute and user.get_bag_ready_reminder and class_tomorrow):
             
             reminder_message = "Il est temps de préparer votre sac pour demain !"
             
@@ -899,18 +918,19 @@ async def check_reminder_notifications(user):
                 title="📚 N'oubliez pas !",
                 body=reminder_message,
             )
-            logger.success(f"Sent bag ready reminder to user {user.user_hash}")
+            logger.success(f"Sent bag ready reminder to user {user.user_hash[:4]}**** !")
 
-        # Homework reminder at 18:15
-        if (current_time.hour == 18 and current_time.minute == 15 and 
-            user.unfinished_homework_reminder and class_tomorrow):
+        # Homework reminder at defined time (HH:MM)
+        #if -> current time matches reminder time and setting is enabled and there are classes tomorrow
+
+        if (current_time.hour == homework_reminder_time.hour and current_time.minute == homework_reminder_time.minute and user.unfinished_homework_reminder and class_tomorrow):
             
             try:
                 homeworks = user.client.homework(tomorrow_date, tomorrow_date)
                 not_finished_homeworks_count = 0
                 
                 if not homeworks:
-                    logger.debug(f"No homeworks found for tomorrow for user {user.user_hash}")
+                    logger.debug(f"No homeworks found for tomorrow for user {user.user_hash[:4]}****")
                     not_finished_homeworks_count = -1 # No homeworks means no unfinished ones so score is -1
                 else:
                     # Count unfinished homework
@@ -941,14 +961,14 @@ async def check_reminder_notifications(user):
                         title=title,
                         body=reminder_message,
                     )
-                    logger.success(f"Sent homework reminder to user {user.user_hash} !")
+                    logger.success(f"Sent homework reminder to user {user.user_hash[:4]}**** !")
                 
             except Exception as homework_error:
                 logger.error(f"Error checking homework for user {user.user_hash}: {homework_error}")
                 sentry_sdk.capture_exception(homework_error)
 
     except Exception as e:
-        logger.error(f"Error in reminder check for user {user.user_hash}: {e}")
+        logger.error(f"Error in reminder check for user {user.user_hash[:4]}****: {e}")
         sentry_sdk.capture_exception(e)
 
 async def main():

@@ -71,6 +71,10 @@ class PronotifUser:
             'thursday': user_data.get('thursday_lunch'),
             'friday': user_data.get('friday_lunch')
         }
+
+        #Reminder Timings
+        self.unfinished_homework_reminder_time = user_data.get('unfinished_homework_reminder_time', '18:00') #def to 18:00
+        self.get_bag_ready_reminder_time = user_data.get('get_bag_ready_reminder_time', '20:00') #def to 20:00
         
         # Feature flags
         self.evening_menu = bool(user_data.get('evening_menu', 0))
