@@ -157,58 +157,58 @@
                     </h1>
 
                         
-                        <h1 class="login-header-app-title" id="loginHeaderAppTitle">Bonjour !</h1>
-                        <p class="login-header-app-subtitle" id="loginHeaderAppSubTitle">Selectionnez une méthode de connexion afin d’acceder à votre compte Pronote.</p>
+                        <h1 class="login-header-app-title" id="loginHeaderAppTitle" data-i18n="login.greeting">Bonjour !</h1>
+                        <p class="login-header-app-subtitle" id="loginHeaderAppSubTitle" data-i18n="login.subtitle">Selectionnez une méthode de connexion afin d'acceder à votre compte Pronote.</p>
                     </div>
 
                     <div class="login-card-container">
-                        <h1 class="login-card-container-title" id="loginCardContainerTitle">Faites votre choix</h1>
+                        <h1 class="login-card-container-title" id="loginCardContainerTitle" data-i18n="login.choose">Faites votre choix</h1>
 
                         <input type="text" class="global-login-container-input" id="globalLoginContainerInput">
                         <button class="global-login-container-button" id="globalLoginContainerButton"></button>
 
-                        <p class="login-username-label" id="loginUsernameLabel">Identifiant</p>
-                        <input type="text" class="login-username-input" id="loginUsernameInput" placeholder="Votre identifiant Pronote ou ENT", autocomplete="username", name="username">
-                        <p class="login-password-label" id="loginPasswordLabel">Mot de passe</p>
+                        <p class="login-username-label" id="loginUsernameLabel" data-i18n="login.username">Identifiant</p>
+                        <input type="text" class="login-username-input" id="loginUsernameInput" placeholder="Votre identifiant Pronote ou ENT", autocomplete="username", name="username" data-i18n-placeholder="login.usernamePlaceholder">
+                        <p class="login-password-label" id="loginPasswordLabel" data-i18n="login.password">Mot de passe</p>
 
                         <div class="password-input-wrapper">
-                            <input type="password" class="login-password-input" id="loginPasswordInput" placeholder="Votre mot de passe", autocomplete="current-password", name="password">
+                            <input type="password" class="login-password-input" id="loginPasswordInput" placeholder="Votre mot de passe", autocomplete="current-password", name="password" data-i18n-placeholder="login.passwordPlaceholder">
 
-                            <button type="button" id="togglePassword" class="toggle-password" aria-label="Afficher le mot de passe">
+                            <button type="button" id="togglePassword" class="toggle-password" aria-label="Afficher le mot de passe" data-i18n-aria-label="login.showPassword">
                                 <i class="fa-solid fa-eye" aria-hidden="true"></i>
                             </button>
                         </div>
 
 
-                        <button class="login-submit-button" id="loginSubmitButton">Se connecter</button>
+                        <button class="login-submit-button" id="loginSubmitButton" data-i18n="login.submit">Se connecter</button>
 
                         <div class="login-options-container" id="loginOptionsContainer">
                             <button class="login-option-box" id="loginGeolocButton">
                                 <i class="fa-regular fa-compass"></i>
                                 <div class="option-text-container">
-                                    <h2 class="options-button-title" id="geolocButtonTitle">Utilisez la géolocalisation</h2>
-                                    <p class="options-button-subtitle" id="geolocButtonSubtitle">Activez la géolocalisation afin de localiser les établissements proches de vous</p>
+                                    <h2 class="options-button-title" id="geolocButtonTitle" data-i18n="login.geolocation">Utilisez la géolocalisation</h2>
+                                    <p class="options-button-subtitle" id="geolocButtonSubtitle" data-i18n="login.geolocationDesc">Activez la géolocalisation afin de localiser les établissements proches de vous</p>
                                 </div>
                             </button>
 
                             <button class="login-option-box" id="loginSearchCityButton">
                                 <i class="fa-solid fa-magnifying-glass"></i>
                                 <div class="option-text-container">
-                                    <h2 class="options-button-title">Recherchez votre ville</h2>
-                                    <p class="options-button-subtitle">Recherchez le nom de votre ville dans la barre de recherche</p>
+                                    <h2 class="options-button-title" data-i18n="login.searchCity">Recherchez votre ville</h2>
+                                    <p class="options-button-subtitle" data-i18n="login.searchCityDesc">Recherchez le nom de votre ville dans la barre de recherche</p>
                                 </div>
                             </button>
 
                             <button class="login-option-box" id="loginLinkButton">
                                 <i class="fa-solid fa-link"></i>
                                 <div class="option-text-container">
-                                    <h2 class="options-button-title">Vous avez un lien ?</h2>
-                                    <p class="options-button-subtitle">Utilisez le lien direct de votre établissement</p>
+                                    <h2 class="options-button-title" data-i18n="login.link">Vous avez un lien ?</h2>
+                                    <p class="options-button-subtitle" data-i18n="login.linkDesc">Utilisez le lien direct de votre établissement</p>
                                 </div>
                             </button>
                         </div>
-                        <p class="login-safety-text">
-                            Conformement à notre <u><a href="https://safety.pronotif.tech/docs/politique-de-confidentialite" target="_blank">politique de confidentialité</a></u> vos données de géolocalisation ne sont jamais enregistrées.
+                        <p class="login-safety-text" data-i18n="login.safetyText">
+                            Conformement à notre <u><a href="https://safety.pronotif.tech/docs/politique-de-confidentialite" target="_blank" data-i18n="login.privacyPolicy">politique de confidentialité</a></u> vos données de géolocalisation ne sont jamais enregistrées.
                             <i class="fa-solid fa-lock"></i>
                         </p>
                     </div>
@@ -276,10 +276,10 @@
             <div id="settingsView" class="view hidden">
                 <div class="settings-container">
                     <div class="settings-header">
-                        <h1 class="settings-title">Paramètres</h1>
+                        <h1 class="settings-title" data-i18n="settings.title">Paramètres</h1>
                     </div>
                     
-                    <h2 class="settings-section-title">Personnalisation</h2>
+                    <h2 class="settings-section-title" data-i18n="settings.personalization">Personnalisation</h2>
 
                     <div class="settings-section">
                         <button class="settings-item" id="settingsAppearanceItem">
@@ -287,11 +287,11 @@
                                 <i class="fa-solid fa-palette"></i>
                             </div>
                             <div class="settings-item-content">
-                                <h3 class="settings-item-title">Apparence</h3>
-                                <p class="settings-item-subtitle">Changez le thème de l'application.</p>
+                                <h3 class="settings-item-title" data-i18n="settings.appearance">Apparence</h3>
+                                <p class="settings-item-subtitle" data-i18n="settings.appearanceDesc">Changez le thème de l'application.</p>
                             </div>
                             <div class="settings-item-action">
-                                <span class="settings-item-label">Système</span>
+                                <span class="settings-item-label" data-i18n="settings.system">Système</span>
                                 <i class="fa-solid fa-chevron-right"></i>
                             </div>
                         </button>
@@ -301,17 +301,31 @@
                                 <i class="fa-solid fa-pen"></i>
                             </div>
                             <div class="settings-item-content">
-                                <h3 class="settings-item-title">Mon Nom</h3>
-                                <p class="settings-item-subtitle">Modifiez votre nom dans Pronot'if.</p>
+                                <h3 class="settings-item-title" data-i18n="settings.myName">Mon Nom</h3>
+                                <p class="settings-item-subtitle" data-i18n="settings.myNameDesc">Modifiez votre nom dans Pronot'if.</p>
                             </div>
                             <div class="settings-item-action">
-                                <span class="settings-item-label">Changer</span>
+                                <span class="settings-item-label" data-i18n="settings.change">Changer</span>
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </div>
+                        </button>
+
+                        <button class="settings-item" id="settingsLanguageItem">
+                            <div class="settings-item-icon">
+                                <i class="fa-solid fa-globe"></i>
+                            </div>
+                            <div class="settings-item-content">
+                                <h3 class="settings-item-title" data-i18n="settings.language">Langue</h3>
+                                <p class="settings-item-subtitle" data-i18n="settings.languageDesc">Choisissez la langue de l'application.</p>
+                            </div>
+                            <div class="settings-item-action">
+                                <span class="settings-item-label" id="currentLanguageLabel" data-i18n="settings.french">Français</span>
                                 <i class="fa-solid fa-chevron-right"></i>
                             </div>
                         </button>
                     </div>
 
-                    <h2 class="settings-section-title">Notifications</h2>
+                    <h2 class="settings-section-title" data-i18n="settings.notifications">Notifications</h2>
                     
                     <div class="settings-section">
                         <div class="settings-item" id="settingsNotificationsItem">
@@ -319,8 +333,8 @@
                                 <i class="fa-solid fa-bell"></i>
                             </div>
                             <div class="settings-item-content">
-                                <h3 class="settings-item-title">Rappels de cours</h3>
-                                <p class="settings-item-subtitle">Vous recevrez des rappels avant chaque cours de votre journée.</p>
+                                <h3 class="settings-item-title" data-i18n="settings.classReminders">Rappels de cours</h3>
+                                <p class="settings-item-subtitle" data-i18n="settings.classRemindersDesc">Vous recevrez des rappels avant chaque cours de votre journée.</p>
                             </div>
                             <div class="settings-item-action">
                                 <label class="settings-toggle">
@@ -335,8 +349,8 @@
                                 <i class="fa-solid fa-hourglass-end"></i>
                             </div>
                             <div class="settings-item-content">
-                                <h3 class="settings-item-title">Délai</h3>
-                                <p class="settings-item-subtitle">Le délai avant lequel vous recevez ces rappels.</p>
+                                <h3 class="settings-item-title" data-i18n="settings.delay">Délai</h3>
+                                <p class="settings-item-subtitle" data-i18n="settings.delayDesc">Le délai avant lequel vous recevez ces rappels.</p>
                                 <div class="settings-time-selector">
                                     <button class="settings-time-option" data-time="1">1 min</button>
                                     <button class="settings-time-option" data-time="3">3 min</button>
@@ -351,8 +365,8 @@
                                 <i class="fa-solid fa-utensils"></i>
                             </div>
                             <div class="settings-item-content">
-                                <h3 class="settings-item-title">Menu du jour</h3>
-                                <p class="settings-item-subtitle">Vous recevrez une notification avec le menu du jour à l'heure de manger.</p>
+                                <h3 class="settings-item-title" data-i18n="settings.menu">Menu du jour</h3>
+                                <p class="settings-item-subtitle" data-i18n="settings.menuDesc">Vous recevrez une notification avec le menu du jour à l'heure de manger.</p>
                             </div>
                             <div class="settings-item-action">
                                 <label class="settings-toggle">
@@ -367,8 +381,8 @@
                                 <i class="fa-solid fa-clipboard"></i>
                             </div>
                             <div class="settings-item-content">
-                                <h3 class="settings-item-title">Devoirs non faits</h3>
-                                <p class="settings-item-subtitle">Chaque soir vous recevrez une notification si des devoirs marqués comme non faits sont à rendre pour le lendemain.</p>
+                                <h3 class="settings-item-title" data-i18n="settings.homeworkNotDone">Devoirs non faits</h3>
+                                <p class="settings-item-subtitle" data-i18n="settings.homeworkNotDoneDesc">Chaque soir vous recevrez une notification si des devoirs marqués comme non faits sont à rendre pour le lendemain.</p>
                             </div>
                             <div class="settings-item-action">
                                 <label class="settings-toggle">
@@ -384,8 +398,8 @@
                                 <i class="fa-solid fa-lock"></i>
                             </div>
                             <div class="settings-item-content">
-                                <h3 class="settings-item-title">Faire son sac</h3>
-                                <p class="settings-item-subtitle">Chaque soir recevez une notification pour ne pas oublier de faire votre sac.</p>
+                                <h3 class="settings-item-title" data-i18n="settings.packBackpack">Faire son sac</h3>
+                                <p class="settings-item-subtitle" data-i18n="settings.packBackpackDesc">Chaque soir recevez une notification pour ne pas oublier de faire votre sac.</p>
                             </div>
                             <div class="settings-item-action">
                                 <label class="settings-toggle">
@@ -397,7 +411,7 @@
                         </div>
                     </div>
 
-                    <h2 class="settings-section-title">Compte & Sécurité</h2>
+                    <h2 class="settings-section-title" data-i18n="settings.accountSecurity">Compte & Sécurité</h2>
                     
                     <div class="settings-section">
                         <button class="settings-item" id="settingsLogoutItem">
@@ -405,11 +419,11 @@
                                 <i class="fa-solid fa-arrow-right-from-bracket"></i>
                             </div>
                             <div class="settings-item-content">
-                                <h3 class="settings-item-title">Se déconnecter</h3>
-                                <p class="settings-item-subtitle">Vous déconnecte de votre compte Pronot'if</p>
+                                <h3 class="settings-item-title" data-i18n="settings.logout">Se déconnecter</h3>
+                                <p class="settings-item-subtitle" data-i18n="settings.logoutDesc">Vous déconnecte de votre compte Pronot'if</p>
                             </div>
                             <div class="settings-item-action">
-                                <span class="settings-item-label">Déconnexion</span>
+                                <span class="settings-item-label" data-i18n="settings.logoutAction">Déconnexion</span>
                                 <i class="fa-solid fa-chevron-right"></i>
                             </div>
                         </button>
@@ -419,17 +433,17 @@
                                 <i class="fa-solid fa-trash"></i>
                             </div>
                             <div class="settings-item-content">
-                                <h3 class="settings-item-title">Supprimer mon compte</h3>
-                                <p class="settings-item-subtitle">Vous déconnecte et efface votre compte de nos serveurs. Attention cette action est irréversible.</p>
+                                <h3 class="settings-item-title" data-i18n="settings.deleteAccount">Supprimer mon compte</h3>
+                                <p class="settings-item-subtitle" data-i18n="settings.deleteAccountDesc">Vous déconnecte et efface votre compte de nos serveurs. Attention cette action est irréversible.</p>
                             </div>
                             <div class="settings-item-action">
-                                <span class="settings-item-label">Effacer</span>
+                                <span class="settings-item-label" data-i18n="settings.deleteAccountAction">Effacer</span>
                                 <i class="fa-solid fa-chevron-right"></i>
                             </div>
                         </button>
                     </div>
 
-                    <h2 class="settings-section-title">À Propos</h2>
+                    <h2 class="settings-section-title" data-i18n="settings.about">À Propos</h2>
                     
                     <div class="settings-section">
                         <a href="https://go.pronotif.tech/donate" style="text-decoration: none;" target="_blank">
@@ -438,12 +452,10 @@
                                     <i class="fa-solid fa-heart"></i>
                                 </div>
                                 <div class="settings-item-content">
-                                    <h3 class="settings-item-title">Faire un Don</h3>
-                                    <p class="settings-item-subtitle">Pronot'if est un projet étudiant à but non lucratif, nous ne gagnons pas d'argent avec le projet alors si vous aimez cette appli n'hésitez pas à nous aider.</p>
+                                    <h3 class="settings-item-title" data-i18n="settings.donate">Faire un Don</h3>
+                                    <p class="settings-item-subtitle" data-i18n="settings.donateDesc">Pronot'if est un projet étudiant à but non lucratif, nous ne gagnons pas d'argent avec le projet alors si vous aimez cette appli n'hésitez pas à nous aider.</p>
                                 </div>
-                                <div class="settings-item-action">
-                                    <i class="fa-solid fa-chevron-right"></i>
-                                </div>
+                                <i class="fa-solid fa-chevron-right"></i>
                             </button>
                         </a>
 
@@ -452,11 +464,11 @@
                                 <i class="fa-solid fa-bug"></i>
                             </div>
                             <div class="settings-item-content">
-                                <h3 class="settings-item-title">Reporter un bug</h3>
-                                <p class="settings-item-subtitle">Vous avez trouvé un bug ? Dites-nous comment l'améliorer.</p>
+                                <h3 class="settings-item-title" data-i18n="settings.reportBug">Reporter un bug</h3>
+                                <p class="settings-item-subtitle" data-i18n="settings.reportBugDesc">Vous avez trouvé un bug ? Dites-nous comment le corriger.</p>
                             </div>
                             <div class="settings-item-action">
-                                <span class="settings-item-label">Reporter</span>
+                                <span class="settings-item-label" data-i18n="settings.reportBugAction">Reporter</span>
                                 <i class="fa-solid fa-chevron-right"></i>
                             </div>
                         </button>
@@ -474,15 +486,15 @@
                         <div class="dashboard-header">
                             <div class="welcome-section">
                                 <div class="welcome-text">
-                                    <p class="welcome-greeting" id="welcomeGreeting">Bonjour {FirstName} !</p>
-                                    <p class="welcome-subtitle" id="welcomeSubtitle">Voici un rapide aperçu de votre journée.</p>
+                                    <p class="welcome-greeting" id="welcomeGreeting" data-i18n="dashboard.greeting">Bonjour {FirstName} !</p>
+                                    <p class="welcome-subtitle" id="welcomeSubtitle" data-i18n="dashboard.subtitle">Voici un rapide aperçu de votre journée.</p>
                                 </div>
                             </div>
                         </div>
                         
                         <!-- Next course card -->
                         <div class="dashboard-card next-course-card">
-                            <div class="card-label">
+                            <div class="card-label" data-i18n="dashboard.nextClass">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
                                     <path d="M12 7v5l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -490,8 +502,8 @@
                                 Prochain cours
                             </div>
                             <div class="course-content">
-                                <h3 class="course-title">Chargement...</h3>
-                                <p class="course-details">Récupération des données...</p>
+                                <h3 class="course-title" data-i18n="dashboard.loading">Chargement...</h3>
+                                <p class="course-details" data-i18n="dashboard.fetchingData">Récupération des données...</p>
                             </div>
                         </div>
 
@@ -501,7 +513,7 @@
                                 <i class="fa-regular fa-heart"></i>
                             </span>
                             <p class="banner-text" id="bannerText">Merci d'avoir installé Pronot'if !</p>
-                            <button class="banner-info-btn" id="bannerInfoBtn" target="_blank">
+                            <button class="banner-info-btn" id="bannerInfoBtn" target="_blank" data-i18n="dashboard.bannerText">
                                 + d'infos <i class="fa-solid fa-arrow-up-right-from-square"></i>
                             </button>
                         </div>
@@ -511,7 +523,7 @@
 
                         <!-- Homework section -->
                         <div class="section-header">
-                            <h2>
+                            <h2 data-i18n="dashboard.tasksToFinish">
                                 <i class="fa-regular fa-square-check"></i>
                                 Tâches à finir
                             </h2>
@@ -549,51 +561,51 @@
 
         <!--Navbar -->
         <nav class="bottom-navbar">
-            <button class="navbar-item navbar-home active" id="navbarHomeBtn" aria-label="Accueil">
+            <button class="navbar-item navbar-home active" id="navbarHomeBtn" aria-label="Accueil" data-i18n-aria-label="navbar.home">
                 <i class="fa-solid fa-house"></i>
-                <span class="navbar-label">Accueil</span>
+                <span class="navbar-label" data-i18n="navbar.home">Accueil</span>
             </button>
-            <button class="navbar-item navbar-schedule disabled" id="navbarScheduleBtn" aria-label="Emploi du temps">
+            <button class="navbar-item navbar-schedule disabled" id="navbarScheduleBtn" aria-label="Emploi du temps" data-i18n-aria-label="navbar.schedule">
                 <i class="fa-solid fa-calendar"></i>
-                <span class="navbar-label">Emploi du temps</span>
+                <span class="navbar-label" data-i18n="navbar.schedule">Emploi du temps</span>
             </button>
-            <button class="navbar-item navbar-homework disabled" id="navbarHomeworkBtn" aria-label="Devoirs">
+            <button class="navbar-item navbar-homework disabled" id="navbarHomeworkBtn" aria-label="Devoirs" data-i18n-aria-label="navbar.homework">
                 <i class="fa-solid fa-clipboard-list"></i>
-                <span class="navbar-label">Devoirs</span>
+                <span class="navbar-label" data-i18n="navbar.homework">Devoirs</span>
             </button>
-            <button class="navbar-item navbar-settings" id="navbarSettingsBtn" aria-label="Paramètres">
+            <button class="navbar-item navbar-settings" id="navbarSettingsBtn" aria-label="Paramètres" data-i18n-aria-label="navbar.settings">
                 <i class="fa-solid fa-gear"></i>
-                <span class="navbar-label">Paramètres</span>
+                <span class="navbar-label" data-i18n="navbar.settings">Paramètres</span>
             </button>
         </nav>
 
         <div class="notification-prompt">
-            <h3 id="infoNotifTitle">
+            <h3 id="infoNotifTitle" data-i18n="notif.title">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="1.5rem" height="1.5rem">
                     <path d="M12 2C8.686 2 6 4.686 6 8v4.586l-1.293 1.293A1 1 0 0 0 4 15v1h16v-1a1 1 0 0 0-.293-.707L18 12.586V8c0-3.314-2.686-6-6-6zm0 20a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2z"/>
                 </svg>
                 Notifications
             </h3>
-            <p id="infoNotifText">Activez les notifications pour profiter pleinement de l'expérience Pronot'if.</p>
-            <button id="allowNotifButton" class="allow-button">Activer maintenant</button>
-            <button id="laterButton" class="later-button">Plus tard</button>
+            <p id="infoNotifText" data-i18n="notif.enableDesc">Activez les notifications pour profiter pleinement de l'expérience Pronot'if.</p>
+            <button id="allowNotifButton" class="allow-button" data-i18n="notif.enableBtn">Activer maintenant</button>
+            <button id="laterButton" class="later-button" data-i18n="notif.laterBtn">Plus tard</button>
         </div>
 
         <!-- Geolocation rationale modal -->
         <div id="geolocRationaleModal" class="geoloc-modal" role="dialog" aria-labelledby="geolocModalTitle" aria-describedby="geolocModalDesc" aria-modal="true" aria-hidden="true">
             <div class="geoloc-modal-content">
-                <h2 id="geolocModalTitle">Autoriser la géolocalisation ?</h2>
-                <p id="geolocModalDesc">
+                <h2 id="geolocModalTitle" data-i18n="modal.geoTitle">Autoriser la géolocalisation ?</h2>
+                <p id="geolocModalDesc" data-i18n="modal.geoDesc">
                     Nous utilisons votre position uniquement pour trouver les établissements à proximité.<br>
                     <b><u>Vos coordonnées ne sont jamais enregistrées.</b></u>
                 </p>
 
                 <div class="geoloc-modal-actions">
-                    <button id="geolocCancelBtn" class="geoloc-modal-btn secondary" type="button">Annuler</button>
-                    <button id="geolocProceedBtn" class="geoloc-modal-btn primary" type="button">Continuer</button>
+                    <button id="geolocCancelBtn" class="geoloc-modal-btn secondary" type="button" data-i18n="common.cancel">Annuler</button>
+                    <button id="geolocProceedBtn" class="geoloc-modal-btn primary" type="button" data-i18n="modal.geoProceed">Continuer</button>
                 </div>
 
-                <p class="geoloc-modal-footnote">
+                <p class="geoloc-modal-footnote" data-i18n="modal.geoFootnote">
                     <i class="fa-solid fa-lock" aria-hidden="true"></i>
                     Vous pourrez toujours utiliser la recherche manuelle si vous le souhaitez.
                 </p>
@@ -605,20 +617,20 @@
             <div class="theme-overlay"></div>
             <div class="theme-selector-container">
                 <div class="theme-selector-header">
-                    <h2 class="theme-selector-title">Thème</h2>
+                    <h2 class="theme-selector-title" data-i18n="modal.theme">Thème</h2>
                 </div>
                 <div class="theme-selector-content">
                     <button class="theme-option" id="themeLight" data-theme="light">
                         <i class="fa-solid fa-sun"></i>
-                        <span>Clair</span>
+                        <span data-i18n="modal.light">Clair</span>
                     </button>
                     <button class="theme-option" id="themeDark" data-theme="dark">
                         <i class="fa-solid fa-moon"></i>
-                        <span>Sombre</span>
+                        <span data-i18n="modal.dark">Sombre</span>
                     </button>
                     <button class="theme-option" id="themeSystem" data-theme="system">
                         <i class="fa-solid fa-circle-half-stroke"></i>
-                        <span>Système</span>
+                        <span data-i18n="modal.system">Système</span>
                     </button>
                 </div>
             </div>
@@ -629,14 +641,38 @@
             <div class="name-edit-overlay"></div>
             <div class="name-edit-container">
                 <div class="name-edit-header">
-                    <h2 class="name-edit-title">Modifier votre nom</h2>
+                    <h2 class="name-edit-title" data-i18n="modal.editName">Modifier votre nom</h2>
                 </div>
                 <div class="name-edit-content">
-                    <input type="text" id="nameEditInput" class="name-edit-input" placeholder="Entrez votre nom" maxlength="50">
+                    <input type="text" id="nameEditInput" class="name-edit-input" placeholder="Entrez votre nom" maxlength="50" data-i18n-placeholder="modal.enterName">
                 </div>
                 <div class="name-edit-footer">
-                    <button class="name-edit-cancel" id="nameEditCancel">Annuler</button>
-                    <button class="name-edit-save" id="nameEditSave">Enregistrer</button>
+                    <button class="name-edit-cancel" id="nameEditCancel" data-i18n="common.cancel">Annuler</button>
+                    <button class="name-edit-save" id="nameEditSave" data-i18n="common.save">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+
+        <!--Language Selector Modal-->
+        <div id="languageSelectorModal" class="language-selector-modal hidden" role="dialog" aria-modal="true">
+            <div class="language-overlay"></div>
+            <div class="language-selector-container">
+                <div class="language-selector-header">
+                    <h2 class="language-selector-title" data-i18n="modal.language">Langue</h2>
+                </div>
+                <div class="language-selector-content">
+                    <button class="language-option" id="languageFr" data-language="fr">
+                        <span class="language-flag">🇫🇷</span>
+                        <span class="language-name" data-i18n="modal.french">Français</span>
+                    </button>
+                    <button class="language-option" id="languageEs" data-language="es">
+                        <span class="language-flag">🇪🇸</span>
+                        <span class="language-name" data-i18n="modal.spanish">Español</span>
+                    </button>
+                    <button class="language-option" id="languageEn" data-language="en">
+                        <span class="language-flag">🇺🇸</span>
+                        <span class="language-name" data-i18n="modal.english">English</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -646,8 +682,8 @@
             <div class="time-picker-overlay"></div>
             <div class="time-picker-container">
                 <div class="time-picker-header">
-                    <button class="time-picker-cancel" id="timePickerCancel">Annuler</button>
-                    <button class="time-picker-done" id="timePickerDone">Définir</button>
+                    <button class="time-picker-cancel" id="timePickerCancel" data-i18n="common.cancel">Annuler</button>
+                    <button class="time-picker-done" id="timePickerDone" data-i18n="common.set">Définir</button>
                 </div>
                 <div class="time-picker-wheel-container">
                     <div class="time-picker-wheel" id="timePickerHours"></div>

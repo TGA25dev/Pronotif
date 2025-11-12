@@ -641,6 +641,20 @@ function populateSettingsUI(settings) {
             console.log(`[Settings] Set backpack reminder time to ${hours}h${minutes}`);
         }
     }
+
+    //update language label
+    if ('language' in settings) {
+        const languageNames = {
+            'fr': 'Français',
+            'es': 'Español',
+            'en': 'English'
+        };
+        const currentLanguageLabel = document.getElementById('currentLanguageLabel');
+        if (currentLanguageLabel && languageNames[settings.language]) {
+            currentLanguageLabel.textContent = languageNames[settings.language];
+            console.log(`[Settings] Set language to ${settings.language}`);
+        }
+    }
 }
 
 async function performLogout() {
@@ -2414,6 +2428,102 @@ async function fetchFirebaseConfig() {
 
 
 document.addEventListener('DOMContentLoaded', async () => {
+    let currentLanguageData = {};
+
+    async function loadLanguage(languageCode) {
+        try {
+            console.log(`[i18n] Loading language: ${languageCode}`);
+            const response = await fetch(`../locales/${languageCode}.json`, {
+                cache: 'no-store'
+            });
+            
+            if (!response.ok) {
+                console.error(`[i18n] Failed to load language file for ${languageCode}`);
+                return false;
+            }
+            
+            currentLanguageData = await response.json();
+            console.log(`[i18n] Language loaded successfully:`, currentLanguageData);
+            applyLanguageToPage();
+            return true;
+        } catch (error) {
+            console.error(`[i18n] Error loading language:`, error);
+            return false;
+        }
+    }
+
+    function getNestedValue(obj, keyPath) {
+        return keyPath.split('.').reduce((current, key) => current?.[key], obj);
+    }
+
+    function applyLanguageToPage() {
+        //Find all elements with data-i18n attribute and update their text content
+        document.querySelectorAll('[data-i18n]').forEach(element => {
+            const key = element.getAttribute('data-i18n');
+            const value = getNestedValue(currentLanguageData, key);
+            if (value) {
+                element.textContent = value;
+            }
+        });
+        
+        //Find all elements with data-i18n-placeholder attribute and update their placeholder
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+            const key = element.getAttribute('data-i18n-placeholder');
+            const value = getNestedValue(currentLanguageData, key);
+            if (value) {
+                element.placeholder = value;
+            }
+        });
+
+        //Titles
+        document.querySelectorAll('[data-i18n-title]').forEach(element => {
+            const key = element.getAttribute('data-i18n-title');
+            const value = getNestedValue(currentLanguageData, key);
+            if (value) {
+                element.title = value;
+            }
+        });
+        
+        console.log('[i18n] Language applied to page elements');
+    }
+
+    function updateLanguageOptions() {
+        const currentLanguage = localStorage.getItem('language') || 'fr';
+        const languageOptions = document.querySelectorAll('.language-option');
+        
+        languageOptions.forEach(option => {
+            const lang = option.getAttribute('data-language');
+            if (lang === currentLanguage) {
+                option.classList.add('selected');
+            } else {
+                option.classList.remove('selected');
+            }
+        });
+    }
+
+    let userLanguage = localStorage.getItem('language');
+    
+    //If no saved language try from browser
+    if (!userLanguage) {
+
+        const browserLanguage = navigator.language || navigator.userLanguage;
+        const browserLangCode = browserLanguage.split('-')[0].toLowerCase();
+        //check if supported, defauult to french
+        const supportedLanguages = ['fr', 'en', 'es'];
+        userLanguage = supportedLanguages.includes(browserLangCode) ? browserLangCode : 'fr';
+        
+        console.log('[i18n] Detected browser language:', browserLanguage, '-> Using:', userLanguage);
+    } else {
+        console.log('[i18n] Using saved language:', userLanguage);
+    }
+    
+    localStorage.setItem('language', userLanguage);
+    
+    console.log('[i18n] Initializing with language:', userLanguage);
+    //await loadLanguage(userLanguage);
+
+    //TODO: ENABLE I18N WHEN READY
+
     //Check for post reload toast
     const postReloadToastData = localStorage.getItem('postReloadToast');
     if (postReloadToastData) {
@@ -3211,6 +3321,81 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (e.target === nameEditOverlay) {
                 const cancelBtn = document.getElementById('nameEditCancel');
                 if (cancelBtn) cancelBtn.click();
+            }
+        });
+    }
+
+    //Language selector
+    const settingsLanguageItem = document.getElementById('settingsLanguageItem');
+    if (settingsLanguageItem) {
+        settingsLanguageItem.addEventListener('click', () => {
+            console.log('[Settings] Language selector button clicked');
+            const modal = document.getElementById('languageSelectorModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                updateLanguageOptions();
+            }
+        });
+    }
+
+    const languageOptions = document.querySelectorAll('.language-option');
+    languageOptions.forEach(option => {
+        option.addEventListener('click', async () => {
+            const language = option.getAttribute('data-language');
+            console.log('[Settings] Language selected:', language);
+            
+            localStorage.setItem('language', language);
+            
+            //const loaded = await loadLanguage(language); Uncomment when i18n is ready
+            const loaded = false
+
+            //DISABLED TEMPORARLY
+            
+            if (loaded) {
+                updateLanguageOptions();
+                
+                //Update the label in settings
+                const languageNames = {
+                    'fr': 'Français',
+                    'es': 'Español',
+                    'en': 'English'
+                };
+                const currentLanguageLabel = document.getElementById('currentLanguageLabel');
+                if (currentLanguageLabel) {
+                    currentLanguageLabel.textContent = languageNames[language];
+                }
+
+            } else {
+                console.error('[Settings] Failed to load language');
+                toast.error('Erreur', 'Impossible de charger la langue');
+                return;
+            }
+            
+            setTimeout(() => {
+                const modal = document.getElementById('languageSelectorModal');
+                if (modal) {
+                    modal.classList.add('closing');
+                    setTimeout(() => {
+                        modal.classList.add('hidden');
+                        modal.classList.remove('closing');
+                    }, 300);
+                }
+            }, 300);
+        });
+    });
+
+    const languageOverlay = document.querySelector('.language-overlay');
+    if (languageOverlay) {
+        languageOverlay.addEventListener('click', (e) => {
+            if (e.target === languageOverlay) {
+                const modal = document.getElementById('languageSelectorModal');
+                if (modal) {
+                    modal.classList.add('closing');
+                    setTimeout(() => {
+                        modal.classList.add('hidden');
+                        modal.classList.remove('closing');
+                    }, 300);
+                }
             }
         });
     }

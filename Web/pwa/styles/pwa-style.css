@@ -2501,6 +2501,128 @@ body:has(#settingsView:not(.hidden)) .bottom-navbar {
     background: var(--primary-dark);
 }
 
+/*Language Selector Modal*/
+.language-selector-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.language-selector-modal.hidden {
+    display: none !important;
+}
+
+.language-selector-modal.closing {
+    animation: fadeOut 0.3s ease-out forwards;
+}
+
+.language-selector-modal.closing .language-overlay {
+    animation: fadeOut 0.3s ease-out forwards;
+}
+
+.language-selector-modal.closing .language-selector-container {
+    animation: slideDown 0.3s ease-out forwards;
+}
+
+.language-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    animation: fadeIn 0.3s ease-out;
+    pointer-events: auto;
+    z-index: 0;
+}
+
+.language-selector-container {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 90%;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    animation: slideUp 0.3s ease-out;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.language-selector-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.language-selector-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin: 0;
+}
+
+.language-selector-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+}
+
+.language-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px;
+    border: 2px solid #e5e5e5;
+    border-radius: 12px;
+    background: var(--bg);
+    cursor: pointer;
+    font-family: "Satoshi", "sans-serif";
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-dark);
+    transition: all 0.2s ease;
+}
+
+.language-option:hover {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+
+.language-option:active {
+    transform: scale(0.95);
+}
+
+.language-option.selected {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(7, 161, 159, 0.3);
+}
+
+.language-flag {
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.language-name {
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: inherit;
+}
+
 .time-picker-modal {
     position: fixed;
     top: 0;
