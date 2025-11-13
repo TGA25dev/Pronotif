@@ -58,10 +58,11 @@ class PronotifUser:
         self.notification_delay = user_data.get('notification_delay', 5)
         self.fcm_token = user_data.get('fcm_token')
         
-        # Time settings
+        # Time and region settings
         self.timezone = user_data.get('timezone', 'Europe/Paris')
         self.timezone_obj = pytz.timezone(self.timezone)
         self.region = decrypt(user_data.get("region"))
+        self.lang = user_data.get("lang", "fr")
         
         # Lunch time
         self.lunch_times = {
@@ -77,6 +78,7 @@ class PronotifUser:
         self.get_bag_ready_reminder_time = user_data.get('get_bag_ready_reminder_time', '20:00') #def to 20:00
         
         # Feature flags
+        self.lunch_menu = bool(user_data.get('lunch_menu', 0))
         self.evening_menu = bool(user_data.get('evening_menu', 0))
         self.unfinished_homework_reminder = bool(user_data.get('unfinished_homework_reminder', 0))
         self.get_bag_ready_reminder = bool(user_data.get('get_bag_ready_reminder', 0))

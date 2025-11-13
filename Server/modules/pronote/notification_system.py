@@ -712,8 +712,8 @@ async def menu_food_check(user):
         user.menu_message_printed_today = False
         user.last_check_date = current_date
     
-    # Skip if evening_menu is disabled
-    if not user.evening_menu:
+    # Skip if evening or lunch menu is disabled
+    if not user.evening_menu and not user.lunch_menu:
         return
     
     # Function to fetch menus from Pronote
@@ -725,7 +725,7 @@ async def menu_food_check(user):
 
         if not menus:
             if not user.menu_message_printed_today:
-                logger.debug(f"No menus found for user {user.user_hash} today")
+                logger.debug(f"No menus found for user {user.user_hash[:4]}**** today")
                 user.menu_message_printed_today = True
             return
         
@@ -740,19 +740,19 @@ async def menu_food_check(user):
         if lunch_time is not None:
             lunch_hour, lunch_minute = lunch_time
             
-            if current_time.hour == lunch_hour and current_time.minute == lunch_minute:
-                logger.info(f"Lunch time for user {user.user_hash}! ({today.strftime('%A')} {lunch_hour:02d}:{lunch_minute:02d})")
+            if current_time.hour == lunch_hour and current_time.minute == lunch_minute and user.lunch_menu:
+                logger.info(f"Lunch time for user {user.user_hash[:4]}**** ! ({today.strftime('%A')} {lunch_hour:02d}:{lunch_minute:02d})")
                 dinner_time = False
                 await send_menu_notification(user, menus, dinner_time)
         
         # Check for dinner time at 18:55 if evening menu is enabled
         if current_time.hour == 18 and current_time.minute == 55 and user.evening_menu:
-            logger.info(f"Dinner time for user {user.user_hash}! ({today.strftime('%A')} 18:55)")
+            logger.info(f"Dinner time for user {user.user_hash[:4]}**** ! ({today.strftime('%A')} 18:55)")
             dinner_time = True
             await send_menu_notification(user, menus, dinner_time)
         
     except Exception as e:
-        logger.error(f"Error checking menus for user {user.user_hash}: {e}")
+        logger.error(f"Error checking menus for user {user.user_hash[:4]}**** : {e}")
         sentry_sdk.capture_exception(e)
 
 async def send_menu_notification(user, menus, dinner_time):
