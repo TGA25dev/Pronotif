@@ -553,7 +553,7 @@ async function fetchSettings() {
     //fetch all user settings on page loading
     try {
         console.log('[Settings] Fetching user settings from backend...');
-        const response = await wrapFetch('https://api.pronotif.tech/v1/app/fetch?fields=class_reminder,lunch_menu,unfinished_homework_reminder,unfinished_homework_reminder_time,get_bag_ready_reminder,get_bag_ready_reminder_time,notification_delay,student_firstname', {
+        const response = await wrapFetch('https://api.pronotif.tech/v1/app/fetch?fields=class_reminder,lunch_menu,evening_menu,unfinished_homework_reminder,unfinished_homework_reminder_time,get_bag_ready_reminder,get_bag_ready_reminder_time,notification_delay,student_firstname', {
             method: 'GET',
             credentials: 'include',
             cache: 'no-store'
@@ -585,7 +585,8 @@ function populateSettingsUI(settings) {
     
     const settingMappings = {
         'class_reminder': 'settingsNotificationsItem',
-        'lunch_menu': 'settingsMenuDuJourItem',
+        'lunch_menu': 'settingsMenuDuMidiItem',
+        'evening_menu': 'settingsMenuDuSoirItem',
         'unfinished_homework_reminder': 'settingsHomeworkNotDoneItem',
         'get_bag_ready_reminder': 'settingsPackBackpackItem'
     };
@@ -3438,8 +3439,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 case 'settingsNotificationsItem':
                     settingName = 'class_reminder';
                     break;
-                case 'settingsMenuDuJourItem':
+                case 'settingsMenuDuMidiItem':
                     settingName = 'lunch_menu';
+                    break;
+                case 'settingsMenuDuSoirItem':
+                    settingName = 'evening_menu';
                     break;
                 case 'settingsHomeworkNotDoneItem':
                     settingName = 'unfinished_homework_reminder';
