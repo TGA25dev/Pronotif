@@ -757,7 +757,8 @@ def set_settings():
         
         #Define text settings
         text_settings = [
-            'student_firstname'
+            'student_firstname',
+            'lang'
         ]
         
         for setting in boolean_settings:
@@ -829,7 +830,8 @@ def set_settings():
             'unfinished_homework_reminder_time',
             'get_bag_ready_reminder_time',
             'student_firstname',
-            'notification_delay'
+            'notification_delay',
+            "lang"
         }
         
         #Validate all field names against whitelist
@@ -1330,7 +1332,7 @@ def fetch_student_data():
         "next_class_name", "next_class_room", "next_class_teacher", 
         "next_class_start", "next_class_end", "homeworks",
         "fcm_token", "token_updated_at", "timestamp", "is_active",
-        "class_reminder", "lunch_menu", "unfinished_homework_reminder_time", "get_bag_ready_reminder_time"
+        "class_reminder", "lunch_menu", "unfinished_homework_reminder_time", "get_bag_ready_reminder_time", "lang"
     }
 
     # Validate and sanitize requested fields
