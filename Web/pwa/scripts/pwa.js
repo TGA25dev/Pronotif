@@ -426,11 +426,11 @@ function getGreeting() {
 
     //time based greetings
     if (hour >= 5 && hour < 18) {
-        return "Bonjour";
+        return getI18nValue("dashboard.greetingDay");
     } else if (hour >= 18 && hour < 22) {
-        return "Bonsoir";
+        return getI18nValue("dashboard.greetingEvening");
     } else {
-        return "Bonne nuit";
+        return getI18nValue("dashboard.greetingNight");
     }
 }
 
@@ -534,17 +534,17 @@ async function updateSettings(settingsObj) {
         if (response.ok) {
             const result = await response.json();
             console.log('Settings updated successfully:', result.updated_settings);
-            toast.success('Paramètres sauvegardés', 'Vos modifications ont été enregistrées.');
+            toast.success(getI18nValue("toast.settingsSavedSuccessTitle"), getI18nValue("toast.settingsSavedSuccessDesc"));
             return true;
         } else {
             const error = await response.json();
             console.error('Settings update failed:', error);
-            toast.error('Erreur', error.error || 'Impossible de sauvegarder les paramètres.');
+            toast.error(getI18nValue("toast.globalErrorTitle"), error.error || getI18nValue("toast.settingsSavedErrorDesc"));
             return false;
         }
     } catch (error) {
         console.error('Network error during settings update:', error);
-        toast.error('Erreur réseau', 'Veuillez réessayer.');
+        toast.error(getI18nValue("toast.networkErrorTitle"), getI18nValue("toast.networkErrorDesc"));
         return false;
     }
 }
@@ -553,7 +553,7 @@ async function fetchSettings() {
     //fetch all user settings on page loading
     try {
         console.log('[Settings] Fetching user settings from backend...');
-        const response = await wrapFetch('https://api.pronotif.tech/v1/app/fetch?fields=class_reminder,lunch_menu,evening_menu,unfinished_homework_reminder,unfinished_homework_reminder_time,get_bag_ready_reminder,get_bag_ready_reminder_time,notification_delay,student_firstname', {
+        const response = await wrapFetch('https://api.pronotif.tech/v1/app/fetch?fields=class_reminder,lunch_menu,evening_menu,unfinished_homework_reminder,unfinished_homework_reminder_time,get_bag_ready_reminder,get_bag_ready_reminder_time,notification_delay,student_firstname,lang', {
             method: 'GET',
             credentials: 'include',
             cache: 'no-store'
@@ -588,7 +588,8 @@ function populateSettingsUI(settings) {
         'lunch_menu': 'settingsMenuDuMidiItem',
         'evening_menu': 'settingsMenuDuSoirItem',
         'unfinished_homework_reminder': 'settingsHomeworkNotDoneItem',
-        'get_bag_ready_reminder': 'settingsPackBackpackItem'
+        'get_bag_ready_reminder': 'settingsPackBackpackItem',
+        'lang': "currentLanguageLabel"
     };
     
     // Update toggle switches
@@ -644,16 +645,17 @@ function populateSettingsUI(settings) {
     }
 
     //update language label
-    if ('language' in settings) {
+    if ('lang' in settings) {
         const languageNames = {
             'fr': 'Français',
             'es': 'Español',
             'en': 'English'
         };
         const currentLanguageLabel = document.getElementById('currentLanguageLabel');
-        if (currentLanguageLabel && languageNames[settings.language]) {
-            currentLanguageLabel.textContent = languageNames[settings.language];
-            console.log(`[Settings] Set language to ${settings.language}`);
+        if (currentLanguageLabel && languageNames[settings.lang]) {
+            currentLanguageLabel.textContent = languageNames[settings.lang];
+            localStorage.setItem('language', settings.lang);
+            console.log(`[Settings] Set language to ${settings.lang}`);
         }
     }
 }
@@ -670,8 +672,8 @@ async function performLogout() {
             
             //Save toast to localStorage 
             localStorage.setItem('postReloadToast', JSON.stringify({
-                title: 'Vous avez été déconnecté avec succès.',
-                message: "Bon retour parmi nous !",
+                title: getI18nValue("toast.logoutSuccessTitle"),
+                message: getI18nValue("toast.toast.logoutSuccessDesc"),
                 type: 'success'
             }));
             
@@ -680,8 +682,8 @@ async function performLogout() {
             
             //Re-save after clearing
             localStorage.setItem('postReloadToast', JSON.stringify({
-                title: 'Vous avez été déconnecté avec succès.',
-                message: "Bon retour parmi nous !",
+                title: getI18nValue("toast.logoutSuccessTitle"),
+                message: getI18nValue("toast.toast.logoutSuccessDesc"),
                 type: 'success'
             }));
             
@@ -715,17 +717,17 @@ async function performLogout() {
             window.location.reload();
         } else {
             console.error('Logout failed:', response.statusText);
-            toast.error("Échec de la déconnexion.", "Veuillez réessayer.");
+            toast.error(getI18nValue("toast.logoutFailedTitle"), getI18nValue("toast.logoutFailedDesc"));
         }
     } catch (error) {
         console.error('Network error during logout:', error);
-        toast.error("Erreur réseau lors de la déconnexion.", "Veuillez réessayer.");
+        toast.error(getI18nValue("toast.networkErrorTitle"), getI18nValue("toast.networkErrorDesc"));
     }
 }
 
 async function performDeleteAccount() {
     try {
-        const confirmed = confirm("⚠️ Êtes-vous sûr(e) de vouloir supprimer votre compte ? Cette action est irréversible.");
+        const confirmed = confirm(getI18nValue("toast.deleteAccountConfirmation"));
         if (!confirmed) {
             console.log('Account deletion cancelled by user');
             return;
@@ -740,8 +742,8 @@ async function performDeleteAccount() {
             console.log('Account deleted successfully');
             
             localStorage.setItem('postReloadToast', JSON.stringify({
-                title: 'Compte supprimé avec succès !',
-                message: "Toutes vos données ont été supprimées de nos serveurs.",
+                title: getI18nValue("toast.deleteAccountSuccessTitle"),
+                message: getI18nValue("toast.deleteAccountSuccessDesc"),
                 type: 'success'
             }));
             
@@ -749,8 +751,8 @@ async function performDeleteAccount() {
             sessionStorage.clear();
             
             localStorage.setItem('postReloadToast', JSON.stringify({
-                title: 'Compte supprimé avec succès !',
-                message: "Toutes vos données ont été supprimées de nos serveurs.",
+                title: getI18nValue("toast.deleteAccountSuccessTitle"),
+                message: getI18nValue("toast.deleteAccountSuccessDesc"),
                 type: 'success'
             }));
             
@@ -783,11 +785,11 @@ async function performDeleteAccount() {
             setTimeout(() => window.location.reload(), 2000);
         } else {
             console.error('Account deletion failed:', response.statusText);
-            toast.error("Échec de la suppression du compte.", "Veuillez réessayer.");
+            toast.error(getI18nValue("toast.accountRemovalErrorTitle"), getI18nValue("toast.accountRemovalErrorDesc"));
         }
     } catch (error) {
         console.error('Network error during account deletion:', error);
-        toast.error("Erreur réseau lors de la suppression du compte.", "Veuillez réessayer.");
+        toast.error(getI18nValue("toast.networkErrorTitle"), getI18nValue("toast.networkErrorDesc"));
     }
 }
 
@@ -890,17 +892,21 @@ const loginHandler = {
         const globalLoginContainerButton = document.getElementById('globalLoginContainerButton');
         const globalLoginContainerInput = document.getElementById('globalLoginContainerInput');
 
-        loginHeaderAppTitle.textContent = "C'est parti !";
-        loginHeaderAppSubTitle.textContent = "Etape 1 sur 3";
+        loginHeaderAppTitle.textContent = getI18nValue("login.letsgoLabel");
 
-        loginCardContainerTitle.textContent = "Recherchez votre ville";
+        const stepsTemplate = getI18nValue("login.steps");
+        loginHeaderAppSubTitle.textContent = stepsTemplate && stepsTemplate.includes('{current_step}')
+            ? stepsTemplate.replace('{current_step}', '1')
+            : stepsTemplate || "Etape 1 sur 3";
+
+        loginCardContainerTitle.textContent = getI18nValue("login.searchCityTitle");
         loginOptionsContainer.style.display = "none";
 
         globalLoginContainerButton.style.display = "block";
         globalLoginContainerInput.style.display = "block";
 
-        globalLoginContainerButton.textContent = "Rechercher";
-        globalLoginContainerInput.placeholder = "Entrez le nom de votre ville";
+        globalLoginContainerButton.textContent = getI18nValue("login.globalSearchButtonLabel");
+        globalLoginContainerInput.placeholder = getI18nValue("login.globalSearchInputPlaceholder");
         
         const self = this;
         globalLoginContainerButton.onclick = function() {
@@ -916,7 +922,7 @@ const loginHandler = {
 
         if (!manualPronoteLink) {
             console.error("[MANUAL LINK] Error: Empty Pronote link");
-            toast.warning("Lien manquant", "Veuillez entrer le lien Pronote de votre établissement.");
+            toast.warning(getI18nValue("toast.missingLinkTitle"), getI18nValue("toast.missingLinkDesc"));
             return;
         }
 
@@ -940,7 +946,7 @@ const loginHandler = {
         .finally(() => {
             // Reset button state
             globalLoginContainerButton.disabled = false;
-            globalLoginContainerButton.textContent = "Rechercher";
+            globalLoginContainerButton.textContent = getI18nValue("login.globalSearchButtonLabel");
         });
 
     },
@@ -955,7 +961,7 @@ const loginHandler = {
         
         if (!cityName) {
             console.error("[SEARCH] Error: Empty city name");
-            toast.warning("Attention", "Veuillez entrer le nom de votre ville.");
+            toast.warning(getI18nValue("toast.emptyCityNameTitle"), getI18nValue("toast.emptyCityNameDesc"));
             return;
         }
         
@@ -963,7 +969,7 @@ const loginHandler = {
         globalLoginContainerButton.disabled = true;
         globalLoginContainerButton.style.cursor = "not-allowed";
         globalLoginContainerButton.style.opacity = "0.6";
-        globalLoginContainerButton.textContent = "Recherche en cours...";
+        globalLoginContainerButton.textContent = getI18nValue("login.processingSearchButtonLabel");
         
         // Prepare API query parameters
         const apiUrl = `https://api.pronotif.tech/v1/login/get_schools?coords=false&city_name=${encodeURIComponent(cityName)}`;
@@ -982,7 +988,7 @@ const loginHandler = {
         .then(data => {
             // Reset button state
             globalLoginContainerButton.disabled = false;
-            globalLoginContainerButton.textContent = "Rechercher";
+            globalLoginContainerButton.textContent = getI18nValue("login.globalSearchButtonLabel");
 
             globalLoginContainerButton.style.cursor = "pointer";
             globalLoginContainerButton.style.opacity = "1";
@@ -994,13 +1000,13 @@ const loginHandler = {
         })
         .catch(error => {
             console.error("[SEARCH] Search failed:", error);
-            toast.error("Une erreur est survenue lors de la recherche.", "Veuillez réessayer plus tard.");
+            toast.error(getI18nValue("toast.searchFailedTitle"), getI18nValue("toast.searchFailedDesc"));
         })
         .finally(() => {
             
             // Reset button state
             globalLoginContainerButton.disabled = false;
-            globalLoginContainerButton.textContent = "Rechercher";
+            globalLoginContainerButton.textContent = getI18nValue("login.globalSearchButtonLabel");
 
             globalLoginContainerButton.style.cursor = "pointer";
             globalLoginContainerButton.style.opacity = "1";
@@ -1071,13 +1077,13 @@ const loginHandler = {
 
             if (!('geolocation' in navigator)) {
                 console.error("Geolocation is not supported by this browser.");
-                toast.error("Erreur", "La géolocalisation n'est pas disponible sur cet appareil.");
+                toast.error(getI18nValue("toast.globalErrorTitle"), getI18nValue("toast.geolocUnavailableDesc"));
                 resetButtons();
                 return;
             }
 
-            geolocButtonTitle.textContent = "Recherche en cours...";
-            geolocButtonSubtitle.textContent = "Veuillez patienter";
+            geolocButtonTitle.textContent = getI18nValue("login.processingSearchButtonLabel");
+            geolocButtonSubtitle.textContent = getI18nValue("dashboard.pleaseWait");
             
             navigator.geolocation.getCurrentPosition(
                 position => {
@@ -1110,9 +1116,9 @@ const loginHandler = {
                     console.error("[GEO] Geolocation error:", error);
 
                     if (error.message === "User denied Geolocation") {
-                        toast.warning("Vous avez refusé la demande de géolocalisation.", "Veuillez autoriser la géolocalisation ou utiliser la recherche manuelle.");
+                        toast.warning(getI18nValue("toast.geolocRequestRefusedTitle"), getI18nValue("toast.geolocRequestRefusedDesc"));
                     } else {
-                        toast.error("Une erreur est survenue lors de la géolocalisation.", "Veuillez réessayer ou utiliser la recherche manuelle.");
+                        toast.error(getI18nValue("toast.geolocRequestErrorTitle"), getI18nValue("toast.geolocRequestErrorDesc"));
                     }
 
                     resetButtons();
@@ -1132,8 +1138,8 @@ const loginHandler = {
                 citySearchButton.style.opacity = "1";
                 directLinkButton.style.opacity = "1";
 
-                geolocButtonTitle.textContent = "Utilisez la géolocalisation";
-                geolocButtonSubtitle.textContent = "Activez la géolocalisation afin de localiser les établissements proches de vous";
+                geolocButtonTitle.textContent = getI18nValue("login.geolocationTitle");
+                geolocButtonSubtitle.textContent = getI18nValue("login.geolocationDesc");
             }
         }
     },
@@ -1150,9 +1156,14 @@ const loginHandler = {
         const globalLoginContainerInput = document.getElementById('globalLoginContainerInput');
 
         // Update header information
-        loginHeaderAppTitle.textContent = "Presque fini !";
-        loginHeaderAppSubTitle.textContent = "Etape 2 sur 3";
-        loginCardContainerTitle.textContent = "Sélectionnez votre établissement";
+        loginHeaderAppTitle.textContent = getI18nValue("login.almostDoneLabel");
+        
+        const stepsTemplate = getI18nValue("login.steps");
+        loginHeaderAppSubTitle.textContent = stepsTemplate && stepsTemplate.includes('{current_step}')
+            ? stepsTemplate.replace('{current_step}', '2')
+            : stepsTemplate || "Etape 2 sur 3";
+
+        loginCardContainerTitle.textContent = getI18nValue("login.selectSchoolLabel");
         
         // Hide the search input and button
         globalLoginContainerButton.style.display = "none";
@@ -1173,12 +1184,12 @@ const loginHandler = {
         if (schools.length === 0 && data.schools.is_international === true) {
             const noResults = document.createElement('div');
             noResults.className = 'no-results-message';
-            noResults.innerHTML = "Cette ville ne semble pas être en France...<br><br>Utilisez le lien Pronote de votre établissement afin de vous connecter.";
+            noResults.innerHTML = `${getI18nValue("login.cityNotInFranceMessage")}<br><br>${getI18nValue("login.useManualLinkMessage")}`;
             schoolsContainer.appendChild(noResults);
 
             const backButton = document.createElement('button');
             backButton.className = 'back-button';
-            backButton.textContent = "Utiliser le lien manuel";
+            backButton.textContent = getI18nValue("login.useManualLinkActionMessage");
             backButton.onclick = () => this.handleDirectLinkButtonClick();
             schoolsContainer.appendChild(backButton);
             return;
@@ -1186,12 +1197,12 @@ const loginHandler = {
         } else if (schools.length === 0) {
             const noResults = document.createElement('div');
             noResults.className = 'no-results-message';
-            noResults.innerHTML = "Aucun établissement trouvé dans cette zone.<br><br>Essayez une autre ville.";
+            noResults.innerHTML = `${getI18nValue("login.noSchoolsFoundMessage")}<br><br>${getI18nValue("login.tryAnotherCityMessage")}`;
             schoolsContainer.appendChild(noResults);
 
             const backButton = document.createElement('button');
             backButton.className = 'back-button';
-            backButton.textContent = "Retour à la recherche";
+            backButton.textContent = getI18nValue("login.backToSearchButtonLabel");
             backButton.onclick = () => this.handleCitySearchButtonClick();
             schoolsContainer.appendChild(backButton);
             return;
@@ -1244,7 +1255,7 @@ const loginHandler = {
         
         const backButton = document.createElement('button');
         backButton.className = 'back-button';
-        backButton.textContent = "Retour à la recherche";
+        backButton.textContent = getI18nValue("login.backToSearchButtonLabel");
         backButton.onclick = () => this.handleCitySearchButtonClick();
         
         backButtonContainer.appendChild(backButton);
@@ -1272,15 +1283,15 @@ const loginHandler = {
                     nomEtab: data.nomEtab || data.nom_etab || ""
                 };
             } else if (data.isValid === false) {
-                toast.warning("Le lien Pronote fourni n'est pas valide.", "Veuillez vérifier et réessayer.");
+                toast.warning(getI18nValue("toast.malformedPronoteLinkTitle"), getI18nValue("toast.malformedPronoteLinkDesc"));
                 return { isValid: false };
             } else {
-                toast.error(data.message || "Erreur de connexion.", "Veuillez réessayer plus tard.");
+                toast.error(data.message || getI18nValue("toast.networkErrorTitle"), getI18nValue("toast.networkErrorDesc"));
                 return { isValid: false };
             }
         })
         .catch(() => {
-            toast.error("Erreur", "Erreur réseau.");
+            toast.error(getI18nValue("toast.networkErrorTitle"), getI18nValue("toast.networkErrorDesc"));
             return { isValid: false };
         });
     },
@@ -1304,9 +1315,14 @@ const loginHandler = {
             globalLoginContainerButton.style.display = "none";
         }
         
-        loginHeaderAppTitle.textContent = "Dernière étape !";
-        loginHeaderAppSubTitle.textContent = "Etape 3 sur 3";
-        loginCardContainerTitle.textContent = "Entrez vos identifiants Pronote";
+        loginHeaderAppTitle.textContent = getI18nValue("login.lastStepLabel");
+
+        const stepsTemplate = getI18nValue("login.steps");
+        loginHeaderAppSubTitle.textContent = stepsTemplate && stepsTemplate.includes('{current_step}')
+            ? stepsTemplate.replace('{current_step}', '3')
+            : stepsTemplate || "Etape 3 sur 3";
+
+        loginCardContainerTitle.textContent = getI18nValue("login.enterCredentialsLabel");
 
         const loginOptionsContainer = document.getElementById('loginOptionsContainer');
         if (loginOptionsContainer) {
@@ -1341,18 +1357,18 @@ const loginHandler = {
                 loginSubmitButton.disabled = true;
                 loginSubmitButton.style.cursor = "not-allowed";
                 loginSubmitButton.style.opacity = "0.6";
-                loginSubmitButton.textContent = "Connexion en cours...";
+                loginSubmitButton.textContent = getI18nValue("login.processingLoginLabel");
 
                 const student_username = loginUsernameInput.value.trim();
                 const student_password = loginPasswordInput.value;
 
                 if (!student_username || !student_password) {
-                    toast.warning("Attention", "Veuillez remplir tous les champs.");
+                    toast.warning(getI18nValue("toast.fillAllEntriesErrorTitle"), getI18nValue("toast.fillAllEntriesErrorDesc"));
 
                     loginSubmitButton.disabled = false;
                     loginSubmitButton.style.cursor = "pointer";
                     loginSubmitButton.style.opacity = "1";
-                    loginSubmitButton.textContent = "Se connecter";
+                    loginSubmitButton.textContent = getI18nValue("login.loginButtonLabel");
                     return;
                 }
                 // Call backend API
@@ -1374,13 +1390,13 @@ const loginHandler = {
                     const data = await response.json().catch(() => ({}));
 
                     if (response.status === 401) {
-                        toast.warning("Oups..", "Identifiant ou mot de passe incorrect.");
+                        toast.warning(getI18nValue("toast.wrongCredentialsTitle"), getI18nValue("toast.wrongCredentialsDesc"));
                         console.error("Wrong credentials provided.");
 
                         loginSubmitButton.disabled = false;
                         loginSubmitButton.style.cursor = "pointer";
                         loginSubmitButton.style.opacity = "1";
-                        loginSubmitButton.textContent = "Se connecter";
+                        loginSubmitButton.textContent = getI18nValue("login.loginButtonLabel");
 
                     } else if (data.success) {
                         console.log("Login successful!");
@@ -1388,22 +1404,22 @@ const loginHandler = {
                         loginSubmitButton.disabled = false;
                         loginSubmitButton.style.cursor = "pointer";
                         loginSubmitButton.style.opacity = "1";
-                        loginSubmitButton.textContent = "Se connecter";
+                        loginSubmitButton.textContent = getI18nValue("login.loginButtonLabel");
 
                         try {
                             showDashboard();
                         } catch(err) {
                             console.error("Error while showing dashboard after login:", err);
-                            toast.error("Une erreur est survenue", "Veuillez réessayer plus tard.");
+                            toast.error(getI18nValue("toast.generalErrorTitle"), getI18nValue("toast.generalErrorDesc"));
                         }
 
                     } else {
-                        toast.error(data.message || "Erreur de connexion.", "Veuillez réessayer plus tard.");
+                        toast.error(data.message || getI18nValue("toast.networkErrorTitle"), getI18nValue("toast.networkErrorDesc"));
 
                         loginSubmitButton.disabled = false;
                         loginSubmitButton.style.cursor = "pointer";
                         loginSubmitButton.style.opacity = "1";
-                        loginSubmitButton.textContent = "Se connecter";
+                        loginSubmitButton.textContent = getI18nValue("login.loginButtonLabel");
                     }
                 });
             };
@@ -1425,17 +1441,21 @@ const loginHandler = {
 
         globalLoginContainerInput.value = "";
 
-        loginHeaderAppTitle.textContent = "C'est parti !";
-        loginHeaderAppSubTitle.textContent = "Etape 1 sur 3";
+        loginHeaderAppTitle.textContent = getI18nValue("login.letsgoLabel");
 
-        loginCardContainerTitle.textContent = "Entrez le lien de connexion Pronote";
+        const stepsTemplate = getI18nValue("login.steps");
+        loginHeaderAppSubTitle.textContent = stepsTemplate && stepsTemplate.includes('{current_step}')
+            ? stepsTemplate.replace('{current_step}', '1')
+            : stepsTemplate || "Etape 1 sur 3";
+
+        loginCardContainerTitle.textContent = getI18nValue("login.enterLinkLabel");
         loginOptionsContainer.style.display = "none";
 
         globalLoginContainerButton.style.display = "block";
         globalLoginContainerInput.style.display = "block";
 
-        globalLoginContainerButton.textContent = "Rechercher";
-        globalLoginContainerInput.placeholder = "Entrez votre lien Pronote";
+        globalLoginContainerButton.textContent = getI18nValue("login.globalSearchButtonLabel");
+        globalLoginContainerInput.placeholder = getI18nValue("login.enterLinkLabel");
         
         const self = this;
         globalLoginContainerButton.onclick = function() {
@@ -1738,16 +1758,16 @@ function updateNextCourseCard(data) {
     if (data.next_class_name && data.next_class_name !== null && data.next_class_name !== '') {
         let titleText = data.next_class_name;
         if (data.next_class_teacher && data.next_class_teacher !== null && data.next_class_teacher !== '') {
-            titleText += ` avec ${data.next_class_teacher}`;
+            titleText += ` ${getI18nValue("dashboard.withWord")} ${data.next_class_teacher}`;
         }
         
         let detailsText = '';
         if (data.next_class_room && data.next_class_room !== null && data.next_class_room !== '') {
-            detailsText += `Salle ${data.next_class_room}`;
+            detailsText += `${getI18nValue("dashboard.roomWord")} ${data.next_class_room}`;
         }
         if (data.next_class_start && data.next_class_start !== null && data.next_class_start !== '') {
             if (detailsText) detailsText += ' · ';
-            detailsText += `Début à ${data.next_class_start}`;
+            detailsText += `${getI18nValue("dashboard.startAtWord")} ${data.next_class_start}`;
         }
         
         if (courseTitle) courseTitle.textContent = titleText;
@@ -1756,8 +1776,8 @@ function updateNextCourseCard(data) {
         nextCourseCard.style.display = 'block';
     } else {
         // No next class data available
-        if (courseTitle) courseTitle.textContent = "Aucun cours à venir";
-        if (courseDetails) courseDetails.textContent = "Profitez de votre temps libre";
+        if (courseTitle) courseTitle.textContent = getI18nValue('dashboard.noUpcomingClassTitle');
+        if (courseDetails) courseDetails.textContent = getI18nValue('dashboard.noUpcomingClassDesc');
         nextCourseCard.style.display = 'block';
     }
 }
@@ -1776,8 +1796,8 @@ function showHomeworkLoadingState() {
                 <i class="fa-solid fa-spinner" style="animation: spin 2s linear infinite;"></i>
             </div>
             <div class="homework-content">
-                <h3 class="homework-subject">Chargement...</h3>
-                <p class="homework-task">Veuillez patienter</p>
+                <h3 class="homework-subject">${getI18nValue('dashboard.loading')}</h3>
+                <p class="homework-task">${getI18nValue('dashboard.fetchingData')}</p>
             </div>
         </div>
     `;
@@ -1798,8 +1818,8 @@ function updateHomeworkSection(data) {
         homeworkList.innerHTML = `
             <div class="homework-item empty-state">
                 <div class="homework-content">
-                    <h3 class="homework-subject">Aucun devoir</h3>
-                    <p class="homework-task">Vous n'avez pas de devoirs pour cette semaine</p>
+                    <h3 class="homework-subject">${getI18nValue("dashboard.noHomeworksTitle")}</h3>
+                    <p class="homework-task">${getI18nValue("dashboard.noHomeworksDesc")}</p>
                 </div>
             </div>
         `;
@@ -1816,11 +1836,11 @@ function updateHomeworkSection(data) {
         const dayDiff = Math.floor((dueDate - today) / (1000 * 60 * 60 * 24));
         
         if (dayDiff === 0) {
-            dueDateText = 'Aujourd\'hui';
+            dueDateText = getI18nValue("days.today");
         } else if (dayDiff === 1) {
-            dueDateText = 'Demain';
+            dueDateText = getI18nValue("days.tomorrow");
         } else if (dayDiff > 1 && dayDiff <= 7) {
-            const daysOfWeek = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+            const daysOfWeek = [getI18nValue("days.sunday"), getI18nValue("days.monday"), getI18nValue("days.tuesday"), getI18nValue("days.wednesday"), getI18nValue("days.thursday"), getI18nValue("days.friday"), getI18nValue("days.saturday")];
             dueDateText = daysOfWeek[dueDate.getDay()];
         } else {
             dueDateText = homework.due_date;
@@ -1839,8 +1859,8 @@ function updateHomeworkSection(data) {
                 ${statusIcon}
             </div>
             <div class="homework-content">
-                <h3 class="homework-subject">${homework.subject || 'Sans matière'}</h3>
-                <p class="homework-task">${homework.description || 'Pas de description'}</p>
+                <h3 class="homework-subject">${homework.subject || getI18nValue("dashboard.noHomeworkSubject")}</h3>
+                <p class="homework-task">${homework.description || getI18nValue("dashboard.noHomeworkDescription")}</p>
             </div>
             <div class="homework-due">${dueDateText}</div>
         `;
@@ -2313,8 +2333,8 @@ if (allowNotifButton) {
             
             allowNotifButton.style.display = 'none';
             laterButton.style.display = 'none';
-            infoNotifTitle.textContent = 'Notifications activées ! 🎉';
-            infoNotifText.textContent = 'Vous recevrez maintenant des notifications pour vos cours et devoirs.';
+            infoNotifTitle.textContent = getI18nValue('toast.enableNotificationSuccessTitle');
+            infoNotifText.textContent = getI18nValue('toast.enableNotificationSuccessDesc');
             
             const currentPermission = Notification.permission;
 
@@ -2323,7 +2343,7 @@ if (allowNotifButton) {
 
             if (isIOS) {
                 console.log('iOS detected, showing success message then reloading');
-                infoNotifText.textContent = "L'application va redémarrer pour finaliser l'activation des notifications.";
+                infoNotifText.textContent = getI18nValue("toast.iosNotificationsAppRestartMessage");
                 // Show success message for 5 seconds and reload
                 setTimeout(() => {
                     window.location.reload();
@@ -2383,8 +2403,8 @@ if (allowNotifButton) {
 
             allowNotifButton.style.display = 'none';
             laterButton.style.display = 'none';
-            infoNotifTitle.textContent = 'Notifications désactivées ! 😢';
-            infoNotifText.textContent = 'Pour les activer à nouveau rendez-vous dans les paramètres de votre appareil.';
+            infoNotifTitle.textContent = getI18nValue('toast.enableNotificationDeniedTitle');
+            infoNotifText.textContent = getI18nValue('toast.enableNotificationDeniedDesc');
 
             setTimeout(() => {
                 //Fade out
@@ -2427,10 +2447,17 @@ async function fetchFirebaseConfig() {
     return response.json();
 }
 
+let currentLanguageData = {};
+
+function getNestedValue(obj, keyPath) {
+    return keyPath.split('.').reduce((current, key) => current?.[key], obj);
+}
+
+function getI18nValue(keyPath) {
+    return getNestedValue(currentLanguageData, keyPath) || keyPath;
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
-    let currentLanguageData = {};
-
     async function loadLanguage(languageCode) {
         try {
             console.log(`[i18n] Loading language: ${languageCode}`);
@@ -2451,10 +2478,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error(`[i18n] Error loading language:`, error);
             return false;
         }
-    }
-
-    function getNestedValue(obj, keyPath) {
-        return keyPath.split('.').reduce((current, key) => current?.[key], obj);
     }
 
     function applyLanguageToPage() {
@@ -2521,9 +2544,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     localStorage.setItem('language', userLanguage);
     
     console.log('[i18n] Initializing with language:', userLanguage);
-    //await loadLanguage(userLanguage);
-
-    //TODO: ENABLE I18N WHEN READY
+    await loadLanguage(userLanguage);
 
     //Check for post reload toast
     const postReloadToastData = localStorage.getItem('postReloadToast');
@@ -3033,7 +3054,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         navbarScheduleBtn.addEventListener('click', (e) => {
             e.preventDefault();
             if (toast) {
-                toast.info('Patience !', 'Cette section arrive très bientôt...');
+                toast.info(getI18nValue("toast.comingSoonTitle"), getI18nValue("toast.comingSoonDesc"));
             }
             console.log('[Navbar] Schedule button clicked - coming soon');
         });
@@ -3043,7 +3064,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         navbarHomeworkBtn.addEventListener('click', (e) => {
             e.preventDefault();
             if (toast) {
-                toast.info('Patience', 'Cette section arrive très bientôt...');
+                toast.info(getI18nValue("toast.comingSoonTitle"), getI18nValue("toast.comingSoonDesc"));
             }
             console.log('[Navbar] Homework button clicked - coming soon');
         });
@@ -3093,12 +3114,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     form.appendToDom();
                     form.open();
                 } else {
-                    toast.warning("Erreur", "Le système de rapport n'est pas disponible.");
+                    toast.warning(getI18nValue("toast.globalErrorTitle"), getI18nValue("toast.reportSystemUnavailableDes"));
                     console.warn('[Settings] Sentry feedback not available');
                 }
             } catch (error) {
                 console.error('[Settings] Error opening feedback:', error);
-                toast.error("Erreur", "Impossible d'ouvrir le formulaire de rapport.");
+                toast.error(getI18nValue("toast.globalErrorTitle"), getI18nValue("toast.reportSystemErrorDesc"));
             }
         });
     }
@@ -3149,13 +3170,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function updateThemeLabel(theme) {
         const labelMap = {
-            'light': 'Clair',
-            'dark': 'Sombre',
-            'system': 'Système'
+            'light': getI18nValue('modal.light'),
+            'dark': getI18nValue('modal.dark'),
+            'system': getI18nValue('modal.system')
         };
         const settingsAppearanceLabel = document.querySelector('#settingsAppearanceItem .settings-item-label');
         if (settingsAppearanceLabel) {
-            settingsAppearanceLabel.textContent = labelMap[theme] || 'Système';
+            settingsAppearanceLabel.textContent = labelMap[theme] || getI18nValue('modal.system');
         }
     }
 
@@ -3265,12 +3286,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             const newName = input.value.trim();
             
             if (!newName) {
-                toast.error('Erreur', 'Veuillez entrer un nom');
+                toast.error(getI18nValue("toast.globalErrorTitle"), getI18nValue("toast.noGivenNameErrorDesc"));
                 return;
             }
             
             if (newName.length > 50) {
-                toast.error('Erreur', 'Le nom ne doit pas dépasser 50 caractères');
+                toast.error(getI18nValue("toast.globalErrorTitle"), getI18nValue("toast.noGivenNameErrorDesc"));
                 return;
             }
             
@@ -3347,10 +3368,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             localStorage.setItem('language', language);
             
-            //const loaded = await loadLanguage(language); Uncomment when i18n is ready
-            const loaded = false
-
-            //DISABLED TEMPORARLY
+            const loaded = await loadLanguage(language);
+            //const loaded = false //To disable i18n temporarily if needed
             
             if (loaded) {
                 updateLanguageOptions();
@@ -3366,9 +3385,29 @@ document.addEventListener('DOMContentLoaded', async () => {
                     currentLanguageLabel.textContent = languageNames[language];
                 }
 
+                // Update dashboard greeting immediately if on dashboard
+                const welcomeElement = document.getElementById('welcomeGreeting');
+                const welcomeSubtitle = document.getElementById('welcomeSubtitle');
+                const studentFirstName = localStorage.getItem('student_firstname') || null;
+                
+                if (welcomeElement) {
+                    if (studentFirstName) {
+                        welcomeElement.textContent = `${getGreeting()} ${studentFirstName} ! ${getTimeEmoji()}`;
+                    } else {
+                        welcomeElement.textContent = `${getGreeting()} ! ${getTimeEmoji()}`;
+                    }
+                }
+                
+                if (welcomeSubtitle) {
+                    welcomeSubtitle.textContent = getSubtitle();
+                }
+
+                //Save language preference to db
+                await updateSettings({ lang: language });
+
             } else {
                 console.error('[Settings] Failed to load language');
-                toast.error('Erreur', 'Impossible de charger la langue');
+                toast.error(getI18nValue("toast.globalErrorTitle"), getI18nValue("toast.changeLanguageFailedDesc"));
                 return;
             }
             
