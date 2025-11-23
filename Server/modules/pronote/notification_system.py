@@ -509,15 +509,60 @@ async def retry_with_backoff(func, user, *args, max_attempts=5) -> None:
                 return [] if func.__name__ in ['fetch_lessons', 'fetch_menus'] else None
             raise
 
+def get_i18n_value(lang: str, key: str, **kwargs) -> str:
+    """Get translated value from i18n files with variable substitution"""
+    global fr_file, en_file, es_file
+    
+    i18n_files = {
+        'fr': fr_file,
+        'en': en_file,
+        'es': es_file
+    }
+    
+    #Default to French
+    translations = i18n_files.get(lang, fr_file)
+    
+    if not translations:
+        logger.warning(f"No translations loaded for language: {lang}")
+        return key
+    
+    #nested keys
+    keys = key.split('.')
+    value = translations
+    
+    for k in keys:
+        if isinstance(value, dict):
+            value = value.get(k)
+        else:
+            logger.warning(f"Missing translation key: {key} for language: {lang}")
+            return key
+    
+    if not isinstance(value, str):
+        logger.warning(f"Translation key {key} is not a string for language: {lang}")
+        return key
+    
+    #placeholders substitution
+    if kwargs:
+        for placeholder, replacement in kwargs.items():
+            
+            value = value.replace(f"{{{placeholder}}}", str(replacement))
+    
+    return value
+
+
 def inform_user_relogin_is_needed(user):
     """
     Inform the user that relogin in the app is needed via notification
     """
+    lang = user.lang
+    
+    title = get_i18n_value(lang, 'notification.logoutInfoTitle')
+    body = get_i18n_value(lang, 'notification.logoutInfoDesc')
 
     send_notification_to_device(
         user.fcm_token,
-        title="Vous avez été déconnecté(e)",
-        body=f"Pour continuer, veuillez vous reconnecter à votre compte. Cela peut se produire si votre mot de passe a changé récemment ou si une erreur inconnue est survenue."
+        title=title,
+        body=body
     )
     
     # Clear session data from database
@@ -669,32 +714,56 @@ async def lesson_check(user):
                 else:
                     extra_space = ""
 
+                lang = user.lang
+                
                 if canceled:
                     # Send notification for canceled lesson
+                    title = get_i18n_value(lang, 'notification.cancelledClassTitle')
+                    body = get_i18n_value(lang, 'notification.cancelledClassBody',
+                        det=det,
+                        extra_space=extra_space,
+                        name=name,
+                        class_start_time=class_start_time
+                    )
                     send_notification_to_device(
                         user.fcm_token,
-                        title=f"❌ Cours annulé !",
-                        body=f"Le cours {det}{extra_space}{name} initialement prévu à {class_start_time} est annulé.",
+                        title=title,
+                        body=body,
                     )
                     logger.success(f"Sent cancellation notification to user {user.user_hash}")
 
                 elif not canceled:
-                    if room_name is None:
-                        class_time_message = f"Le cours {det}{extra_space}{name} commencera à {class_start_time}. {chosen_emoji}"
-
-                    else:  
-                        class_time_message = f"Le cours {det}{extra_space}{name} se fera en salle {room_name} et commencera à {class_start_time}. {chosen_emoji}"
-
-                    #logger.debug(class_time_message)
-        
-                    # S grammar
+                    # S grammar for minutes
                     s = "" if int(user.notification_delay) == 1 else "s"
-                    title = f"🔔 Prochain cours dans {user.notification_delay} minute{s} !"
+                    delay = user.notification_delay
+                    
+                    if room_name is None:
+                        class_time_message = get_i18n_value(lang, 'notification.classTimeNoRoomMessageDesc',
+                            det=det,
+                            extra_space=extra_space,
+                            name=name,
+                            class_start_time=class_start_time,
+                            chosen_emoji=chosen_emoji
+                        )
+                    else:  
+                        class_time_message = get_i18n_value(lang, 'notification.classTimeRoomMessageDesc',
+                            det=det,
+                            extra_space=extra_space,
+                            name=name,
+                            room_name=room_name,
+                            class_start_time=class_start_time,
+                            chosen_emoji=chosen_emoji
+                        )
+
+                    title = get_i18n_value(lang, 'notification.classTimeMessageTitle',
+                        delay=delay,
+                        s=s
+                    )
 
                     send_notification_to_device( 
                         user.fcm_token,
                         title=title,
-                        body=f"{class_time_message}",
+                        body=class_time_message,
                     ) #Send notification using Firebase
                     logger.success(f"Sent lesson notification to user {user.user_hash}")
         
@@ -810,24 +879,23 @@ async def send_menu_notification(user, menus, dinner_time):
             'dessert': get_menu_items(menu_items.dessert),
         }
 
+    lang = user.lang
+    
     for menu in menus:
         if dinner_time is False and menu.is_lunch:
             # Format lunch menu items
             menu_items = format_menu(menu)
 
             if all(menu_items.values()):  # Check that all categories are present
-                menu_text = (
-                    f"Au menu: {menu_items['first_meal']}, "
-                    f"{menu_items['main_meal']}, "
-                    f"{menu_items['side_meal']} "
-                    f"et {menu_items['dessert']} en dessert.\n"
-                    "Bon appétit ! 😁"
+                title = get_i18n_value(lang, 'notification.lunchTimeLunchTitle')
+                body = get_i18n_value(lang, 'notification.lunchTimeLunchDesc',
+                    menu_items=menu_items
                 )
 
                 send_notification_to_device(
                     user.fcm_token,
-                    title="🍽️ C'est l'heure de manger !",
-                    body=menu_text,
+                    title=title,
+                    body=body,
                 )
                 logger.success(f"Sent lunch menu notification to user {user.user_hash}")
             else:
@@ -838,18 +906,15 @@ async def send_menu_notification(user, menus, dinner_time):
             menu_items = format_menu(menu)
 
             if all(menu_items.values()):  # Check that all categories are present
-                menu_text = (
-                    f"Au menu: {menu_items['first_meal']}, "
-                    f"{menu_items['main_meal']}, "
-                    f"{menu_items['side_meal']} "
-                    f"et {menu_items['dessert']} en dessert.\n"
-                    "Bonne soirée ! 🌙"
+                title = get_i18n_value(lang, 'notification.lunchTimeEveningTitle')
+                body = get_i18n_value(lang, 'notification.lunchTimeEveningDesc',
+                    menu_items=menu_items
                 )
 
                 send_notification_to_device(
                     user.fcm_token,
-                    title="🌙 C'est l'heure du dîner !",
-                    body=menu_text,
+                    title=title,
+                    body=body,
                 )
                 logger.success(f"Sent dinner menu notification to user {user.user_hash}")
             else:
@@ -910,13 +975,15 @@ async def check_reminder_notifications(user):
         #if -> current time matches reminder time and setting is enabled and there are classes tomorrow
 
         if (current_time.hour == bag_reminder_time.hour and current_time.minute == bag_reminder_time.minute and user.get_bag_ready_reminder and class_tomorrow):
+            lang = user.lang
             
-            reminder_message = "Il est temps de préparer votre sac pour demain !"
+            title = get_i18n_value(lang, 'notification.getBagReadyTitle')
+            body = get_i18n_value(lang, 'notification.getBagReadyDesc')
             
             send_notification_to_device(
                 user.fcm_token,
-                title="📚 N'oubliez pas !",
-                body=reminder_message,
+                title=title,
+                body=body,
             )
             logger.success(f"Sent bag ready reminder to user {user.user_hash[:4]}**** !")
 
@@ -939,27 +1006,30 @@ async def check_reminder_notifications(user):
                             not_finished_homeworks_count += 1
                 
                 # Set reminder message based on homework completion status
+                lang = user.lang
 
                 if not_finished_homeworks_count == -1:
                     pass #Do not send notification if no homework was found
                 
                 else:
                     if not_finished_homeworks_count == 0:
-                        reminder_message = "Vous avez fini tous vos devoirs pour demain, vous pouvez souffler ! 😮‍💨"
-                        title = "✅ Reposez vous bien !"
+                        title = get_i18n_value(lang, 'notification.noUnfinishedHomeworkTitle')
+                        body = get_i18n_value(lang, 'notification.noUnfinishedHomeworkDesc')
 
                     elif not_finished_homeworks_count > 1:
-                        reminder_message = f"Il vous reste {not_finished_homeworks_count} devoirs à terminer pour demain."
-                        title = "📝 Devoirs non faits !"
+                        title = get_i18n_value(lang, 'notification.unfinishedHomeworkTitle')
+                        body = get_i18n_value(lang, 'notification.unfinishedHomeworkDesc',
+                            not_finished_homeworks_count=not_finished_homeworks_count
+                        )
 
-                    elif not_finished_homeworks_count == 1:  # not_finished_homeworks_count == 1
-                        reminder_message = "Il vous reste 1 devoir à terminer pour demain."
-                        title = "📝 Devoir non fait !"
+                    elif not_finished_homeworks_count == 1:
+                        title = get_i18n_value(lang, 'notification.singleUnfinishedHomeworkTitle')
+                        body = get_i18n_value(lang, 'notification.singleUnfinishedHomeworkDesc')
 
                     send_notification_to_device(
                         user.fcm_token,
                         title=title,
-                        body=reminder_message,
+                        body=body,
                     )
                     logger.success(f"Sent homework reminder to user {user.user_hash[:4]}**** !")
                 
@@ -984,6 +1054,30 @@ async def main():
     if not users:
         logger.critical("No active users found! Program will close in 2 seconds...")
         await asyncio.sleep(2)
+        sys.exit(1)
+
+
+    #Initialize i18n
+    global fr_file, en_file, es_file
+    
+    try:
+        web_dir = os.path.join(os.path.dirname(server_dir), 'Web')
+        locales_dir = os.path.join(web_dir, 'locales')
+        
+        with open(os.path.join(locales_dir, 'fr.json'), 'r', encoding='utf-8') as f:
+            fr_file = json.load(f)
+        
+        with open(os.path.join(locales_dir, 'en.json'), 'r', encoding='utf-8') as f:
+            en_file = json.load(f)
+        
+        with open(os.path.join(locales_dir, 'es.json'), 'r', encoding='utf-8') as f:
+            es_file = json.load(f)
+        
+        logger.success("Loaded i18n translation files from Web/locales successfully")
+
+    except FileNotFoundError as e:
+        logger.error(f"Failed to load i18n files from Web/locales: {e}")
+        sentry_sdk.capture_exception(e)
         sys.exit(1)
     
     # Start user processing tasks

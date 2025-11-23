@@ -186,5 +186,26 @@
     "thursday": "Jeudi",
     "today": "Aujourd\\'hui",
     "tomorrow": "Demain"
+  },
+  "notification": {
+    "logoutInfoTitle": "Vous avez été déconnecté(e)",
+    "logoutInfoDesc": "Pour continuer, veuillez vous reconnecter à votre compte. Cela peut se produire si votre mot de passe a changé récemment ou si une erreur inconnue est survenue.",
+    "cancelledClassTitle": "❌ Cours annulé !",
+    "cancelledClassBody": "Le cours {det}{extra_space}{name} initialement prévu à {class_start_time} est annulé.",
+    "classTimeMessageTitle": "🔔 Prochain cours dans {delay} minute{s} !",
+    "classTimeRoomMessageDesc": "Le cours {det}{extra_space}{name} se fera en salle {room_name} et commencera à {class_start_time}. {chosen_emoji}",
+    "lunchTimeLunchTitle": "🍽️ C'est l'heure de manger !",
+    "lunchTimeEveningTitle": "🌙 C'est l'heure du dîner !",
+    "lunchTimeLunchDesc": "Au menu: {menu_items['first_meal']}, {menu_items['main_meal']}, {menu_items['side_meal']} et {menu_items['dessert']} en dessert.\\n Bon appétit ! 😁",
+    "lunchTimeEveningDesc": "Au menu: {menu_items['first_meal']}, {menu_items['main_meal']}, {menu_items['side_meal']} et {menu_items['dessert']} en dessert.\\n Bonne soirée ! 🌙",
+    "getBagReadyTitle": "📚 N'oubliez pas !",
+    "getBagReadyDesc": "Il est temps de préparer votre sac pour demain !",
+    "noUnfinishedHomeworkTitle": "✅ Reposez vous bien !",
+    "noUnfinishedHomeworkDesc": "Vous avez fini tous vos devoirs pour demain, vous pouvez souffler ! 😮‍💨",
+    "unfinishedHomeworkTitle": "📝 Devoirs non faits !",
+    "unfinishedHomeworkDesc": "Il vous reste {not_finished_homeworks_count} devoirs à terminer pour demain.",
+    "singleUnfinishedHomeworkTitle": "Il vous reste 1 devoir à terminer pour demain.",
+    "singleUnfinishedHomeworkDesc": "📝 Devoir non fait !",
+    "classTimeNoRoomMessageDesc": "Le cours {det}{extra_space}{name} commencera à {class_start_time}. {chosen_emoji}"
   }
 }

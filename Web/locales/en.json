@@ -186,5 +186,26 @@
     "thursday": "Thursday",
     "today": "Today",
     "tomorrow": "Tomorrow"
+  },
+  "notification": {
+    "logoutInfoTitle": "You'v been logged out",
+    "logoutInfoDesc": "To contiue, please login again on your account. This can happen if your password has recently changed or if an unknown error has occured.",
+    "cancelledClassTitle": "❌ Class canceled!",
+    "cancelledClassBody": "The {det}{extra_space}{name} class originally scheduled for {class_start_time} has been canceled.",
+    "classTimeMessageTitle": "🔔 Next class in {delay} minute{s}!",
+    "classTimeRoomMessageDesc": "The {det} {extra_space} {name} class will be held in room {room_name} and will start at {class_start_time}. {chosen_emoji}",
+    "lunchTimeLunchTitle": "🍽️ Time to eat!",
+    "lunchTimeEveningTitle": "🌙 It's dinner time!",
+    "lunchTimeLunchDesc": "On the menu: {menu_items[‘first_meal’]}, {menu_items[‘main_meal’]}, {menu_items[‘side_meal’]}, and {menu_items[‘dessert’]} for dessert. Enjoy your meal! 😁",
+    "lunchTimeEveningDesc": "On the menu: {menu_items[‘first_meal’]}, {menu_items[‘main_meal’]}, {menu_items[‘side_meal’]}, and {menu_items[‘dessert’]} for dessert. Have a great evening! 🌙",
+    "getBagReadyTitle": "📚 Don't forget!",
+    "getBagReadyDesc": "It's time to pack your bag for tomorrow!",
+    "noUnfinishedHomeworkTitle": "✅ Rest well!",
+    "noUnfinishedHomeworkDesc": "You've finished all your homework for tomorrow, you can chill out! 😮‍💨",
+    "unfinishedHomeworkTitle": "📝 Unfinished homeworks!",
+    "unfinishedHomeworkDesc": "You still have {not_finished_homeworks_count} assignments to complete for tomorrow.",
+    "singleUnfinishedHomeworkTitle": "You have one assignment left to complete for tomorrow.",
+    "singleUnfinishedHomeworkDesc": "📝 Unfinished homework!",
+    "classTimeNoRoomMessageDesc": "The {det}{extra_space}{name} class will start at {class_start_time}. {chosen_emoji}"
   }
 }

@@ -186,5 +186,26 @@
     "thursday": "Jueves",
     "today": "Hoy",
     "tomorrow": "Mañana"
+  },
+  "notification": {
+    "logoutInfoTitle": "Has sido desconectad@",
+    "logoutInfoDesc": "Para continuar, tienes que volver a iniciar sesión en tu cuenta. Esto puede ocurrir si has cambiando tu contraseña recientemente o si se ha producido un error desconocido.",
+    "cancelledClassTitle": "❌ ¡Clase cancelada!",
+    "cancelledClassBody": "La clase {det}{extra_space}{name} prevista inicialmente a las {class_start_time} ha sido cancelada.",
+    "classTimeMessageTitle": "🔔 ¡Próxima clase en {delay} minuto{s}!",
+    "classTimeRoomMessageDesc": "La clase {det}{extra_space}{name} se impartirá en la sala {room_name} y comenzará a las {class_start_time}. {chosen_emoji}",
+    "lunchTimeLunchTitle": "🍽️ ¡Es hora de comer!",
+    "lunchTimeEveningTitle": "🌙 ¡Hora de cenar!",
+    "lunchTimeLunchDesc": "En el menú: {menu_items[“first_meal”]}, {menu_items[“main_meal”]}, {menu_items[“side_meal”]} y {menu_items[“dessert”]} de postre.\\n ¡Que aproveche! 😁",
+    "lunchTimeEveningDesc": "En el menú: {menu_items[“first_meal”]}, {menu_items[“main_meal”]}, {menu_items[“side_meal”]} y {menu_items[“dessert”]} de postre.\\n ¡Que pases una buena noche! 🌙",
+    "getBagReadyTitle": "📚 ¡No te olvides!",
+    "getBagReadyDesc": "¡Es hora de preparar tu mochila para mañana!",
+    "noUnfinishedHomeworkTitle": "✅ ¡Que descanses!",
+    "noUnfinishedHomeworkDesc": "Has terminado todos los deberes para mañana, ¡puedes relajarte! 😮‍💨",
+    "unfinishedHomeworkTitle": "📝 ¡Tareas sin hacer!",
+    "unfinishedHomeworkDesc": "Te quedan {not_finished_homeworks_count} tareas por terminar para mañana.",
+    "singleUnfinishedHomeworkTitle": "Te queda una tarea por terminar para mañana.",
+    "singleUnfinishedHomeworkDesc": "📝 ¡Tarea sin hacer!",
+    "classTimeNoRoomMessageDesc": "La classe {det}{extra_space}{name} comenzará a las {class_start_time}. {chosen_emoji}"
   }
 }
