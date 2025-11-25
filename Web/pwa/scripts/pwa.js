@@ -1572,14 +1572,14 @@ function initializeDashboard() {
         
         if (welcomeElement) {
             if (studentFirstName) {
-                welcomeElement.textContent = `${getGreeting()} ${studentFirstName} ! ${getTimeEmoji()}`;
+                welcomeElement.textContent = `${getGreeting()} ${studentFirstName} !`;
             } else {
                 welcomeElement.textContent = `${getGreeting()} ! ${getTimeEmoji()}`;
             }
         }
         
         if (welcomeSubtitle) {
-            welcomeSubtitle.textContent = getSubtitle();
+            welcomeSubtitle.textContent = `${getSubtitle()} ${getTimeEmoji()}`
         }
         
         // If no cached student data, fetch from API
@@ -1596,7 +1596,7 @@ function initializeDashboard() {
                     console.log('Fetched student name:', name);
                     localStorage.setItem('student_firstname', name);
                     if (welcomeElement) {
-                        welcomeElement.textContent = `${getGreeting()} ${name} ! ${getTimeEmoji()}`;
+                        welcomeElement.textContent = `${getGreeting()} ${name} !`;
                     }
                 }
             })
@@ -1673,8 +1673,8 @@ function loadDemoData() {
     const welcomeElement = document.getElementById('welcomeGreeting');
     const welcomeSubtitle = document.getElementById('welcomeSubtitle');
     if (welcomeElement) {
-        welcomeElement.textContent = `${getGreeting()} Demo ! ${getTimeEmoji()}`;
-        welcomeSubtitle.textContent = getSubtitle();
+        welcomeElement.textContent = `${getGreeting()} Demo ! `;
+        welcomeSubtitle.textContent = `${getSubtitle()} ${getTimeEmoji()}`;
     }
 
     // Next course card
@@ -3498,14 +3498,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 if (welcomeElement) {
                     if (studentFirstName) {
-                        welcomeElement.textContent = `${getGreeting()} ${studentFirstName} ! ${getTimeEmoji()}`;
+                        welcomeElement.textContent = `${getGreeting()} ${studentFirstName} !`;
                     } else {
-                        welcomeElement.textContent = `${getGreeting()} ! ${getTimeEmoji()}`;
+                        welcomeElement.textContent = `${getGreeting()} !`;
                     }
                 }
                 
                 if (welcomeSubtitle) {
-                    welcomeSubtitle.textContent = getSubtitle();
+                    welcomeSubtitle.textContent = `${getSubtitle()} ${getTimeEmoji()}`;
                 }
 
                 //Save language preference to db
