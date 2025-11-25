@@ -523,6 +523,26 @@ function getSubtitle() {
 }
 
 async function updateSettings(settingsObj) {
+
+    //specific handling for telemtry change
+    if ('telemetry_consent' in settingsObj) {
+        if (settingsObj.telemetry_consent === true) {
+            localStorage.setItem('telemetryConsent', 'true');
+            console.log('[Settings] Telemetry enabled by user');
+
+            //diags to be enabled on next app start
+            toast.info(getI18nValue("toast.telemetryEnabledTitle"), getI18nValue("toast.telemetryEnabledDesc"));
+        } else {
+
+            localStorage.setItem('telemetryConsent', 'false');
+            console.log('[Settings] Telemetry disabled by user');
+
+            toast.info(getI18nValue("toast.telemetryDisabledTitle"), getI18nValue("toast.telemetryDisabledDesc"));
+        }
+        return true;
+    }
+
+    //send settings to backend
     try {
         const response = await wrapFetch('https://api.pronotif.tech/v1/app/set-settings', {
             method: 'POST',
@@ -570,7 +590,7 @@ async function fetchSettings() {
                 localStorage.setItem('student_firstname', result.data.student_firstname);
                 console.log('[Settings] Updated student_firstname in localStorage');
             }
-            console.log('[Settings] Settings loaded:', result.data);
+            console.log('[Settings] Settings loaded !');
             populateSettingsUI(result.data);
             return result.data;
         }
@@ -581,7 +601,7 @@ async function fetchSettings() {
 }
 
 function populateSettingsUI(settings) {
-    console.log('[Settings] Populating UI with settings:', settings);
+    console.log('[Settings] Populating UI with settings');
     
     const settingMappings = {
         'class_reminder': 'settingsNotificationsItem',
@@ -607,6 +627,23 @@ function populateSettingsUI(settings) {
             }
         }
     }
+
+    //Update telemetry toogle
+    const telemetryToggle = document.querySelector('#settingsTelemetryConsentItem .settings-toggle-input');
+    if (telemetryToggle) {
+
+        const value = localStorage.getItem('telemetryConsent');
+
+        if (value === "true") {
+            telemetryToggle.checked = true;
+
+        } else{
+            telemetryToggle.checked = false;
+        }
+        
+        console.log(`[Settings] Set telemetry_consent toggle to ${telemetryToggle.checked}`);
+    }
+
     
     //Update notification delay buttons
     if ('notification_delay' in settings) {
@@ -673,7 +710,7 @@ async function performLogout() {
             //Save toast to localStorage 
             localStorage.setItem('postReloadToast', JSON.stringify({
                 title: getI18nValue("toast.logoutSuccessTitle"),
-                message: getI18nValue("toast.toast.logoutSuccessDesc"),
+                message: getI18nValue("toast.logoutSuccessDesc"),
                 type: 'success'
             }));
             
@@ -683,7 +720,7 @@ async function performLogout() {
             //Re-save after clearing
             localStorage.setItem('postReloadToast', JSON.stringify({
                 title: getI18nValue("toast.logoutSuccessTitle"),
-                message: getI18nValue("toast.toast.logoutSuccessDesc"),
+                message: getI18nValue("toast.logoutSuccessDesc"),
                 type: 'success'
             }));
             
@@ -1000,7 +1037,7 @@ const loginHandler = {
         })
         .catch(error => {
             console.error("[SEARCH] Search failed:", error);
-            toast.error(getI18nValue("toast.searchFailedTitle"), getI18nValue("toast.searchFailedDesc"));
+            toast.error(getI18nValue("toast.searchFailedTitle"), getI18nValue("toast.generalErrorDesc"));
         })
         .finally(() => {
             
@@ -1173,7 +1210,7 @@ const loginHandler = {
         loginOptionsContainer.innerHTML = "";
         
         const schoolsContainer = document.createElement('div');
-        schoolsContainer.className = 'schools-options-container';
+        schoolsContainer.className = 'schools-options-container sentry-mask';
         loginOptionsContainer.appendChild(schoolsContainer);
         
         // Show the options container
@@ -1616,7 +1653,10 @@ function showDashboard() {
         }
         showHomeworkLoadingState();
 
-        initializeDashboard()
+        initializeDashboard();
+        
+        // Initialize telemetry consent screen on dashboard
+        telemetryConsentManager.init();
 
         // Lightweight pre-update
         setTimeout(() => {
@@ -2457,7 +2497,73 @@ function getI18nValue(keyPath) {
     return getNestedValue(currentLanguageData, keyPath) || keyPath;
 }
 
+//Telemetry Consent Screen
+const telemetryConsentManager = {
+    init() {
+        const screen = document.getElementById('telemetryConsentScreen');
+        const acceptBtn = document.getElementById('telemetryAcceptBtn');
+        const continueBtn = document.getElementById('telemetryContinueBtn');
+        
+        if (!screen || !acceptBtn || !continueBtn) {
+            console.error('[Telemetry] Screen elements not found');
+            return;
+        }
+
+        //if on dashboard
+        const dashboardView = document.getElementById('dashboardView');
+        const isOnDashboard = dashboardView && !dashboardView.classList.contains('hidden');
+        
+        if (!isOnDashboard) {
+            console.log('[Telemetry] Not on dashboard view, hiding telemetry consent screen');
+            screen.classList.add('hidden');
+            return;
+        }
+
+        const telemetryConsent = localStorage.getItem('telemetryConsent');
+        
+        if (telemetryConsent !== null) {
+            // User has already made a choice - hide the screen
+            screen.classList.add('hidden');
+            return;
+        }
+
+        //if no choice show it
+        screen.classList.remove('hidden');
+
+        acceptBtn.addEventListener('click', () => {
+            this.handleConsent(true, screen);
+        });
+
+        continueBtn.addEventListener('click', () => {
+            this.handleConsent(false, screen);
+        });
+    },
+
+    handleConsent(enableDiagnostics, screen) {
+
+        localStorage.setItem('telemetryConsent', enableDiagnostics ? 'true' : 'false');
+        
+        //update the consent flag
+        window.sentryConsent = enableDiagnostics;
+        
+        console.log('[Telemetry] User consent updated:', enableDiagnostics ? 'enabled' : 'disabled');
+
+        //Disable interactions during animation
+        screen.style.pointerEvents = 'none';
+
+        screen.classList.add('closing');
+
+        setTimeout(() => {
+            screen.classList.add('hidden');
+            screen.classList.remove('closing');
+        }, 400);
+    }
+};
+
 document.addEventListener('DOMContentLoaded', async () => {
+    // Initialize telemetry consent popup
+    telemetryConsentManager.init();
+
     async function loadLanguage(languageCode) {
         try {
             console.log(`[i18n] Loading language: ${languageCode}`);
@@ -3489,6 +3595,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     break;
                 case 'settingsPackBackpackItem':
                     settingName = 'get_bag_ready_reminder';
+                    break;
+                case "settingsTelemetryConsentItem":
+                    settingName = 'telemetry_consent';
                     break;
                 default:
                     console.warn(`Unknown settings item: ${itemId}`);

@@ -57,22 +57,29 @@
 
         <script>
             function scrubObject(obj) {
-                    if (!obj || typeof obj !== "object") return obj;
+                if (!obj || typeof obj !== "object") return obj;
 
-                    const scrubbed = Array.isArray(obj) ? [] : {};
-                    for (const key in obj) {
-                        if (!obj.hasOwnProperty(key)) continue;
+                const scrubbed = Array.isArray(obj) ? [] : {};
+                for (const key in obj) {
+                    if (!obj.hasOwnProperty(key)) continue;
 
-                        //skip sensitive fields
-                        if (["cookies", "headers", "data", "student", "user", "email", "name", "ip_address"].includes(key)) {
-                            continue; // omit these fields
-                        }
-
-                        // Recurse into nested objects
-                        scrubbed[key] = scrubObject(obj[key]);
+                    //skip sensitive fields
+                    if (["cookies", "headers", "data", "student", "user", "email", "name", "ip_address"].includes(key)) {
+                        continue; // omit these fields
                     }
-                    return scrubbed;
+
+                    // Recurse into nested objects
+                    scrubbed[key] = scrubObject(obj[key]);
+                }
+                return scrubbed;
             }
+
+            //URL scrubber
+            function urlScrubber(url) {
+                return url.replace(/https:\/\/[a-zA-Z0-9]+\.index-education\.net\/[^\s]*/g, "https://[Filtered].index-education.net/[Filtered]");
+            }
+
+            const telemetryConsent = localStorage.getItem("telemetryConsent") === "true";
 
             Sentry.init({
                 dsn: "https://8c5e5e92f5e18135e5c89280db44a056@o4508253449224192.ingest.de.sentry.io/4508253458726992",
@@ -80,56 +87,97 @@
                 environment: "production",
                 sendDefaultPii: false,
 
-                tracesSampleRate: 0.0,
-                replaysSessionSampleRate: 0.0,
-                replaysOnErrorSampleRate: 0.0,
+                tracesSampleRate: telemetryConsent ? 0.1 : 0,
+                replaysSessionSampleRate: telemetryConsent ? 0.2 : 0,
+                replaysOnErrorSampleRate: telemetryConsent ? 1.0 : 0,
 
                 beforeSend(event) {
                     //scrub request and user fields
                     if (event.request) event.request = scrubObject(event.request);
                     if (event.user) event.user = {};
                     if (event.student) event.student = {};
+                    
+                    //Scrub breadcrumbs
+                    if (event.breadcrumbs) {
+                        event.breadcrumbs = event.breadcrumbs.map(b => ({
+                            ...b,
+                            data: scrubObject(b.data)
+                        }));
+                    }
+                    
                     return event;
                 },
 
                 beforeSendTransaction(event) {
                     if (event.request && event.request.url) {
-                    try {
-                        const url = new URL(event.request.url);
-                        event.request.url = url.origin + url.pathname;
-                    } catch (e) {}
+                        try {
+                            const url = new URL(event.request.url);
+                            event.request.url = url.origin + url.pathname;
+                        } catch (e) {}
                     }
                     return event;
                 },
 
 
                 integrations: [
-                Sentry.feedbackIntegration({
-                    enableScreenshot: true,
-                    useSentryUser: true,
-                    colorScheme: "system",
-                    autoInject: false, 
-                    position: "bottom-right",
-                    triggerLabel: "Donner un avis",
-                    triggerAriaLabel: "Donner un avis",
-                    formTitle: "Envoyer un retour",
-                    submitButtonLabel: "Envoyer",
-                    cancelButtonLabel: "Annuler",
-                    confirmButtonLabel: "Confirmer",
-                    addScreenshotButtonLabel: "Ajouter une capture d'écran",
-                    removeScreenshotButtonLabel: "Supprimer la capture d'écran",
-                    nameLabel: "Nom (Facultatif)",
-                    namePlaceholder: "Votre nom",
-                    emailLabel: "E-mail (Facultatif)",
-                    emailPlaceholder: "votre.email@exemple.org",
-                    isRequiredLabel: "(obligatoire)",
-                    messageLabel: "Votre message",
-                    messagePlaceholder: "Décrivez votre retour, suggestion ou bug ici.",
-                    successMessageText: "Merci pour votre retour !",
-                })
+                    Sentry.browserTracingIntegration(),
+                    Sentry.replayIntegration({
+                        maskAllText: false,
+                        maskAllInputs: true,
+                        blockAllMedia: true,
+
+                        beforeAddRecordingEvent: (event) => {
+                            // Do not capture fetch/xhr requests, unless the response code is 500
+                            if (
+                                event.data.tag === "performanceSpan" &&
+                                (event.data.payload.op === "resource.fetch" ||
+                                event.data.payload.op === "resource.xhr") &&
+                                event.data.payload.data.statusCode !== 500
+                            ) {
+                                return null;
+                            }
+                            return event;
+                        },
+                    }),
+                    Sentry.feedbackIntegration({
+                        enableScreenshot: true,
+                        useSentryUser: true,
+                        colorScheme: "system",
+                        autoInject: false, 
+                        position: "bottom-right",
+                        triggerLabel: "Donner un avis",
+                        triggerAriaLabel: "Donner un avis",
+                        formTitle: "Envoyer un retour",
+                        submitButtonLabel: "Envoyer",
+                        cancelButtonLabel: "Annuler",
+                        confirmButtonLabel: "Confirmer",
+                        addScreenshotButtonLabel: "Ajouter une capture d'écran",
+                        removeScreenshotButtonLabel: "Supprimer la capture d'écran",
+                        nameLabel: "Nom (Facultatif)",
+                        namePlaceholder: "Votre nom",
+                        emailLabel: "E-mail (Facultatif)",
+                        emailPlaceholder: "votre.email@exemple.org",
+                        isRequiredLabel: "(obligatoire)",
+                        messageLabel: "Votre message",
+                        messagePlaceholder: "Décrivez votre retour, suggestion ou bug ici.",
+                        successMessageText: "Merci pour votre retour !",
+                    })
                 ]
             });
-            console.log("[SENTRY] Sentry succesfully initialised !");
+            
+            Sentry.addEventProcessor((event) => {
+                // Ensure that we specifically look at replay events
+                if (event.type !== "replay_event") {
+                    // Return the event, otherwise the event will be dropped
+                    return event;
+                }
+                // Scrub URLs in the event
+                event.urls = event.urls && event.urls.map(urlScrubber);
+
+                return event;
+            });
+
+            console.log("[SENTRY] Sentry successfully initialised!");
         </script>
 
         <!--jsQR Script-->
@@ -430,6 +478,22 @@
                     <h2 class="settings-section-title" data-i18n="settings.accountSecurity">Compte & Sécurité</h2>
                     
                     <div class="settings-section">
+                        <div class="settings-item" id="settingsTelemetryConsentItem">
+                            <div class="settings-item-icon">
+                                    <i class="fa-solid fa-chart-line"></i>
+                                </div>
+                                <div class="settings-item-content">
+                                    <h3 class="settings-item-title" data-i18n="settings.toggleTelemetryTitle">Diagnostics & Télémétrie</h3>
+                                    <p class="settings-item-subtitle" data-i18n="settings.toggleTelemetryDesc">Partagez des données de diagnostics pour améliorer l'application.</p>
+                                </div>
+                                <div class="settings-item-action">
+                                    <label class="settings-toggle">
+                                        <input type="checkbox" class="settings-toggle-input" checked>
+                                        <span class="settings-toggle-slider"></span>
+                                    </label>
+                                </div>
+                        </div>
+
                         <button class="settings-item" id="settingsLogoutItem">
                             <div class="settings-item-icon">
                                 <i class="fa-solid fa-arrow-right-from-bracket"></i>
@@ -502,7 +566,7 @@
                         <div class="dashboard-header">
                             <div class="welcome-section">
                                 <div class="welcome-text">
-                                    <p class="welcome-greeting" id="welcomeGreeting" data-i18n="dashboard.greeting">Bonjour {FirstName} !</p>
+                                    <p class="welcome-greeting sentry-mask" id="welcomeGreeting" data-i18n="dashboard.greeting">Bonjour {FirstName} !</p>
                                     <p class="welcome-subtitle" id="welcomeSubtitle" data-i18n="dashboard.subtitle">Voici un rapide aperçu de votre journée.</p>
                                 </div>
                             </div>
@@ -518,8 +582,8 @@
                                 Prochain cours
                             </div>
                             <div class="course-content">
-                                <h3 class="course-title" data-i18n="dashboard.loading">Chargement...</h3>
-                                <p class="course-details" data-i18n="dashboard.fetchingData">Récupération des données...</p>
+                                <h3 class="course-title sentry-mask" data-i18n="dashboard.loading">Chargement...</h3>
+                                <p class="course-details sentry-mask" data-i18n="dashboard.fetchingData">Récupération des données...</p>
                             </div>
                         </div>
 
@@ -545,7 +609,7 @@
                             </h2>
                         </div>
                         <!-- Homework items -->
-                        <div class="homework-list">
+                        <div class="homework-list sentry-mask">
                             <div class="homework-item">
                                 <div class="homework-content">
                                     <h3 class="homework-subject">{Title}</h3>
@@ -670,7 +734,7 @@
         </div>
 
         <!--Language Selector Modal-->
-        <div id="languageSelectorModal" class="language-selector-modal hidden" role="dialog" aria-modal="true">
+        <div id="languageSelectorModal" class="language-selector-modal hidden sentry-mask" role="dialog" aria-modal="true">
             <div class="language-overlay"></div>
             <div class="language-selector-container">
                 <div class="language-selector-header">
@@ -694,7 +758,7 @@
         </div>
 
         <!--Time Picker-->
-        <div id="timePickerModal" class="time-picker-modal hidden" role="dialog" aria-modal="true">
+        <div id="timePickerModal" class="time-picker-modal hidden sentry-mask" role="dialog" aria-modal="true">
             <div class="time-picker-overlay"></div>
             <div class="time-picker-container">
                 <div class="time-picker-header">
@@ -705,6 +769,59 @@
                     <div class="time-picker-wheel" id="timePickerHours"></div>
                     <div class="time-picker-divider">:</div>
                     <div class="time-picker-wheel" id="timePickerMinutes"></div>
+                </div>
+            </div>
+        </div>
+
+                <!-- Telemetry Consent-->
+        <div id="telemetryConsentScreen" class="telemetry-consent-screen hidden">
+            <div class="telemetry-container">
+                <div class="telemetry-header">
+                    <h1 class="telemetry-title">Aider à améliorer l'app</h1>
+                    <span class="telemetry-badge">Recommandé</span>
+                </div>
+                
+                <div class="telemetry-boxes-section">
+                    <div class="telemetry-info-box">
+                        <div class="telemetry-box-icon">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <div class="telemetry-box-content">
+                            <h3 class="telemetry-box-title">Rapports d'erreurs anonymes</h3>
+                            <p class="telemetry-box-text">Toujours activés pour maintenir l'app stable et fiable. Seules des informations techniques liées au crash sont envoyées. Aucune donnée personnelle n'est transmise.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="telemetry-info-box">
+                        <div class="telemetry-box-icon">
+                            <i class="fa-solid fa-chart-line"></i>
+                        </div>
+                        <div class="telemetry-box-content">
+                            <h3 class="telemetry-box-title">Diagnostics optionnels</h3>
+                            <p class="telemetry-box-text">Si vous activez cette option, vous nous aidez à mieux comprendre les performances de l'app. Les temps de chargement, les actions menant à un bug ainsi qu'un bref replay en cas d'erreur peuvent être enregistrés.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="telemetry-info-box">
+                        <div class="telemetry-box-icon">
+                            <i class="fa-solid fa-lock"></i>
+                        </div>
+                        <div class="telemetry-box-content">
+                            <h3 class="telemetry-box-title">Confidentialité</h3>
+                            <p class="telemetry-box-text">Toutes vos données parmis lesquelles le texte saisi, les mots de passe, identifiants, ou encore la localisation restent privés. Vous pouvez modifier votre choix à tout moment dans les paramètres.</p>
+                        </div>
+                    </div>
+                    
+                    <p class="telemetry-additional-info">Vous pouvez modifier vos choix dans les paramètres de l'application à tout moment.</p>
+
+                    <p class="login-telemetry-text">
+                            <u><a href="https://safety.pronotif.tech/docs/politique-de-confidentialite#telemetrie" target="_blank" data-i18n="login.learnAboutTelemetry">En savoir plus sur la collecte de données</a></u>
+                    </p>
+                </div>
+                
+                <div class="telemetry-buttons">
+                    <button id="telemetryAcceptBtn" class="telemetry-btn telemetry-btn-primary">Accepter et partager les diagnostics</button>
+                    <button id="telemetryContinueBtn" class="telemetry-btn telemetry-btn-secondary">Pas maintenant</button>
                 </div>
             </div>
         </div>

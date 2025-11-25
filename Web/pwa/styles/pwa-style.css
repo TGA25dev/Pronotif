@@ -2795,3 +2795,410 @@ body:has(#settingsView:not(.hidden)) .bottom-navbar {
     font-weight: 700;
     opacity: 1;
 }
+
+/* Telemetry Consent*/
+@keyframes telemetryFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes telemetryFadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes telemetrySlideUp {
+    from {
+        transform: translateY(2rem);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes telemetryBackgroundFadeIn {
+    from {
+        opacity: 0;
+        backdrop-filter: blur(0px);
+    }
+    to {
+        opacity: 1;
+        backdrop-filter: blur(4px);
+    }
+}
+
+@keyframes telemetryBackgroundFadeOut {
+    from {
+        opacity: 1;
+        backdrop-filter: blur(4px);
+    }
+    to {
+        opacity: 0;
+        backdrop-filter: blur(0px);
+    }
+}
+
+@keyframes telemetryContainerSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(3rem) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes telemetryContainerSlideDown {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(3rem) scale(0.95);
+    }
+}
+
+@keyframes telemetryBoxSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-1.5rem);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes telemetryButtonPulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.02);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+.telemetry-consent-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(248, 250, 252, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 1;
+    transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), backdrop-filter 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 20px;
+    backdrop-filter: blur(4px);
+    animation: telemetryBackgroundFadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.telemetry-consent-screen.closing {
+    animation: telemetryBackgroundFadeOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.telemetry-consent-screen.closing .telemetry-container {
+    animation: telemetryContainerSlideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.telemetry-consent-screen.hidden {
+    display: none !important;
+}
+
+.telemetry-container {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    height: 100vh;
+    justify-content: flex-start;
+    padding: 32px 0 28px 0;
+    box-sizing: border-box;
+    animation: telemetryContainerSlideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.telemetry-consent-screen.hidden .telemetry-container {
+    animation: telemetryContainerSlideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.telemetry-header {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    animation: telemetrySlideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    opacity: 0;
+    animation-delay: 0.05s;
+}
+
+.telemetry-title {
+    font-family: "Cabinet", "sans-serif";
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin: 0;
+    line-height: 1.2;
+    letter-spacing: -0.8px;
+}
+
+.telemetry-badge {
+    display: inline-block;
+    background: #07A19F;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    width: fit-content;
+    margin-bottom: 1rem;
+}
+
+.telemetry-boxes-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.telemetry-info-box {
+    display: flex;
+    gap: 16px;
+    padding: 18px 20px;
+    border-radius: 16px;
+    background: #ffffff;
+    border: 1px solid #e0e4e8;
+    border-left: 4px solid #07A19F;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: telemetryBoxSlideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    opacity: 0;
+}
+
+.telemetry-info-box:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.telemetry-info-box:nth-child(2) {
+    animation-delay: 0.25s;
+}
+
+.telemetry-info-box:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+.telemetry-info-box:hover {
+    box-shadow: 0 8px 16px rgba(7, 161, 159, 0.12);
+    transform: translateY(-2px);
+    border-left-width: 6px;
+}
+
+.telemetry-box-icon {
+    font-size: 24px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 16px;
+    background: rgba(7, 161, 159, 0.1);
+    color: #07A19F;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.telemetry-info-box:hover .telemetry-box-icon {
+    background: rgba(7, 161, 159, 0.2);
+    transform: scale(1.1) rotate(10deg);
+}
+
+.telemetry-box-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.telemetry-box-title {
+    font-family: "Cabinet", "sans-serif";
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin: 0;
+    line-height: 1.3;
+}
+
+.telemetry-box-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: #2d3d4d;
+    margin: 0;
+    line-height: 1.6;
+}
+
+.telemetry-additional-info {
+    font-size: 12px;
+    font-weight: 500;
+    color: #7a8a98;
+    text-align: center;
+    margin-top: 12px;
+    margin-bottom: auto;
+    line-height: 1.5;
+    letter-spacing: -0.2px;
+}
+
+.telemetry-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: auto;
+}
+
+.telemetry-btn {
+    padding: 14px 20px;
+    min-height: 48px;
+    border: none;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: var(--font-family);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: -0.1px;
+    border-radius: 16px;
+    animation: telemetrySlideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    opacity: 0;
+}
+
+.telemetry-btn:nth-child(1) {
+    animation-delay: 0.5s;
+}
+
+.telemetry-btn:nth-child(2) {
+    animation-delay: 0.65s;
+}
+
+.telemetry-btn-primary {
+    background: #07A19F;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(7, 161, 159, 0.3);
+}
+
+.telemetry-btn-primary:hover {
+    background: #058f87;
+    box-shadow: 0 8px 20px rgba(7, 161, 159, 0.4);
+    transform: translateY(-2px);
+}
+
+.telemetry-btn-primary:active {
+    transform: translateY(0);
+    animation: telemetryButtonPulse 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.telemetry-btn-secondary {
+    background: none !important;
+    font-size: 13px !important;
+    color: var(--text-dark) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.telemetry-btn-secondary:hover {
+    color: #07A19F !important;
+    background: rgba(7, 161, 159, 0.08) !important;
+    transform: translateY(-1px);
+}
+
+.telemetry-btn-secondary:active {
+    transform: translateY(0);
+}
+
+
+
+@media (max-width: 480px) {
+
+    .telemetry-consent-screen {
+        padding: 10px;
+    }
+
+    .telemetry-container {
+        gap: 12px;
+        padding: 12px 0 8px 0;
+    }
+
+    .telemetry-header {
+        gap: 4px;
+    }
+
+    .telemetry-title {
+        font-size: 24px;
+        letter-spacing: -0.6px;
+        margin-bottom: 0;
+    }
+
+    .telemetry-badge {
+        font-size: 9px;
+        padding: 3px 8px;
+        margin-bottom: 0.5rem;
+    }
+
+    .telemetry-boxes-section {
+        gap: 8px;
+    }
+
+    .telemetry-info-box {
+        padding: 12px;
+        gap: 10px;
+    }
+
+    .telemetry-info-box:first-child {
+        margin-top: 8px;
+    }
+
+    .telemetry-box-icon {
+        font-size: 18px;
+        width: 32px;
+        height: 32px;
+    }
+
+    .telemetry-box-title {
+        font-size: 14px;
+    }
+
+    .telemetry-box-text {
+        font-size: 12px;
+        line-height: 1.4;
+    }
+
+    .telemetry-additional-info {
+        font-size: 10px;
+        margin-top: 6px;
+    }
+
+    .telemetry-buttons {
+        gap: 6px;
+    }
+
+    .telemetry-btn {
+        padding: 11px 14px;
+        min-height: 42px;
+        font-size: 13px;
+    }
+}
