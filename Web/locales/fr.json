@@ -58,6 +58,8 @@
     "packBackpack": "Faire son sac",
     "packBackpackDesc": "Chaque soir recevez une notification pour ne pas oublier de faire votre sac.",
     "accountSecurity": "Compte & Sécurité",
+    "toggleTelemetryTitle": "Diagnostics & Télémétrie",
+    "toggleTelemetryDesc": "Partagez des données de diagnostics pour améliorer l'application.",
     "logout": "Se déconnecter",
     "logoutDesc": "Vous déconnecte de votre compte Pronot'if",
     "logoutAction": "Déconnexion",
@@ -174,7 +176,11 @@
     "enableNotificationSuccessDesc": "Vous recevrez maintenant des notifications pour vos cours et devoirs.",
     "iosNotificationsAppRestartMessage": "L'application va redémarrer pour finaliser l'activation des notifications.",
     "enableNotificationDeniedTitle": "Notifications désactivées ! 😢",
-    "enableNotificationDeniedDesc": "Pour les activer à nouveau rendez-vous dans les paramètres de votre appareil."
+    "enableNotificationDeniedDesc": "Pour les activer à nouveau rendez-vous dans les paramètres de votre appareil.",
+    "telemetryEnabledTitle": "Diagnostics activés",
+    "telemetryEnabledDesc": "Merci ! Les diagnostics seront activés au prochain démarrage de l'appli.",
+    "telemetryDisabledTitle": "Diagnostics désactivés",
+    "telemetryDisabledDesc": "Les diagnostics seront désactivés au prochain démarrage de l'appli"
   },
   "days": {
     "monday": "Lundi",

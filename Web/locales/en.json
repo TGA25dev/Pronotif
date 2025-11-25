@@ -58,6 +58,8 @@
     "packBackpack": "Pack your backpack",
     "packBackpackDesc": "Each evening receive a notification to remember to pack your backpack for tomorrow.",
     "accountSecurity": "Account & Security",
+    "toggleTelemetryTitle": "Diagnostics & Telemetry",
+    "toggleTelemetryDesc": "Share diagnostic data to help improve the app.",
     "logout": "Sign out",
     "logoutDesc": "Signs you out of your Pronot'if account",
     "logoutAction": "Sign out",
@@ -174,7 +176,11 @@
     "enableNotificationSuccessDesc": "You will now receive notifications for your classes and assignments.",
     "iosNotificationsAppRestartMessage": "The app will restart to complete the notification activation process.",
     "enableNotificationDeniedTitle": "Notifications disabled! 😢",
-    "enableNotificationDeniedDesc": "To reactivate them, go to your device settings."
+    "enableNotificationDeniedDesc": "To reactivate them, go to your device settings.",
+    "telemetryEnabledTitle": "Diagnostics enabled",
+    "telemetryEnabledDesc": "Thanks! Diagnostics will be enabled on next app startup.",
+    "telemetryDisabledTitle": "Diagnostics disabled",
+    "telemetryDisabledDesc": "Diagnostics will be disabled on next app startup."
   },
   "days": {
     "monday": "Monday",
