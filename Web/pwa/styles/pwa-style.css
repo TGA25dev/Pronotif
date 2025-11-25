@@ -308,6 +308,27 @@ body::before {
     margin-right: 0.25rem;
 }
 
+.login-telemetry-text {
+    font-size: 0.8rem;
+    color: #07A19F;
+    text-align: left;
+    margin-top: 0.75rem;
+    margin-bottom: 0.5rem;
+    padding: 0 0.5rem;
+    line-height: 1.2;
+    display: block;
+}
+
+.login-telemetry-text a {
+    color: #07A19F;
+    text-decoration: underline;
+    font-weight: 500;
+}
+
+.login-telemetry-text a:hover {
+    color: #3a8f8f;
+}
+
 .global-login-container-input {
     display: none;
     width: 100%;
@@ -3133,6 +3154,15 @@ body:has(#settingsView:not(.hidden)) .bottom-navbar {
 
 
 @media (max-width: 480px) {
+    @media screen and (min-width: 480px) {
+    .login-telemetry-text {
+        font-size: 0.85rem;
+    }
+    
+    .login-safety-text {
+        font-size: 0.8rem;
+    }
+}
 
     .telemetry-consent-screen {
         padding: 10px;
