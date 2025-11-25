@@ -4,7 +4,7 @@ from timezonefinder import TimezoneFinder
 
 logger = logging.getLogger(__name__)
 geolocator = Nominatim(user_agent="Pronotif")
-timeouts = [1, 2, 3]
+timeouts = [5, 10, 20]
 
 def geocode_city(city_name: str) -> tuple[float, float] | None:
     """
@@ -88,12 +88,12 @@ def get_region(latitude: float, longitude: float) -> str | None:
     """
     for attempt, timeout in enumerate(timeouts, 1):
         try:
-            location = geolocator.reverse((latitude, longitude), exactly_one=True, timeout=timeout)
+            location = geolocator.reverse((latitude, longitude), exactly_one=True, timeout=timeout, zoom=8)
             if location and location.raw.get('address', {}).get('state'):
                 return location.raw['address']['state']
             else:
-                logger.warning(f"get_region: No region found after {attempt} attempts")
-                return None
+                logger.warning(f"get_region: No region found at attempt {attempt}, retrying…")
+                continue
         except Exception as e:
             logger.warning(f"get_region: Attempt {attempt} failed due to: {e}")
             continue
