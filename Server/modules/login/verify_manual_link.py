@@ -21,7 +21,7 @@ BLOCKED_HOST_PATTERNS = (
 )
 
 APP_ID = "0D264427-EEFC-4810-A9E9-346942A862A4"
-INFO_ENDPOINT = f"infoMobileApp.json?id={APP_ID}"
+INFO_ENDPOINT = f"InfoMobileApp.json?id={APP_ID}"
 
 def _host_blocked(host: str) -> bool:
     h = host.split(":")[0].lower()

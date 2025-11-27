@@ -952,7 +952,7 @@ def verify_pronote_link():
 
             if result["isValid"] is False or not result.get("nomEtab") or result["isValid"] is None:
                 return jsonify({
-                    "error": "Invalid Pronote link",
+                    "error": result["error"],
                     "region": None,
                     "nomEtab": None,
                     "isValid": False
