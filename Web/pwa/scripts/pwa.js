@@ -135,7 +135,7 @@ const debugLogger = {
     },
     
     getDeviceInfo() {
-        const APP_VERSION = '0.8.1';
+        const APP_VERSION = '0.9';
         const API_VERSION = 'v1';
         const API_BASE_URL = 'https://api.pronotif.tech';
         

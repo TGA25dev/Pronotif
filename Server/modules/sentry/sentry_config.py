@@ -3,7 +3,7 @@ from sentry_sdk.scrubber import EventScrubber
 from sentry_sdk import logger as sentry_logger
 from loguru import logger
 
-version = "v0.8.1"
+version = "v0.9"
 ignore_errors = [KeyboardInterrupt]
 
 def before_send(event, hint):
