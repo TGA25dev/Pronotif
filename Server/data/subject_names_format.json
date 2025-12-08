@@ -36,6 +36,7 @@
  "histoire-geographie": {"name":"Histoire-Géographie","det":"d'"},
  "ens. moral & civique": {"name":"Enseignement Moral et Civique", "det":"d'"},
  "human.litter.philo": {"name":"Humanités, Littérature & Philosophie", "det":"d'"},
+ "philosophie": {"name":"Philosophie", "det":"de"},
  "llc angl.mond.cont.": {"name":"LLCER Anglais Monde Contemporain", "det":"de"},
  "llc espagnol": {"name":"LLCE Espagnol", "det":"de"},
  "maths pour informatq": {"name":"Mathématiques pour l’informatique", "det":"de"},
