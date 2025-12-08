@@ -691,7 +691,12 @@ async def lesson_check(user):
                 if normalized_subject_key in normalized_subjects:
                     subject_details = normalized_subjects[normalized_subject_key]
                     name = subject_details["name"]
-                    det = subject_details["det"]
+
+                    if user.lang == "es":
+                        det = "de"
+
+                    else:
+                        det = subject_details["det"] #french
                 else:
                     name = lower_cap_subject_name
                     det = ":"  # default caracter if not found
