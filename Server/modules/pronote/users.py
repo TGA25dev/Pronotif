@@ -422,6 +422,11 @@ class PronotifUser:
             self.uuid = user_data.get('uuid', self.uuid)
             changes_made = True
             changes.append('uuid')
+        
+        if user_data.get('lang') != self.lang:
+            self.lang = user_data.get('lang', self.lang)
+            changes_made = True
+            changes.append('lang')
 
         new_qr_code_login = bool(user_data.get('qr_code_login', 0))
         if new_qr_code_login != self.qr_code_login:
