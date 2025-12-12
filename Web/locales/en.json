@@ -210,8 +210,8 @@
     "noUnfinishedHomeworkDesc": "You've finished all your homework for tomorrow, you can chill out! 😮‍💨",
     "unfinishedHomeworkTitle": "📝 Unfinished homeworks!",
     "unfinishedHomeworkDesc": "You still have {not_finished_homeworks_count} assignments to complete for tomorrow.",
-    "singleUnfinishedHomeworkTitle": "You have one assignment left to complete for tomorrow.",
-    "singleUnfinishedHomeworkDesc": "📝 Unfinished homework!",
+    "singleUnfinishedHomeworkTitle": "📝 Unfinished homework!",
+    "singleUnfinishedHomeworkDesc": "You have one assignment left to complete for tomorrow.",
     "classTimeNoRoomMessageDesc": "The {det}{extra_space}{name} class will start at {class_start_time}. {chosen_emoji}"
   }
 }
