@@ -43,6 +43,7 @@ class PronotifUser:
         self.student_fullname = user_data.get('student_fullname')
         self.student_firstname = user_data.get('student_firstname')
         self.student_class = user_data.get('student_class')
+        self.student_school_name = None  #To be fetched after login and not stored in db
         
         # Credentials (encrypted)
         self.username = decrypt(user_data.get('student_username', ''))
@@ -158,6 +159,11 @@ class PronotifUser:
                 logger.success(f"User {self.user_hash[:4]}**** successfully logged in!")
                 self.relogin_needed_notified = False
                 self._reset_refresh_counter()  # Reset counter on successful login
+
+                self.student_school_name = generate_id(self.client.info.establishment) if self.client.info.establishment else None
+                if not self.student_school_name:
+                    logger.warning(f"Could not fetch school name for user {self.user_hash[:4]}**** after login")
+
                 if self.qr_code_login:
                     # Update password for future logins
                     await self._save_password()

@@ -776,6 +776,37 @@ async def lesson_check(user):
         logger.error(f"Error checking lessons for user {user.user_hash}: {e}")
         sentry_sdk.capture_exception(e)
 
+async def fetch_saved_menus(user, date):
+    """Try to fetch saved menus from db"""
+
+    school_name = user.student_school_name
+
+    try:
+        with get_db_connection() as connection:
+            cursor = connection.cursor(dictionary=True)
+            query = f"""
+            SELECT menu_content
+            FROM {get_secret('DB_MENUS_TABLE_NAME')}
+            WHERE school_name = %s AND day = %s
+            """
+            cursor.execute(query, (school_name, date))
+            result = cursor.fetchone()
+            
+            if result:
+                logger.debug(result)
+                logger.info(f"Fetched saved menus for user {user.user_hash[:4]}*** on {date}")
+                return result['menu_content']
+            else:
+                logger.info(f"No saved menus found for user {user.user_hash[:4]}*** on {date}")
+                return None
+                
+    except Exception as e:
+        logger.error(f"Error fetching saved menus for user {user.user_hash[:4]}***: {e}")
+        sentry_sdk.capture_exception(e)
+        return None
+
+
+
 async def menu_food_check(user):
     """Check for upcoming menus and send notifications"""
     today = datetime.now(user.timezone_obj).date()
@@ -799,7 +830,9 @@ async def menu_food_check(user):
 
         if not menus:
             if not user.menu_message_printed_today:
-                logger.debug(f"No menus found for user {user.user_hash[:4]}**** today")
+                logger.debug(f"No menus found for user {user.user_hash[:4]}**** today, checking saved menus...")
+
+                fetched_menus = await fetch_saved_menus(user, today)
                 user.menu_message_printed_today = True
             return
         
