@@ -64,7 +64,18 @@ def send_notification_to_device(registration_token, title, body):
             notification=messaging.Notification(
                 title=title, #Title
                 body=body, #Body (content)
-            )
+            ),
+
+            android=messaging.AndroidConfig(
+                priority="high",
+                ttl=86400,  #24 hours
+                ),
+
+            apns=messaging.APNSConfig(
+                headers={
+                    "apns-priority": "10",
+                }
+            ),
         )
 
         # Send a message to the device
