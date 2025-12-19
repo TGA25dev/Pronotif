@@ -80,9 +80,10 @@ def send_notification_to_device(registration_token, title, body):
 
         # Send a message to the device
         response = messaging.send(message)
-        return response
+        return {"status": "success", "message_id": response}
     
     except FirebaseError as e:
+        error_msg = str(e)
         #Handle Firebase-specific errors
         if "Requested entity was not found" in str(e):
             logger.warning(f"Invalid FCM token: {registration_token[:10]}... : Token is no longer valid")
@@ -90,8 +91,11 @@ def send_notification_to_device(registration_token, title, body):
 
         else:
             logger.error(f"Firebase error: {e}")
-        return None
+
+        return {"status": "error", "error": error_msg}
+    
     except Exception as e:
+        error_msg = str(e)
         #Other exceptions
-        logger.error(f"Error sending notification: {e}")
-        return None
+        logger.error(f"Error sending notification: {error_msg}")
+        return {"status": "error", "error": error_msg}
