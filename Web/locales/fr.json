@@ -212,6 +212,8 @@
     "unfinishedHomeworkDesc": "Il vous reste {not_finished_homeworks_count} devoirs à terminer pour demain.",
     "singleUnfinishedHomeworkTitle": "Il vous reste 1 devoir à terminer pour demain.",
     "singleUnfinishedHomeworkDesc": "📝 Devoir non fait !",
-    "classTimeNoRoomMessageDesc": "Le cours {det}{extra_space}{name} commencera à {class_start_time}. {chosen_emoji}"
+    "classTimeNoRoomMessageDesc": "Le cours {det}{extra_space}{name} commencera à {class_start_time}. {chosen_emoji}",
+    "newGradeTitle": "{emoji}Nouvelle note",
+    "newGradeDesc": "Vous avez eu {grade_value}/{grade_out_of} en {subject_name}"
   }
 }

@@ -210,8 +210,10 @@
     "noUnfinishedHomeworkDesc": "Has terminado todos los deberes para mañana, ¡puedes relajarte! 😮‍💨",
     "unfinishedHomeworkTitle": "📝 ¡Tareas sin hacer!",
     "unfinishedHomeworkDesc": "Te quedan {not_finished_homeworks_count} tareas por terminar para mañana.",
-    "singleUnfinishedHomeworkTitle": "Te queda una tarea por terminar para mañana.",
-    "singleUnfinishedHomeworkDesc": "📝 ¡Tarea sin hacer!",
-    "classTimeNoRoomMessageDesc": "La classe {det}{extra_space}{name} comenzará a las {class_start_time}. {chosen_emoji}"
+    "singleUnfinishedHomeworkTitle": "📝 ¡Tarea sin hacer!",
+    "singleUnfinishedHomeworkDesc": "Te queda una tarea por terminar para mañana.",
+    "classTimeNoRoomMessageDesc": "La classe {det}{extra_space}{name} comenzará a las {class_start_time}. {chosen_emoji}",
+    "newGradeTitle": "{emoji}Nueva nota",
+    "newGradeDesc": "Has sacado un {grade_value}/{grade_out_of} en {subject_name}"
   }
 }

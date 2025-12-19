@@ -212,6 +212,8 @@
     "unfinishedHomeworkDesc": "You still have {not_finished_homeworks_count} assignments to complete for tomorrow.",
     "singleUnfinishedHomeworkTitle": "📝 Unfinished homework!",
     "singleUnfinishedHomeworkDesc": "You have one assignment left to complete for tomorrow.",
-    "classTimeNoRoomMessageDesc": "The {det}{extra_space}{name} class will start at {class_start_time}. {chosen_emoji}"
+    "classTimeNoRoomMessageDesc": "The {det}{extra_space}{name} class will start at {class_start_time}. {chosen_emoji}",
+    "newGradeTitle": "{emoji}New grade",
+    "newGradeDesc": "You got {grade_value}/{grade_out_of} in {subject_name}"
   }
 }
