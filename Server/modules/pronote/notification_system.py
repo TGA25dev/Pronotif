@@ -356,7 +356,7 @@ async def user_process_loop(user:PronotifUser) -> None:
         instance_not_reachable_message = False
         
         user_offset = hash(user.user_hash) % 30
-        logger.debug(f"User {user.user_hash} assigned offset of {user_offset} seconds")
+        logger.debug(f"User {user.user_hash[:4]}**** assigned offset of {user_offset} seconds")
         await asyncio.sleep(user_offset)
         
         while True:
@@ -369,7 +369,7 @@ async def user_process_loop(user:PronotifUser) -> None:
                 
                 if internet_available and server_reachable:
                     if no_internet_message or instance_not_reachable_message:
-                        logger.info(f"Connectivity restored for user {user.user_hash}")
+                        logger.info(f"Connectivity restored for user {user.user_hash[:4]}****")
                         no_internet_message = False
                         instance_not_reachable_message = False
                         consecutive_failures = 0  # Reset failure counter
@@ -403,22 +403,22 @@ async def user_process_loop(user:PronotifUser) -> None:
                 else:
                     consecutive_failures += 1
                     if consecutive_failures >= max_consecutive_failures:
-                        logger.critical(f"User {user.user_hash} has {consecutive_failures} consecutive failures. Pausing for 10 minutes.")
+                        logger.critical(f"User {user.user_hash[:4]}**** has {consecutive_failures} consecutive failures. Pausing for 10 minutes.")
                         await asyncio.sleep(600)  # Wait 10 minutes before trying again
                         consecutive_failures = 0  # Reset after long wait
                     
                     if not no_internet_message and not instance_not_reachable_message:
-                        logger.warning(f"Tasks paused for user {user.user_hash} - No internet or server unreachable")
+                        logger.warning(f"Tasks paused for user {user.user_hash[:4]}**** - No internet or server unreachable")
                         no_internet_message = True
                         instance_not_reachable_message = True
                 
             except Exception as loop_error:
                 consecutive_failures += 1
-                logger.error(f"Error in main loop for user {user.user_hash}: {loop_error}")
+                logger.error(f"Error in main loop for user {user.user_hash[:4]}****: {loop_error}")
                 
                 if consecutive_failures >= max_consecutive_failures:
-                    logger.critical(f"Too many consecutive errors for user {user.user_hash}. Pausing.")
-                    await asyncio.sleep(600)
+                    logger.critical(f"Too many consecutive errors for user {user.user_hash[:4]}****. Pausing.")
+                    await asyncio.sleep(600) #10min
                     consecutive_failures = 0
             
             # Calculate time to next check with adaptive timing based on failures
@@ -428,7 +428,7 @@ async def user_process_loop(user:PronotifUser) -> None:
             await asyncio.sleep(sleep_time)
             
     except Exception as e:
-        logger.critical(f"Critical error in user loop for {user.user_hash}: {e}")
+        logger.critical(f"Critical error in user loop for {user.user_hash[:4]}****: {e}")
         sentry_sdk.capture_exception(e)
         
 async def retry_with_backoff(func, user, *args, max_attempts=5) -> None:
