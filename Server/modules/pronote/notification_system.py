@@ -641,80 +641,12 @@ async def lesson_check(user):
                 room_name = lesson_checks.classroom
                 class_start_time = lesson_checks.start.strftime("%H:%M")
                 canceled = lesson_checks.canceled
-                status = lesson_checks.status
-                num = lesson_checks.num
 
-                #logger.debug("Debug Data : " + str(subject) + " " + str(room_name) + " " + str(class_start_time) + " " + str(canceled) + " " + str(status) + " " + str(num))
+                #Get clean subject name and emoji
+                clean_subject_name, determiner = get_clean_subject_name(subject)
+                chosen_emoji = get_subject_emoji(clean_subject_name)
 
-                # Load JSON data from files
-                emoji_path = os.path.join(data_dir, 'emoji_cours_names.json')
-                subject_path = os.path.join(data_dir, 'subject_names_format.json')
-
-                try:
-                    async with aiofiles.open(emoji_path, 'r', encoding='utf-8') as emojis_data, aiofiles.open(subject_path, 'r', encoding='utf-8') as subjects_data:
-                        emojis = json.loads(await emojis_data.read())
-                        subjects = json.loads(await subjects_data.read())
-                        
-                except (FileNotFoundError, json.JSONDecodeError) as e:
-                    logger.error(f"Failed to load JSON files for user {user.user_hash}: {e}")
-                    sentry_sdk.capture_exception(e)
-                    emojis = {}
-                    subjects = {}
-
-                global lower_cap_subject_name
-                lower_cap_subject_name = subject[0].capitalize() + subject[1:].lower()
-
-                # Normalize function to simplify comparison
-                def normalize(text:str) -> str:
-                    """
-                    Normalize a text string for comparison
-                    """
-                    
-                    return text.lower().replace(' ', '').replace('-', '').replace('.', '').replace('é', 'e')
-
-                # Create a dictionary of normalized short names to emojis
-                normalized_emojis = {
-                    normalize(name): (emoji if isinstance(emoji, list) else [emoji])
-                    for name, emoji in emojis.items()
-                }
-
-                # Create a dictionary of normalized subject names
-                normalized_subjects = {
-                    normalize(key): details
-                    for key, details in subjects.items()
-                }
-
-                # Normalize lower_cap_subject_name for comparison
-                normalized_subject_key = normalize(lower_cap_subject_name)
-
-                # Find subject details from the subjects JSON
-                if normalized_subject_key in normalized_subjects:
-                    subject_details = normalized_subjects[normalized_subject_key]
-                    name = subject_details["name"]
-
-                    if user.lang == "es":
-                        det = "de"
-
-                    else:
-                        det = subject_details["det"] #french
-                else:
-                    name = lower_cap_subject_name
-                    det = ":"  # default caracter if not found
-
-                # Find matching emoji using the better subject name
-                found_emoji_list = ['📝']  # Default emoji if no match is found
-                normalized_name_key = normalize(name)
-                for short_name, emoji_list in normalized_emojis.items():
-                    # Use word boundary check or exact match
-                    if (short_name in normalized_name_key or normalized_name_key == short_name):
-                        #logger.debug(f"Debug Data : {name} {short_name} {emoji_list}")
-                        found_emoji_list = emoji_list
-                        break
-
-                # Randomly choose an emoji from the matched emoji list
-                chosen_emoji = random.choice(found_emoji_list)
-
-                if det == "de" or det ==":":
+                if determiner == "de" or determiner == ":":
                     extra_space = " "
                 else:
                     extra_space = ""
@@ -725,9 +657,9 @@ async def lesson_check(user):
                     # Send notification for canceled lesson
                     title = get_i18n_value(lang, 'notification.cancelledClassTitle')
                     body = get_i18n_value(lang, 'notification.cancelledClassBody',
-                        det=det,
+                        det=determiner,
                         extra_space=extra_space,
-                        name=name,
+                        name=clean_subject_name,
                         class_start_time=class_start_time
                     )
                     send_notification_to_device(
@@ -744,17 +676,17 @@ async def lesson_check(user):
                     
                     if room_name is None:
                         class_time_message = get_i18n_value(lang, 'notification.classTimeNoRoomMessageDesc',
-                            det=det,
+                            det=determiner,
                             extra_space=extra_space,
-                            name=name,
+                            name=clean_subject_name,
                             class_start_time=class_start_time,
                             chosen_emoji=chosen_emoji
                         )
                     else:  
                         class_time_message = get_i18n_value(lang, 'notification.classTimeRoomMessageDesc',
-                            det=det,
+                            det=determiner,
                             extra_space=extra_space,
-                            name=name,
+                            name=clean_subject_name,
                             room_name=room_name,
                             class_start_time=class_start_time,
                             chosen_emoji=chosen_emoji
@@ -1079,6 +1011,102 @@ async def check_reminder_notifications(user):
         logger.error(f"Error in reminder check for user {user.user_hash[:4]}****: {e}")
         sentry_sdk.capture_exception(e)
 
+async def load_subject_data() -> tuple:
+    """Load subject emoji and name data from JSON files"""
+    emoji_path = os.path.join(data_dir, 'emoji_cours_names.json')
+    subject_path = os.path.join(data_dir, 'subject_names_format.json')
+
+    try:
+        async with aiofiles.open(emoji_path, 'r', encoding='utf-8') as emojis_data, aiofiles.open(subject_path, 'r', encoding='utf-8') as subjects_data:
+            emojis = json.loads(await emojis_data.read())
+            subjects = json.loads(await subjects_data.read())
+            return emojis, subjects
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        logger.error(f"Failed to load subject data: {e}")
+        sentry_sdk.capture_exception(e)
+        return {}, {}
+
+
+def normalize(text: str) -> str:
+    """Normalize a text string for comparison"""
+    return text.lower().replace(' ', '').replace('-', '').replace('.', '').replace('é', 'e')
+
+
+def get_clean_subject_name(raw_subject_name: str) -> tuple:
+    """
+    Get the cleaned subject name and grammatical determiner.
+    Returns a tuple of (clean_name, determiner)
+    """
+    try:
+        # Load subjects data
+        subject_path = os.path.join(data_dir, 'subject_names_format.json')
+        with open(subject_path, 'r', encoding='utf-8') as f:
+            subjects_data = json.load(f)
+
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        logger.warning(f"Failed to load subject names data: {e}. Using raw name.")
+        return raw_subject_name, ":"
+    
+    # Capitalize first letter, lowercase the rest
+    lower_cap_subject_name = raw_subject_name[0].capitalize() + raw_subject_name[1:].lower()
+    
+    # Create a dictionary of normalized subject names
+    normalized_subjects = {
+        normalize(key): details
+        for key, details in subjects_data.items()
+    }
+    
+    # Normalize the subject name for comparison
+    normalized_subject_key = normalize(lower_cap_subject_name)
+    
+    # Find subject details from the subjects JSON
+    if normalized_subject_key in normalized_subjects:
+        subject_details = normalized_subjects[normalized_subject_key]
+        clean_name = subject_details["name"]
+        determiner = subject_details["det"]
+
+    else:
+        clean_name = lower_cap_subject_name
+        determiner = ":"  # default character if not found
+    
+    return clean_name, determiner
+
+
+def get_subject_emoji(clean_subject_name: str) -> str:
+    """
+    Get the emoji for a given subject name.
+    Returns a single emoji string.
+    """
+    try:
+        # Load emojis data
+        emoji_path = os.path.join(data_dir, 'emoji_cours_names.json')
+        with open(emoji_path, 'r', encoding='utf-8') as f:
+            emojis_data = json.load(f)
+            
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        logger.warning(f"Failed to load emoji data: {e}. Using default emoji.")
+        return '📝'
+    
+    # Create a dictionary of normalized short names to emojis
+    normalized_emojis = {
+        normalize(name): (emoji if isinstance(emoji, list) else [emoji])
+        for name, emoji in emojis_data.items()
+    }
+    
+    # Normalize the clean name for comparison
+    normalized_name_key = normalize(clean_subject_name)
+    
+    # Find matching emoji
+    found_emoji_list = ['📝']  # Default emoji if no match is found
+    
+    for short_name, emoji_list in normalized_emojis.items():
+        if short_name in normalized_name_key or normalized_name_key == short_name:
+            found_emoji_list = emoji_list
+            break
+    
+    # Randomly choose an emoji from the matched emoji list
+    return random.choice(found_emoji_list)
+    
 async def main():
     """Main function to run the multi-user system"""
     # Check internet connection
