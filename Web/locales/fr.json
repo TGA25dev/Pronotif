@@ -75,7 +75,9 @@
     "lunchMenu": "Menu du midi",
     "eveningMenu": "Menu du soir",
     "lunchMenuDesc": "Vous recevrez une notification avec le menu du midi à l'heure de manger.",
-    "eveningMenuDesc": "Vous recevrez une notification avec le menu du soir à l'heure du diner."
+    "eveningMenuDesc": "Vous recevrez une notification avec le menu du soir à l'heure du diner.",
+    "newGrade": "Nouvelle note",
+    "newGradeDesc": "Soyez notifiés quand une nouvelle note est publiée."
   },
   "dashboard": {
     "greetingDay": "Bonjour",

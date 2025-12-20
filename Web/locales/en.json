@@ -75,7 +75,9 @@
     "lunchMenu": "Lunch menu",
     "eveningMenu": "Evening menu",
     "lunchMenuDesc": "You will receive a notification with the lunch menu at lunchtime.",
-    "eveningMenuDesc": "You will receive a notification with the lunch menu on the evening."
+    "eveningMenuDesc": "You will receive a notification with the lunch menu on the evening.",
+    "newGrade": "New grade",
+    "newGradeDesc": "Receive a notification when a new grade is published."
   },
   "dashboard": {
     "greetingDay": "Hello",
