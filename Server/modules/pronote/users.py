@@ -12,6 +12,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 from modules.security.encryption import decrypt
 
 from ..login.temp_login.pronotepy_monlycee import ile_de_france
+from ..pronote.id_creator import generate_id
 
 # Initialize Sentry
 from modules.sentry.sentry_config import sentry_sdk
@@ -83,6 +84,7 @@ class PronotifUser:
         self.evening_menu = bool(user_data.get('evening_menu', 0))
         self.unfinished_homework_reminder = bool(user_data.get('unfinished_homework_reminder', 0))
         self.get_bag_ready_reminder = bool(user_data.get('get_bag_ready_reminder', 0))
+        self.new_grade_notification = bool(user_data.get('new_grade_notification', 0))
         
         # Status tracking
         self.is_active = bool(user_data.get('is_active', 0))
@@ -484,6 +486,11 @@ class PronotifUser:
 
         if bool(user_data.get('get_bag_ready_reminder', self.get_bag_ready_reminder)) != self.get_bag_ready_reminder:
             self.get_bag_ready_reminder = bool(user_data.get('get_bag_ready_reminder', self.get_bag_ready_reminder))
+            changes_made = True
+            changes.append('get_bag_ready_reminder')
+        
+        if bool(user_data.get('new_grade_notification', self.new_grade_notification)) != self.new_grade_notification:
+            self.new_grade_notification = bool(user_data.get('new_grade_notification', self.new_grade_notification))
             changes_made = True
             changes.append('get_bag_ready_reminder')
 

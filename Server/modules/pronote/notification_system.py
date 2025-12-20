@@ -13,9 +13,11 @@ import aiofiles
 import json
 import random
 import redis
+import hashlib
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from modules.secrets.secrets_manager import get_secret
+from modules.security.encryption import encrypt
 
 from modules.pronote.users import PronotifUser
 from modules.messaging.firebase import send_notification_to_device
@@ -391,12 +393,19 @@ async def user_process_loop(user:PronotifUser) -> None:
                     except Exception as e:
                         logger.error(f"Failed to update Redis session: {e}")
                     
-                    # Run all notification checks in parallel
-                    await asyncio.gather(
+                    current_minute = datetime.now().minute
+                    
+                    tasks = [ #every minute tasks
                         lesson_check(user), 
-                        menu_food_check(user), 
-                        check_reminder_notifications(user)
-                    )
+                        check_reminder_notifications(user),
+                        menu_food_check(user),
+                    ]
+                    
+                    #Grade check every 15 minutes
+                    if current_minute % 15 == 0:
+                        tasks.append(check_new_grades(user))
+                                        
+                    await asyncio.gather(*tasks)
                     
                     consecutive_failures = 0  # Reset on success
                     
@@ -707,6 +716,164 @@ async def lesson_check(user):
     except Exception as e:
         logger.error(f"Error checking lessons for user {user.user_hash}: {e}")
         sentry_sdk.capture_exception(e)
+        
+async def check_new_grades(user):
+    """Check for new grades and send notifications"""
+
+    if not user.new_grade_notification:
+        return
+    
+    async def fetch_current_period(user_obj):
+        """Fetch the current period for the user"""
+        return user_obj.client.current_period
+    
+    try:
+        student_current_period = await retry_with_backoff(fetch_current_period, user)
+
+        if not student_current_period:
+            logger.debug(f"No current period found for user {user.user_hash[:4]}****")
+            return
+
+        grades_for_period = student_current_period.grades if student_current_period else []
+
+        if not grades_for_period:
+            logger.debug(f"No grades found for user {user.user_hash[:4]}**** in current period")
+            return
+
+        new_grades_count = 0
+
+        #Check if this is first run for grades
+        try:
+            with get_db_connection() as connection:
+                cursor = connection.cursor(dictionary=True)
+                check_query = f"""
+                SELECT COUNT(*) as count
+                FROM {get_secret('DB_GRADES_TABLE_NAME')}
+                WHERE user_hash = %s
+                """
+                cursor.execute(check_query, (user.user_hash,))
+                result = cursor.fetchone()
+                is_first_run = result['count'] == 0
+
+        except Exception as e:
+            logger.error(f"Error checking if first run for grades: {e}")
+            sentry_sdk.capture_exception(e)
+            is_first_run = False
+        
+        for grade in grades_for_period:
+            grade_date = grade.date
+            grade_subject_name = grade.subject.name
+            grade_value = grade.grade
+            grade_out_of = grade.out_of
+            grade_is_the_best = True if grade.max == grade.grade else False
+
+            # Create unique hash for the grade
+            grade_hash = hashlib.sha256(
+                f"{user.user_hash}_{grade_subject_name}_{grade_value}_{grade_out_of}_{grade_date}".encode()
+            ).hexdigest()
+
+            #encrypt sensitive grade data
+            encrypted_grade_date = encrypt(str(grade_date))
+            encrypted_grade_subject_name = encrypt(grade_subject_name)
+            encrypted_grade_value = encrypt(str(grade_value))
+            encrypted_grade_out_of = encrypt(str(grade_out_of))
+
+            #Check if grade already exists in database
+            try:
+                with get_db_connection() as connection:
+                    cursor = connection.cursor(dictionary=True)
+                    
+                    #compare with hash
+                    check_query = f"""
+                    SELECT COUNT(*) as count
+                    FROM {get_secret('DB_GRADES_TABLE_NAME')}
+                    WHERE user_hash = %s AND grade_hash = %s
+                    """
+                    cursor.execute(check_query, (user.user_hash, grade_hash))
+                    result = cursor.fetchone()
+                    
+                    if result['count'] == 0:  #Grade doesn't exist
+                        insert_query = f"""
+                        INSERT INTO {get_secret('DB_GRADES_TABLE_NAME')}
+                        (user_hash, subject_name, grade, out_of, date, grade_hash, created_at)
+                        VALUES (%s, %s, %s, %s, %s, %s, NOW())
+                        """
+                        cursor.execute(insert_query, (user.user_hash, encrypted_grade_subject_name, encrypted_grade_value, encrypted_grade_out_of, encrypted_grade_date, grade_hash))
+                        connection.commit() #insert data
+                        
+                        new_grades_count += 1
+                        
+                        if not is_first_run: #skip notification on first run to prevent spam
+                            await send_grade_notification(user, grade_subject_name, grade_value, grade_out_of, grade_is_the_best)
+                        else:
+                            logger.debug(f"Skipping notification for grade (first run) for user {user.user_hash[:4]}****")
+                        
+            except Exception as e:
+                logger.error(f"Error checking/storing grade for user {user.user_hash[:4]}****: {e}")
+                sentry_sdk.capture_exception(e)
+        
+        if new_grades_count > 0:
+            logger.info(f"Found and stored {new_grades_count} new grade(s) for user {user.user_hash[:4]}****")
+
+    except Exception as e:
+        logger.error(f"Error checking grades for user {user.user_hash[:4]}****: {e}")
+        sentry_sdk.capture_exception(e)
+
+async def send_grade_notification(user, subject_name, grade_value, grade_out_of, grade_is_the_best):
+    """Send notification when a new grade is received"""
+    lang = user.lang
+    
+    try:
+        clean_subject_name, _ = get_clean_subject_name(subject_name)
+
+        grade_value_str = str(grade_value).replace(',', '.')
+        grade_out_of_str = str(grade_out_of).replace(',', '.')
+
+        grade_value = float(grade_value_str) if grade_value is not None else 0
+        grade_out_of = float(grade_out_of_str) if grade_out_of is not None else 20
+
+        if grade_is_the_best: #best grade of the group
+            emoji = "👑 "     
+        elif grade_value >= 0.85 * grade_out_of: #85% and above
+            emoji = "🎉 "
+        elif grade_value >= 0.7 * grade_out_of: #70% and above but below 85%
+            emoji = "✨ "
+        else:
+            emoji = "" #regular grade (default)
+        
+        title = get_i18n_value(lang, 'notification.newGradeTitle', emoji=emoji)
+        body = get_i18n_value(lang, 'notification.newGradeDesc',
+            grade_value=grade_value,
+            grade_out_of=grade_out_of,
+            subject_name=clean_subject_name)
+        
+    except Exception as e:
+        logger.warning(f"Failed to get i18n values for grade notification: {e}. Using fallback text.")
+        clean_subject_name, _ = get_clean_subject_name(subject_name)
+        title = "Nouvelle note"
+        body = f"Vous avez eu {grade_value}/{grade_out_of} en {subject_name}"
+    
+    try:
+        result = send_notification_to_device(
+            user.fcm_token,
+            title=title,
+            body=body,
+        )
+
+        if result and result.get("status") == "success":
+            logger.success(f"Grade notification sent to {user.user_hash[:4]}****")
+            return result
+        else:
+            error_msg = result.get("error") if result else "Unknown error"
+            logger.error(f"Failed to send grade notification for user {user.user_hash[:4]}****: {error_msg}")
+            sentry_sdk.capture_exception(Exception(error_msg))
+            return None
+
+    except Exception as e:
+        logger.error(f"Exception in send_grade_notification for user {user.user_hash[:4]}****: {str(e)}")
+        sentry_sdk.capture_exception(e)
+        return None
+   
 
 async def fetch_saved_menus(user, date):
     """Try to fetch saved menus from db"""
