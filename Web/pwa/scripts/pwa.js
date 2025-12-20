@@ -573,7 +573,7 @@ async function fetchSettings() {
     //fetch all user settings on page loading
     try {
         console.log('[Settings] Fetching user settings from backend...');
-        const response = await wrapFetch('https://api.pronotif.tech/v1/app/fetch?fields=class_reminder,lunch_menu,evening_menu,unfinished_homework_reminder,unfinished_homework_reminder_time,get_bag_ready_reminder,get_bag_ready_reminder_time,notification_delay,student_firstname,lang', {
+        const response = await wrapFetch('https://api.pronotif.tech/v1/app/fetch?fields=class_reminder,lunch_menu,evening_menu,unfinished_homework_reminder,new_grade_notification,unfinished_homework_reminder_time,get_bag_ready_reminder,get_bag_ready_reminder_time,notification_delay,student_firstname,lang', {
             method: 'GET',
             credentials: 'include',
             cache: 'no-store'
@@ -609,6 +609,7 @@ function populateSettingsUI(settings) {
         'evening_menu': 'settingsMenuDuSoirItem',
         'unfinished_homework_reminder': 'settingsHomeworkNotDoneItem',
         'get_bag_ready_reminder': 'settingsPackBackpackItem',
+        'new_grade_notification': 'settingsNewGradeItem',
         'lang': "currentLanguageLabel"
     };
     
@@ -3596,12 +3597,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 case 'settingsPackBackpackItem':
                     settingName = 'get_bag_ready_reminder';
                     break;
+                case 'settingsNewGradeItem':
+                    settingName = 'new_grade_notification';
+                    break;
                 case "settingsTelemetryConsentItem":
                     settingName = 'telemetry_consent';
                     break;
                 default:
                     console.warn(`Unknown settings item: ${itemId}`);
-                    return;
+                    return; 
             }
             
             if (settingName) {

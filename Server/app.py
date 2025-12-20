@@ -746,7 +746,8 @@ def set_settings():
             'get_bag_ready_reminder',
             'evening_menu',
             'lunch_menu',
-            'class_reminder'
+            'class_reminder',
+            'new_grade_notification'
         ]
         
         #Define time settings (HH:MM format)
@@ -829,6 +830,7 @@ def set_settings():
             'class_reminder',
             'unfinished_homework_reminder_time',
             'get_bag_ready_reminder_time',
+            'new_grade_notification',
             'student_firstname',
             'notification_delay',
             "lang"
@@ -1332,7 +1334,7 @@ def fetch_student_data():
         "next_class_name", "next_class_room", "next_class_teacher", 
         "next_class_start", "next_class_end", "homeworks",
         "fcm_token", "token_updated_at", "timestamp", "is_active",
-        "class_reminder", "lunch_menu", "unfinished_homework_reminder_time", "get_bag_ready_reminder_time", "lang"
+        "class_reminder", "lunch_menu", "unfinished_homework_reminder_time", "get_bag_ready_reminder_time", "new_grade_notification" ,"lang"
     }
 
     # Validate and sanitize requested fields
