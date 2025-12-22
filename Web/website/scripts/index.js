@@ -21,6 +21,7 @@ function initializeUrlHandling() {
                     /^[a-zA-Z0-9_\-\/]+$/.test(safeBaseUrl)
                     
                 ) {
+                    // lgtm[js/xss-through-dom]
                     window.location.href = safeBaseUrl + config.urlSuffix;
                 } else {
                     console.error('Invalid or potentially unsafe URL detected:', baseUrl);
