@@ -67,6 +67,22 @@ except ValueError as e:
     print(f"Environment validation failed: {e}")
     exit(1)
 
+#Cache static configs
+RUN_BG_TASKS_CONFIG = get_secret("RUN_BG_TASKS")
+INTERNAL_API_KEY_CONFIG = get_secret('INTERNAL_API_KEY')
+DB_POOL_SIZE_CONFIG = int(get_secret('DB_POOL_SIZE'))
+
+#Pre fetch fb config values
+FIREBASE_CONFIG_CACHE = {
+    "apiKey": get_secret('FB_API_KEY'),
+    "authDomain": get_secret('FB_AUTH_DOMAIN'),
+    "projectId": get_secret('FB_PROJECT_ID'),
+    "storageBucket": get_secret('FB_STORAGE_BUCKET'),
+    "messagingSenderId": get_secret('FB_MESSAGING_SENDER_ID'),
+    "appId": get_secret('FB_APP_ID')
+}
+FIREBASE_CACHE_CONTROL_HEADER = f"private, max-age={int(get_secret('FIREBASE_CONFIG_CACHE_SECONDS'))}"
+
 app = Flask(__name__)
 limiter.init_app(app)
 app.wsgi_app = ProxyFix(
@@ -498,23 +514,11 @@ def get_firebase_config():
                             logger.warning(f"Firebase config access attempt with invalid credentials: {app_session_id[:4]}****")
                             return jsonify({"error": "Invalid credentials"}), 401
                     
-                        # User is authenticated, return Firebase config
-                        firebase_config = {
-                            "apiKey": get_secret('FB_API_KEY'),
-                            "authDomain": get_secret('FB_AUTH_DOMAIN'),
-                            "projectId": get_secret('FB_PROJECT_ID'),
-                            "storageBucket": get_secret('FB_STORAGE_BUCKET'),
-                            "messagingSenderId": get_secret('FB_MESSAGING_SENDER_ID'),
-                            "appId": get_secret('FB_APP_ID')
-                        }
-                        
-                        # Log the successful access
                         logger.info(f"Firebase config provided to authenticated user: {app_session_id[:4]}****")
                         
                         # Return the config
-                        response = jsonify(firebase_config)
-                        cache_seconds = int(get_secret('FIREBASE_CONFIG_CACHE_SECONDS'))
-                        response.headers['Cache-Control'] = f'private, max-age={cache_seconds}'
+                        response = jsonify(FIREBASE_CONFIG_CACHE) #send the sacved config
+                        response.headers['Cache-Control'] = FIREBASE_CACHE_CONTROL_HEADER
                         response.headers['X-Content-Type-Options'] = 'nosniff'
                         return response
                 
@@ -1668,7 +1672,7 @@ def invalid_token():
     """
     # Require internal auth
     auth_header = request.headers.get('X-Internal-Auth')
-    if not auth_header or auth_header != get_secret('INTERNAL_API_KEY'):
+    if not auth_header or auth_header != INTERNAL_API_KEY_CONFIG:
         return jsonify({"error": "Unauthorized"}), 401
         
     if not request.is_json:
@@ -1744,7 +1748,7 @@ def monitor_pool():
         try:
             if hasattr(connection_pool, '_cnx_queue'):
                 available = connection_pool._cnx_queue.qsize()
-                total = int(get_secret('DB_POOL_SIZE'))
+                total = DB_POOL_SIZE_CONFIG
                 used = total - available
                 
                 # Potential connection leak
@@ -1842,7 +1846,7 @@ def initialize():
     global initialized, _background_started
     if not initialized:
         initialized = True
-    if not _background_started and get_secret("RUN_BG_TASKS") == "1":
+    if not _background_started and RUN_BG_TASKS_CONFIG == "1":
         _background_started = True
         start_background_tasks()
     if request.method in ("POST","PUT","PATCH","DELETE") and request.endpoint not in ("login_user", "verify_code", "consume_code", "invalid_token"):
