@@ -100,6 +100,12 @@
     "noHomeworkSubject": "No subject",
     "noHomeworkDescription": "No description"
   },
+  "homework": {
+    "title": "Homeworks",
+    "noToDo": "No homeworks for now",
+    "noDone": "No recently finished homeworks", 
+    "forThe": "For the"
+  },
   "modal": {
     "theme": "Theme",
     "light": "Light",
