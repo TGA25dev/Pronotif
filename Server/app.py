@@ -569,8 +569,8 @@ def send_test_notification():
                 "✅ Notification de test",
                 "Si vous voyez ça c'est que tout fontionne correctement ! 🎉"
             )
-            if response:
-                return jsonify({"success": True, "message_id": response}), 200
+            if response and response.get("status") == "success":
+                return jsonify({"success": True, "message_id": response.get("message_id")}), 200
             else:
                 return jsonify({"success": False, "error": "Failed to send notification"}), 500
         finally:
