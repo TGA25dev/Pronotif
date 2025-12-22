@@ -104,7 +104,9 @@
     "title": "Devoirs",
     "noToDo": "Aucun devoir pour le moment",
     "noDone": "Aucun devoir terminé récemment", 
-    "forThe": "Pour le"
+    "forThe": "Pour le",
+    "toDo": "À faire",
+    "done": "Terminés"
   },
   "modal": {
     "theme": "Thème",
@@ -202,6 +204,20 @@
     "tomorrow": "Demain",
     "daysWord": "jours",
     "inWord": "Dans"
+  },
+  "month": {
+    "january": "Janvier",
+    "february": "Février",
+    "march": "Mars",
+    "april": "Avril",
+    "may": "Mai",
+    "june": "Juin",
+    "july": "Juillet",
+    "august": "Août",
+    "september": "Septembre",
+    "october": "Octobre",
+    "november": "Novembre",
+    "december": "Décembre"
   },
   "notification": {
     "logoutInfoTitle": "Vous avez été déconnecté(e)",

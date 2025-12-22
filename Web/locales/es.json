@@ -100,11 +100,13 @@
     "noHomeworkSubject": "Ninguna materia",
     "noHomeworkDescription": "Sin descripción"
   },
-    "homework": {
+  "homework": {
     "title": "Deberes",
     "noToDo": "No tienes deberes por hacer",
     "noDone": "No tienes deberes terminados", 
-    "forThe": "Para el"
+    "forThe": "Para el",
+    "toDo": "Por hacer",
+    "done": "Acabados"
   },
   "modal": {
     "theme": "Tema",
@@ -199,7 +201,23 @@
     "sunday": "Domingo",
     "thursday": "Jueves",
     "today": "Hoy",
-    "tomorrow": "Mañana"
+    "tomorrow": "Mañana",
+    "daysWord": "días",
+    "inWord": "Dentro de"
+  },
+  "month": {
+    "january": "Enero",
+    "february": "Febrero",
+    "march": "Marzo",
+    "april": "Abril",
+    "may": "Mayo",
+    "june": "Junio",
+    "july": "Julio",
+    "august": "Agosto",
+    "september": "Septiembre",
+    "october": "Octubre",
+    "november": "Noviembre",
+    "december": "Diciembre"
   },
   "notification": {
     "logoutInfoTitle": "Has sido desconectad@",

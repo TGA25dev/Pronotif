@@ -104,7 +104,9 @@
     "title": "Homeworks",
     "noToDo": "No homeworks for now",
     "noDone": "No recently finished homeworks", 
-    "forThe": "For the"
+    "forThe": "For the",
+    "toDo": "To Do",
+    "done": "Done"
   },
   "modal": {
     "theme": "Theme",
@@ -199,7 +201,23 @@
     "sunday": "Sunday",
     "thursday": "Thursday",
     "today": "Today",
-    "tomorrow": "Tomorrow"
+    "tomorrow": "Tomorrow",
+    "daysWord": "days",
+    "inWord": "In"
+  },
+  "month": {
+    "january": "January",
+    "february": "February",
+    "march": "March",
+    "april": "April",
+    "may": "May",
+    "june": "June",
+    "july": "July",
+    "august": "August",
+    "september": "September",
+    "october": "October",
+    "november": "November",
+    "december": "December"
   },
   "notification": {
     "logoutInfoTitle": "You'v been logged out",
