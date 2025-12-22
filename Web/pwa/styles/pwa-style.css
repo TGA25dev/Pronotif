@@ -134,11 +134,12 @@ body::before {
 }
 
 .dashboard-bottom-part {
-    margin-top: auto;
+    margin-top: 0.5rem;
+    flex-grow: 1;
     padding: 0;
-    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0));
+    padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0)) !important;
     width: 100%;
-    min-height: 60%; /* Box placement (height*/
+    min-height: 90vh;
     background: var(--login-view-main-card);
     border-radius: 2rem 2rem 0 0;
     display: flex;
@@ -992,6 +993,7 @@ body::before {
     align-items: stretch;
     box-sizing: border-box;
     overflow-x: hidden;
+    overflow-y: auto;
     flex: 1 1 auto;
     min-height: 0; 
 }
@@ -1067,7 +1069,7 @@ body::before {
     display: flex;
     width: 100%;
     max-width: var(--container-width);
-    margin: 1rem auto 0.1rem;
+    margin: 0.5rem auto 0.1rem;
     padding: 0.6rem 1rem;
     border-radius: 1rem;
     box-shadow: 0 4px 14px rgba(0,0,0,0.06);
@@ -1230,14 +1232,33 @@ body::before {
     user-select: none;
     position: relative;
     transform-origin: center;
+    animation: slideInUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    opacity: 0;
 }
 
-.homework-item.swiping {
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.homework-item.swiping,
+.homework-card.swiping {
     transition: transform 0.05s linear;
     border-radius: 0.75rem 0 0 0.75rem;
 }
 
-.homework-item.swiping-reset {
+.homework-card.swiping {
+    border-radius: 1rem 0 0 1rem;
+}
+
+.homework-item.swiping-reset,
+.homework-card.swiping-reset {
     transition: transform 0.3s ease-out;
 }
 
@@ -1314,10 +1335,17 @@ body::before {
 }
 
 
-.homework-list .homework-item {
+.homework-list .homework-item,
+.homework-list .homework-card {
     width: 100% !important;
     margin-left: 0 !important;
     margin-right: 0 !important;
+}
+
+.homework-list .homework-card {
+    margin-bottom: 0.75rem;
+    user-select: none;
+    transform-origin: center;
 }
 
 .homework-subject {
@@ -1344,6 +1372,215 @@ body::before {
     white-space: nowrap;
     margin-left: 0.5rem;
     box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.25);
+}
+
+/* Homework View */
+#homeworkView {
+    position: relative;
+    height: 100%;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    display: flex;
+    flex-direction: column;
+    background: var(--login-view-main-card);
+    overflow: hidden;
+}
+
+#homeworkView.hidden {
+    display: none !important;
+}
+
+.homework-container {
+    width: 100%;
+    padding: 1rem 0 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    overflow-y: auto;
+    flex: 1 1 100%;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0));
+}
+
+.homework-header {
+    padding: 1.5rem 1rem 0.75rem;
+    max-width: 100%;
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.homework-title {
+    font-family: "Cabinet";
+    font-size: 2rem;
+    font-weight: 800;
+    margin: 0 0 0.5rem 0;
+    color: var(--text-dark);
+    text-align: left;
+}
+
+.homework-content-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    color: var(--subtitle-dark);
+    font-family: "Satoshi";
+    font-weight: 500;
+}
+
+.homework-tabs-container {
+    width: 100%;
+    padding: 0 1rem;
+    box-sizing: border-box;
+    margin-bottom: 1.5rem;
+}
+
+.homework-tabs {
+    display: flex;
+    background: rgba(0, 0, 0, 0.05);
+    padding: 0.25rem;
+    border-radius: 2rem;
+    position: relative;
+}
+
+.homework-tab {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 0.6rem 1rem;
+    border-radius: 1.5rem;
+    font-family: "Satoshi";
+    font-weight: 600;
+    color: var(--subtitle-dark);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+}
+
+.homework-tab.active {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.homework-list-container {
+    width: 100%;
+    padding: 0 1rem;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.homework-list-container.hidden {
+    display: none;
+}
+
+.homework-card {
+    background: var(--login-view-main-card);
+    border-radius: 1rem;
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    position: relative;
+    min-height: 90px;
+    animation: slideInUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    opacity: 0;
+}
+
+.homework-card-strip {
+    width: 12px;
+    background: var(--card-color);
+    flex-shrink: 0;
+}
+
+.homework-card-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+}
+
+.homework-card-header {
+    padding: 0.75rem 1rem 0.25rem 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.homework-icon {
+    font-size: 1.5rem;
+    color: var(--card-color);
+    margin-top: 0.1rem;
+}
+
+.homework-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.homework-card-title {
+    font-family: "Cabinet";
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text-dark);
+    margin: 0 0 0.15rem 0;
+    line-height: 1.1;
+}
+
+.homework-date-label {
+    font-size: 0.8rem;
+    color: var(--subtitle-dark);
+    margin: 0;
+}
+
+.homework-badge {
+    background: var(--card-color);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0.9;
+}
+
+.homework-badge.date-badge {
+    background: rgba(0,0,0,0.05);
+    color: var(--text-dark);
+}
+
+.homework-description {
+    padding: 0 1rem 0.5rem 1rem;
+    font-size: 0.85rem;
+    color: var(--text-dark);
+    line-height: 1.3;
+    opacity: 0.8;
+}
+
+.homework-footer {
+    margin-top: auto;
+    padding: 0.5rem 1rem;
+    background: rgba(0, 0, 0, 0.03);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--subtitle-dark);
+    font-weight: 500;
+}
+
+.homework-footer i {
+    font-size: 0.9rem;
 }
 
 /*Settings View*/
@@ -2175,10 +2412,14 @@ body:has(#settingsView:not(.hidden)) .toast-container {
 /* Notched phones */
 .dashboard-container,
 .main-container,
-.dashboard-top-part,
-.dashboard-bottom-part {
+.dashboard-top-part {
     padding-top: env(safe-area-inset-top, 0);
     padding-bottom: env(safe-area-inset-bottom, 0);
+    padding-left: env(safe-area-inset-left, 0);
+    padding-right: env(safe-area-inset-right, 0);
+}
+
+.dashboard-bottom-part {
     padding-left: env(safe-area-inset-left, 0);
     padding-right: env(safe-area-inset-right, 0);
 }
@@ -2202,7 +2443,8 @@ body:has(#settingsView:not(.hidden)) .toast-container {
 
 /* Show navbar only on dashboard and settings*/
 body:has(#dashboardView:not(.hidden)) .bottom-navbar,
-body:has(#settingsView:not(.hidden)) .bottom-navbar {
+body:has(#settingsView:not(.hidden)) .bottom-navbar,
+body:has(#homeworkView:not(.hidden)) .bottom-navbar {
     display: flex !important;
 }
 
@@ -2271,7 +2513,7 @@ body:has(#settingsView:not(.hidden)) .bottom-navbar {
 }
 
 .dashboard-container {
-    padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0)) !important;
+    padding-bottom: 0 !important;
 }
 
 .homework-list {

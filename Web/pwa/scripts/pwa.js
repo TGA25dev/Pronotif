@@ -1653,6 +1653,7 @@ function showDashboard() {
             console.log('[UI] Dashboard view is now visible.');
         }
         showHomeworkLoadingState();
+        showHomeworksPageLoadingState();
 
         initializeDashboard();
         
@@ -1752,6 +1753,7 @@ async function fetchDashboardData() {
         console.log('Dashboard data received:', result);
 
         if (result.data) {
+            window.lastDashboardData = result.data; //ttore for re-rendering on language change
             updateDashboardWithData(result.data);
         } else {
             console.warn('No data in API response, using fallback');
@@ -1777,6 +1779,9 @@ function updateDashboardWithData(data) {
     
     updateNextCourseCard(data);
     updateHomeworkSection(data);
+    if (data.homeworks) {
+        renderHomeworksPage(data.homeworks);
+    }
     
     console.log('Dashboard update completed');
 }
@@ -1844,6 +1849,21 @@ function showHomeworkLoadingState() {
     `;
 }
 
+function showHomeworksPageLoadingState() {
+    const listTodo = document.getElementById('homeworkListTodo');
+    const listDone = document.getElementById('homeworkListDone');
+    
+    const loadingHtml = `
+        <div style="display: flex; justify-content: center; align-items: center; padding: 2rem; min-height: 200px; flex-direction: column;">
+            <i class="fa-solid fa-spinner" style="animation: spin 2s linear infinite; font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem;"></i>
+            <p style="color: var(--subtitle-dark); margin: 0; font-family: 'Satoshi', sans-serif; font-weight:500">${getI18nValue('dashboard.loading')}</p>
+        </div>
+    `;
+
+    if (listTodo) listTodo.innerHTML = loadingHtml;
+    if (listDone) listDone.innerHTML = loadingHtml;
+}
+
 function updateHomeworkSection(data) {
     const homeworkList = document.querySelector('.homework-list');
     
@@ -1868,43 +1888,19 @@ function updateHomeworkSection(data) {
     }
     
     //Populate homework items
-    data.homeworks.forEach(homework => {
-        const dueDate = new Date(homework.due_date);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+    data.homeworks.forEach((homework, index) => {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = renderHomeworkCard(homework);
+        const homeworkItem = tempDiv.firstElementChild;
         
-        let dueDateText = '';
-        const dayDiff = Math.floor((dueDate - today) / (1000 * 60 * 60 * 24));
-        
-        if (dayDiff === 0) {
-            dueDateText = getI18nValue("days.today");
-        } else if (dayDiff === 1) {
-            dueDateText = getI18nValue("days.tomorrow");
-        } else if (dayDiff > 1 && dayDiff <= 7) {
-            const daysOfWeek = [getI18nValue("days.sunday"), getI18nValue("days.monday"), getI18nValue("days.tuesday"), getI18nValue("days.wednesday"), getI18nValue("days.thursday"), getI18nValue("days.friday"), getI18nValue("days.saturday")];
-            dueDateText = daysOfWeek[dueDate.getDay()];
-        } else {
-            dueDateText = homework.due_date;
-        }
-        
-        const homeworkItem = document.createElement('div');
-        homeworkItem.className = `homework-item ${homework.done ? 'completed' : 'pending'}`;
         homeworkItem.dataset.homeworkId = homework.id || Math.random();
-
-        const statusIcon = homework.done 
-            ? '<i class="fa-solid fa-check-circle"></i>' 
-            : '<i class="fa-regular fa-circle"></i>';
+        homeworkItem.style.animationDelay = `${index * 0.05}s`;
         
-        homeworkItem.innerHTML = `
-            <div class="homework-status">
-                ${statusIcon}
-            </div>
-            <div class="homework-content">
-                <h3 class="homework-subject">${homework.subject || getI18nValue("dashboard.noHomeworkSubject")}</h3>
-                <p class="homework-task">${homework.description || getI18nValue("dashboard.noHomeworkDescription")}</p>
-            </div>
-            <div class="homework-due">${dueDateText}</div>
-        `;
+        if (homework.done) {
+            homeworkItem.classList.add('completed');
+        } else {
+            homeworkItem.classList.add('pending');
+        }
         
         homeworkList.appendChild(homeworkItem);
         
@@ -1923,6 +1919,137 @@ function updateHomeworkSection(data) {
     });
     
     console.log('Homework section updated with', data.homeworks.length, 'items');
+}
+
+function renderHomeworkCard(hw) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dueDate = new Date(hw.due_date);
+    dueDate.setHours(0, 0, 0, 0);
+    
+    const dayDiff = Math.floor((dueDate - today) / (1000 * 60 * 60 * 24)); //Difference in days
+    let dueDateText = '';
+    
+    if (dayDiff === 0) {
+        dueDateText = getI18nValue('days.today');
+    } else if (dayDiff === 1) {
+        dueDateText = getI18nValue('days.tomorrow');
+    } else if (dayDiff > 0) {
+        dueDateText = `${getI18nValue('days.inWord')} ${dayDiff} ${getI18nValue('days.daysWord')}`;
+    }
+
+    const dateObj = new Date(hw.due_date);
+    const day = dateObj.getDate();
+    const monthIndex = dateObj.getMonth();
+    const monthKeys = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+    const monthName = getI18nValue(`month.${monthKeys[monthIndex]}`).toLowerCase();
+    
+    const currentLang = localStorage.getItem('language') || 'fr';
+    let formattedDate = '';
+    
+    if (currentLang === 'en') {
+        formattedDate = `${day} of ${monthName}`;
+    } else if (currentLang === 'es') {
+        formattedDate = `${day} de ${monthName}`;
+    } else {
+        formattedDate = `${day} ${monthName}`;
+    }
+
+    return `
+        <div class="homework-card" style="--card-color: ${hw.color}">
+            <div class="homework-card-strip"></div>
+            <div class="homework-card-content">
+                <div class="homework-card-header">
+                    <div class="homework-icon">${hw.emoji || '📝'}</div>
+                    <div class="homework-info">
+                        <h3 class="homework-card-title">${hw.subject}</h3>
+                        <p class="homework-date-label">${getI18nValue('homework.forThe')} ${formattedDate}</p>
+                    </div>
+                    ${hw.done ? `<i class="homework-status-icon fa-solid fa-circle-check" style="color: ${hw.color}; font-size: 1.5rem;"></i>` : `<i class="homework-status-icon fa-regular fa-circle" style="color: var(--subtitle-dark); font-size: 1.5rem; opacity: 0.3;"></i>`}
+                </div>
+                <div class="homework-description">
+                    ${hw.description || hw.content}
+                </div>
+                <div class="homework-footer">
+                    <i class="fa-regular fa-calendar"></i>
+                    <span>${dueDateText}</span>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderHomeworksPage(homeworks) {
+    const listTodo = document.getElementById('homeworkListTodo');
+    const listDone = document.getElementById('homeworkListDone');
+    
+    if (!listTodo || !listDone) return;
+
+    //Separate homeworks into todo and done
+    const todoHomeworks = homeworks.filter(hw => !hw.done);
+    const doneHomeworks = homeworks.filter(hw => hw.done);
+
+    //Render todo homeworks
+    if (todoHomeworks.length === 0) {
+        listTodo.innerHTML = `
+            <div class="homework-content-empty" style="padding: 2rem;">
+                <i class="fa-solid fa-clipboard-check" style="font-size: 3rem; color: var(--subtitle-dark); margin-bottom: 1rem;"></i>
+                <p>${getI18nValue('homework.noToDo')}</p>
+            </div>
+        `;
+    } else {
+        listTodo.innerHTML = '';
+        todoHomeworks.forEach((hw, index) => {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = renderHomeworkCard(hw);
+            const homeworkItem = tempDiv.firstElementChild;
+            
+            homeworkItem.dataset.homeworkId = hw.id || Math.random();
+            homeworkItem.classList.add('pending');
+            homeworkItem.style.animationDelay = `${index * 0.05}s`;
+            
+            listTodo.appendChild(homeworkItem);
+            
+            const swipeHint = document.createElement('div');
+            swipeHint.className = `homework-item-swipe-hint mark-hint`;
+            swipeHint.innerHTML = '<i class="fa-solid fa-check"></i>';
+            
+            document.body.appendChild(swipeHint);
+            
+            attachSwipeListeners(homeworkItem, hw, swipeHint);
+        });
+    }
+
+    //Render done homeworks
+    if (doneHomeworks.length === 0) {
+        listDone.innerHTML = `
+            <div class="homework-content-empty" style="padding: 2rem;">
+                <i class="fa-solid fa-check-circle" style="font-size: 3rem; color: var(--subtitle-dark); margin-bottom: 1rem;"></i>
+                <p>${getI18nValue('homework.noDone')}</p>
+            </div>
+        `;
+    } else {
+        listDone.innerHTML = '';
+        doneHomeworks.forEach((hw, index) => {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = renderHomeworkCard(hw);
+            const homeworkItem = tempDiv.firstElementChild;
+            
+            homeworkItem.dataset.homeworkId = hw.id || Math.random();
+            homeworkItem.classList.add('completed');
+            homeworkItem.style.animationDelay = `${index * 0.05}s`;
+            
+            listDone.appendChild(homeworkItem);
+            
+            const swipeHint = document.createElement('div');
+            swipeHint.className = `homework-item-swipe-hint unmark-hint`;
+            swipeHint.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+            
+            document.body.appendChild(swipeHint);
+            
+            attachSwipeListeners(homeworkItem, hw, swipeHint);
+        });
+    }
 }
 
 function attachSwipeListeners(element, homework, hintElement) {
@@ -2028,9 +2155,11 @@ function attachSwipeListeners(element, homework, hintElement) {
                     element.classList.remove('completed');
                     element.classList.add('pending');
                     
-                    const statusIcon = element.querySelector('.homework-status');
+                    const statusIcon = element.querySelector('.homework-status-icon');
                     if (statusIcon) {
-                        statusIcon.innerHTML = '<i class="fa-regular fa-circle"></i>';
+                        statusIcon.className = 'homework-status-icon fa-regular fa-circle';
+                        statusIcon.style.color = 'var(--subtitle-dark)';
+                        statusIcon.style.opacity = '0.3';
                     }
                     
                     hintElement.className = `homework-item-swipe-hint mark-hint`;
@@ -2043,9 +2172,11 @@ function attachSwipeListeners(element, homework, hintElement) {
                     element.classList.add('completed');
                     element.classList.remove('pending');
                     
-                    const statusIcon = element.querySelector('.homework-status');
+                    const statusIcon = element.querySelector('.homework-status-icon');
                     if (statusIcon) {
-                        statusIcon.innerHTML = '<i class="fa-solid fa-check-circle"></i>';
+                        statusIcon.className = 'homework-status-icon fa-solid fa-circle-check';
+                        statusIcon.style.color = homework.color;
+                        statusIcon.style.opacity = '1';
                     }
                     
                     hintElement.className = `homework-item-swipe-hint unmark-hint`;
@@ -2578,7 +2709,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             
             currentLanguageData = await response.json();
-            console.log(`[i18n] Language loaded successfully:`, currentLanguageData);
+            console.log(`[i18n] Language loaded successfully !`);
             applyLanguageToPage();
             return true;
         } catch (error) {
@@ -2616,6 +2747,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         
         console.log('[i18n] Language applied to page elements');
+
+        //re render dashboard data if exists
+        if (window.lastDashboardData) {
+            console.log('[i18n] Re-rendering dashboard data with new language');
+            updateDashboardWithData(window.lastDashboardData);
+        }
     }
 
     function updateLanguageOptions() {
@@ -3167,13 +3304,53 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
     
+    
+    const tabTodo = document.getElementById('tabTodo');
+    const tabDone = document.getElementById('tabDone');
+    const listTodo = document.getElementById('homeworkListTodo');
+    const listDone = document.getElementById('homeworkListDone');
+
+    if (tabTodo && tabDone && listTodo && listDone) {
+        tabTodo.addEventListener('click', () => {
+            tabTodo.classList.add('active');
+            tabDone.classList.remove('active');
+            listTodo.classList.remove('hidden');
+            listDone.classList.add('hidden');
+        });
+
+        tabDone.addEventListener('click', () => {
+            tabDone.classList.add('active');
+            tabTodo.classList.remove('active');
+            listDone.classList.remove('hidden');
+            listTodo.classList.add('hidden');
+        });
+    }
+
     if (navbarHomeworkBtn) {
-        navbarHomeworkBtn.addEventListener('click', (e) => {
+        navbarHomeworkBtn.addEventListener('click', async (e) => {
             e.preventDefault();
-            if (toast) {
-                toast.info(getI18nValue("toast.comingSoonTitle"), getI18nValue("toast.comingSoonDesc"));
+            
+            //Update active state
+            document.querySelectorAll('.navbar-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            navbarHomeworkBtn.classList.add('active');
+            
+            console.log('[Navbar] Homework button clicked');
+            
+            //Hide all views
+            document.querySelectorAll('.view').forEach(view => {
+                view.classList.add('hidden');
+            });
+
+            const homeworkView = document.getElementById('homeworkView');
+            if (homeworkView) {
+                console.log('[Homework] Showing homework view');
+                homeworkView.classList.remove('hidden');
+                updateThemeColor('homework');
+            } else {
+                console.warn('[Homework] Homework view not found!');
             }
-            console.log('[Navbar] Homework button clicked - coming soon');
         });
     }
 

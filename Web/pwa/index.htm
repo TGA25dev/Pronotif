@@ -321,6 +321,34 @@
                 </div>
             </div>
             
+            <div id="homeworkView" class="view hidden">
+                <div class="homework-container">
+                    <div class="homework-header">
+                        <h1 class="homework-title" data-i18n="homework.title">Devoirs</h1>
+                    </div>
+
+                    <div class="homework-tabs-container">
+                        <div class="homework-tabs">
+                            <button class="homework-tab active" id="tabTodo" data-i18n="homework.toDo">À faire</button>
+                            <button class="homework-tab" id="tabDone" data-i18n="homework.done">Terminés</button>
+                        </div>
+                    </div>
+
+                    <div id="homeworkListTodo" class="homework-list-container">
+                        <!--injected by JS-->
+                    </div>
+
+                    <div id="homeworkListDone" class="homework-list-container hidden">
+                        <!--injected by JS-->
+                    </div>
+
+                    <div class="homework-content-empty hidden">
+                        <i class="fa-solid fa-clipboard-check" style="font-size: 3rem; color: var(--subtitle-dark); margin-bottom: 1rem;"></i>
+                        <p data-i18n="homework.noToDo">Aucun devoir pour le moment</p>
+                    </div>
+                </div>
+            </div>
+
             <div id="settingsView" class="view hidden">
                 <div class="settings-container">
                     <div class="settings-header">
@@ -665,7 +693,7 @@
                 <i class="fa-solid fa-calendar"></i>
                 <span class="navbar-label" data-i18n="navbar.schedule">Emploi du temps</span>
             </button>
-            <button class="navbar-item navbar-homework disabled" id="navbarHomeworkBtn" aria-label="Devoirs" data-i18n-aria-label="navbar.homework">
+            <button class="navbar-item navbar-homework" id="navbarHomeworkBtn" aria-label="Devoirs" data-i18n-aria-label="navbar.homework">
                 <i class="fa-solid fa-clipboard-list"></i>
                 <span class="navbar-label" data-i18n="navbar.homework">Devoirs</span>
             </button>
