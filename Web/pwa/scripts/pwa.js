@@ -664,21 +664,37 @@ function populateSettingsUI(settings) {
     // Update time pills
     if ('unfinished_homework_reminder_time' in settings && settings.unfinished_homework_reminder_time) {
         const timeStr = settings.unfinished_homework_reminder_time;
-        const timePill = document.querySelector('#settingsHomeworkNotDoneItem .settings-item-time-pill');
-        if (timePill && timeStr) {
+        const item = document.querySelector('#settingsHomeworkNotDoneItem');
+        if (item && timeStr) {
+            const timePill = item.querySelector('.settings-item-time-pill');
+            const timeInput = item.querySelector('.settings-time-input');
+            
+            if (timePill) {
             const [hours, minutes] = timeStr.split(':');
             timePill.textContent = `${hours}h${minutes}`;
-            console.log(`[Settings] Set homework reminder time to ${hours}h${minutes}`);
+            }
+            if (timeInput) {
+                timeInput.value = timeStr;
+            }
+            console.log(`[Settings] Set homework reminder time to ${timeStr}`);
         }
     }
     
     if ('get_bag_ready_reminder_time' in settings && settings.get_bag_ready_reminder_time) {
         const timeStr = settings.get_bag_ready_reminder_time;
-        const timePill = document.querySelector('#settingsPackBackpackItem .settings-item-time-pill');
-        if (timePill && timeStr) {
+        const item = document.querySelector('#settingsPackBackpackItem');
+        if (item && timeStr) {
+            const timePill = item.querySelector('.settings-item-time-pill');
+            const timeInput = item.querySelector('.settings-time-input');
+            
+            if (timePill) {
             const [hours, minutes] = timeStr.split(':');
             timePill.textContent = `${hours}h${minutes}`;
-            console.log(`[Settings] Set backpack reminder time to ${hours}h${minutes}`);
+            }
+            if (timeInput) {
+                timeInput.value = timeStr;
+            }
+            console.log(`[Settings] Set backpack reminder time to ${timeStr}`);
         }
     }
 
@@ -3952,14 +3968,36 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateSelection();
     };
     
-    // Time Pill Click Handler
-    const timePills = document.querySelectorAll('.settings-item-time-pill');
-    timePills.forEach((pill, index) => {
-        pill.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            currentTimePill = this;
-            window.showTimePicker();
+    // Time Input Change Handler
+    const timeInputs = document.querySelectorAll('.settings-time-input');
+    timeInputs.forEach(input => {
+        input.addEventListener('change', async function(e) {
+            const timeStr = e.target.value;
+            if (!timeStr) return;
+            
+            const [hours, minutes] = timeStr.split(':');
+            const formatted = `${hours}h${minutes}`;
+            
+            // Update the pill text
+            const pill = this.parentElement.querySelector('.settings-item-time-pill');
+            if (pill) {
+                pill.textContent = formatted;
+            }
+            
+            // Determine which setting to update
+            const item = this.closest('.settings-item');
+            let settingName = '';
+            
+            if (item.id === 'settingsHomeworkNotDoneItem') {
+                settingName = 'unfinished_homework_reminder_time';
+            } else if (item.id === 'settingsPackBackpackItem') {
+                settingName = 'get_bag_ready_reminder_time';
+            }
+            
+            if (settingName) {
+                console.log(`[Settings] Updating ${settingName} to ${timeStr}`);
+                await updateSettings({ [settingName]: timeStr });
+            }
         });
     });
 
