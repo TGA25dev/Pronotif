@@ -19,6 +19,7 @@ from ..pronote.id_creator import generate_id
 
 # Initialize Sentry
 from modules.sentry.sentry_config import sentry_sdk
+from modules.utils.subject_utils import get_subject_color, get_subject_emoji, get_subject_clean_name
 
 table_name = os.getenv('DB_STUDENT_TABLE_NAME')
 
@@ -567,7 +568,7 @@ class PronotifUser:
                     next_lesson_end = self.timezone_obj.localize(next_lesson_end)
                 
                 return {
-                    'name': next_lesson.subject.name if next_lesson.subject else None,
+                    'name': get_subject_clean_name(next_lesson.subject.name) if next_lesson.subject else None,
                     'room': next_lesson.classroom,
                     'teacher': next_lesson.teacher_name if hasattr(next_lesson, 'teacher_name') else None,
                     'start': next_lesson_start.strftime('%H:%M'),
@@ -581,26 +582,6 @@ class PronotifUser:
     async def get_homeworks(self, count: int = 5) -> list:
         """Get a defined count of upcoming homeworks"""
         try:            
-            #Load subject colors and emojis
-            subject_data = {}
-            emoji_data = {}
-            try:
-                color_path = os.path.join(os.path.dirname(__file__), '../../data/subject_names_format.json')
-                if os.path.exists(color_path):
-                    with open(color_path, 'r', encoding='utf-8') as f:
-                        subject_data = json.load(f)
-                        logger.debug(f"Loaded {len(subject_data)} subjects from color mapping")
-                
-                emoji_path = os.path.join(os.path.dirname(__file__), '../../data/emoji_cours_names.json')
-                if os.path.exists(emoji_path):
-                    with open(emoji_path, 'r', encoding='utf-8') as f:
-                        emoji_data = json.load(f)
-                        logger.debug(f"Loaded emojis from emoji mapping")
-
-            except Exception as e:
-                logger.error(f"Failed to load subject data: {e}")
-                sentry_sdk.capture_exception(e)
-
             today = datetime.now(self.timezone_obj).date()
             
             debug_mode = False #SET TO FALSE ON PROD
@@ -619,24 +600,12 @@ class PronotifUser:
                 for x in range(count):
                     subject_name = dummy_subjects[x % len(dummy_subjects)]
                     
-                    #colors in the json
-                    hw_color = "#E0C195"  # Default color
-                    normalized_name = "".join([c for c in unicodedata.normalize('NFKD', subject_name)  #remove accents
-                                             if not unicodedata.category(c).startswith('M')]).lower() 
-                    
-                    if normalized_name in subject_data:
-                        hw_color = subject_data[normalized_name].get('color', hw_color)
-                    
-                    #emojin from json
-                    hw_emoji = emoji_data.get('default', '📝')
-                    for key in emoji_data:
-                        if key != 'default' and key in normalized_name:
-                            emojis = emoji_data[key]
-                            hw_emoji = random.choice(emojis) if isinstance(emojis, list) else emojis #pick random if list
-                            break
+                    hw_color = get_subject_color(subject_name)
+                    hw_emoji = get_subject_emoji(subject_name)
+                    clean_name = get_subject_clean_name(subject_name)
                     
                     upcoming_homeworks.append({
-                        'subject': subject_name,
+                        'subject': clean_name,
                         'description': f'Exercices {x+1} à {x+5}',
                         'due_date': (today + timedelta(days=x+1)).strftime('%Y-%m-%d'),
                         'done': x % 2 == 0,
@@ -658,25 +627,15 @@ class PronotifUser:
                     continue
 
                 hw_color = "#E0C195"  #Default color
-                hw_emoji = emoji_data.get('default', '📝')  #Default emoji
+                hw_emoji = "📝"  #Default emoji
                 
                 if hw.subject and hw.subject.name:
-                    normalized_name = "".join([c for c in unicodedata.normalize('NFKD', hw.subject.name) 
-                                             if not unicodedata.category(c).startswith('M')]).lower()
-                    
-                    if normalized_name in subject_data:
-                        hw_color = subject_data[normalized_name].get('color', hw_color)
-                    
-                    # Look up emoji from JSON
-                    for key in emoji_data:
-                        if key != 'default' and key in normalized_name:
-                            emojis = emoji_data[key]
-                            hw_emoji = random.choice(emojis) if isinstance(emojis, list) else emojis
-                            break
+                    hw_color = get_subject_color(hw.subject.name)
+                    hw_emoji = get_subject_emoji(hw.subject.name)
                 
                 if hw.date >= today:
                     upcoming_homeworks.append({
-                        'subject': hw.subject.name if hw.subject else None,
+                        'subject': get_subject_clean_name(hw.subject.name) if hw.subject else None,
                         'description': hw.description,
                         'due_date': hw.date.strftime('%Y-%m-%d'),
                         'done': hw.done,
