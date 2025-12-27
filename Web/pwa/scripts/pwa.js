@@ -670,8 +670,8 @@ function populateSettingsUI(settings) {
             const timeInput = item.querySelector('.settings-time-input');
             
             if (timePill) {
-            const [hours, minutes] = timeStr.split(':');
-            timePill.textContent = `${hours}h${minutes}`;
+                const [hours, minutes] = timeStr.split(':');
+                timePill.textContent = `${hours}h${minutes}`;
             }
             if (timeInput) {
                 timeInput.value = timeStr;
@@ -688,8 +688,8 @@ function populateSettingsUI(settings) {
             const timeInput = item.querySelector('.settings-time-input');
             
             if (timePill) {
-            const [hours, minutes] = timeStr.split(':');
-            timePill.textContent = `${hours}h${minutes}`;
+                const [hours, minutes] = timeStr.split(':');
+                timePill.textContent = `${hours}h${minutes}`;
             }
             if (timeInput) {
                 timeInput.value = timeStr;
@@ -1547,6 +1547,436 @@ const loginHandler = {
         }
     }
 };
+
+function updateScheduleHeader(date) {
+    const scheduleDateElement = document.querySelector('.schedule-date');
+    const scheduleRelativeDateElement = document.querySelector('.schedule-relative-date');
+    
+    if (!scheduleDateElement || !scheduleRelativeDateElement) return;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const targetDate = new Date(date);
+    targetDate.setHours(0, 0, 0, 0);
+    
+    const diffTime = targetDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    //Format date : DD Month
+    const day = targetDate.getDate().toString().padStart(2, '0');
+    const month = targetDate.toLocaleString('fr-FR', { month: 'long' });
+    const formattedDate = `${day} ${month.charAt(0).toUpperCase() + month.slice(1)}`;
+    
+    let relativeText = '';
+    if (diffDays === 0) {
+        relativeText = "Aujourd'hui";
+    } else if (diffDays === 1) {
+        relativeText = "Demain";
+    } else if (diffDays === -1) {
+        relativeText = "Hier";
+    }
+
+    if (relativeText) {
+        scheduleRelativeDateElement.textContent = relativeText;
+        scheduleDateElement.textContent = formattedDate;
+        scheduleRelativeDateElement.style.display = 'block';
+        scheduleDateElement.classList.remove('large-date');
+    } else {
+        scheduleRelativeDateElement.textContent = formattedDate;
+        scheduleRelativeDateElement.style.display = 'block';
+        
+        if (diffDays > 0) {
+            scheduleDateElement.textContent = `Dans ${diffDays} jours`;
+        } else {
+            scheduleDateElement.textContent = `Il y a ${Math.abs(diffDays)} jours`;
+        }
+        scheduleDateElement.classList.remove('large-date');
+    }
+}
+
+let dateSelectorListenerAttached = false;
+let isUpdatingDateSelector = false;
+
+function createDateItem(date) {
+    const dateItem = document.createElement('div');
+    dateItem.className = 'date-item';
+    
+    const dayName = date.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '').toUpperCase();
+    const dayNumber = date.getDate().toString().padStart(2, '0');
+    
+    dateItem.innerHTML = `
+        <span class="date-day">${dayName}</span>
+        <span class="date-number">${dayNumber}</span>
+        <div class="date-indicator"></div>
+    `;
+    
+    dateItem.dataset.date = date.toISOString();
+    
+    dateItem.addEventListener('click', function() {
+        const clickedDate = new Date(this.dataset.date);
+        updateScheduleView(clickedDate);
+    });
+    
+    return dateItem;
+}
+
+function handleDateSelectorScroll() {
+    if (isUpdatingDateSelector) return;
+    
+    const selector = document.querySelector('.schedule-date-selector');
+    if (!selector) return;
+
+    const scrollLeft = selector.scrollLeft;
+    const scrollWidth = selector.scrollWidth;
+    const clientWidth = selector.clientWidth;
+    const threshold = 100; //px
+
+    //Prepend if near start
+    if (scrollLeft < threshold) {
+        isUpdatingDateSelector = true;
+        const firstItem = selector.firstElementChild;
+        if (firstItem) {
+            const firstDate = new Date(firstItem.dataset.date);
+            const daysToPrepend = 7;
+            const oldScrollWidth = selector.scrollWidth;
+            
+            for (let i = 1; i <= daysToPrepend; i++) { //prepend days
+                const newDate = new Date(firstDate);
+                newDate.setDate(firstDate.getDate() - i);
+                const newItem = createDateItem(newDate);
+                selector.insertBefore(newItem, selector.firstElementChild);
+            }
+            
+            //Adjust scroll position
+            const newScrollWidth = selector.scrollWidth;
+            selector.scrollLeft += (newScrollWidth - oldScrollWidth);
+        }
+        setTimeout(() => { isUpdatingDateSelector = false; }, 50);
+    } 
+    //Append if near end
+    else if (scrollWidth - (scrollLeft + clientWidth) < threshold) { //if near end and scrolling right
+        isUpdatingDateSelector = true;
+        const lastItem = selector.lastElementChild;
+        if (lastItem) {
+            const lastDate = new Date(lastItem.dataset.date);
+            const daysToAppend = 7;
+            
+            for (let i = 1; i <= daysToAppend; i++) {
+                const newDate = new Date(lastDate);
+                newDate.setDate(lastDate.getDate() + i);
+                const newItem = createDateItem(newDate);
+                selector.appendChild(newItem);
+            }
+        }
+        setTimeout(() => { isUpdatingDateSelector = false; }, 50); //small delay to prevent rapid re-triggering
+    }
+}
+
+function generateDateSelector(selectedDate) {
+    const selector = document.querySelector('.schedule-date-selector');
+    if (!selector) return;
+    
+    if (!dateSelectorListenerAttached) {
+        selector.addEventListener('scroll', handleDateSelectorScroll);
+        dateSelectorListenerAttached = true;
+    }
+    
+    const targetDate = new Date(selectedDate);
+    targetDate.setHours(0, 0, 0, 0);
+
+    //Check if the date is already in the list
+    let dateExists = false;
+    if (selector.children.length > 0) { //if in the list no need to regenerate
+        const items = selector.querySelectorAll('.date-item');
+        items.forEach(item => {
+            const itemDate = new Date(item.dataset.date);
+            itemDate.setHours(0, 0, 0, 0);
+            if (itemDate.getTime() === targetDate.getTime()) {
+                dateExists = true;
+            }
+        });
+    }
+    
+    //If date exists just update selection
+    if (dateExists) {
+        updateDateSelectorSelection(selectedDate);
+        return;
+    }
+    
+    selector.innerHTML = '';
+    
+    //Generate dates for a range: -14 days to +31 days around the date
+    const startDate = new Date(targetDate);
+    startDate.setDate(targetDate.getDate() - 14);
+    
+    const endDate = new Date(targetDate);
+    endDate.setDate(targetDate.getDate() + 31);
+    
+    let currentDate = new Date(startDate);
+    
+    while (currentDate <= endDate) {
+        const dateItem = createDateItem(currentDate);
+        selector.appendChild(dateItem);
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    updateDateSelectorSelection(selectedDate);
+}
+
+function updateDateSelectorSelection(date) { // Scroll to selected date
+    const selector = document.querySelector('.schedule-date-selector');
+    if (!selector) return;
+    
+    const items = selector.querySelectorAll('.date-item');
+    const targetDate = new Date(date);
+    targetDate.setHours(0,0,0,0);
+    
+    items.forEach(item => {
+        const itemDate = new Date(item.dataset.date);
+        itemDate.setHours(0,0,0,0);
+        
+        if (itemDate.getTime() === targetDate.getTime()) {
+            item.classList.add('selected');
+            setTimeout(() => {
+                isUpdatingDateSelector = true;
+                
+                const itemRect = item.getBoundingClientRect();
+                const selectorRect = selector.getBoundingClientRect();
+                const currentScroll = selector.scrollLeft;
+                
+                //Calculate position relative to content start
+                const itemOffset = itemRect.left - selectorRect.left + currentScroll;
+                
+                //Target: item at 15% of container width
+                const targetScroll = itemOffset - (selector.clientWidth * 0.15);
+                
+                selector.scrollTo({ left: targetScroll, behavior: 'smooth' });
+                
+                setTimeout(() => { isUpdatingDateSelector = false; }, 500);
+            }, 100);
+        } else {
+            item.classList.remove('selected');
+        }
+    });
+}
+
+
+//Schedule caching
+const scheduleCache = {};
+const fetchedDates = new Set();
+
+async function fetchSchedule(date) {
+    const scheduleContainer = document.querySelector('.schedule-list');
+    if (!scheduleContainer) return;
+
+    const formatDate = (d) => {
+        //If d is a string in YYYY-MM-DD format return it directly to avoid timezone issues
+        if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) {
+            return d;
+        }
+        
+        const dateObj = new Date(d);
+        const year = dateObj.getFullYear();
+        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const day = String(dateObj.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    const targetDateStr = formatDate(date);
+
+    //Check cache first
+    if (fetchedDates.has(targetDateStr)) {
+        console.log(`[Schedule] Using cached data for ${targetDateStr}`);
+        const cachedLessons = scheduleCache[targetDateStr] || [];
+        renderSchedule(cachedLessons);
+        return;
+    }
+
+    //Show loading state
+    scheduleContainer.innerHTML = '<div class="schedule-loading"><i class="fas fa-spinner fa-spin fa-2x"></i></div>';
+
+    try {
+        //fetch window of 14days before and after (28)
+        const target = new Date(date);
+        const start = new Date(target);
+        start.setDate(target.getDate() - 14);
+        
+        const end = new Date(target);
+        end.setDate(target.getDate() + 14);
+        
+        const startStr = formatDate(start);
+        const endStr = formatDate(end);
+
+        console.log(`[Schedule] Fetching from ${startStr} to ${endStr} for target ${targetDateStr}`);
+
+        const response = await wrapFetch(`https://api.pronotif.tech/v1/app/fetch?fields=lessons&start=${startStr}&end=${endStr}`, {
+                method: 'GET',
+                credentials: 'include',
+                cache: 'no-store'
+            });
+        
+        const data = await response.json();
+        
+        if (data.data && data.data.lessons) {
+            //Mark range as fetched and initialize cache for these days
+            let curr = new Date(startStr);
+            const end = new Date(endStr);
+            
+            while (curr <= end) {
+                const dStr = formatDate(curr);
+                fetchedDates.add(dStr);
+                scheduleCache[dStr] = []; //Initialize with empty array
+                curr.setDate(curr.getDate() + 1);
+            }
+
+            //Populate cache with lessons
+            data.data.lessons.forEach(lesson => {
+                if (scheduleCache[lesson.date]) {
+                    scheduleCache[lesson.date].push(lesson);
+                }
+            });
+
+            // Render for target date
+            const dayLessons = scheduleCache[targetDateStr] || [];
+            renderSchedule(dayLessons);
+        } else {
+            scheduleContainer.innerHTML = '';
+            toast.error('Erreur', 'Impossible de récupérer les données de l\'emploi du temps.');
+        }
+    } catch (error) {
+        console.error('Error fetching schedule:', error);
+        scheduleContainer.innerHTML = '';
+        toast.error('Erreur', 'Une erreur est survenue lors de la récupération de l\'emploi du temps.');
+    }
+}
+
+function renderSchedule(lessons) {
+    const container = document.querySelector('.schedule-list');
+    if (!container) return;
+    
+    //build HTML instead of DOM manipulation for performance
+    let html = '';
+
+    if (!lessons || lessons.length === 0) {
+        container.innerHTML = `
+            <div class="no-results-message" style="margin-top: 2rem;">
+                <i class="fas fa-calendar-day" style="font-size: 3rem; margin-bottom: 1rem; color: var(--primary);"></i>
+                <p>Aucun cours prévu pour cette date</p>
+            </div>
+        `;
+        return;
+    }
+
+    //Sort lessons by start time
+    lessons.sort((a, b) => a.start.localeCompare(b.start));
+
+    let lastEndTime = null;
+
+    //helper to parse time strings (HH:MM) to minutes
+    const parseTime = (timeStr) => {
+        const [h, m] = timeStr.split(':').map(Number);
+        return h * 60 + m;
+    };
+
+    lessons.forEach(lesson => {
+        if (lesson.canceled) return;
+
+        //Check for gap
+        if (lastEndTime) {
+            const gapStartMins = parseTime(lastEndTime);
+            const currentStartMins = parseTime(lesson.start);
+            const gapMinutes = currentStartMins - gapStartMins;
+
+            if (gapMinutes >= 15) { //Only show gaps of more than 15mins
+                let durationText = `${gapMinutes} min`;
+                if (gapMinutes > 59) {
+                    const h = Math.floor(gapMinutes / 60);
+                    const m = gapMinutes % 60;
+                    durationText = `${h}h${m > 0 ? m.toString().padStart(2, '0') : ''}`;
+                }
+
+                html += `
+                    <div class="schedule-card empty-slot">
+                        <div class="schedule-card-time"></div>
+                        <div class="schedule-card-content">
+                            <div class="empty-slot-content">
+                                <h3 class="schedule-subject"><i class="fa-solid fa-mug-hot"></i> Pas de cours</h3>
+                                <span class="schedule-duration">${durationText}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        const startParts = lesson.start.split(':');
+        const endParts = lesson.end.split(':');
+        
+        const startFormatted = `${parseInt(startParts[0])}:${startParts[1]}`;
+        const endFormatted = `${parseInt(endParts[0])}:${endParts[1]}`;
+
+        //Calculate duration
+        const startMins = parseTime(lesson.start);
+        const endMins = parseTime(lesson.end);
+        const diffMinutes = endMins - startMins;
+        
+        let durationText = `${diffMinutes} min`;
+        if (diffMinutes > 59) { //More than an hour
+            const h = Math.floor(diffMinutes / 60);
+            const m = diffMinutes % 60;
+            durationText = `${h}h${m > 0 ? m.toString().padStart(2, '0') : ''}`; //render with hour and mins
+        }
+        
+        const color = lesson.color;
+
+        html += `
+            <div class="schedule-card" style="--course-color: ${color}">
+                <div class="schedule-card-time">
+                    <span class="start-time">${startFormatted}</span>
+                    <span class="end-time">${endFormatted}</span>
+                </div>
+                <div class="schedule-card-content">
+                    <h3 class="schedule-subject">${lesson.subject}</h3>
+                    <div class="schedule-card-details">
+                        ${lesson.room ? `
+                        <div class="schedule-location">
+                            <i class="fa-solid fa-location-dot"></i>
+                            <span>${lesson.room}</span>
+                        </div>` : ''}
+                        ${lesson.teacher ? `
+                        <div class="schedule-teacher">
+                            <i class="fa-solid fa-user"></i>
+                            <span>${lesson.teacher}</span>
+                        </div>` : ''}
+                        <span class="schedule-duration">${durationText} de cours</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        lastEndTime = lesson.end;
+    });
+    
+    container.innerHTML = html;
+}
+
+function updateScheduleView(date) {
+    updateScheduleHeader(date);
+    generateDateSelector(date);
+    
+    //to update hidden date picker value
+    const datePicker = document.getElementById('scheduleDatePicker');
+    if (datePicker) {
+        const d = new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        datePicker.value = `${year}-${month}-${day}`;
+    }
+
+    fetchSchedule(date);
+}
 
 // Dashboard initialization
 function initializeDashboard() {
@@ -3245,6 +3675,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             themeColorLight?.setAttribute('content', '#FFEEDB');
             themeColorDark?.setAttribute('content', '#FFEEDB');
             themeColorDefault?.setAttribute('content', '#FFEEDB');
+        } else if (viewType === 'schedule') {
+            themeColorLight?.setAttribute('content', '#FFEEDB');
+            themeColorDark?.setAttribute('content', '#FFEEDB');
+            themeColorDefault?.setAttribute('content', '#FFEEDB');
         } else {
             themeColorLight?.setAttribute('content', '#07A19F');
             themeColorDark?.setAttribute('content', '#07A19F');
@@ -3286,11 +3720,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         const observer = new MutationObserver(() => {
             const dashboardView = document.getElementById('dashboardView');
-            if (dashboardView && !dashboardView.classList.contains('hidden')) {
+            const homeworkView = document.getElementById('homeworkView');
+            const settingsView = document.getElementById('settingsView');
+            const scheduleView = document.getElementById('scheduleView');
+
+            const isAnyViewVisible = (dashboardView && !dashboardView.classList.contains('hidden')) ||
+                                     (homeworkView && !homeworkView.classList.contains('hidden')) ||
+                                     (settingsView && !settingsView.classList.contains('hidden')) ||
+                                     (scheduleView && !scheduleView.classList.contains('hidden'));
+
+            if (isAnyViewVisible) {
                 if (bottomNavbar) {
                     bottomNavbar.style.display = 'flex';
                 }
-                navbarHomeBtn.classList.add('active');
+                if (dashboardView && !dashboardView.classList.contains('hidden')) {
+                    navbarHomeBtn.classList.add('active');
+                } else {
+                    navbarHomeBtn.classList.remove('active');
+                }
             } else {
                 if (bottomNavbar) {
                     bottomNavbar.style.display = 'none';
@@ -3299,12 +3746,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
         
-        if (document.getElementById('dashboardView')) {
-            observer.observe(document.getElementById('dashboardView'), { 
-                attributes: true, 
-                attributeFilter: ['class'] 
-            });
-        }
+        const viewsToObserve = ['dashboardView', 'homeworkView', 'settingsView', 'scheduleView'];
+        viewsToObserve.forEach(viewId => {
+            const element = document.getElementById(viewId);
+            if (element) {
+                observer.observe(element, { 
+                    attributes: true, 
+                    attributeFilter: ['class'] 
+                });
+            }
+        });
     }
 
     const navbarScheduleBtn = document.getElementById('navbarScheduleBtn');
@@ -3313,10 +3764,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (navbarScheduleBtn) {
         navbarScheduleBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            if (toast) {
-                toast.info(getI18nValue("toast.comingSoonTitle"), getI18nValue("toast.comingSoonDesc"));
+            
+            //Update active state
+            document.querySelectorAll('.navbar-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            navbarScheduleBtn.classList.add('active');
+            
+            console.log('[Navbar] Schedule button clicked');
+            
+            //Hide all views
+            document.querySelectorAll('.view').forEach(view => {
+                view.classList.add('hidden');
+            });
+
+            const scheduleView = document.getElementById('scheduleView');
+            if (scheduleView) {
+                console.log('[Schedule] Showing schedule view');
+                scheduleView.classList.remove('hidden');
+                updateThemeColor('schedule');
+                updateScheduleView(new Date());
+            } else {
+                console.warn('[Schedule] Schedule view not found!');
             }
-            console.log('[Navbar] Schedule button clicked - coming soon');
         });
     }
     
@@ -4000,6 +4470,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     });
+
+    //Initialize calendar buton in schedule
+    const datePicker = document.getElementById('scheduleDatePicker');
+
+    if (datePicker) {
+        datePicker.addEventListener('change', (e) => {
+            if (e.target.value) {
+                updateScheduleView(new Date(e.target.value));
+            }
+        });
+    }
 
     // Check if device is mobile
     function isMobileDevice() {

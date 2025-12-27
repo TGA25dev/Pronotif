@@ -349,6 +349,29 @@
                 </div>
             </div>
 
+            <div id="scheduleView" class="view hidden">
+                <div class="schedule-header">
+                    <div class="schedule-header-content">
+                        <div class="schedule-date-container">
+                            <h2 class="schedule-date"></h2>
+                            <h1 class="schedule-relative-date"></h1>
+                        </div>
+                        <div style="position: relative;">
+                            <button id="scheduleCalendarBtn" class="schedule-calendar-btn" aria-label="Choisir une date">
+                                <i class="fa-regular fa-calendar"></i>
+                            </button>
+                            <input type="date" id="scheduleDatePicker" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
+                        </div>
+                    </div>
+                </div>
+                <div class="schedule-date-selector">
+                    <!--injected later-->
+                </div>
+                <div class="schedule-list">
+                    <!--injected later-->
+                </div>
+            </div>
+
             <div id="settingsView" class="view hidden">
                 <div class="settings-container">
                     <div class="settings-header">
@@ -498,7 +521,7 @@
                                     <span class="settings-toggle-slider"></span>
                                 </label>
                                 <div style="position: relative; display: inline-block;">
-                                <div class="settings-item-time-pill">18h00</div>
+                                    <div class="settings-item-time-pill">18h00</div>
                                     <input type="time" class="settings-time-input" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
                                 </div>
                             </div>
@@ -518,7 +541,7 @@
                                     <span class="settings-toggle-slider"></span>
                                 </label>
                                 <div style="position: relative; display: inline-block;">
-                                <div class="settings-item-time-pill">19h30</div>
+                                    <div class="settings-item-time-pill">19h30</div>
                                     <input type="time" class="settings-time-input" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
                                 </div>
                             </div>
@@ -695,7 +718,7 @@
                 <i class="fa-solid fa-house"></i>
                 <span class="navbar-label" data-i18n="navbar.home">Accueil</span>
             </button>
-            <button class="navbar-item navbar-schedule disabled" id="navbarScheduleBtn" aria-label="Emploi du temps" data-i18n-aria-label="navbar.schedule">
+            <button class="navbar-item navbar-schedule" id="navbarScheduleBtn" aria-label="Emploi du temps" data-i18n-aria-label="navbar.schedule">
                 <i class="fa-solid fa-calendar"></i>
                 <span class="navbar-label" data-i18n="navbar.schedule">Emploi du temps</span>
             </button>
@@ -807,7 +830,7 @@
             </div>
         </div>
 
-                <!-- Telemetry Consent-->
+        <!-- Telemetry Consent-->
         <div id="telemetryConsentScreen" class="telemetry-consent-screen hidden">
             <div class="telemetry-container">
                 <div class="telemetry-header">
