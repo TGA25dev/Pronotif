@@ -651,8 +651,32 @@ class PronotifUser:
             sentry_sdk.capture_exception(e)
             return []
 
+
+    async def get_lessons(self, start_date, end_date) -> list:
+        """Get lessons between start_date and end_date"""
+        try:
+            lessons = self.client.lessons(date_from=start_date, date_to=end_date)
+            day_lessons = []
+            for lesson in lessons:
+                day_lessons.append({
+                    'subject': get_subject_clean_name(lesson.subject.name) if lesson.subject else None,
+                    'date': lesson.start.strftime('%Y-%m-%d'),
+                    'start': lesson.start.strftime('%H:%M'),
+                    'end': lesson.end.strftime('%H:%M'),
+                    'room': lesson.classroom,
+                    'teacher': lesson.teacher_name if hasattr(lesson, 'teacher_name') else None,
+                    'canceled': lesson.canceled,
+                    'color': get_subject_color(lesson.subject.name) if lesson.subject else "#E0C195",
+                    'emoji': get_subject_emoji(lesson.subject.name) if lesson.subject else "📝"
+                })
+            return day_lessons
+        
+        except Exception as e:
+            logger.error(f"Error getting day lessons for user {self.user_hash[:4]}**** : {e}")
+            return []
+
     
-    async def get_pronote_data(self, requested_fields: list) -> dict:
+    async def get_pronote_data(self, requested_fields: list, lessons_start_date=None, lessons_end_date=None) -> dict:
         """Get Pronote data based on requested fields"""
         data = {}
         
@@ -683,6 +707,17 @@ class PronotifUser:
             if 'homeworks' in requested_fields:
                 homeworks = await self.get_homeworks()
                 data['homeworks'] = homeworks
+            
+            elif 'lessons' in requested_fields:
+                #if no provided dates default to today
+                if not lessons_start_date:
+                    lessons_start_date = datetime.now(self.timezone_obj).date()
+                    
+                if not lessons_end_date:
+                    lessons_end_date = datetime.now(self.timezone_obj).date()
+                
+                lessons = await self.get_lessons(lessons_start_date, lessons_end_date)
+                data['lessons'] = lessons
                 
         except Exception as e:
             logger.error(f"Error getting Pronote data for user {self.user_hash[:4]}**** : {e}")

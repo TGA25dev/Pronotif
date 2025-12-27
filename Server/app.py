@@ -1336,7 +1336,7 @@ def fetch_student_data():
         "get_bag_ready_reminder", "monday_lunch", "tuesday_lunch", 
         "wednesday_lunch", "thursday_lunch", "friday_lunch",
         "next_class_name", "next_class_room", "next_class_teacher", 
-        "next_class_start", "next_class_end", "homeworks",
+        "next_class_start", "next_class_end", "homeworks", "lessons",
         "fcm_token", "token_updated_at", "timestamp", "is_active",
         "class_reminder", "lunch_menu", "unfinished_homework_reminder_time", "get_bag_ready_reminder_time", "new_grade_notification" ,"lang"
     }
@@ -1346,14 +1346,45 @@ def fetch_student_data():
     if not fields:
         return jsonify({"error": "Invalid or no fields specified"}), 400
 
+    #Parse and validate date parameters for lessons
+    lessons_start_date = None
+    lessons_end_date = None
+    
+    if 'lessons' in fields:
+        start_param = request.args.get('start')
+        end_param = request.args.get('end')
+
+        if not start_param or not end_param:
+            return jsonify({"error": "missing start and end dates"}), 400
+        
+        #Format: (YYYY-MM-DD)
+        date_format = '%Y-%m-%d'
+        if start_param:
+            try:
+                lessons_start_date = datetime.strptime(start_param, date_format).date()
+                
+            except ValueError:
+                return jsonify({"error": "invalid start date format"}), 400
+        
+        if end_param:
+            try:
+                lessons_end_date = datetime.strptime(end_param, date_format).date()
+
+            except ValueError:
+                return jsonify({"error": "invalid end date format"}), 400
+        
+        #Validate date ranges
+        if lessons_start_date and lessons_end_date and lessons_start_date > lessons_end_date:
+            return jsonify({"error": "start date must be before or equal to end date"}), 400
+
     try:
         # Sanitize inputs
         app_session_id = bleach.clean(app_session_id)
         app_token = bleach.clean(app_token)
 
         # Separate DB fields from Pronote fields
-        db_fields = [f for f in fields if not f.startswith(('next_class_', "homeworks"))]
-        pronote_fields = [f for f in fields if f.startswith(('next_class_', "homeworks"))]
+        db_fields = [f for f in fields if not f.startswith(('next_class_', "homeworks", "lessons"))]
+        pronote_fields = [f for f in fields if f.startswith(('next_class_', "homeworks", "lessons"))]
         
         response_data = {}
 
@@ -1433,7 +1464,7 @@ def fetch_student_data():
                 user = fut_user.result(timeout=8)
                 if user and user.client and user.client.logged_in:
                     fut_data = asyncio.run_coroutine_threadsafe(
-                        user.get_pronote_data(pronote_fields),
+                        user.get_pronote_data(pronote_fields, lessons_start_date, lessons_end_date),
                         shared_loop
                     )
                     pronote_data = fut_data.result(timeout=8)
