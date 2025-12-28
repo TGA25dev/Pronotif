@@ -753,6 +753,8 @@ async function performLogout() {
                     await caches.delete(name);
                 }
             }
+
+            await ScheduleDB.clear(); //Clear the db
             
             //invisible overlay to prevent user interactions
             const overlay = document.createElement('div');
@@ -1763,8 +1765,65 @@ function updateDateSelectorSelection(date) { // Scroll to selected date
 
 
 //Schedule caching
-const scheduleCache = {};
-const fetchedDates = new Set();
+const scheduleCache = {}; //Memory Cache
+
+const ScheduleDB = {
+    db: null,
+    async executeTransaction(mode, callback) {
+
+        if (!this.db) {
+            this.db = await new Promise((resolve, reject) => {
+
+                const request = indexedDB.open('PronotifScheduleDB', 1);
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => resolve(request.result);
+                request.onupgradeneeded = (event) => {
+                    event.target.result.createObjectStore('lessons', { keyPath: 'date' });
+                };
+            });
+        }
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction('lessons', mode);
+            const store = transaction.objectStore('lessons');
+            const request = callback(store);
+            
+            if (!request) {
+                resolve();
+                return;
+            }
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    },
+    
+    get(date) { 
+        return this.executeTransaction('readonly', store => store.get(date))
+            .then(result => result?.data)
+            .catch(error => console.error('[ScheduleDB] Get error:', error)); 
+    },
+    
+    save(date, data) { 
+        return this.executeTransaction('readwrite', store => store.put({ date, data }))
+            .catch(error => console.error('[ScheduleDB] Save error:', error)); 
+    },
+    
+    saveMany(items) {
+        if (!items || Object.keys(items).length === 0) return Promise.resolve();
+        
+        return this.executeTransaction('readwrite', store => {
+            let lastRequest;
+            for (const [date, data] of Object.entries(items)) {
+                lastRequest = store.put({ date, data });
+            }
+            return lastRequest;
+        }).catch(error => console.error('[ScheduleDB] SaveMany error:', error));
+    },
+    
+    clear() { 
+        return this.executeTransaction('readwrite', store => store.clear())
+            .catch(error => console.error('[ScheduleDB] Clear error:', error)); 
+    }
+};
 
 async function fetchSchedule(date) {
     const scheduleContainer = document.querySelector('.schedule-list');
@@ -1785,11 +1844,18 @@ async function fetchSchedule(date) {
 
     const targetDateStr = formatDate(date);
 
-    //Check cache first
-    if (fetchedDates.has(targetDateStr)) {
-        console.log(`[Schedule] Using cached data for ${targetDateStr}`);
-        const cachedLessons = scheduleCache[targetDateStr] || [];
-        renderSchedule(cachedLessons);
+    //first check memory cache
+    if (scheduleCache[targetDateStr]) {
+        console.log(`[Schedule] Using memory cache for ${targetDateStr}`);
+        renderSchedule(scheduleCache[targetDateStr]);
+        return;
+    }
+    //then check IndexedDB
+    const dbCache = await ScheduleDB.get(targetDateStr);
+    if (dbCache) {
+        console.log(`[Schedule] Using IDB cache for ${targetDateStr}`);
+        scheduleCache[targetDateStr] = dbCache; //populate L1
+        renderSchedule(dbCache);
         return;
     }
 
@@ -1819,23 +1885,27 @@ async function fetchSchedule(date) {
         const data = await response.json();
         
         if (data.data && data.data.lessons) {
-            //Mark range as fetched and initialize cache for these days
+            //initialize cache for the range
             let curr = new Date(startStr);
-            const end = new Date(endStr);
+            const endDateObj = new Date(endStr);
             
-            while (curr <= end) {
+            const lessonsMap = {};
+            
+            while (curr <= endDateObj) {
                 const dStr = formatDate(curr);
-                fetchedDates.add(dStr);
-                scheduleCache[dStr] = []; //Initialize with empty array
+                lessonsMap[dStr] = []; //default to empty
                 curr.setDate(curr.getDate() + 1);
             }
 
-            //Populate cache with lessons
-            data.data.lessons.forEach(lesson => {
-                if (scheduleCache[lesson.date]) {
-                    scheduleCache[lesson.date].push(lesson);
+            data.data.lessons.forEach(lesson => { //populate map with actual lessons
+                if (lessonsMap[lesson.date]) {
+                    lessonsMap[lesson.date].push(lesson);
                 }
             });
+
+            //save to both Cache and IDB 
+            Object.assign(scheduleCache, lessonsMap); 
+            ScheduleDB.saveMany(lessonsMap); 
 
             // Render for target date
             const dayLessons = scheduleCache[targetDateStr] || [];
