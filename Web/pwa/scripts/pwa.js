@@ -3075,6 +3075,45 @@ function getI18nValue(keyPath) {
     return getNestedValue(currentLanguageData, keyPath) || keyPath;
 }
 
+function attachScheduleSwipeListeners() { //for swipe schedule feature
+    const scheduleList = document.querySelector('.schedule-list');
+    if (!scheduleList) return;
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+    
+    scheduleList.addEventListener('touchstart', (e) => { //record start position
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+    }, { passive: true });
+
+    scheduleList.addEventListener('touchend', (e) => { //record end position and determine swipe
+        const touchEndX = e.changedTouches[0].screenX;
+        const touchEndY = e.changedTouches[0].screenY;
+        
+        const minSwipeDistance = 50;
+        const maxVerticalDistance = 50;
+        const distanceX = touchEndX - touchStartX;
+        const distanceY = touchEndY - touchStartY;
+
+        if (Math.abs(distanceX) > minSwipeDistance && Math.abs(distanceY) < maxVerticalDistance) { //horizontal swipe detected
+            const datePicker = document.getElementById('scheduleDatePicker');
+            if (!datePicker || !datePicker.value) return;
+
+            const currentDate = new Date(datePicker.value);
+            
+            if (distanceX > 0) {//swipe right
+                currentDate.setDate(currentDate.getDate() - 1);
+
+            } else {//swipe left
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+            
+            updateScheduleView(currentDate);
+        }
+    }, { passive: true });
+}
+
 //Telemetry Consent Screen
 const telemetryConsentManager = {
     init() {
@@ -3141,6 +3180,9 @@ const telemetryConsentManager = {
 document.addEventListener('DOMContentLoaded', async () => {
     // Initialize telemetry consent popup
     telemetryConsentManager.init();
+    
+    //Initialize schedule swipe listeners
+    attachScheduleSwipeListeners();
 
     async function loadLanguage(languageCode) {
         try {
