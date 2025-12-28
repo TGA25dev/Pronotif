@@ -716,6 +716,12 @@ function populateSettingsUI(settings) {
 
 async function performLogout() {
     try {
+        const confirmed = confirm("⚠️ Êtes-vous sûr(e) de vouloir vous déconecter ?");
+        if (!confirmed) {
+            console.log('User logout cancelled by user');
+            return;
+        }
+
         const response = await wrapFetch('https://api.pronotif.tech/v1/app/logout', {
             method: 'POST',
             credentials: 'include'
