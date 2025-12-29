@@ -147,6 +147,7 @@
     "settingsSavedErrorDesc": "Ha sido imposible guardar tus cambios.",
     "networkErrorTitle": "Error de red",
     "networkErrorDesc": "Inténtalo otra vez",
+    "logoutConfirmation": "⚠️ ¿Estás segur@ de que quieres desconectarte?",
     "logoutFailedTitle": "Error al desconectarse",
     "logoutFailedDesc": "Inténtalo otra vez",
     "deleteAccountConfirmation": "⚠️ ¿Estás segur@ de que quieres borrar tu cuenta? Esta acción es irreversible.",

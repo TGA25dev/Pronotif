@@ -716,7 +716,7 @@ function populateSettingsUI(settings) {
 
 async function performLogout() {
     try {
-        const confirmed = confirm("⚠️ Êtes-vous sûr(e) de vouloir vous déconecter ?");
+        const confirmed = confirm(getI18nValue("toast.logoutConfirmation"));
         if (!confirmed) {
             console.log('User logout cancelled by user');
             return;

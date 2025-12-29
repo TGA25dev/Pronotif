@@ -147,6 +147,7 @@
     "settingsSavedErrorDesc": "Failed to save your changes.",
     "networkErrorTitle": "Network error",
     "networkErrorDesc": "Please try again.",
+    "logoutConfirmation": "⚠️ Are you sure you want to log out?",
     "logoutFailedTitle": "Logout failed.",
     "logoutFailedDesc": "Please try again.",
     "deleteAccountConfirmation": "⚠️ Are you sure you want to delete your account ? This action is irreversible.",
