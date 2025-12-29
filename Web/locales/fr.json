@@ -1,4 +1,5 @@
 {
+  "langCode": "fr-FR",
   "login": {
     "greeting": "Bonjour !",
     "subtitle": "Selectionnez une méthode de connexion afin d'acceder à votre compte Pronote.",
@@ -141,6 +142,14 @@
     "enableBtn": "Activer maintenant",
     "laterBtn": "Plus tard"
   },
+  "schedule": {
+    "noClassFoundForDate": "Aucun cours prévu pour cette date.",
+    "noClassSlot": "Pas de cours",
+    "durationOfClassText": "de cours",
+    "inXDays": "Dans {count} jours",
+    "xDaysAgo": "Il y a {count} jours",
+    "canceledStatus": "Annulé"
+  },
   "toast": {
     "settingsSavedSuccessTitle": "Paramètres sauvegardés",
     "settingsSavedSuccessDesc": "Vos modifications ont été enregistrées.",
@@ -191,7 +200,9 @@
     "telemetryEnabledTitle": "Diagnostics activés",
     "telemetryEnabledDesc": "Merci ! Les diagnostics seront activés au prochain démarrage de l'appli.",
     "telemetryDisabledTitle": "Diagnostics désactivés",
-    "telemetryDisabledDesc": "Les diagnostics seront désactivés au prochain démarrage de l'appli"
+    "telemetryDisabledDesc": "Les diagnostics seront désactivés au prochain démarrage de l'appli",
+    "failedToGetScheduleDesc": "Impossible de récupérer les données de l'emploi du temps.",
+    "errorFetchingScheduleDesc": "Une erreur est survenue lors de la récupération de l'emploi du temps."
   },
   "days": {
     "monday": "Lundi",
@@ -203,6 +214,7 @@
     "thursday": "Jeudi",
     "today": "Aujourd'hui",
     "tomorrow": "Demain",
+    "yesterday": "Hier",
     "daysWord": "jours",
     "inWord": "Dans"
   },

@@ -1,4 +1,5 @@
 {
+  "langCode": "en-US",
   "login": {
     "greeting": "Hello!",
     "subtitle": "Select a login method to access your Pronote account.",
@@ -141,6 +142,14 @@
     "enableBtn": "Enable now",
     "laterBtn": "Later"
   },
+  "schedule": {
+    "noClassFoundForDate": "No classes planned for this day.",
+    "noClassSlot": "Break",
+    "durationOfClassText": "of class",
+    "inXDays": "In {count} days",
+    "xDaysAgo": "{count} days ago",
+    "canceledStatus": "Canceled"
+  },
   "toast": {
     "settingsSavedSuccessTitle": "Settings saved",
     "settingsSavedSuccessDesc": "Your changes have been saved.",
@@ -191,7 +200,9 @@
     "telemetryEnabledTitle": "Diagnostics enabled",
     "telemetryEnabledDesc": "Thanks! Diagnostics will be enabled on next app startup.",
     "telemetryDisabledTitle": "Diagnostics disabled",
-    "telemetryDisabledDesc": "Diagnostics will be disabled on next app startup."
+    "telemetryDisabledDesc": "Diagnostics will be disabled on next app startup.",
+    "failedToGetScheduleDesc": "Failed to get timetable data.",
+    "errorFetchingScheduleDesc": "An error has occured while fetching the timetable data."
   },
   "days": {
     "monday": "Monday",
@@ -203,6 +214,7 @@
     "thursday": "Thursday",
     "today": "Today",
     "tomorrow": "Tomorrow",
+    "yesterday": "Yesterday",
     "daysWord": "days",
     "inWord": "In"
   },

@@ -1,4 +1,5 @@
 {
+  "langCode": "es-ES",
   "login": {
     "greeting": "¡Hola!",
     "subtitle": "Selecciona un método de conexión para acceder a tu cuenta Pronote.",
@@ -141,6 +142,14 @@
     "enableBtn": "Activar ahora",
     "laterBtn": "Más tarde"
   },
+  "schedule": {
+    "noClassFoundForDate": "No se han encontrado clases para esta fecha.",
+    "noClassSlot": "Sin clase",
+    "durationOfClassText": "de clase",
+    "inXDays": "Dentro de {count} días",
+    "xDaysAgo": "Hace {count} días",
+    "canceledStatus": "Cancelado"
+  },
   "toast": {
     "settingsSavedSuccessTitle": "Parámetros guardados",
     "settingsSavedSuccessDesc": "Sus modificaciónes han sido guardadas.",
@@ -191,7 +200,9 @@
     "telemetryEnabledTitle": "Diagnósticos activados",
     "telemetryEnabledDesc": "¡Gracias! Los diagnósticos se activarán en el próximo inicio de la app.",
     "telemetryDisabledTitle": "Diagnósticos desactivados",
-    "telemetryDisabledDesc": "Los diagnósticos se desactivarán en el próximo inicio de la app."
+    "telemetryDisabledDesc": "Los diagnósticos se desactivarán en el próximo inicio de la app.",
+    "failedToGetScheduleDesc": "No se ha podido recuperar los datos del horario.",
+    "errorFetchingScheduleDesc": "Se ha producido un error al intentar recuperar el horario."
   },
   "days": {
     "monday": "Lunes",
@@ -203,6 +214,7 @@
     "thursday": "Jueves",
     "today": "Hoy",
     "tomorrow": "Mañana",
+    "yesterday": "Ayer",
     "daysWord": "días",
     "inWord": "Dentro de"
   },

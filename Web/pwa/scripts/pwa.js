@@ -1573,16 +1573,16 @@ function updateScheduleHeader(date) {
     
     //Format date : DD Month
     const day = targetDate.getDate().toString().padStart(2, '0');
-    const month = targetDate.toLocaleString('fr-FR', { month: 'long' });
+    const month = targetDate.toLocaleString(getI18nValue("langCode"), { month: 'long' });
     const formattedDate = `${day} ${month.charAt(0).toUpperCase() + month.slice(1)}`;
     
     let relativeText = '';
     if (diffDays === 0) {
-        relativeText = "Aujourd'hui";
+        relativeText = getI18nValue("days.today");
     } else if (diffDays === 1) {
-        relativeText = "Demain";
+        relativeText = getI18nValue("days.tomorrow");
     } else if (diffDays === -1) {
-        relativeText = "Hier";
+        relativeText = getI18nValue("days.yesterday");
     }
 
     if (relativeText) {
@@ -1595,9 +1595,9 @@ function updateScheduleHeader(date) {
         scheduleRelativeDateElement.style.display = 'block';
         
         if (diffDays > 0) {
-            scheduleDateElement.textContent = `Dans ${diffDays} jours`;
+            scheduleDateElement.textContent = getI18nValue('schedule.inXDays').replace('{count}', diffDays);
         } else {
-            scheduleDateElement.textContent = `Il y a ${Math.abs(diffDays)} jours`;
+            scheduleDateElement.textContent = getI18nValue('schedule.xDaysAgo').replace('{count}', Math.abs(diffDays));
         }
         scheduleDateElement.classList.remove('large-date');
     }
@@ -1610,7 +1610,7 @@ function createDateItem(date) {
     const dateItem = document.createElement('div');
     dateItem.className = 'date-item';
     
-    const dayName = date.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '').toUpperCase();
+    const dayName = date.toLocaleDateString((getI18nValue("langCode")), { weekday: 'short' }).replace('.', '').toUpperCase();
     const dayNumber = date.getDate().toString().padStart(2, '0');
     
     dateItem.innerHTML = `
@@ -1918,12 +1918,12 @@ async function fetchSchedule(date) {
             renderSchedule(dayLessons);
         } else {
             scheduleContainer.innerHTML = '';
-            toast.error('Erreur', 'Impossible de récupérer les données de l\'emploi du temps.');
+            toast.error(getI18nValue("toast.globalErrorTitle"), getI18nValue("toast.failedToGetScheduleDesc"));
         }
     } catch (error) {
         console.error('Error fetching schedule:', error);
         scheduleContainer.innerHTML = '';
-        toast.error('Erreur', 'Une erreur est survenue lors de la récupération de l\'emploi du temps.');
+        toast.error(getI18nValue("toast.globalErrorTitle"), getI18nValue("toast.errorFetchingScheduleDesc"));
     }
 }
 
@@ -1938,7 +1938,7 @@ function renderSchedule(lessons) {
         container.innerHTML = `
             <div class="no-results-message" style="margin-top: 2rem;">
                 <i class="fas fa-calendar-day" style="font-size: 3rem; margin-bottom: 1rem; color: var(--primary);"></i>
-                <p>Aucun cours prévu pour cette date</p>
+                <p>${getI18nValue("schedule.noClassFoundForDate")}</p>
             </div>
         `;
         return;
@@ -1975,7 +1975,7 @@ function renderSchedule(lessons) {
                         <div class="schedule-card-time"></div>
                         <div class="schedule-card-content">
                             <div class="empty-slot-content">
-                                <h3 class="schedule-subject"><i class="fa-solid fa-mug-hot"></i> Pas de cours</h3>
+                                <h3 class="schedule-subject"><i class="fa-solid fa-mug-hot"></i> ${getI18nValue("schedule.noClassSlot")}</h3>
                                 <span class="schedule-duration">${durationText}</span>
                             </div>
                         </div>
@@ -2030,7 +2030,7 @@ function renderSchedule(lessons) {
                             <i class="fa-solid fa-user"></i>
                             <span>${lesson.teacher}</span>
                         </div>` : ''}
-                        <span class="schedule-duration">${durationText} de cours</span>
+                        <span class="schedule-duration">${durationText} ${getI18nValue("schedule.durationOfClassText")}</span>
                     </div>
                 </div>
             </div>
@@ -3314,6 +3314,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                 element.title = value;
             }
         });
+
+        //Update date selector items
+        document.querySelectorAll('.schedule-date-selector .date-item').forEach(item => {
+            const date = new Date(item.dataset.date);
+            const dayName = date.toLocaleDateString((getI18nValue("langCode")), { weekday: 'short' }).replace('.', '').toUpperCase();
+            const dayNameSpan = item.querySelector('.date-day');
+            if (dayNameSpan) {
+                dayNameSpan.textContent = dayName;
+            }
+        });
+
+        //Update schedule header if visible
+        const selectedDateItem = document.querySelector('.schedule-date-selector .date-item.selected');
+        if (selectedDateItem) {
+            const selectedDate = new Date(selectedDateItem.dataset.date);
+            updateScheduleHeader(selectedDate);
+        }
         
         console.log('[i18n] Language applied to page elements');
 
