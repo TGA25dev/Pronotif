@@ -1956,8 +1956,6 @@ function renderSchedule(lessons) {
     };
 
     lessons.forEach(lesson => {
-        if (lesson.canceled) return;
-
         //Check for gap
         if (lastEndTime) {
             const gapStartMins = parseTime(lastEndTime);
@@ -2005,15 +2003,22 @@ function renderSchedule(lessons) {
         }
         
         const color = lesson.color;
+        const isCanceled = lesson.canceled === true;
+        const status = lesson.status || (isCanceled ? getI18nValue("schedule.canceledStatus") : null);
+        
+        const cardClass = isCanceled ? 'schedule-card canceled' : 'schedule-card';
 
         html += `
-            <div class="schedule-card" style="--course-color: ${color}">
+            <div class="${cardClass}" style="--course-color: ${color}">
                 <div class="schedule-card-time">
                     <span class="start-time">${startFormatted}</span>
                     <span class="end-time">${endFormatted}</span>
                 </div>
                 <div class="schedule-card-content">
-                    <h3 class="schedule-subject">${lesson.subject}</h3>
+                    <h3 class="schedule-subject">
+                        ${lesson.subject}
+                        ${status ? `<span class="schedule-status-badge">${status}</span>` : ''}
+                    </h3>
                     <div class="schedule-card-details">
                         ${lesson.room ? `
                         <div class="schedule-location">

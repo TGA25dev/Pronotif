@@ -1918,6 +1918,35 @@ body::before {
     font-size: 0.75rem;
 }
 
+.schedule-card.canceled {
+    opacity: 0.9;
+}
+
+.schedule-card.canceled .schedule-card-content {
+    background: var(--box-accent-color);
+    border-color: transparent;
+    filter: grayscale(0.2);
+}
+
+.schedule-card.canceled .schedule-subject {
+    text-decoration: line-through;
+    color: var(--subtitle-dark);
+    opacity: 0.7;
+}
+
+.schedule-status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-left: 0.5rem;
+    background-color: var(--error);
+    color: white;
+    text-decoration: none !important;
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+}
+
 .schedule-loading {
     display: flex;
     justify-content: center;
