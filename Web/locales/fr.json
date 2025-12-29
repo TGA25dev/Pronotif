@@ -218,20 +218,6 @@
     "daysWord": "jours",
     "inWord": "Dans"
   },
-  "month": {
-    "january": "Janvier",
-    "february": "Février",
-    "march": "Mars",
-    "april": "Avril",
-    "may": "Mai",
-    "june": "Juin",
-    "july": "Juillet",
-    "august": "Août",
-    "september": "Septembre",
-    "october": "Octobre",
-    "november": "Novembre",
-    "december": "Décembre"
-  },
   "notification": {
     "logoutInfoTitle": "Vous avez été déconnecté(e)",
     "logoutInfoDesc": "Pour continuer, veuillez vous reconnecter à votre compte. Cela peut se produire si votre mot de passe a changé récemment ou si une erreur inconnue est survenue.",

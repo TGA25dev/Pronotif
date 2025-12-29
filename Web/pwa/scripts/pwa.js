@@ -2467,10 +2467,8 @@ function renderHomeworkCard(hw) {
 
     const dateObj = new Date(hw.due_date);
     const day = dateObj.getDate();
-    const monthIndex = dateObj.getMonth();
-    const monthKeys = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
-    const monthName = getI18nValue(`month.${monthKeys[monthIndex]}`).toLowerCase();
-    
+    const monthName = dateObj.toLocaleString(getI18nValue("langCode"), { month: 'long' }).toLowerCase();
+
     const currentLang = localStorage.getItem('language') || 'fr';
     let formattedDate = '';
     
