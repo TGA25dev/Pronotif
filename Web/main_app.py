@@ -165,6 +165,24 @@ def website_index2(filename):
 def website_serve_language_file(filename):
     return send_from_directory('website/langs', filename)
 
+# Serve static files
+@app.route('/assets/<path:filename>')
+def website_serve_assets_file(filename):
+    website_assets_path = os.path.join(app.root_path, 'website/assets', filename)
+    if os.path.isfile(website_assets_path):
+        return send_from_directory('website/assets', filename)
+    
+    #fall back to shared assets folder
+    shared_assets_path = os.path.join(app.root_path, 'assets', filename)
+    if os.path.isfile(shared_assets_path):
+        return send_from_directory('assets', filename)
+    
+    abort(404)
+
+@app.route('/pwa/splash/<path:filename>')
+def pwa_serve_splash_file(filename):
+    return send_from_directory('pwa/splash', filename)
+
 @app.route('/styles/<filename>')
 def website_serve_style_file(filename):
     return send_from_directory('website/styles', filename)
