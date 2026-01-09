@@ -2532,6 +2532,11 @@ function renderHomeworksPage(homeworks) {
             homeworkItem.dataset.homeworkId = hw.id || Math.random();
             homeworkItem.classList.add('pending');
             homeworkItem.style.animationDelay = `${index * 0.05}s`;
+
+            homeworkItem.addEventListener('animationend', () => {
+                homeworkItem.style.animation = 'none';
+                homeworkItem.style.opacity = '1';
+            }, { once: true });
             
             listTodo.appendChild(homeworkItem);
             
@@ -2563,6 +2568,11 @@ function renderHomeworksPage(homeworks) {
             homeworkItem.dataset.homeworkId = hw.id || Math.random();
             homeworkItem.classList.add('completed');
             homeworkItem.style.animationDelay = `${index * 0.05}s`;
+
+            homeworkItem.addEventListener('animationend', () => {
+                homeworkItem.style.animation = 'none';
+                homeworkItem.style.opacity = '1';
+            }, { once: true });
             
             listDone.appendChild(homeworkItem);
             
@@ -2592,6 +2602,10 @@ function attachSwipeListeners(element, homework, hintElement) {
         hasMovedSignificantly = false;
         
         element.classList.remove('swiping-active');
+
+        //force reset animation state
+        element.style.animation = 'none'; 
+        element.style.opacity = '1';
         
         if (hintElement) {
             hintElement.style.transform = '';
