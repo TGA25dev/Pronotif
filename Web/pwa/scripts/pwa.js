@@ -3798,11 +3798,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         //Reset FCM locally
                         localStorage.removeItem('fcmToken');
                         localStorage.removeItem('fcmTokenTimestamp');
-                        
-                        toast.warning(
-                            getI18nValue("toast.sessionExpiredTitle"),
-                            getI18nValue("toast.sessionExpiredDesc"),
-                        );
+
                     });
                 }
             } else {
