@@ -202,7 +202,9 @@
     "telemetryDisabledTitle": "Diagnostics désactivés",
     "telemetryDisabledDesc": "Les diagnostics seront désactivés au prochain démarrage de l'appli",
     "failedToGetScheduleDesc": "Impossible de récupérer les données de l'emploi du temps.",
-    "errorFetchingScheduleDesc": "Une erreur est survenue lors de la récupération de l'emploi du temps."
+    "errorFetchingScheduleDesc": "Une erreur est survenue lors de la récupération de l'emploi du temps.",
+    "sessionExpiredTitle": "Session expirée",
+    "sessionExpiredDesc": "Vous semblez vous être connecté(e) sur un autre appareil. Veuillez vous reconnecter."
   },
   "days": {
     "monday": "Lundi",

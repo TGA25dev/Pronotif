@@ -202,7 +202,9 @@
     "telemetryDisabledTitle": "Diagnósticos desactivados",
     "telemetryDisabledDesc": "Los diagnósticos se desactivarán en el próximo inicio de la app.",
     "failedToGetScheduleDesc": "No se ha podido recuperar los datos del horario.",
-    "errorFetchingScheduleDesc": "Se ha producido un error al intentar recuperar el horario."
+    "errorFetchingScheduleDesc": "Se ha producido un error al intentar recuperar el horario.",
+    "sessionExpiredTitle": "Sesión expirada",
+    "sessionExpiredDesc": "Parece que te has conectado en otro dispositivo. Por favor, vuelve a iniciar sesión."
   },
   "days": {
     "monday": "Lunes",

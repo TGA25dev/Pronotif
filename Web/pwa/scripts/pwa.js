@@ -3698,9 +3698,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    let loggedInElsewhereWarningShown = false; //Prevent duplicate toasts
+
     function checkExistingSession(retryCount = 0) {
         const startTime = Date.now();
         let transitioned = false;
+        let sessionInvalid401 = false;
 
         //show spinner if loading takes too long
         const spinnerTimeout = setTimeout(() => {
@@ -3767,6 +3770,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             cache: 'no-store'
         })
         .then(response => {
+            if (response.status === 401) {
+                //Session invalid might be logged in elsewhere
+                console.warn('[Auth] Session invalid user may be logged in elsewhere');
+                sessionInvalid401 = true;
+                throw new Error('Session expired logged in elsewhere');
+            }
+            
             if (!response.ok) {
                 throw new Error(`Auth refresh failed: ${response.status} ${response.statusText}`);
             }
@@ -3776,15 +3786,33 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.info('[Auth] Session refreshed successfully');
             handleTransition(() => showDashboard());
         })
-        .catch(error => {
+        .catch(async (error) => {
             console.warn('[Auth] Session check failed:', error.message);
             
-            // 3 retries
-            if (retryCount < 3 && error.message.includes('timed out')) {
-                console.info(`[Auth] Retrying session check (${retryCount + 1}/3)...`);
-                setTimeout(() => checkExistingSession(retryCount + 1), 1000);
+            if (sessionInvalid401 || error.message.includes('logged in elsewhere')) {
+                //Only show warning if not already shown
+                if (!loggedInElsewhereWarningShown) {
+                    loggedInElsewhereWarningShown = true;
+                    handleTransition(() => {
+                        showLoginView();
+                        //Reset FCM locally
+                        localStorage.removeItem('fcmToken');
+                        localStorage.removeItem('fcmTokenTimestamp');
+                        
+                        toast.warning(
+                            getI18nValue("toast.sessionExpiredTitle"),
+                            getI18nValue("toast.sessionExpiredDesc"),
+                        );
+                    });
+                }
             } else {
-                handleTransition(() => showLoginView());
+                // 3 retries for timeout errors only
+                if (retryCount < 3 && error.message.includes('timed out')) {
+                    console.info(`[Auth] Retrying session check (${retryCount + 1}/3)...`);
+                    setTimeout(() => checkExistingSession(retryCount + 1), 1000);
+                } else {
+                    handleTransition(() => showLoginView());
+                }
             }
         });
     }
