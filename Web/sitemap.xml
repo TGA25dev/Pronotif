@@ -4,23 +4,8 @@
 
   <url>
     <loc>https://www.pronotif.tech/</loc>
-    <lastmod>2025-10-13</lastmod>
+    <lastmod>2026-01-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
-
-  <url>
-    <loc>https://www.pronotif.tech/download</loc>
-    <lastmod>2025-10-10</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <url>
-    <loc>https://www.pronotif.tech/support</loc>
-    <lastmod>2025-10-05</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-
 </urlset>
