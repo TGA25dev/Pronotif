@@ -5,135 +5,272 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Pronot'if - On est en quelle salle ?</title>
         <meta name="description" content="On est en quelle salle ?">
-        <link rel="stylesheet" href="styles/index-style.css?v0.2">
+        <link rel="stylesheet" href="styles/index-style.css">
         <link rel="stylesheet" href="https://pronotif.tech/fonts_manager.css">
         <link rel="icon" href="../assets/logo_pronotif_rounded_64.webp" type="image/webp">
+
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="theme-color" content="#45a8a8">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="application-name" content="Pronot'if">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="default">
+        <link rel="apple-touch-icon" sizes="180x180" href="../images/pwa/assets/logo.jpg">
+        <link rel="manifest" href="manifest.json">
     </head>
     <body>
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">Pronot'if</div>
+                <nav class="nav-links">
+                    <a href="#features" data-i18n="nav-features">Fonctionnalités</a>
+                    <a href="http://docs.pronotif.tech/" target="_blank" data-i18n="nav-support">Besoin d'aide ?</a>
+                    <button class="install-btn mobile-menu-btn" data-i18n="header-install">Installer maintenant</button>
+                </nav>
+                <div class="header-right">
+                    <button class="install-btn desktop-btn" data-i18n="header-install">Installer maintenant</button>
+                    <button class="burger-menu" aria-label="Menu">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!--Main Hero-->
+        <section class="hero-section">
+            <div class="hero-decorations">
+                <div class="emoji-wrapper wrapper-1" data-speed="0.08"><div class="floating-emoji">🎒</div></div>
+                <div class="emoji-wrapper wrapper-2" data-speed="-0.06"><div class="floating-emoji">📚</div></div>
+                <div class="emoji-wrapper wrapper-3" data-speed="0.07"><div class="floating-emoji">✏️</div></div>
+                <div class="emoji-wrapper wrapper-4" data-speed="-0.05"><div class="floating-emoji">🔔</div></div>
+                <div class="emoji-wrapper wrapper-5" data-speed="0"><div class="floating-emoji">📅</div></div>
+                <div class="emoji-wrapper wrapper-6" data-speed="0"><div class="floating-emoji">🥪</div></div>
+                <div class="emoji-wrapper wrapper-7" data-speed="0"><div class="floating-emoji">🚌</div></div>
+                <div class="emoji-wrapper wrapper-8" data-speed="0"><div class="floating-emoji">📝</div></div>
+            </div>
+
+            <div class="hero-content">
+                <h1 class="hero-title">On est en<br>quelle salle ? 📚</h1>
+                <p class="hero-subtitle">Votre emploi du temps, vos salles, vos devoirs.<br>Soyez informés de tout.</p>
+                
+                <div class="hero-buttons">
+                    <button class="btn btn-primary" data-i18n="btn-install">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        Installer Pronot'if
+                    </button>
+                    <a href="https://ko-fi.com/pronotif" target="_blank" class="btn btn-secondary" data-i18n="btn-support">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                        Soutenir le projet
+                    </a>
+                </div>
+            </div>
+
+            <div class="mockups-container">
+                <img src="" alt="Mockup_Left" class="mockup mockup-left">
+                <img src="assets/mockups/mockup-homepage.svg" alt="Mockup_Center" class="mockup mockup-center">
+                <img src="assets/mockups/mockup-timetable.svg" alt="Mockup_Right" class="mockup mockup-right">
+            </div>
+        </section>
+
+        <section class="reminders-section">
+            <div class="reminders-container">
+                <h2 data-i18n="reminders-title">Des rappels faits pour <span class="highlight">vous</span></h2>
+                <p data-i18n="reminders-subtitle">Pronot'if vous notifie à propos des nombreux évènements de votre journée scolaire.</p>
+                
+                <div class="bento-grid">
+                    <div class="bento-card card-blue">
+                        <div class="card-icons-scattered">
+                            <span class="emoji" style="top: 15%; left: 20%; font-size: 2.5rem;">🔔</span>
+                            <span class="emoji" style="top: 20%; right: 20%; font-size: 2.5rem;">🎒</span>
+                            <span class="emoji" style="top: 45%; left: 15%; font-size: 2rem; transform: rotate(-15deg);">📌</span>
+                            <span class="emoji" style="top: 40%; left: 45%; font-size: 2.5rem;">📍</span>
+                            <span class="emoji" style="top: 55%; right: 25%; font-size: 2.5rem;">⏰</span>
+                        </div>
+                        <div class="card-content-bottom">
+                            <h3>"On est en quelle salle ?"</h3>
+                            <p>Quelques minutes avant chaque cours recevez une notification avec des informations sur la salle où vous devez vous rendre.</p>
+                        </div>
+                    </div>
+        
+                    <div class="bento-column">
+                        <div class="bento-card card-yellow">
+                            <div class="card-icons-left">
+                                <span class="emoji" style="top: 10%; left: 10%; font-size: 2rem;">💡</span>
+                                <span class="emoji" style="top: 10%; right: 15%; font-size: 2rem;">⏳</span>
+                                <span class="emoji" style="top: 40%; left: 25%; font-size: 2.5rem;">📚</span>
+                                <span class="emoji" style="top: 50%; right: 10%; font-size: 2rem; transform: rotate(45deg);">✏️</span>
+                                <span class="emoji thinking-emoji" style="top: 70%; left: 15%; font-size: 2.2rem;">🤔</span>
+                            </div>
+                            <div class="card-content-right">
+                                <h3>"Y'avait des devoirs pour aujourd'hui ?"</h3>
+                                <p>Chaque soir soyez prévenus si vous avez des devoirs marqués comme non faits à rendre pour le lendemain.</p>
+                            </div>
+                        </div>
+        
+                        <div class="bento-card card-green">
+                            <div class="card-icons-left">
+                                <span class="emoji" style="top: 15%; left: 15%; font-size: 2.2rem;">😋</span>
+                                <span class="emoji" style="top: 20%; right: 20%; font-size: 2rem;">🕒</span>
+                                <span class="emoji" style="top: 45%; left: 40%; font-size: 2.5rem;">🍽️</span>
+                                <span class="emoji" style="top: 70%; left: 10%; font-size: 2rem; transform: rotate(-20deg);">🍗</span>
+                                <span class="emoji" style="top: 70%; right: 20%; font-size: 2rem;">🍩</span>
+                            </div>
+                            <div class="card-content-right">
+                                <h3>"On mange quoi ce midi ?"</h3>
+                                <p>Découvrez le menu de la cantine avant même d'être installé à table.¹</p>
+                            </div>
+                        </div>
+                    </div>
+        
+                    <div class="bento-card card-pink">
+                        <div class="card-icons-scattered">
+                            <span class="emoji" style="top: 15%; left: 20%; font-size: 2.5rem;">😮</span>
+                            <span class="emoji" style="top: 20%; right: 20%; font-size: 2.5rem;">🔔</span>
+                            <span class="emoji" style="top: 45%; left: 35%; font-size: 3rem;">🎉</span>
+                            <span class="emoji" style="top: 60%; left: 15%; font-size: 2.5rem;">🌵</span>
+                            <span class="emoji" style="top: 60%; right: 15%; font-size: 2.5rem;">📅</span>
+                        </div>
+                        <div class="card-content-bottom">
+                            <h3>"Le cours est annulé ?"</h3>
+                            <p>Soyez la premiere personne avertie si un cours est annulé.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="footnote">¹Certaines fonctionnalités sont uniquement disponibles pour les établissements compatibles. Plus d'informations sur <a href="https://go.pronotif.tech/compatibility">go.pronotif.tech/compatibility</a>.</p>
+            </div>
+        </section>
+
+        <!--Features section-->
+        <section class="features-scroll-section" id="features">
+            <div class="features-container">
+                <h2 class="features-title">Fonctionnalités</h2>
+                
+                <div class="features-scroll-wrapper">
+                    <div class="feature-card">
+                        <h3>Ne ratez plus jamais un cours</h3>
+                        <p>Un rappel avant chaque cours pour <small>(presque)</small> toujours arriver à l'heure.</p>
+                        <div class="feature-visual-placeholder">
+                            <img src="" alt="Connexion rapide" class="feature-mockup">
+                        </div>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Connexion rapide</h3>
+                        <p>Connectez vous rapidement à votre compte en seulement quelques étapes.</p>
+                        <div class="feature-visual-placeholder">
+                            <img src="assets/feature-screenshots/screen-login.svg" alt="Connexion rapide" class="feature-mockup">
+                        </div>
+                    </div>
+
+                    <div class="feature-card">
+                        <h3>Votre journée en un coup d'oeil</h3>
+                        <p>Tout ce que vous devez savoir à propos de votre journée sur une seule et même page.</p>
+                        <div class="feature-visual-placeholder">
+                            <img src="assets/feature-screenshots/screen-dashboard.svg" alt="Connexion rapide" class="feature-mockup">
+                        </div>
+                    </div>
+
+                    <div class="feature-card">
+                        <h3>Compatible iOS et Android</h3>
+                        <p>Que vous ayez un iPhone ou tout autre chose l'expérience est la même.</p>
+                        <div class="feature-visual-placeholder">
+                            <img src="" alt="Connexion rapide" class="feature-mockup">
+                        </div>
+                    </div>
+
+                    <div class="feature-card">
+                        <h3>Notifications sur mesure</h3>
+                        <p>Choisissez quels types d'alertes recevoir quand vous le souhaitez</p>
+                        <div class="feature-visual-placeholder">
+                            <img src="assets/feature-screenshots/screen-notifications.svg" alt="Connexion rapide" class="feature-mockup">
+                        </div>
+                    </div>
+
+                    <div class="feature-card">
+                        <h3>Respect de la vie privée</h3>
+                        <p>Aucune revente de données, aucune publicité une transparence totale et un projet entièrement gratuit.</p>
+                        <div class="feature-visual-placeholder">
+                            <img src="" alt="Connexion rapide" class="feature-mockup">
+                        </div>
+                    </div>
+
+                    <div class="feature-card">
+                        <h3>Installation simple et rapide</h3>
+                        <p>Ajoutez l'application à votre écran d'accueil en quelques clics.</p>
+                        <div class="feature-visual-placeholder">
+                            <img src="" alt="Connexion rapide" class="feature-mockup">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!--Install Section-->
+        <section class="install-section" id="install">
+            <div class="install-wrapper">
+                <div class="install-info">
+                    <h2 class="install-heading">Installer Pronot'if</h2>
+                    <p class="install-subheading">Installez l'application sur votre appareil pour commencer à recevoir les notifications.</p>
+                </div>
+                
+                <div class="install-card-wrapper">
+                    <div id="install-content" class="install-interface">
+                        <!--injected by JS-->
+                    </div>
+                    <div class="install-blob blob-1"></div>
+                    <div class="install-blob blob-2"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer-->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-top">
+                    <div class="footer-brand">
+                        <div class="logo footer-logo">Pronot'if</div>
+                        <p>Des notifications faites pour vous.</p>
+                    </div>
+                    <div class="footer-nav">
+                        <div class="footer-col">
+                            <h4>Légal</h4>
+                            <a href="https://safety.pronotif.tech/docs/terms-of-service" target="_blank">CGU</a>
+                            <a href="https://safety.pronotif.tech/docs/politique-de-confidentialite" target="_blank">Politique de confidentialité</a>
+                            <a href="https://safety.pronotif.tech/usage/data" target="_blank">Traitement des données</a>
+                            
+                        </div>
+                        <div class="footer-col">
+                            <h4>Liens</h4>
+                            <a href="https://github.com/TGA25dev/Pronotif" target="_blank">GitHub</a>
+                            <a href="https://ko-fi.com/pronotif" target="_blank">Soutenir le projet</a>
+                            <a href="https://docs.pronotif.tech/contrib/avant-de-commencer" target="_blank">Contribuer</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <p>&copy; 2026 Pronot'if. Tous droits réservés.</p>
+                </div>
+            </div>
+        </footer>
+
+        <!-- Language Switcher -->
         <div class="language-switcher">
-            <div class="language-toggle">
-                <span class="active-lang">FR</span>
-                <svg class="globe-icon" viewBox="0 0 24 24" width="16" height="16">
+            <button class="lang-toggle" id="langToggle">
+                <span class="lang-code">FR</span>
+                <svg viewBox="0 0 24 24" width="16" height="16">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
                 </svg>
-            </div>
-            <div class="language-dropdown">
-                <div class="language-option" data-lang="fr">
-                    <div class="lang-info">
-                        <span class="lang-text">Français</span>
-                        <span class="lang-code">FR</span>
-                    </div>
-                    <svg class="checkmark" viewBox="0 0 24 24" width="16" height="16">
-                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-                    </svg>
-                </div>
-                <div class="language-option" data-lang="en">
-                    <div class="lang-info">
-                        <span class="lang-text">English</span>
-                        <span class="lang-code">EN</span>
-                    </div>
-                    <svg class="checkmark" viewBox="0 0 24 24" width="16" height="16">
-                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-                    </svg>
-                </div>
-                <div class="language-option" data-lang="es">
-                    <div class="lang-info">
-                        <span class="lang-text">Español</span>
-                        <span class="lang-code">ES</span>
-                    </div>
-                    <svg class="checkmark" viewBox="0 0 24 24" width="16" height="16">
-                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-                    </svg>
-                </div>
+            </button>
+            <div class="lang-dropdown" id="langDropdown">
+                <button class="lang-option" data-lang="fr">Français</button>
+                <button class="lang-option" data-lang="en">English</button>
+                <button class="lang-option" data-lang="es">Español</button>
             </div>
         </div>
-        <div class="bento-container">
-            <div class="bento-box main-title-box">
-                <div class="title-content">
-                    <div class="carousel-container">
-                        <h1 class="carousel-text" data-i18n="carousel-text1">On est en quelle salle ?</h1>
-                        <h1 class="carousel-text" data-i18n="carousel-text2">Le cours est annulé ?</h1>
-                        <h1 class="carousel-text" data-i18n="carousel-text3">On mange quoi ce midi ?</h1>
-                        <h1 class="carousel-text" data-i18n="carousel-text4">J'ai fini mes devoirs ?</h1>
-                        <h1 class="carousel-text" data-i18n="carousel-text5">On a cours de Français là ?</h1>
-                    </div>
-                    <p class="carousel-subtitle" data-i18n="carousel-subtitle">Toutes les réponses à ces questions avec Pronot'if !</p>
-                </div>
-                <p class="footer-text-conditions">
-                    <span data-i18n="conditions-text-start">En continuant vous acceptez les</span>
-                    <b><a href="https://safety.pronotif.tech/docs/terms-of-service" data-i18n="terms-link">conditions d'utilisation</a></b>
-                    <span data-i18n="conditions-text-and">et</span>
-                    <b><a href="https://safety.pronotif.tech/docs/politique-de-confidentialite" data-i18n="privacy-link">la politique de confidentialité</a></b>.
-                </p>
-            </div>
 
-            <div class="bento-box download-box">
-                <div>
-                    <h2 data-i18n="download-box-title">Installer Pronot'if</h2>
-                    <p data-i18n="download-box-desc">Une notification avant chaque cours, quoi de plus simple ?</p>
-                </div>
-                <button 
-                    data-i18n="download-box-btn" 
-                    class="download-btn" 
-                    data-href="download"
-                    title="Ça arrive bientôt !"></button>
-                </button>
-            </div>
-
-            <div class="bento-box learn-more-box">
-                <h2 data-i18n="learn-more-box-title">En savoir +</h2>
-                <p data-i18n="learn-more-box-desc">Vous voulez plus d'infos sur le fonctionnement de Pronot'if, l'équipe, vos données ?</p>
-                <img src="https://drive.pronotif.tech/raw/UvFWSF.png" alt="En savoir plus">
-                <button data-i18n="learn-more-box-btn" class="learn-more-btn" id="discoverBtn">Découvrir Pronot'if</button>
-            </div>
-
-            <div class="bento-box main-feature-box">
-                <h2 data-i18n="main-feature-title">Notifications en direct</h2>
-                <p data-i18n="main-feature-desc">Recevez une notification avant chaque cours pour ne plus jamais être en retard.</p>
-            </div>
-
-            <div class="bento-box secondary-feature-box">
-                <h2 data-i18n="secondary-feature-title">Rappels utiles</h2>
-                <p data-i18n="secondary-feature-desc">Pronot'if vous rappelle de faire vos devoirs pour le lendemain.</p>
-            </div>
-
-            <div class="bento-box support-project-box">
-                <div>
-                    <h2 data-i18n="support-project-title">Vous voulez aider ?</h2>
-                    <p data-i18n="support-project-desc">Participez à l'amélioration de Pronot'if en faisant un don ou en contribuant sur GitHub !</p>
-                </div> <button data-i18n="support-project-btn" class="support-project-btn" data-href="support">Soutenir le projet</button>
-            </div>
-
-            <div class="bento-box footer-box">
-                <p>
-                    <span class="copyright">© 2025 Pronot'if</span>
-                    <br>
-                    <span class="footer-text" data-i18n="footer"></span>
-                </p>
-                <a href="https://github.com/TGA25dev/Pronotif" target="_blank" aria-label="GitHub Repository" class="github-link">
-                    <svg class="github-icon" viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
-                        <path d="M12 0.5C5.6 0.5 0.5 5.6 0.5 12c0 5.1 3.3 9.4 7.9 10.9 0.6 0.1 0.9-0.3 0.9-0.7v-2.6c-3.4 0.7-4.1-1.4-4.1-1.4-0.5-1.2-1.1-1.6-1.1-1.6-0.9-0.6 0.1-0.6 0.1-0.6 1 0.1 1.5 1 1.5 1 0.9 1.5 2.4 1.1 3 0.8 0.1-0.6 0.4-1.1 0.7-1.4-2.7-0.3-5.5-1.3-5.5-5.8 0-1.3 0.5-2.4 1.2-3.3-0.1-0.3-0.5-1.5 0.1-3 0 0 1-0.3 3.3 1.2 1-0.3 2.1-0.4 3.2-0.4 1.1 0 2.2 0.1 3.2 0.4 2.3-1.5 3.3-1.2 3.3-1.2 0.6 1.5 0.2 2.7 0.1 3 0.8 0.9 1.2 2 1.2 3.3 0 4.6-2.8 5.5-5.5 5.8 0.4 0.3 0.7 1 0.7 2v3c0 0.4 0.3 0.8 0.9 0.7 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.6 18.4 0.5 12 0.5z"/>
-                    </svg>
-                </a>
-            </div>
-        </div>
-        <div class="modal" id="comingSoonModal">
-            <div class="modal-content">
-                <span class="close-modal">&times;</span>
-                <h2 data-i18n="coming-soon-modal-title">🚧 En construction</h2>
-                <p data-i18n="coming-soon-modal-desc">Cette page arrive bientôt...</p>
-                <button data-i18n="coming-soon-modal-btn" class="modal-btn">Compris !</button>
-            </div>
-        </div>
-        <div class="status-notification" id="statusNotification" style="display: none;">
-            <div class="status-content">
-                <span class="status-icon" id="statusIcon">⚠️</span>
-                <span class="status-message" id="statusMessage"></span>
-            </div>
-            <a href="https://status.pronotif.tech" target="_blank" class="status-link" data-i18n="status-more">Plus de détails</a>
-            <button class="status-close" id="closeStatus">&times;</button>
-        </div>
-        <script src="scripts/index.js?v0.1"></script>
-        <script src="scripts/status_checker.js"></script>
+        <script src="scripts/index.js"></script>
     </body>
 </html>
