@@ -2767,11 +2767,55 @@ function attachSwipeListeners(element, homework, hintElement) {
 }
 //TODO: Implement actual API calls to mark/unmark homework
 async function markHomeworkAsDone(homework) {
-    console.log('Marking homework as done:', homework);
+    if (!homework || !homework.id) return;
+    console.log('Marking homework as done:', homework.id);
+    
+    try {
+        const response = await wrapFetch('https://api.pronotif.tech/v1/app/homework/set-status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                id: homework.id,
+                done: true,
+            }),
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to update status');
+        }
+    } catch (error) {
+        console.error('Error updating homework status:', error);
+        toast.error(getI18nValue("toast.globalErrorTitle"), getI18nValue("toast.homeworkStatusUpdateFailedDesc"));
+    }
 }
 
 async function unmarkHomeworkAsDone(homework) {
-    console.log('Unmarking homework as done:', homework);
+    if (!homework || !homework.id) return;
+    console.log('Unmarking homework as done:', homework.id);
+    
+    try {
+        const response = await wrapFetch('https://api.pronotif.tech/v1/app/homework/set-status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                id: homework.id,
+                done: false
+            }),
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to update status');
+        }
+    } catch (error) {
+        console.error('Error updating homework status:', error);
+        toast.error(getI18nValue("toast.globalErrorTitle"), getI18nValue("toast.homeworkStatusUpdateFailedDesc"));
+    }
 }
 
 function showDataFetchError() {
