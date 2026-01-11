@@ -997,7 +997,7 @@ const loginHandler = {
             if (result && result.isValid) {
                 const school = { nomEtab: result.nomEtab };
                 console.log("[MANUAL LINK] Link verified successfully:", manualPronoteLink);
-                self.handleSchoolSelection(school, manualPronoteLink, null, null, null, result.region);
+                self.handleSchoolSelection(school, manualPronoteLink, null, null, null, result.region, true);
             } else {
                 console.error("[MANUAL LINK] Link verification failed or was unverified.");
             }
@@ -1304,8 +1304,8 @@ const loginHandler = {
             // Add click handler for school selection
             schoolBox.addEventListener('click', () => {
                 console.log(`[SCHOOL] Selected: ${school.nomEtab}`);
-                this.handleSchoolSelection(school, school.url, null, null, null, data.schools.region);
-                                        //School name, login_page_link, qrcode_login, qrcode_data, pin, region
+                this.handleSchoolSelection(school, school.url, null, null, null, data.schools.region, false);
+                                        //School name, login_page_link, qrcode_login, qrcode_data, pin, region, manual_link_login
             });
             
             schoolsContainer.appendChild(schoolBox);
@@ -1358,7 +1358,7 @@ const loginHandler = {
         });
     },
 
-    async handleSchoolSelection(school, login_page_link, qr_code_login, qrcode_data, pin, region) {
+    async handleSchoolSelection(school, login_page_link, qr_code_login, qrcode_data, pin, region, manual_link_login) {
         console.log(`[SCHOOL] Processing selection: ${school.nomEtab}`);
         
         // Store the selected school
@@ -1444,7 +1444,8 @@ const loginHandler = {
                         qr_code_login: String(qr_code_login),
                         qrcode_data: String(qrcode_data),
                         pin: String(pin),
-                        region: String(region)
+                        region: String(region),
+                        manual_link_login: String(manual_link_login)
                     }),
                     credentials: 'include'
                 })
@@ -1479,6 +1480,12 @@ const loginHandler = {
                         if (response.status === 504) {
                             toast.error(getI18nValue("toast.wrongCredentialsTitle"), getI18nValue("toast.pronoteTimeoutDesc"));
                             console.error("Pronote server timed out.");
+                            return;
+                        }
+
+                        else if (response.status === 503) {
+                            toast.warn(getI18nValue("Service désactivé"), "La fonctionnalité de connexion manuelle est temporairement indisponible, elle sera réactivée sous peu.", { persistent: true });
+                            console.error("Manual link has been disabled.");
                             return;
                         }
                         toast.error(data.message || getI18nValue("toast.networkErrorTitle"), getI18nValue("toast.networkErrorDesc"));

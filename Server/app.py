@@ -1005,13 +1005,13 @@ def login_user():
             # Define required fields
             required_fields = [
                 "student_username", "student_password", "login_page_link", 
-                "qr_code_login", "qrcode_data", "pin", "region"
+                "qr_code_login", "qrcode_data", "pin", "region", "manual_link_login"
             ]
             
             # Validate all string fields
             for field in required_fields:
                 if field not in data:
-                    return jsonify({"error": f"Missing {field}"}), 400
+                    return jsonify({"error": f"Missing field(s)"}), 400
                 
                 if not isinstance(data[field], str):
                     return jsonify({"error": f"Invalid {field} type, expected string"}), 400
@@ -1033,6 +1033,7 @@ def login_user():
             qrcode_data = sanitized_payload['qrcode_data']
             pin = sanitized_payload['pin']
             region = sanitized_payload['region']
+            manual_link_login = sanitized_payload['manual_link_login']
 
             # Call the module to get user data
             user_data = global_pronote_login(
@@ -1201,18 +1202,22 @@ def login_user():
         except Exception as e:
             err_msg = str(e).lower()
 
-            if "username / password is invalid" not in err_msg and "ent login failed" not in err_msg and "pronote login failed" not in err_msg:
-                sentry_sdk.capture_exception(e)
-                logger.error(f"Unexpected error in login_user: {e}")
-                return jsonify({"error": "Internal server error"}), 500
-            
-            elif "Read timed out." in err_msg:
+            if "Read timed out." in err_msg:
                 logger.info(f"Login failed due to timeout: {e}")
                 return jsonify({"error": "Pronote server timed out"}), 504
             
-            else:
+            elif manual_link_login == "true":
+                logger.info(f"Login failed due to invalid credentials: {e}")
+                return jsonify({"error": "Service suspended"}), 503
+            
+            elif "username / password is invalid" in err_msg or "ent login failed" in err_msg or "pronote login failed" in err_msg:
                 logger.info(f"Login failed due to invalid credentials: {e}")
                 return jsonify({"error": "Invalid username or password"}), 401
+            
+            else:
+                sentry_sdk.capture_exception(e)
+                logger.error(f"Unexpected error in login_user: {e}")
+                return jsonify({"error": "Internal server error"}), 500
                 
 
 
