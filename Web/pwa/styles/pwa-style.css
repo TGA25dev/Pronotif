@@ -20,6 +20,71 @@
 
     --box-accent-color: #FFECD6;
 
+    --white: #ffffff;
+    --black: #000000;
+    
+    /* Text */
+    --text-primary: var(--text-black);
+    --text-secondary: #888888;
+    --text-tertiary: #9ca3af;
+    --text-darker: #222222;
+    --text-link-hover: #222222;
+    
+    /* Borders / Dividers */
+    --border-default: rgba(0, 0, 0, 0.1);
+    --border-subtle: rgba(0, 0, 0, 0.08);
+    --border-solid: #e5e5e5;
+    --focus-ring: rgba(69, 168, 168, 0.2);
+    
+    /* Shadows / Elevation */
+    --shadow-xs: rgba(0, 0, 0, 0.05);
+    --shadow-sm: rgba(0, 0, 0, 0.15);
+    --shadow-md: rgba(0, 0, 0, 0.25);
+    --shadow-error: rgba(239, 68, 68, 0.2);
+
+    /* Overlays */
+    --overlay-default: rgba(0, 0, 0, 0.5);
+    --modal-overlay: rgba(15, 23, 42, 0.5);
+
+    /* Statuses Colors */
+    --warning: #f59e0b;
+    --warning-icon-bg: rgba(245, 158, 11, 0.15);
+    
+    --success-subtle: rgba(34, 197, 94, 0.1);
+    --success-icon-bg: rgba(34, 197, 94, 0.15);
+    --success-border: rgba(34, 197, 94, 0.3);
+    
+    --error-subtle: rgba(239, 68, 68, 0.1);
+    --error-icon-bg: rgba(239, 68, 68, 0.15);
+    --error-border: rgba(239, 68, 68, 0.3);
+    
+    --info-icon-bg: rgba(0, 166, 166, 0.15);
+    
+    /* Primary Variants */
+    --primary-darker: #058f87;
+    --primary-surface: rgba(7, 161, 159, 0.1);
+    --primary-alpha-20: rgba(7, 161, 159, 0.2);
+    --primary-alpha-30: rgba(7, 161, 159, 0.3);
+    --primary-alpha-40: rgba(7, 161, 159, 0.4);
+    
+    /* Components */
+    --spinner-border: rgba(240, 240, 240, 0.3);
+    --homework-done-bg: rgba(200, 200, 200, 0.3);
+    --toggle-bg: #CCCCCC;
+    --box-accent-hover: #FFE0CC;
+    --refresh-btn-bg: rgba(255, 255, 255, 0.8);
+    
+    --demo-badge-bg: #ff5722;
+    --demo-badge-hover: #e64a19;
+    
+    --btn-cancel-bg: #f0f0f0;
+    --btn-cancel-active: #e0e0e0;
+    
+    --telemetry-bg: rgba(248, 250, 252, 0.85); 
+    --telemetry-border: #e0e4e8; 
+    --telemetry-text: #2d3d4d; 
+    --telemetry-subtext: #7a8a98;
+
     --title-large: clamp(2.5rem, 8vw, 3.5rem);
     --title-medium: clamp(1.7rem, 5vw, 2.3rem);
     --title-small: clamp(1.2rem, 5vw, 1.6rem);
@@ -40,6 +105,131 @@
 
     /* Fonts */
     --font-family: 'Satoshi', sans-serif;
+}
+
+:root[data-theme="dark"] {
+    /* Colors */
+    --primary: #066C6A;
+    --primary-dark: #055453;
+    --primary-light: rgba(6, 108, 106, 0.15);
+    --background: #121212;
+    --card-bg: #1C1C1C;
+    --text: #E6E6E6;
+    --text-white: #FFFFFF;
+    --text-black: #E6E6E6;
+    --text-app-name: #FFCFA5;
+    --subtitle-black: #A7A7A7;
+    --success: #22C55E;
+    --error: #F87171;
+    --error-bg: rgba(248, 113, 113, 0.15);
+    --error-text: #FCA5A5;
+
+    --login-view-bg: #055453;
+    --login-view-main-card: #1E2629;
+
+    --box-accent-color: #232B2E;
+
+    --white: #FFFFFF;
+    --black: #000000;
+    
+    /* Text */
+    --text-primary: #E6E6E6;
+    --text-secondary: #A0A0A0;
+    --text-tertiary: #888888;
+    --text-darker: #FFFFFF;
+    --text-link-hover: #FFFFFF;
+    
+    /* Borders / Dividers */
+    --border-default: rgba(255, 255, 255, 0.12);
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-solid: rgba(255, 255, 255, 0.16);
+    --focus-ring: rgba(6, 108, 106, 0.25);
+    
+    /* Shadows / Elevation */
+    --shadow-xs: rgba(0, 0, 0, 0.35);
+    --shadow-sm: rgba(0, 0, 0, 0.55);
+    --shadow-md: rgba(0, 0, 0, 0.75);
+    --shadow-error: rgba(248, 113, 113, 0.35);
+
+    /* Overlays */
+    --overlay-default: rgba(0, 0, 0, 0.6);
+    --modal-overlay: rgba(0, 0, 0, 0.75);
+
+    /* Status Colors */
+    --warning: #FBBF24;
+    --warning-icon-bg: rgba(251, 191, 36, 0.2);
+    
+    --success-subtle: rgba(34, 197, 94, 0.2);
+    --success-icon-bg: rgba(34, 197, 94, 0.25);
+    --success-border: rgba(34, 197, 94, 0.35);
+    
+    --error-subtle: rgba(248, 113, 113, 0.2);
+    --error-icon-bg: rgba(248, 113, 113, 0.25);
+    --error-border: rgba(248, 113, 113, 0.35);
+    
+    --info-icon-bg: rgba(6, 108, 106, 0.25);
+    
+    /* Primary Variants */
+    --primary-darker: #044F4D;
+    --primary-surface: rgba(6, 108, 106, 0.18);
+    --primary-alpha-20: rgba(6, 108, 106, 0.2);
+    --primary-alpha-30: rgba(6, 108, 106, 0.3);
+    --primary-alpha-40: rgba(6, 108, 106, 0.4);
+    
+    /* Components */
+    --spinner-border: rgba(230, 230, 230, 0.25);
+    --homework-done-bg: rgba(255, 255, 255, 0.08);
+    --toggle-bg: #2E2E2E;
+    --box-accent-hover: #2A3336;
+    --refresh-btn-bg: rgba(28, 28, 28, 0.9);
+    
+    --demo-badge-bg: #FF7043;
+    --demo-badge-hover: #FF5722;
+    
+    --btn-cancel-bg: #242424;
+    --btn-cancel-active: #2E2E2E;
+    
+    --telemetry-bg: rgba(18, 18, 18, 0.85); 
+    --telemetry-border: rgba(255, 255, 255, 0.08); 
+    --telemetry-text: #DCE5E8; 
+    --telemetry-subtext: #A0A0A0;
+
+    --title-large: clamp(2.5rem, 8vw, 3.5rem);
+    --title-medium: clamp(1.7rem, 5vw, 2.3rem);
+    --title-small: clamp(1.2rem, 5vw, 1.6rem);
+    --subtitle-large: clamp(1rem, 4vw, 1.2rem);
+    --subtitle-small: clamp(0.85rem, 3vw, 1rem);
+    
+    /* Spacing variables */
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 1rem;
+    --spacing-md: 1.5rem;
+    --spacing-lg: 2rem;
+    --spacing-xl: 2rem;
+    
+    /* Dynamic sizes */
+    --container-width: min(420px, 95vw);
+    --header-size: clamp(3.5rem, 15vw, 7rem);
+    --subtitle-size: clamp(1.1rem, 4vw, 1.4rem);
+
+    /* Fonts */
+    --font-family: 'Satoshi', sans-serif;
+}
+
+/* Theme transition class*/
+html.theme-transitioning,
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+    transition:
+        background 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        background-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        border-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        outline-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        box-shadow 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        fill 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        stroke 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 @media screen and (max-width: 430px) and (max-height: 932px) {
@@ -103,7 +293,7 @@
 
 #sentry-feedback {
         --font-family: var(--font-family);
-        --accent-foreground: #ffffff;
+        --accent-foreground: var(--white);
         --accent-background: var(--primary);
 }
 
@@ -112,6 +302,7 @@
     padding: 0;
     box-sizing: border-box;
     /* overflow: hidden;*/
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 html, body {
@@ -174,7 +365,7 @@ body::before {
     border-radius: 2rem 2rem 0 0;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 -4px 10px var(--shadow-xs);
     padding-left: env(safe-area-inset-left, 0);
     padding-right: env(safe-area-inset-right, 0);
     box-sizing: border-box;
@@ -189,7 +380,7 @@ body::before {
     border-radius: 2rem 2rem 0 0;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 -4px 10px var(--shadow-xs);
 }
 
 .login-header-container {
@@ -227,7 +418,7 @@ body::before {
 .login-header-app-subtitle {
     font-family: "Satoshi", sans-serif;
     font-weight: 400;
-    color: #F0F0F0;
+    color: var(--text);
     font-size: var(--subtitle-large);
     line-height: 1.4;
     text-align: left;
@@ -236,7 +427,7 @@ body::before {
 }
 
 .login-card-container-title {
-    color: #1E2D2D;
+    color: var(--text-black);
     font-family: "Cabinet";
     font-size: var(--title-medium);
     font-weight: 800;
@@ -247,7 +438,7 @@ body::before {
 
 .login-option-box {
     background-color: var(--box-accent-color);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--shadow-xs);
     border-radius: 1rem;
     min-height: 5rem;
     width: 100%;
@@ -260,7 +451,7 @@ body::before {
     font-family: "Satoshi", sans-serif;
     color: var(--text);
     margin-bottom: 0.75rem;
-    box-shadow: 0px 0px 3px 0px rgba(0, 0, 0, 0.25);
+    box-shadow: 0px 0px 3px 0px var(--shadow-md);
     padding: 0.8rem;
 }
 
@@ -270,7 +461,7 @@ body::before {
 
 .login-option-box i {
     font-size: 1.2rem;
-    color: #1E2D2D;
+    color: var(--text-black);
     margin-right: 1rem;
     min-width: 24px;
     text-align: center;
@@ -288,7 +479,7 @@ body::before {
     font-family: "Cabinet";
     font-size: 1.2rem;
     font-weight: 800;
-    color: #1E2D2D;
+    color: var(--text-black);
     margin: 0;
     padding: 0;
     line-height: 1.3;
@@ -297,7 +488,7 @@ body::before {
 
 .options-button-subtitle {
     font-size: 0.7rem;
-    color: #444444;
+    color: var(--subtitle-black);
     margin: 0.2rem 0 0 0;
     padding: 0;
     line-height: 1.3;
@@ -307,7 +498,7 @@ body::before {
 
 .login-safety-text {
     font-size: 0.75rem;
-    color: #444444;
+    color: var(--subtitle-black);
     text-align: left;
     margin-top: 1.5rem;
     margin-bottom: 0.25rem;
@@ -326,13 +517,13 @@ body::before {
 }
 
 .login-safety-text a {
-    color: #444444;
+    color: var(--subtitle-black);
     text-decoration: underline;
     font-weight: 500;
 }
 
 .login-safety-text a:hover {
-    color: #222222;
+    color: var(--text-link-hover);
 }
 
 .login-safety-text .fa-lock {
@@ -344,7 +535,7 @@ body::before {
 
 .login-telemetry-text {
     font-size: 0.8rem;
-    color: #07A19F;
+    color: var(--primary);
     text-align: left;
     margin-top: 0.75rem;
     margin-bottom: 0.5rem;
@@ -354,13 +545,13 @@ body::before {
 }
 
 .login-telemetry-text a {
-    color: #07A19F;
+    color: var(--primary);
     text-decoration: underline;
     font-weight: 500;
 }
 
 .login-telemetry-text a:hover {
-    color: #3a8f8f;
+    color: var(--primary-dark);
 }
 
 .global-login-container-input {
@@ -368,12 +559,12 @@ body::before {
     width: 100%;
     padding: 1rem;
     border-radius: 1.5rem;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    background: #FFECD6;
+    border: 1px solid var(--border-default);
+    background: var(--box-accent-color);
     margin-bottom: 2rem;
     font-family: "Satoshi", sans-serif;
     font-size: 1rem;
-    color: #1E2D2D;
+    color: var(--text-black);
     outline: none;
 }
 
@@ -383,12 +574,12 @@ body::before {
     margin: 0 auto;
     padding: 0.8rem 1rem;
     border-radius: 1.5rem;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    background: #FFECD6;
+    border: 1px solid var(--border-default);
+    background: var(--box-accent-color);
     font-family: "Cabinet", sans-serif;
     font-size: 1rem;
     font-weight: 600;
-    color: #1E2D2D;
+    color: var(--text-black);
     cursor: pointer;
     text-align: center;
 }
@@ -407,7 +598,7 @@ body::before {
 }
 
 .schools-options-container::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.05);
+    background: var(--shadow-xs);
     border-radius: 10px;
 }
 
@@ -422,7 +613,7 @@ body::before {
 
 .school-option:hover, .school-option:active {
     transform: translateY(-2px);
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0px 4px 8px var(--shadow-sm);
 }
 
 .no-results-message {
@@ -430,7 +621,7 @@ body::before {
     padding: 1.5rem;
     color: var(--text-black);
     font-size: 1rem;
-    background: rgba(0, 0, 0, 0.03);
+    background: var(--shadow-xs);
     border-radius: 1rem;
     margin-bottom: 1rem;
 }
@@ -470,7 +661,7 @@ body::before {
     font-family: "Cabinet", sans-serif;
     font-size: 1.2rem;
     font-weight: 600;
-    color: #1E2D2D;
+    color: var(--text-black);
     margin-bottom: 0.5rem;
     display: none;
     text-align: left;
@@ -482,12 +673,12 @@ body::before {
     width: 100%;
     padding: 1rem;
     border-radius: 1.25rem;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    background: #FFECD6;
+    border: 1px solid var(--border-default);
+    background: var(--box-accent-color);
     margin-bottom: 1.25rem;
     font-family: "Satoshi", sans-serif;
     font-size: 1rem;
-    color: #1E2D2D;
+    color: var(--text-black);
     outline: none;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -495,7 +686,7 @@ body::before {
 .login-username-input:focus,
 .login-password-input:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 2px rgba(69, 168, 168, 0.2);
+    box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
 .password-input-wrapper {
@@ -549,7 +740,7 @@ body::before {
     border-radius: 1.25rem;
     border: none;
     background: var(--primary);
-    color: white;
+    color: var(--white);
     font-family: "Cabinet", sans-serif;
     font-size: 1.1rem;
     font-weight: 700;
@@ -632,7 +823,7 @@ body::before {
 }
 
 .feedback-message.success {
-    background: rgba(34, 197, 94, 0.1);
+    background: var(--success-subtle);
     color: var(--success);
     display: block;
 }
@@ -677,9 +868,9 @@ body::before {
 .spinner-large {
     width: 2rem;
     height: 2rem;
-    border: 3px solid rgba(240, 240, 240, 0.3);
-    border-top-color: #FFEEDB;
-    border-right-color: #FFEEDB;
+    border: 3px solid var(--spinner-border);
+    border-top-color: var(--login-view-main-card);
+    border-right-color: var(--login-view-main-card);
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin: 0 auto;
@@ -705,7 +896,7 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: var(--overlay-default);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -789,7 +980,7 @@ body::before {
     overflow-y: auto;
     transition: transform 0.3s ease;
     transform: translateX(100%);
-    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
+    box-shadow: -2px 0 10px var(--shadow-md);
     overflow-y: auto;
     overflow-x: hidden;
 }
@@ -894,7 +1085,7 @@ body::before {
 .debug-button {
     font-family: "Satoshi", sans-serif;
     background: var(--primary);
-    color: white;
+    color: var(--white);
     border: none;
     border-radius: 0.5rem;
     padding: 0.5rem 0.75rem;
@@ -915,7 +1106,7 @@ body::before {
 }
 
 .log-entry.warn {
-    color: #f59e0b;
+    color: var(--warning);
 }
 
 .log-entry.info {
@@ -948,14 +1139,14 @@ body::before {
     font-family: "Satoshi", sans-serif;
     font-weight: 600;
     background: var(--primary);
-    color: white;
+    color: var(--white);
     border: none;
     border-radius: 0.5rem;
     cursor: pointer;
     margin-bottom: 0.4rem;
     margin-left: 0.6rem;
     margin-right: 0.6rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    box-shadow: 0 2px 8px var(--shadow-xs);
     transition: background 0.2s;
     text-align: left;
 }
@@ -975,7 +1166,7 @@ body::before {
     display: block;
     font-size: 0.8rem;
     font-weight: 400;
-    color: #e6f7f7;
+    color: var(--primary-light);
     opacity: 0.85;
     line-height: 1.2;
     margin-top: 0.1rem;
@@ -1105,7 +1296,7 @@ body::before {
     margin: 0.5rem auto 0.1rem;
     padding: 0.6rem 1rem;
     border-radius: 1rem;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    box-shadow: 0 4px 14px var(--shadow-xs);
     background: var(--login-view-main-card);
     color: var(--text-black);
     align-items: center;
@@ -1146,7 +1337,7 @@ body::before {
     outline: none;
     color: var(--subtitle-black);
     border-radius: 999px;
-    box-shadow: 0px 1px 3px 0px rgba(0,0,0,0.25);
+    box-shadow: 0px 1px 3px 0px var(--shadow-md);
     padding: 0.25rem 0.8rem;
     margin-left: auto;
     margin-right: -0.2rem;
@@ -1167,7 +1358,7 @@ body::before {
 .dashboard-card {
     border-radius: 0.75rem; 
     padding: 0.75rem;
-    box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.25);
+    box-shadow: 0 0 3px 0 var(--shadow-md);
     margin-bottom: 0rem;
 }
 
@@ -1190,7 +1381,7 @@ body::before {
     border-radius: 1rem;
     align-self: flex-start;
     display: inline-flex;
-    box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.25);
+    box-shadow: 0 0 3px 0 var(--shadow-md);
 }
 
 .course-content {
@@ -1259,7 +1450,7 @@ body::before {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.25);
+    box-shadow: 0 0 3px 0 var(--shadow-md);
     margin-bottom: 0.75rem;
     transition: opacity 0.2s ease, background 0.2s ease, box-shadow 0.1s ease, border-radius 0.1s ease;
     user-select: none;
@@ -1305,10 +1496,10 @@ body::before {
     pointer-events: none;
     z-index: 1000;
     font-size: 1rem;
-    color: white;
+    color: var(--white);
     transition: opacity 0.1s ease;
     border-radius: 0 0.75rem 0.75rem 0;
-    box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.25);
+    box-shadow: 0 0 3px 0 var(--shadow-md);
     flex-direction: column;
     gap: 0.25rem;
 }
@@ -1330,8 +1521,8 @@ body::before {
 }
 
 .homework-item.completed .homework-due {
-    background: rgba(200, 200, 200, 0.3);
-    color: #888888;
+    background: var(--homework-done-bg);
+    color: var(--text-secondary);
 }
 
 .homework-item.pending {
@@ -1404,7 +1595,7 @@ body::before {
     border-radius: 1rem;
     white-space: nowrap;
     margin-left: 0.5rem;
-    box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.25);
+    box-shadow: 0 0 3px 0 var(--shadow-md);
 }
 
 /* Homework View */
@@ -1476,7 +1667,7 @@ body::before {
 
 .homework-tabs {
     display: flex;
-    background: rgba(0, 0, 0, 0.05);
+    background: var(--shadow-xs);
     padding: 0.25rem;
     border-radius: 2rem;
     position: relative;
@@ -1498,8 +1689,8 @@ body::before {
 
 .homework-tab.active {
     background: var(--primary);
-    color: white;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    color: var(--white);
+    box-shadow: 0 2px 4px var(--border-default);
 }
 
 .homework-list-container {
@@ -1521,7 +1712,7 @@ body::before {
     display: flex;
     flex-direction: row;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 8px var(--shadow-xs);
     position: relative;
     min-height: 90px;
     animation: slideInUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
@@ -1577,7 +1768,7 @@ body::before {
 
 .homework-badge {
     background: var(--card-color);
-    color: white;
+    color: var(--white);
     padding: 0.25rem 0.75rem;
     border-radius: 1rem;
     font-size: 0.75rem;
@@ -1587,7 +1778,7 @@ body::before {
 }
 
 .homework-badge.date-badge {
-    background: rgba(0,0,0,0.05);
+    background: var(--shadow-xs);
     color: var(--text-black);
 }
 
@@ -1602,7 +1793,7 @@ body::before {
 .homework-footer {
     margin-top: auto;
     padding: 0.5rem 1rem;
-    background: rgba(0, 0, 0, 0.03);
+    background: var(--shadow-xs);
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -1647,7 +1838,7 @@ body::before {
 .schedule-calendar-btn {
     background-color: var(--primary);
     border: none;
-    color: var(--primary-light);
+    color: var(--text-black);
     font-size: 1.2rem;
     cursor: pointer;
     padding: 0;
@@ -1658,14 +1849,14 @@ body::before {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 5px var(--shadow-xs);
     flex-shrink: 0;
 }
 
 .schedule-calendar-btn:active {
     transform: scale(0.95);
-    background-color: var(--primary-light);
-    color: white;
+    background-color: var(--primary-dark);
+    color: var(--text-black);
 }
 
 .schedule-date-container {
@@ -1704,8 +1895,8 @@ body::before {
     gap: 0.8rem;
     margin-bottom: 1rem;
     width: 100%;
-    mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-    -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    mask-image: linear-gradient(to right, transparent, var(--black) 10%, var(--black) 90%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, var(--black) 10%, var(--black) 90%, transparent);
 }
 
 .schedule-date-selector::-webkit-scrollbar {
@@ -1809,7 +2000,7 @@ body::before {
 
 .end-time {
     font-size: 0.9rem;
-    color: #9ca3af;
+    color: var(--text-tertiary);
     margin-top: 0;
     font-weight: 600;
 }
@@ -1821,7 +2012,7 @@ body::before {
     padding: 1rem 1rem 1rem 1.5rem;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    box-shadow: 0 2px 8px var(--shadow-xs);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -1887,7 +2078,7 @@ body::before {
 
 .schedule-card.empty-slot .schedule-card-content {
     background-color: var(--login-view-main-card);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    box-shadow: 0 2px 8px var(--shadow-xs);
     border: none;
     min-height: 2.5rem;
     padding: 0.25rem 1rem 0.25rem 1.5rem;
@@ -1901,7 +2092,7 @@ body::before {
 }
 
 .schedule-card.empty-slot .schedule-card-content::before {
-    background-color: #9ca3af;
+    background-color: var(--text-tertiary);
     display: block;
 }
 
@@ -1918,7 +2109,7 @@ body::before {
 }
 
 .schedule-card.empty-slot .schedule-duration {
-    color: #9ca3af;
+    color: var(--text-tertiary);
     font-weight: 500;
     font-size: 0.75rem;
 }
@@ -1947,9 +2138,9 @@ body::before {
     font-weight: 700;
     margin-left: 0.5rem;
     background-color: var(--error);
-    color: white;
+    color: var(--white);
     text-decoration: none !important;
-    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+    box-shadow: 0 2px 4px var(--shadow-error);
 }
 
 .schedule-loading {
@@ -2027,7 +2218,7 @@ body::before {
     background: var(--login-view-main-card);
     border-radius: 0.5rem;
     overflow: visible;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 1px 3px var(--border-subtle);
     margin: 0 1rem 1.5rem 1rem;
     width: calc(100% - 2rem);
 }
@@ -2048,7 +2239,7 @@ body::before {
     padding: 0.8rem 0;
     background: transparent;
     border: none;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid var(--shadow-xs);
     cursor: pointer;
     transition: all 0.2s ease;
     width: 100%;
@@ -2061,7 +2252,7 @@ body::before {
 }
 
 .settings-item:active {
-    background: rgba(0, 0, 0, 0.03);
+    background: var(--shadow-xs);
 }
 
 .settings-item-expanded {
@@ -2117,7 +2308,7 @@ body::before {
 .settings-item-subtitle {
     font-family: "Satoshi";
     font-size: 0.75rem;
-    color: #999999;
+    color: var(--text-tertiary);
     margin: 0;
     padding: 0;
     font-weight: 500;
@@ -2141,7 +2332,7 @@ body::before {
 .settings-item-time-display {
     font-family: "Satoshi";
     font-size: 0.75rem;
-    color: #888888;
+    color: var(--text-secondary);
     font-weight: 500;
 }
 
@@ -2156,7 +2347,7 @@ body::before {
     margin-top: 0.2rem;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 1px 3px var(--border-subtle);
     display: block;
     border: none;
     user-select: none;
@@ -2165,20 +2356,20 @@ body::before {
 }
 
 .settings-item-time-pill:hover {
-    background: #FFE0CC;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+    background: var(--box-accent-hover);
+    box-shadow: 0 2px 4px var(--shadow-sm);
 }
 
 .settings-item-label {
     font-family: "Satoshi";
     font-size: 0.8rem;
-    color: #888888;
+    color: var(--text-secondary);
     font-weight: 400;
 }
 
 .settings-item-action i {
     font-size: 0.65rem;
-    color: #CCCCCC;
+    color: var(--toggle-bg);
 }
 
 /* Toggle Switch Styles */
@@ -2197,7 +2388,7 @@ body::before {
 .settings-toggle-slider {
     width: 2.2rem;
     height: 1.2rem;
-    background: #CCCCCC;
+    background: var(--toggle-bg);
     border-radius: 0.6rem;
     position: relative;
     transition: background 0.3s ease;
@@ -2209,7 +2400,7 @@ body::before {
     position: absolute;
     width: 0.95rem;
     height: 0.95rem;
-    background: white;
+    background: var(--white);
     border-radius: 50%;
     top: 0.125rem;
     left: 0.125rem;
@@ -2236,13 +2427,13 @@ body::before {
 
 .settings-time-option {
     padding: 0.4rem 0.75rem;
-    border: 1.5px solid #CCCCCC;
+    border: 1.5px solid var(--toggle-bg);
     background: transparent;
     border-radius: 0.4rem;
     font-family: "Satoshi", sans-serif;
     font-size: 0.75rem;
     font-weight: 500;
-    color: #888888;
+    color: var(--text-secondary);
     cursor: pointer;
     transition: all 0.2s ease;
 }
@@ -2255,7 +2446,7 @@ body::before {
 .settings-time-option.selected {
     background: var(--primary);
     border-color: var(--primary);
-    color: white;
+    color: var(--white);
 }
 
 
@@ -2291,11 +2482,11 @@ body::before {
     right: 0;
     margin-left: auto;
     margin-right: auto;
-    background: #FFECD6;
+    background: var(--box-accent-color);
     color: var(--text);
     padding: 1rem;
     border-radius: 0.75rem;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 15px var(--shadow-md);
     z-index: 1000;
     display: none;
     width: calc(100% - 2rem);
@@ -2343,7 +2534,7 @@ body::before {
 .notification-prompt .allow-button {
     font-family: "Satoshi", sans-serif;
     background: var(--primary);
-    color: white;
+    color: var(--white);
     border: none;
     border-radius: 0.5rem;
     padding: 0.75rem 1.5rem;
@@ -2413,8 +2604,8 @@ body:has(#homeworkView:not(.hidden)) .toast-container {
     color: var(--text-black);
     border-radius: 0.75rem;
     padding: 1rem;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 8px 32px var(--shadow-sm);
+    border: 1px solid var(--border-subtle);
     display: flex;
     align-items: flex-start;
     gap: 0.75rem;
@@ -2504,7 +2695,7 @@ body:has(#homeworkView:not(.hidden)) .toast-container {
 }
 
 .toast.success .toast-icon {
-    background: rgba(34, 197, 94, 0.15);
+    background: var(--success-icon-bg);
     color: var(--success);
 }
 
@@ -2514,18 +2705,18 @@ body:has(#homeworkView:not(.hidden)) .toast-container {
 }
 
 .toast.error .toast-icon {
-    background: rgba(239, 68, 68, 0.15);
+    background: var(--error-icon-bg);
     color: var(--error);
 }
 
 .toast.warning {
-    border-left: 4px solid #f59e0b;
+    border-left: 4px solid var(--warning);
     background: var(--login-view-main-card);
 }
 
 .toast.warning .toast-icon {
-    background: rgba(245, 158, 11, 0.15);
-    color: #f59e0b;
+    background: var(--warning-icon-bg);
+    color: var(--warning);
 }
 
 .toast.info {
@@ -2534,7 +2725,7 @@ body:has(#homeworkView:not(.hidden)) .toast-container {
 }
 
 .toast.info .toast-icon {
-    background: rgba(0, 166, 166, 0.15);
+    background: var(--info-icon-bg);
     color: var(--primary);
 }
 
@@ -2545,7 +2736,7 @@ body:has(#homeworkView:not(.hidden)) .toast-container {
     display: none;
     align-items: center;
     justify-content: center;
-    background: rgba(15, 23, 42, 0.5);
+    background: var(--modal-overlay);
     z-index: 1200;
     padding: 1rem;
 }
@@ -2557,7 +2748,7 @@ body:has(#homeworkView:not(.hidden)) .toast-container {
     color: var(--text-black);
     border-radius: 1rem;
     padding: 1rem 1rem 0.75rem 1rem;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    box-shadow: 0 10px 30px var(--shadow-md);
 }
 .geoloc-modal-content h2 {
     font-family: "Cabinet";
@@ -2580,7 +2771,7 @@ body:has(#homeworkView:not(.hidden)) .toast-container {
     font-weight: 700;
     cursor: pointer;
 }
-.geoloc-modal-btn.primary { background: var(--primary); color: #fff; }
+.geoloc-modal-btn.primary { background: var(--primary); color: var(--white); }
 .geoloc-modal-btn.primary:hover { background: var(--primary-dark); }
 .geoloc-modal-btn.secondary {
     background: transparent;
@@ -2604,20 +2795,20 @@ body:has(#homeworkView:not(.hidden)) .toast-container {
     top: 0;
     left: 50%;
     transform: translateX(-50%);
-    background: #ff5722;
-    color: white;
+    background: var(--demo-badge-bg);
+    color: var(--white);
     padding: 4px 12px;
     border-radius: 0 0 8px 8px;
     font-size: 12px;
     font-weight: 500;
     z-index: 1000;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px var(--shadow-md);
     transition: all 0.2s ease;
 }
 
 .demo-mode-indicator:hover {
-    background: #e64a19;
+    background: var(--demo-badge-hover);
     padding-top: 6px;
 }
 
@@ -2638,22 +2829,22 @@ body:has(#homeworkView:not(.hidden)) .toast-container {
 }
 
 .connection-indicator.offline {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    background: var(--error-subtle);
+    color: var(--error);
+    border: 1px solid var(--error-border);
 }
 
 .connection-indicator.online {
-    background: rgba(34, 197, 94, 0.1);
-    color: #22c55e;
-    border: 1px solid rgba(34, 197, 94, 0.3);
+    background: var(--success-subtle);
+    color: var(--success);
+    border: 1px solid var(--success-border);
 }
 
 .refresh-data-btn {
     position: absolute;
     top: 10px;
     right: 10px;
-    background: rgba(255, 255, 255, 0.8);
+    background: var(--refresh-btn-bg);
     border: none;
     border-radius: 50%;
     width: 30px;
@@ -2799,13 +2990,13 @@ body:has(#homeworkView:not(.hidden)) .toast-container {
     right: 0;
     height: calc(3.5rem + env(safe-area-inset-bottom, 0));
     background: var(--login-view-main-card);
-    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    border-top: 1px solid var(--border-subtle);
     display: none;
     align-items: flex-start;
     justify-content: space-around;
     padding: 0.25rem 0 env(safe-area-inset-bottom, 0);
     z-index: 100;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 -2px 10px var(--shadow-xs);
 }
 
 /* Show navbar only on dashboard and settings*/
@@ -2923,7 +3114,7 @@ body:has(#homeworkView:not(.hidden)) .bottom-navbar {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: var(--overlay-default);
     animation: fadeIn 0.3s ease-out;
     pointer-events: auto;
     z-index: 0;
@@ -2936,7 +3127,7 @@ body:has(#homeworkView:not(.hidden)) .bottom-navbar {
     max-width: 90%;
     width: 100%;
     max-width: 380px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 24px var(--shadow-sm);
     animation: slideUp 0.3s ease-out;
     position: relative;
     z-index: 1;
@@ -2971,9 +3162,9 @@ body:has(#homeworkView:not(.hidden)) .bottom-navbar {
     justify-content: center;
     gap: 12px;
     padding: 16px;
-    border: 2px solid #e5e5e5;
+    border: 2px solid var(--border-solid);
     border-radius: 12px;
-    background: var(--bg);
+    background: var(--background);
     cursor: pointer;
     font-family: "Satoshi", "sans-serif";
     font-size: 0.95rem;
@@ -2994,8 +3185,8 @@ body:has(#homeworkView:not(.hidden)) .bottom-navbar {
 .theme-option.selected {
     border-color: var(--primary);
     background: var(--primary);
-    color: white;
-    box-shadow: 0 4px 12px rgba(7, 161, 159, 0.3);
+    color: var(--white);
+    box-shadow: 0 4px 12px var(--primary-alpha-30);
 }
 
 .theme-option i {
@@ -3038,7 +3229,7 @@ body:has(#homeworkView:not(.hidden)) .bottom-navbar {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: var(--overlay-default);
     animation: fadeIn 0.3s ease-out;
     pointer-events: auto;
     z-index: 0;
@@ -3051,7 +3242,7 @@ body:has(#homeworkView:not(.hidden)) .bottom-navbar {
     max-width: 90%;
     width: 100%;
     max-width: 400px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px var(--shadow-sm);
     animation: slideUp 0.3s ease-out;
     position: relative;
     z-index: 1;
@@ -3081,7 +3272,7 @@ body:has(#homeworkView:not(.hidden)) .bottom-navbar {
 .name-edit-input {
     font-family: "Satoshi", "sans-serif";
     padding: 12px 16px;
-    border: 1px solid #e5e5e5;
+    border: 1px solid var(--border-solid);
     border-radius: 8px;
     font-size: 1rem;
     color: var(--text-black);
@@ -3114,17 +3305,17 @@ body:has(#homeworkView:not(.hidden)) .bottom-navbar {
 }
 
 .name-edit-cancel {
-    background: #f0f0f0;
+    background: var(--btn-cancel-bg);
     color: var(--text-black);
 }
 
 .name-edit-cancel:active {
-    background: #e0e0e0;
+    background: var(--btn-cancel-active);
 }
 
 .name-edit-save {
     background: var(--primary);
-    color: white;
+    color: var(--white);
 }
 
 .name-edit-save:active {
@@ -3167,7 +3358,7 @@ body:has(#homeworkView:not(.hidden)) .bottom-navbar {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: var(--overlay-default);
     animation: fadeIn 0.3s ease-out;
     pointer-events: auto;
     z-index: 0;
@@ -3180,7 +3371,7 @@ body:has(#homeworkView:not(.hidden)) .bottom-navbar {
     max-width: 90%;
     width: 100%;
     max-width: 380px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 24px var(--shadow-sm);
     animation: slideUp 0.3s ease-out;
     position: relative;
     z-index: 1;
@@ -3215,7 +3406,7 @@ body:has(#homeworkView:not(.hidden)) .bottom-navbar {
     justify-content: center;
     gap: 12px;
     padding: 16px;
-    border: 2px solid #e5e5e5;
+    border: 2px solid var(--border-solid);
     border-radius: 12px;
     background: var(--bg);
     cursor: pointer;
@@ -3238,8 +3429,8 @@ body:has(#homeworkView:not(.hidden)) .bottom-navbar {
 .language-option.selected {
     border-color: var(--primary);
     background: var(--primary);
-    color: white;
-    box-shadow: 0 4px 12px rgba(7, 161, 159, 0.3);
+    color: var(--white);
+    box-shadow: 0 4px 12px var(--primary-alpha-30);
 }
 
 .language-flag {
@@ -3357,7 +3548,7 @@ body:has(#homeworkView:not(.hidden)) .bottom-navbar {
     bottom: 0;
     width: 100%;
     height: 100%;
-    background: rgba(248, 250, 252, 0.85);
+    background: var(--telemetry-bg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3419,8 +3610,8 @@ body:has(#homeworkView:not(.hidden)) .bottom-navbar {
 
 .telemetry-badge {
     display: inline-block;
-    background: #07A19F;
-    color: white;
+    background: var(--primary);
+    color: var(--white);
     font-size: 11px;
     font-weight: 700;
     padding: 5px 12px;
@@ -3441,9 +3632,9 @@ body:has(#homeworkView:not(.hidden)) .bottom-navbar {
     gap: 16px;
     padding: 18px 20px;
     border-radius: 16px;
-    background: #ffffff;
-    border: 1px solid #e0e4e8;
-    border-left: 4px solid #07A19F;
+    background: var(--white);
+    border: 1px solid var(--telemetry-border);
+    border-left: 4px solid var(--primary);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     animation: telemetryBoxSlideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     opacity: 0;
@@ -3462,7 +3653,7 @@ body:has(#homeworkView:not(.hidden)) .bottom-navbar {
 }
 
 .telemetry-info-box:hover {
-    box-shadow: 0 8px 16px rgba(7, 161, 159, 0.12);
+    box-shadow: 0 8px 16px var(--shadow-primary-12);
     transform: translateY(-2px);
     border-left-width: 6px;
 }
@@ -3476,13 +3667,13 @@ body:has(#homeworkView:not(.hidden)) .bottom-navbar {
     justify-content: center;
     flex-shrink: 0;
     border-radius: 16px;
-    background: rgba(7, 161, 159, 0.1);
-    color: #07A19F;
+    background: var(--primary-surface);
+    color: var(--primary);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .telemetry-info-box:hover .telemetry-box-icon {
-    background: rgba(7, 161, 159, 0.2);
+    background: var(--primary-alpha-20);
     transform: scale(1.1) rotate(10deg);
 }
 
@@ -3504,7 +3695,7 @@ body:has(#homeworkView:not(.hidden)) .bottom-navbar {
 .telemetry-box-text {
     font-size: 14px;
     font-weight: 500;
-    color: #2d3d4d;
+    color: var(--telemetry-text);
     margin: 0;
     line-height: 1.6;
 }
@@ -3512,7 +3703,7 @@ body:has(#homeworkView:not(.hidden)) .bottom-navbar {
 .telemetry-additional-info {
     font-size: 12px;
     font-weight: 500;
-    color: #7a8a98;
+    color: var(--telemetry-subtext);
     text-align: center;
     margin-top: 12px;
     margin-bottom: auto;
@@ -3554,14 +3745,14 @@ body:has(#homeworkView:not(.hidden)) .bottom-navbar {
 }
 
 .telemetry-btn-primary {
-    background: #07A19F;
-    color: #ffffff;
-    box-shadow: 0 4px 12px rgba(7, 161, 159, 0.3);
+    background: var(--primary);
+    color: var(--white);
+    box-shadow: 0 4px 12px var(--primary-alpha-30);
 }
 
 .telemetry-btn-primary:hover {
-    background: #058f87;
-    box-shadow: 0 8px 20px rgba(7, 161, 159, 0.4);
+    background: var(--primary-darker);
+    box-shadow: 0 8px 20px var(--primary-alpha-40);
     transform: translateY(-2px);
 }
 
@@ -3578,8 +3769,8 @@ body:has(#homeworkView:not(.hidden)) .bottom-navbar {
 }
 
 .telemetry-btn-secondary:hover {
-    color: #07A19F !important;
-    background: rgba(7, 161, 159, 0.08) !important;
+    color: var(--primary) !important;
+    background: var(--primary-surface) !important;
     transform: translateY(-1px);
 }
 
