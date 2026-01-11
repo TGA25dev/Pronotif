@@ -204,7 +204,8 @@
     "failedToGetScheduleDesc": "Impossible de récupérer les données de l'emploi du temps.",
     "errorFetchingScheduleDesc": "Une erreur est survenue lors de la récupération de l'emploi du temps.",
     "sessionExpiredTitle": "Session expirée",
-    "sessionExpiredDesc": "Vous semblez vous être connecté(e) sur un autre appareil. Veuillez vous reconnecter."
+    "sessionExpiredDesc": "Vous semblez vous être connecté(e) sur un autre appareil. Veuillez vous reconnecter.",
+    "homeworkStatusUpdateFailedDesc": "Impossible de mettre à jour le statut du devoir. Veuillez consulter l'application officielle Pronote."
   },
   "days": {
     "monday": "Lundi",

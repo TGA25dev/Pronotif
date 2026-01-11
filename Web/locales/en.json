@@ -204,7 +204,8 @@
     "failedToGetScheduleDesc": "Failed to get timetable data.",
     "errorFetchingScheduleDesc": "An error has occured while fetching the timetable data.",
     "sessionExpiredTitle": "Session Expired",
-    "sessionExpiredDesc": "You see to have been logged in on another device. Please log in again."
+    "sessionExpiredDesc": "You see to have been logged in on another device. Please log in again.",
+    "homeworkStatusUpdateFailedDesc": "Failed to update homework status. Please check the official Pronote app."
   },
   "days": {
     "monday": "Monday",

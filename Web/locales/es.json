@@ -204,7 +204,8 @@
     "failedToGetScheduleDesc": "No se ha podido recuperar los datos del horario.",
     "errorFetchingScheduleDesc": "Se ha producido un error al intentar recuperar el horario.",
     "sessionExpiredTitle": "Sesión expirada",
-    "sessionExpiredDesc": "Parece que te has conectado en otro dispositivo. Por favor, vuelve a iniciar sesión."
+    "sessionExpiredDesc": "Parece que te has conectado en otro dispositivo. Por favor, vuelve a iniciar sesión.",
+    "homeworkStatusUpdateFailedDesc": "No se ha podido actualizar el estado de la tarea. Por favor, consulta la aplicación oficial Pronote."
   },
   "days": {
     "monday": "Lunes",
