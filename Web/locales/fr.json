@@ -203,9 +203,13 @@
     "telemetryDisabledDesc": "Les diagnostics seront désactivés au prochain démarrage de l'appli",
     "failedToGetScheduleDesc": "Impossible de récupérer les données de l'emploi du temps.",
     "errorFetchingScheduleDesc": "Une erreur est survenue lors de la récupération de l'emploi du temps.",
+    "partialDataTitle": "Erreur lors de la récupération des données",
+    "partialScheduleDesc": "Certaines données de l'emploi du temps n'ont pas pu être récupérées en raison d'un problème. Veuillez réessayer plus tard.",
+    "partialDashboardDesc": "Certaines données n'ont pas pu être récupérées en raison d'une problème. Veuillez réessayer plus tard.",
     "sessionExpiredTitle": "Session expirée",
     "sessionExpiredDesc": "Vous semblez vous être connecté(e) sur un autre appareil. Veuillez vous reconnecter.",
-    "homeworkStatusUpdateFailedDesc": "Impossible de mettre à jour le statut du devoir. Veuillez consulter l'application officielle Pronote."
+    "homeworkStatusUpdateFailedDesc": "Impossible de mettre à jour le statut du devoir. Veuillez consulter l'application officielle Pronote.",
+    "pronoteTimeoutDesc": "Le serveur Pronote de votre établissement ne répond pas. Veuillez réessayer plus tard."
   },
   "days": {
     "monday": "Lundi",

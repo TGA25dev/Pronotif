@@ -203,9 +203,13 @@
     "telemetryDisabledDesc": "Diagnostics will be disabled on next app startup.",
     "failedToGetScheduleDesc": "Failed to get timetable data.",
     "errorFetchingScheduleDesc": "An error has occured while fetching the timetable data.",
+    "partialDataTitle": "Error when fetching data",
+    "partialScheduleDesc": "Some schedule data could not be fetched due to an issue. Please try again later.",
+    "partialDashboardDesc": "Some data could not be fetched due to an issue. Please try again later.",
     "sessionExpiredTitle": "Session Expired",
     "sessionExpiredDesc": "You see to have been logged in on another device. Please log in again.",
-    "homeworkStatusUpdateFailedDesc": "Failed to update homework status. Please check the official Pronote app."
+    "homeworkStatusUpdateFailedDesc": "Failed to update homework status. Please check the official Pronote app.",
+    "pronoteTimeoutDesc": "Your school's Pronote server is not responding. Please try again later."
   },
   "days": {
     "monday": "Monday",

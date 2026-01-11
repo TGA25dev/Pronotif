@@ -203,9 +203,13 @@
     "telemetryDisabledDesc": "Los diagnósticos se desactivarán en el próximo inicio de la app.",
     "failedToGetScheduleDesc": "No se ha podido recuperar los datos del horario.",
     "errorFetchingScheduleDesc": "Se ha producido un error al intentar recuperar el horario.",
+    "partialDataTitle": "Error al recuperar datos",
+    "partialScheduleDesc": "Algunos datos del horario no pudieron recuperarse debido a un problema. Por favor, inténtalo de nuevo más tarde.",
+    "partialDashboardDesc": "Algunos datos no pudieron recuperarse debido a un problema. Por favor, inténtalo de nuevo más tarde.",
     "sessionExpiredTitle": "Sesión expirada",
     "sessionExpiredDesc": "Parece que te has conectado en otro dispositivo. Por favor, vuelve a iniciar sesión.",
-    "homeworkStatusUpdateFailedDesc": "No se ha podido actualizar el estado de la tarea. Por favor, consulta la aplicación oficial Pronote."
+    "homeworkStatusUpdateFailedDesc": "No se ha podido actualizar el estado de la tarea. Por favor, consulta la aplicación oficial Pronote.",
+    "pronoteTimeoutDesc": "El servidor Pronote de tu instituto no responde. Por favor, inténtalo de nuevo más tarde."
   },
   "days": {
     "monday": "Lunes",
