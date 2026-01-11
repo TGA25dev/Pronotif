@@ -21,7 +21,7 @@ BLOCKED_HOST_PATTERNS = (
 )
 
 APP_ID = "0D264427-EEFC-4810-A9E9-346942A862A4"
-INFO_ENDPOINT = f"InfoMobileApp.json?id={APP_ID}"
+INFO_ENDPOINT = f"pronote/infoMobileApp.json?id={APP_ID}"
 
 def _host_blocked(host: str) -> bool:
     h = host.split(":")[0].lower()
@@ -39,14 +39,19 @@ def clean_url(url: str) -> Optional[str]:
     if not parsed.netloc or _host_blocked(parsed.netloc):
         return None
 
-    parts = [p for p in parsed.path.split('/') if p]
-    if parts and parts[-1].endswith('.html'):
-        parts.pop()
-    cleaned_path = "/" + "/".join(parts) if parts else ""
+    #keep the path as-is but remove .html if present
+    path = parsed.path
+    if path.endswith('.html'):
+        path = path.rsplit('/', 1)[0]
+    
+    #Ensure path doesn't end with slash for consistency
+    if path.endswith('/'):
+        path = path.rstrip('/')
+    
     return urlunparse((
         parsed.scheme.lower(),
         parsed.netloc,
-        cleaned_path,
+        path,
         "", "", ""
     ))
 
