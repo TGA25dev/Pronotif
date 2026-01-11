@@ -1476,6 +1476,11 @@ const loginHandler = {
                         }
 
                     } else {
+                        if (response.status === 504) {
+                            toast.error(getI18nValue("toast.wrongCredentialsTitle"), getI18nValue("toast.pronoteTimeoutDesc"));
+                            console.error("Pronote server timed out.");
+                            return;
+                        }
                         toast.error(data.message || getI18nValue("toast.networkErrorTitle"), getI18nValue("toast.networkErrorDesc"));
 
                         loginSubmitButton.disabled = false;
@@ -1890,6 +1895,11 @@ async function fetchSchedule(date) {
         
         const data = await response.json();
         
+        //Check for partial fetch error
+        if (response.status === 206) {
+            toast.warning(getI18nValue("toast.partialDataTitle"), getI18nValue("toast.partialScheduleDesc"), duration=10000);
+        }
+        
         if (data.data && data.data.lessons) {
             //initialize cache for the range
             let curr = new Date(startStr);
@@ -2272,12 +2282,17 @@ async function fetchDashboardData() {
 
         clearTimeout(timeoutId);
 
-        if (!response.ok) {
+        if (!response.ok && response.status !== 206) {
             throw new Error(`Fetch failed: ${response.status} ${response.statusText}`);
         }
 
         const result = await response.json();
         console.log('Dashboard data received:', result);
+
+        //Check for partial fetch error
+        if (response.status === 206) {
+            toast.warning(getI18nValue("toast.partialDataTitle"), getI18nValue("toast.partialDashboardDesc"));
+        }
 
         if (result.data) {
             window.lastDashboardData = result.data; //ttore for re-rendering on language change

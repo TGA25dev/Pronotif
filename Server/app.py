@@ -1205,6 +1205,11 @@ def login_user():
                 sentry_sdk.capture_exception(e)
                 logger.error(f"Unexpected error in login_user: {e}")
                 return jsonify({"error": "Internal server error"}), 500
+            
+            elif "Read timed out." in err_msg:
+                logger.info(f"Login failed due to timeout: {e}")
+                return jsonify({"error": "Pronote server timed out"}), 504
+            
             else:
                 logger.info(f"Login failed due to invalid credentials: {e}")
                 return jsonify({"error": "Invalid username or password"}), 401
@@ -1453,6 +1458,7 @@ def fetch_student_data():
                     cursor.close()
 
         # Get Pronote fields from existing user session if requested
+        pronote_fetch_error = False
         if pronote_fields:
             try:
                 shared_loop = get_shared_loop()
@@ -1472,20 +1478,24 @@ def fetch_student_data():
                 else:
                     for field in pronote_fields:
                         response_data[field] = None
+
             except Exception as e:
                 logger.error(f"Error fetching Pronote data: {e}")
                 sentry_sdk.capture_exception(e)
+                pronote_fetch_error = True
                 for field in pronote_fields:
                     response_data[field] = None
 
+        response_status = 206 if pronote_fetch_error else 200
+
         response = jsonify({
             "data": response_data,
-            "status": 200
+            "status": response_status
         })
         response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
         response.headers['Pragma'] = 'no-cache'
         response.headers['X-Content-Type-Options'] = 'nosniff'
-        return response
+        return response, response_status
 
     except Exception as e:
         sentry_sdk.capture_exception(e)
