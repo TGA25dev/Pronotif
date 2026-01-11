@@ -238,23 +238,8 @@ async def get_user_by_auth(app_session_id: str, app_token: str) -> PronotifUser:
     
     #first check local _existing_users 
     for user_hash, user in _existing_users.items():
-        if user.app_session_id == app_session_id:
-            #Verify token matches
-            try:
-                with get_db_connection() as connection:
-                    cursor = connection.cursor(dictionary=True)
-                    query = f"""
-                    SELECT app_token FROM {table_name}
-                    WHERE app_session_id = %s AND is_active = 1
-                    """
-                    cursor.execute(query, (app_session_id, app_token))
-                    result = cursor.fetchone()
-                    
-                    if result and result['app_token'] == app_token:
-                        logger.success(f"Found user {user_hash} in local cache for session {app_session_id}")
-                        return user
-            except Exception as e:
-                logger.error(f"Error verifying user auth: {e}")
+        if user.app_session_id == app_session_id and user.app_token == app_token:
+            return user
     
     try:
         with get_db_connection() as connection:
@@ -279,16 +264,17 @@ async def get_user_by_auth(app_session_id: str, app_token: str) -> PronotifUser:
                     user_info = json.loads(user_session_data)
                     if user_info.get('logged_in'):
                         logger.success(f"Found active user session in Redis for {user_hash}")
-                        # Create a temporary user object for API use
-                        return await create_temp_user_for_api(user_hash, app_session_id, app_token)
                     else:
                         logger.warning(f"User {user_hash} found in Redis but not logged in - attempting direct login")
-                        #Try direct login for immediate API access
-                        return await create_temp_user_for_api(user_hash, app_session_id, app_token)
                 else:
                     logger.info(f"User {user_hash} not found in Redis active sessions - attempting direct login")
-                    # User not in Redis yet, create temporary user from database
-                    return await create_temp_user_for_api(user_hash, app_session_id, app_token)
+                
+                # Create a temporary user object for API use
+                user = await create_temp_user_for_api(user_hash, app_session_id, app_token)
+                if user:
+                    _existing_users[user_hash] = user
+                return user
+            
             except Exception as e:
                 logger.error(f"Error checking Redis for user session: {e}")
             
