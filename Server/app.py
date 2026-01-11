@@ -1492,6 +1492,56 @@ def fetch_student_data():
         logger.error(f"Unexpected error in fetch_student_data: {e}")
         return jsonify({"error": "Internal server error"}), 500
 
+@app.route("/v1/app/homework/set-status", methods=["POST", "HEAD"])
+@limiter.limit(str(get_secret('FETCH_DATA_LIMIT')) + " per minute")
+#@require_beta_access
+def set_homework_status():
+    app_session_id = request.cookies.get('app_session_id')
+    app_token = request.cookies.get('app_token')
+    
+    if not app_session_id or not app_token:
+        return jsonify({"error": "Authentication required"}), 401
+    
+    app_session_id = bleach.clean(app_session_id)
+    app_token = bleach.clean(app_token)
+    
+    data = request.get_json()
+    if not data or 'id' not in data or 'done' not in data:
+        return jsonify({"error": "Missing id or done status"}), 400
+        
+    homework_id = bleach.clean(str(data['id']))
+    done = bool(data['done'])
+    
+    try:
+        shared_loop = get_shared_loop()
+        
+        # Fetch user
+        fut_user = asyncio.run_coroutine_threadsafe(
+            get_user_by_auth(app_session_id, app_token),
+            shared_loop
+        )
+        user = fut_user.result(timeout=10)
+        
+        if not user:
+             return jsonify({"error": "Invalid session or user not found"}), 401
+             
+        # Call set_homework_status
+        fut_status = asyncio.run_coroutine_threadsafe(
+            user.set_homework_status(homework_id, done),
+            shared_loop
+        )
+        success = fut_status.result(timeout=15)
+        
+        if success:
+            return jsonify({"success": True})
+        else:
+            return jsonify({"success": False, "error": "Homework not found or update failed"}), 404
+            
+    except Exception as e:
+        logger.error(f"Error in set_homework_status endpoint: {e}")
+        sentry_sdk.capture_exception(e)
+        return jsonify({"error": "Internal server error"}), 500
+
 @app.route("/v1/app/dynamic-banner", methods=["GET"])
 @limiter.limit(str(get_secret('FETCH_DATA_LIMIT')) + " per minute")
 #@require_beta_access

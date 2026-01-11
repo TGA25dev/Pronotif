@@ -634,10 +634,16 @@ class PronotifUser:
                     hw_emoji = get_subject_emoji(hw.subject.name)
                 
                 if hw.date >= today:
+                    subject_clean_name = get_subject_clean_name(hw.subject.name) if hw.subject else None
+                    due_date = hw.date.strftime('%Y-%m-%d')
+                    
+                    hw_id = generate_id(f"{subject_clean_name if subject_clean_name else ''}-{due_date}-{hw.description}")
+                    
                     upcoming_homeworks.append({
-                        'subject': get_subject_clean_name(hw.subject.name) if hw.subject else None,
+                        'id': hw_id,
+                        'subject': subject_clean_name,
                         'description': hw.description,
-                        'due_date': hw.date.strftime('%Y-%m-%d'),
+                        'due_date': due_date,
                         'done': hw.done,
                         'color': hw_color,
                         'emoji': hw_emoji
@@ -650,6 +656,43 @@ class PronotifUser:
             logger.error(f"Error getting upcoming homeworks for user {self.user_hash[:4]}**** : {e}")
             sentry_sdk.capture_exception(e)
             return []
+
+    async def set_homework_status(self, homework_id: str, done: bool) -> bool:
+        """Set homework status by finding it via generated ID"""
+        try:
+            await self.check_session()
+            
+            #Fetch homeworks from 30 days ago to 60 days ahead to ensure we find it
+            today = datetime.now(self.timezone_obj).date()
+            start_date = today - timedelta(days=30)
+            end_date = today + timedelta(days=60)
+            
+            homeworks = self.client.homework(date_from=start_date, date_to=end_date)
+            
+            target_hw = None
+            for hw in homeworks:
+                if not hw.date: continue
+                
+                subject_clean_name = get_subject_clean_name(hw.subject.name) if hw.subject else None
+                due_date = hw.date.strftime('%Y-%m-%d')
+                
+                hw_id = generate_id(f"{subject_clean_name if subject_clean_name else ''}-{due_date}-{hw.description}")
+                
+                if hw_id == homework_id:
+                    target_hw = hw
+                    break
+            
+            if target_hw:
+                target_hw.set_done(done)
+                return True
+            
+            logger.warning(f"Homework {homework_id} not found for user {self.user_hash[:4]}****")
+            return False
+            
+        except Exception as e:
+            logger.error(f"Error setting homework status for user {self.user_hash[:4]}**** : {e}")
+            sentry_sdk.capture_exception(e)
+            return False
 
 
     async def get_lessons(self, start_date, end_date) -> list:
