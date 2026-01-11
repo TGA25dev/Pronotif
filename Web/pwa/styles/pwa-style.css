@@ -3632,7 +3632,7 @@ body:has(#homeworkView:not(.hidden)) .bottom-navbar {
     gap: 16px;
     padding: 18px 20px;
     border-radius: 16px;
-    background: var(--white);
+    background: var(--background);
     border: 1px solid var(--telemetry-border);
     border-left: 4px solid var(--primary);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
