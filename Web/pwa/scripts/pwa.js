@@ -4134,26 +4134,54 @@ document.addEventListener('DOMContentLoaded', async () => {
     //Theme Management
     function initializeTheme() {
         const savedTheme = localStorage.getItem('appTheme') || 'system';
-        applyTheme(savedTheme);
+        applyTheme(savedTheme, { animate: false });
         updateThemeLabel(savedTheme);
+        
+        //Listen for system theme changes
+        if (window.matchMedia) {
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                const currentTheme = localStorage.getItem('appTheme') || 'system';
+                if (currentTheme === 'system') {
+                    console.log('[Theme] System theme changed, reapplying theme');
+                    //Animate when system theme toggles
+                    applyTheme('system', { animate: true });
+                }
+            });
+        }
     }
 
-    function applyTheme(theme) {
+    function applyTheme(theme, { animate = false } = {}) {
         const root = document.documentElement;
-        
+
+        if (animate) {
+            root.classList.add('theme-transitioning');
+            void root.offsetHeight; 
+        }
+
         if (theme === 'system') {
             //Use system preference
             if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                root.setAttribute('data-theme', 'dark');
                 root.style.colorScheme = 'dark';
             } else {
+                root.removeAttribute('data-theme');
                 root.style.colorScheme = 'light';
             }
         } else if (theme === 'dark') {
+            root.setAttribute('data-theme', 'dark');
             root.style.colorScheme = 'dark';
         } else if (theme === 'light') {
+            root.removeAttribute('data-theme');
             root.style.colorScheme = 'light';
         }
         
+        // Remove transition class after transition completes
+        if (animate) {
+            setTimeout(() => {
+                root.classList.remove('theme-transitioning');
+            }, 500);
+        }
+
         localStorage.setItem('appTheme', theme);
         console.log('[Theme] Applied theme:', theme);
     }
@@ -4195,7 +4223,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     themeOptions.forEach(option => {
         option.addEventListener('click', () => {
             const theme = option.getAttribute('data-theme');
-            applyTheme(theme);
+            applyTheme(theme, { animate: true });
             updateThemeLabel(theme);
             
             themeOptions.forEach(opt => opt.classList.remove('selected'));
