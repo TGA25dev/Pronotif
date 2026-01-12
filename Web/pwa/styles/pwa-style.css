@@ -358,9 +358,6 @@ body::before {
     padding: 0;
     padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0)) !important;
     width: 100%;
-    min-height: 0;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
     background: var(--login-view-main-card);
     border-radius: 2rem 2rem 0 0;
     display: flex;
