@@ -942,6 +942,79 @@ async function initializeFirebase() {
 
 // Login functionality handler object
 const loginHandler = {
+    //Go back to main login screen
+    goBackToMainLogin() {
+        console.log("[LOGIN] Returning to main login screen");
+        
+        const loginHeaderAppTitle = document.getElementById('loginHeaderAppTitle');
+        const loginHeaderAppSubTitle = document.getElementById('loginHeaderAppSubTitle');
+        const loginCardContainerTitle = document.getElementById('loginCardContainerTitle');
+        const loginOptionsContainer = document.getElementById('loginOptionsContainer');
+        const globalLoginContainerButton = document.getElementById('globalLoginContainerButton');
+        const globalLoginContainerInput = document.getElementById('globalLoginContainerInput');
+
+        //Reset to main login UI
+        loginHeaderAppTitle.textContent = getI18nValue("login.greeting");
+        loginHeaderAppSubTitle.textContent = getI18nValue("login.subtitle");
+        loginCardContainerTitle.textContent = getI18nValue("login.choose");
+        
+        //Clear input and hide search elements
+        globalLoginContainerInput.value = "";
+        globalLoginContainerInput.style.display = "none";
+        globalLoginContainerButton.style.display = "none";
+
+        //Hide credentials form if visible
+        const loginUsernameLabel = document.getElementById('loginUsernameLabel');
+        const loginUsernameInput = document.getElementById('loginUsernameInput');
+        const loginPasswordLabel = document.getElementById('loginPasswordLabel');
+        const loginPasswordInput = document.getElementById('loginPasswordInput');
+        const loginSubmitButton = document.getElementById('loginSubmitButton');
+        const passwordWrapper = document.querySelector('.password-input-wrapper');
+        const togglePasswordBtn = document.getElementById('togglePassword');
+
+        if (loginUsernameLabel) loginUsernameLabel.style.display = "none";
+        if (loginUsernameInput) loginUsernameInput.style.display = "none";
+        if (loginPasswordLabel) loginPasswordLabel.style.display = "none";
+        if (loginPasswordInput) loginPasswordInput.style.display = "none";
+        if (loginSubmitButton) loginSubmitButton.style.display = "none";
+        if (passwordWrapper) passwordWrapper.style.display = "none";
+        if (togglePasswordBtn) togglePasswordBtn.style.display = "none";
+
+        const credentialsBackButton = document.getElementById('credentialsBackButtonContainer');
+        if (credentialsBackButton) credentialsBackButton.remove();
+        
+        //Show main login options
+        loginOptionsContainer.innerHTML = `
+            <button class="login-option-box" id="loginGeolocButton">
+                <i class="fa-regular fa-compass"></i>
+                <div class="option-text-container">
+                    <h2 class="options-button-title" id="geolocButtonTitle" data-i18n="login.geolocationTitle">Utilisez la géolocalisation</h2>
+                    <p class="options-button-subtitle" id="geolocButtonSubtitle" data-i18n="login.geolocationDesc">Activez la géolocalisation afin de localiser les établissements proches de vous</p>
+                </div>
+            </button>
+
+            <button class="login-option-box" id="loginSearchCityButton">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <div class="option-text-container">
+                    <h2 class="options-button-title" data-i18n="login.searchCityTitle">Recherchez votre ville</h2>
+                    <p class="options-button-subtitle" data-i18n="login.searchCityDesc">Recherchez le nom de votre ville dans la barre de recherche</p>
+                </div>
+            </button>
+
+            <button class="login-option-box" id="loginLinkButton">
+                <i class="fa-solid fa-link"></i>
+                <div class="option-text-container">
+                    <h2 class="options-button-title" data-i18n="login.gotALinkTitle">Vous avez un lien ?</h2>
+                    <p class="options-button-subtitle" data-i18n="login.gotALinkDesc">Utilisez le lien direct de votre établissement</p>
+                </div>
+            </button>
+        `;
+        loginOptionsContainer.style.display = "block";
+        
+        //Reinitialize button listeners
+        this.init();
+    },
+
     // City search button handler
     handleCitySearchButtonClick() {
         console.log("[LOGIN DEBUG] Search City button pressed!");
@@ -962,6 +1035,8 @@ const loginHandler = {
             : stepsTemplate || "Etape 1 sur 3";
 
         loginCardContainerTitle.textContent = getI18nValue("login.searchCityTitle");
+        
+        loginOptionsContainer.innerHTML = "";
         loginOptionsContainer.style.display = "none";
 
         globalLoginContainerButton.style.display = "block";
@@ -969,6 +1044,22 @@ const loginHandler = {
 
         globalLoginContainerButton.textContent = getI18nValue("login.globalSearchButtonLabel");
         globalLoginContainerInput.placeholder = getI18nValue("login.globalSearchInputPlaceholder");
+        globalLoginContainerInput.value = "";
+        
+        //Add back button container
+        const backButtonContainer = document.createElement('div');
+        backButtonContainer.className = 'back-button-container';
+        backButtonContainer.id = 'citySearchBackButtonContainer';
+        
+        const backButton = document.createElement('button');
+        backButton.className = 'back-button';
+        backButton.textContent = getI18nValue("login.backToMainButtonLabel") || "← Retour";
+        backButton.type = 'button';
+        backButton.onclick = () => this.goBackToMainLogin();
+        
+        backButtonContainer.appendChild(backButton);
+        loginOptionsContainer.appendChild(backButtonContainer);
+        loginOptionsContainer.style.display = "block";
         
         const self = this;
         globalLoginContainerButton.onclick = function() {
@@ -1413,6 +1504,27 @@ const loginHandler = {
                 togglePasswordBtn.style.display = "flex";
             }
 
+            //Add back button for credentials form
+            let backButtonContainer = document.getElementById('credentialsBackButtonContainer');
+            if (!backButtonContainer) {
+                backButtonContainer = document.createElement('div');
+                backButtonContainer.className = 'back-button-container';
+                backButtonContainer.id = 'credentialsBackButtonContainer';
+                
+                const backButton = document.createElement('button');
+                backButton.className = 'back-button';
+                backButton.textContent = getI18nValue("login.backToMainButtonLabel") || "← Retour";
+                backButton.type = 'button';
+                backButton.onclick = () => this.goBackToMainLogin();
+                
+                backButtonContainer.appendChild(backButton);
+                
+                const loginCardContainer = document.querySelector('.login-card-container');
+                if (loginCardContainer) {
+                    loginCardContainer.appendChild(backButtonContainer);
+                }
+            }
+
             //Submit Handler
 
             loginSubmitButton.onclick = () => {
@@ -1523,6 +1635,9 @@ const loginHandler = {
             : stepsTemplate || "Etape 1 sur 3";
 
         loginCardContainerTitle.textContent = getI18nValue("login.enterLinkLabel");
+        
+        //Clear the options container completely
+        loginOptionsContainer.innerHTML = "";
         loginOptionsContainer.style.display = "none";
 
         globalLoginContainerButton.style.display = "block";
@@ -1530,6 +1645,21 @@ const loginHandler = {
 
         globalLoginContainerButton.textContent = getI18nValue("login.globalSearchButtonLabel");
         globalLoginContainerInput.placeholder = getI18nValue("login.enterLinkLabel");
+        
+        //Add back button container
+        const backButtonContainer = document.createElement('div');
+        backButtonContainer.className = 'back-button-container';
+        backButtonContainer.id = 'directLinkBackButtonContainer';
+        
+        const backButton = document.createElement('button');
+        backButton.className = 'back-button';
+        backButton.textContent = getI18nValue("login.backToMainButtonLabel") || "← Retour";
+        backButton.type = 'button';
+        backButton.onclick = () => this.goBackToMainLogin();
+        
+        backButtonContainer.appendChild(backButton);
+        loginOptionsContainer.appendChild(backButtonContainer);
+        loginOptionsContainer.style.display = "block";
         
         const self = this;
         globalLoginContainerButton.onclick = function() {
