@@ -31,6 +31,7 @@
     "enterLinkLabel": "Entrez le lien de connexion Pronote",
     "processingSearchButtonLabel": "Recherche en cours...",
     "backToSearchButtonLabel": "Retour à la recherche",
+    "backToMainButtonLabel": "← Retour au menu",
     "noSchoolsFoundMessage": "Aucun établissement trouvé dans cette zone.",
     "tryAnotherCityMessage": "Essayez une autre ville.",
     "cityNotInFranceMessage": "Cette ville ne semble pas être en France...",

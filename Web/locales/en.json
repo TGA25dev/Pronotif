@@ -31,6 +31,7 @@
     "enterLinkLabel": "Enter the Pronote login link",
     "processingSearchButtonLabel": "Searching...",
     "backToSearchButtonLabel": "Back to search",
+    "backToMainButtonLabel": "← Back to menu",
     "noSchoolsFoundMessage": "No schools found in this area.",
     "tryAnotherCityMessage": "Try another city.",
     "cityNotInFranceMessage": "This city doesn't seem to be in France...",
