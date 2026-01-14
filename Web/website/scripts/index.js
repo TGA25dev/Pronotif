@@ -163,7 +163,7 @@ function renderInstallSection() {
         html = `
             <div class="desktop-install-message">
                 <div class="qr-container">
-                    <img src="./assets/qr-install.png" alt="QRCode" class="qr-code">
+                    <img src="./assets/qr-code.svg" alt="QRCode" class="qr-code">
                 </div>
                 <p class="qr-caption">Scannez pour installer l'app</p>
                 <p class="qr-subcaption">Ouvrez l'appareil photo de votre téléphone</p>
