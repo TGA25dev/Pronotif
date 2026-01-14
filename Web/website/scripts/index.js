@@ -81,16 +81,19 @@ function initLanguageSwitcher() {
 
 let deferredPrompt = null;
 
-const isAndroid = () => /Android/i.test(navigator.userAgent);
-const isIos = () => /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-const isDesktop = () => !isAndroid() && !isIos();
-
 window.addEventListener('beforeinstallprompt', (e) => {
     console.log('[PWA] BeforeInstallPrompt captured !');
     e.preventDefault();
     deferredPrompt = e;
     renderInstallSection();
 });
+
+const isAndroid = () => /Android/i.test(navigator.userAgent);
+const isIos = () => /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+const isDesktop = () => !isAndroid() && !isIos();
+
+const isAndroidChrome = () => isAndroid() && deferredPrompt !== null;
+const isAndroidDefault = () => isAndroid() && deferredPrompt === null;
 
 window.addEventListener('appinstalled', () => {
     console.log('[PWA] App installed');
@@ -112,14 +115,15 @@ function renderInstallSection() {
 
     console.log('Device detection:', {
         isIos: isIos(),
-        isAndroid: isAndroid(),
+        isAndroidChrome: isAndroidChrome(),
+        isAndroidDefault: isAndroidDefault(),
         isDesktop: isDesktop(),
         deferredPrompt: !!deferredPrompt
     });
 
     let html = '';
 
-    if (isAndroid()) {
+    if (isAndroidChrome()) {
         html = `
             <div class="install-steps">
                 <div class="step">
@@ -136,6 +140,24 @@ function renderInstallSection() {
                 </div>
             </div>
             ${deferredPrompt ? `<button id="pwa-install-btn" class="btn btn-primary install-action-btn" data-i18n="install_button">Installer maintenant</button>` : ''}
+        `;
+    } else if (isAndroidDefault()) {
+        html = `
+            <div class="install-steps">
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <p>Appuyez sur le bouton de votre <b><u>navigateur</u></b> (•••, ⋮ ou ≡)</p>
+                </div>
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <p>Sélectionnez "Ajouter à l'écran d'accueil"</p>
+                </div>
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <p>Confirmez</p>
+                </div>
+            </div>
+            <p class="android-note" style="text-align: center; margin-top: 1rem; color: var(--text-gray);">Ensuite, ouvrez l'application depuis votre écran d'accueil.</p>
         `;
     } else if (isIos()) {
         html = `
