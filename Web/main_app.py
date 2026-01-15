@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template, send_from_directory, abort
+from flask import Flask, jsonify, render_template, send_from_directory, abort, request
 import logging
 from datetime import timedelta
 import redis
@@ -98,6 +98,38 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Strict'
 app.config['SESSION_COOKIE_SECURE'] = True  #HTTPS
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
+
+
+@app.after_request
+def add_static_cache_headers(response):
+    """Give static assets long lived caching headers"""
+    cacheable_exts = {
+        "svg', 'png', 'jpg', 'jpeg', 'webp', 'gif', 'ico', 'woff2', 'ttf'"
+    }
+
+    # Only touch GET/HEAD for static paths
+    if request.method in {'GET', 'HEAD'}:
+        path = request.path.lower()
+
+        if '.' in path:
+            ext = path.rsplit('.', 1)[-1]
+
+            if ext in cacheable_exts:
+                #Force caching
+                response.headers['Cache-Control'] = 'public, max-age=31536000, immutable' #1 year
+
+                # Prevent cache fragmentation
+                vary_header = response.headers.get('Vary', '')
+
+                if vary_header:
+                    parts = [v.strip() for v in vary_header.split(',') if v.strip().lower() == 'accept-encoding'] #only keep accept-encoding
+
+                    if parts:
+                        response.headers['Vary'] = ', '.join(parts) #rebuild
+
+                    else:
+                        response.headers.pop('Vary', None)
+    return response
 
 @app.errorhandler(500)
 def internal_error(error):

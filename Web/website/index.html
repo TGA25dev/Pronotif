@@ -5,8 +5,15 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Pronot'if - On est en quelle salle ?</title>
         <meta name="description" content="On est en quelle salle ?">
+        <link rel="preload" href="https://pronotif.tech/fonts/satoshivariable.woff2" as="font" type="font/woff2" crossorigin>
+        <link rel="preload" href="https://pronotif.tech/fonts/cabinetvariable.woff2" as="font" type="font/woff2" crossorigin>
+
+        <link rel="preload" href="assets/mockups/mockup_lockscreen.svg" as="image" type="image/svg+xml" fetchpriority="high">
+        <link rel="preload" href="assets/mockups/mockup-homepage.svg" as="image" type="image/svg+xml" fetchpriority="high">
+        <link rel="preload" href="assets/mockups/mockup-timetable.svg" as="image" type="image/svg+xml" fetchpriority="high">
+
         <link rel="stylesheet" href="styles/index-style.css">
-        <link rel="stylesheet" href="https://pronotif.tech/fonts_manager.css">
+        <link rel="stylesheet" href="https://pronotif.tech/fonts_manager.css?v5">
         <link rel="icon" href="assets/logo_pronotif_rounded_64.webp" type="image/webp">
 
         <meta name="mobile-web-app-capable" content="yes">
@@ -69,9 +76,9 @@
             </div>
 
             <div class="mockups-container">
-                <img src="assets/mockups/mockup_lockscreen.svg" alt="Mockup_Left" class="mockup mockup-left">
-                <img src="assets/mockups/mockup-homepage.svg" alt="Mockup_Center" class="mockup mockup-center">
-                <img src="assets/mockups/mockup-timetable.svg" alt="Mockup_Right" class="mockup mockup-right">
+                <img src="assets/mockups/mockup_lockscreen.svg" alt="Mockup_Left" class="mockup mockup-left" loading="eager" fetchpriority="high" >
+                <img src="assets/mockups/mockup-homepage.svg" alt="Mockup_Center" class="mockup mockup-center" loading="eager" fetchpriority="high">
+                <img src="assets/mockups/mockup-timetable.svg" alt="Mockup_Right" class="mockup mockup-right" loading="eager" fetchpriority="high">
             </div>
         </section>
 

@@ -2,14 +2,16 @@
 
 @font-face {
   font-family: "Satoshi";
-  src: url('https://pronotif.tech/fonts/satoshivariable.ttf') format('truetype');
+  src: url('https://pronotif.tech/fonts/satoshivariable.woff2') format('woff2');
   font-style: normal;
+  font-weight: 100 900;
   font-display: swap;
 }
 
 @font-face {
   font-family: "Cabinet";
-  src: url('https://pronotif.tech/fonts/cabinetvariable.ttf') format('truetype');
+  src: url('https://pronotif.tech/fonts/cabinetvariable.woff2') format('woff2');
   font-style: normal;
+  font-weight: 100 900;
   font-display: swap;
 }
