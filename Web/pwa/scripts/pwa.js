@@ -1596,7 +1596,7 @@ const loginHandler = {
                         }
 
                         else if (response.status === 503) {
-                            toast.warn(getI18nValue("Service désactivé"), "La fonctionnalité de connexion manuelle est temporairement indisponible, elle sera réactivée sous peu.", { persistent: true });
+                            toast.warning(getI18nValue("Service désactivé"), "La fonctionnalité de connexion manuelle est temporairement indisponible, elle sera réactivée sous peu.", { persistent: true });
                             console.error("Manual link has been disabled.");
                             return;
                         }
@@ -1615,6 +1615,7 @@ const loginHandler = {
     
     // Direct link button handler
     handleDirectLinkButtonClick() {
+        toast.warning("Attention", "Cette fonctionalité rencontre actuellement des problèmes et est temporairement désactivée. Une mise à jour est prévue prochainement pour corriger cela.", { persistent: true });
         console.log("Direct link button pressed!");
 
         // Get DOM elements
