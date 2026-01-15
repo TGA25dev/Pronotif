@@ -945,7 +945,9 @@ const loginHandler = {
     //Go back to main login screen
     goBackToMainLogin() {
         console.log("[LOGIN] Returning to main login screen");
-        
+
+        setLoginFooter('login.tosAknowledge');
+     
         const loginHeaderAppTitle = document.getElementById('loginHeaderAppTitle');
         const loginHeaderAppSubTitle = document.getElementById('loginHeaderAppSubTitle');
         const loginCardContainerTitle = document.getElementById('loginCardContainerTitle');
@@ -1018,6 +1020,8 @@ const loginHandler = {
     // City search button handler
     handleCitySearchButtonClick() {
         console.log("[LOGIN DEBUG] Search City button pressed!");
+
+        setLoginFooter('login.geoSafetyText');
 
         // Get DOM elements properly
         const loginHeaderAppTitle = document.getElementById('loginHeaderAppTitle');
@@ -1170,6 +1174,8 @@ const loginHandler = {
     handleGeolocationButtonClick() {
         console.log("Geolocation button pressed!");
 
+        setLoginFooter('login.geoSafetyText');
+
         const citySearchButton = document.getElementById('loginSearchCityButton');
         const geolocButton = document.getElementById('loginGeolocButton');
         const directLinkButton = document.getElementById('loginLinkButton');
@@ -1299,6 +1305,8 @@ const loginHandler = {
 
     handleScoolResultsDisplay(data) {
         console.log("[SEARCH DISPLAY] Displaying school results");
+
+        setLoginFooter('login.geoSafetyText');
         
         // Get DOM elements
         const loginHeaderAppTitle = document.getElementById('loginHeaderAppTitle');
@@ -1451,6 +1459,8 @@ const loginHandler = {
 
     async handleSchoolSelection(school, login_page_link, qr_code_login, qrcode_data, pin, region, manual_link_login) {
         console.log(`[SCHOOL] Processing selection: ${school.nomEtab}`);
+
+        setLoginFooter('login.geoSafetyText');
         
         // Store the selected school
         this.selectedSchool = school;
@@ -1617,6 +1627,8 @@ const loginHandler = {
     handleDirectLinkButtonClick() {
         toast.warning("Attention", "Cette fonctionalité rencontre actuellement des problèmes et est temporairement désactivée. Une mise à jour est prévue prochainement pour corriger cela.", { persistent: true });
         console.log("Direct link button pressed!");
+
+        setLoginFooter('login.geoSafetyText');
 
         // Get DOM elements
         const loginHeaderAppTitle = document.getElementById('loginHeaderAppTitle');
@@ -3365,6 +3377,57 @@ function getI18nValue(keyPath) {
     return getNestedValue(currentLanguageData, keyPath) || keyPath;
 }
 
+function renderWithSlots(element, value) {
+    //Replace placeholders with content
+    const slotFallbacks = {
+        lockIcon: '<i class="fa-solid fa-lock"></i>',
+        privacyPolicyLink: `<u><a href="https://safety.pronotif.tech/docs/politique-de-confidentialite" target="_blank">${getI18nValue('login.privacyPolicy')}</a></u>`,
+        termsOfServiceLink: `<u><a href="https://safety.pronotif.tech/docs/conditions-d-utilisation" target="_blank">${getI18nValue('login.termsOfService')}</a></u>`
+    };
+
+    return value.replace(/\{([^}]+)\}/g, (match, slotName) => {
+        const slotEl = element.querySelector(`[data-i18n-slot="${slotName}"]`);
+        if (slotEl) return slotEl.outerHTML;
+        if (slotFallbacks[slotName]) return slotFallbacks[slotName];
+        return match;
+    });
+}
+
+function setTextPreserveChildren(element, value) {
+    //if there no child elements fallback to plain text
+    if (element.childElementCount === 0) {
+        element.textContent = value;
+        return;
+    }
+
+    const textNode = Array.from(element.childNodes).find(
+        node => node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== ''
+    );
+
+    if (textNode) {
+        const leading = textNode.textContent.match(/^\s*/)?.[0] || '';
+        const trailing = textNode.textContent.match(/\s*$/)?.[0] || '';
+        textNode.textContent = `${leading}${value}${trailing}`;
+    } else {
+        element.insertBefore(document.createTextNode(value), element.firstChild);
+    }
+}
+
+function applyI18nHtml(element, key) {
+    if (!element) return;
+    const value = getNestedValue(currentLanguageData, key);
+    if (!value) return;
+
+    element.setAttribute('data-i18n-html', key);
+    element.innerHTML = renderWithSlots(element, value);
+}
+
+function setLoginFooter(key) {
+    const footer = document.querySelector('.login-safety-text');
+    if (!footer) return;
+    applyI18nHtml(footer, key);
+}
+
 function attachScheduleSwipeListeners() { //for swipe schedule feature
     const scheduleList = document.querySelector('.schedule-list');
     if (!scheduleList) return;
@@ -3497,12 +3560,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function applyLanguageToPage() {
+        // First, handle elements that intentionally render HTML with slot placeholders
+        document.querySelectorAll('[data-i18n-html]').forEach(element => {
+            const key = element.getAttribute('data-i18n-html');
+            const value = getNestedValue(currentLanguageData, key);
+            if (value) {
+                element.innerHTML = renderWithSlots(element, value);
+            }
+        });
+
         //Find all elements with data-i18n attribute and update their text content
         document.querySelectorAll('[data-i18n]').forEach(element => {
+            // Avoid double-processing elements that render HTML via data-i18n-html
+            if (element.hasAttribute('data-i18n-html')) return;
+
             const key = element.getAttribute('data-i18n');
             const value = getNestedValue(currentLanguageData, key);
             if (value) {
-                element.textContent = value;
+                setTextPreserveChildren(element, value);
             }
         });
         

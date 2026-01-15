@@ -258,9 +258,9 @@
                                 </div>
                             </button>
                         </div>
-                        <p class="login-safety-text" data-i18n="login.safetyText">
-                            Conformement à notre <u><a href="https://safety.pronotif.tech/docs/politique-de-confidentialite" target="_blank" data-i18n="login.privacyPolicy">politique de confidentialité</a></u> vos données de géolocalisation ne sont jamais enregistrées.
-                            <i class="fa-solid fa-lock"></i>
+                        <p class="login-safety-text" data-i18n-html="login.tosAknowledge">
+                            En continuant, vous acceptez nos <u data-i18n-slot="termsOfServiceLink"><a href="https://safety.pronotif.tech/docs/conditions-d-utilisation" target="_blank" data-i18n="login.termsOfService">conditions d'utilisation</a></u> et notre <u data-i18n-slot="privacyPolicyLink"><a href="https://safety.pronotif.tech/docs/politique-de-confidentialite" target="_blank" data-i18n="login.privacyPolicy">politique de confidentialité</a></u>.
+                            <i class="fa-solid fa-lock" data-i18n-slot="lockIcon"></i>
                         </p>
                     </div>
             </div>
@@ -680,7 +680,6 @@
                         <!-- Homework section -->
                         <div class="section-header">
                             <h2 data-i18n="dashboard.tasksToFinish">
-                                <i class="fa-regular fa-square-check"></i>
                                 Tâches à finir
                             </h2>
                         </div>
