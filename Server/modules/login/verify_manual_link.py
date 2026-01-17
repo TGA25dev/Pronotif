@@ -10,7 +10,7 @@ import requests
 import re
 from typing import Optional, Dict
 
-ALLOWED_SCHEMES = {"https", "http"}
+ALLOWED_SCHEMES = {"https"} #TODO: add warnings about http not being supported
 BLOCKED_HOST_PATTERNS = (
     r"^localhost$",
     r"^127\.\d+\.\d+\.\d+$",
@@ -21,7 +21,7 @@ BLOCKED_HOST_PATTERNS = (
 )
 
 APP_ID = "0D264427-EEFC-4810-A9E9-346942A862A4"
-INFO_ENDPOINT = f"pronote/infoMobileApp.json?id={APP_ID}"
+INFO_ENDPOINT = f"infoMobileApp.json?id={APP_ID}"
 
 def _host_blocked(host: str) -> bool:
     h = host.split(":")[0].lower()
@@ -36,6 +36,8 @@ def clean_url(url: str) -> Optional[str]:
     parsed = urlparse(url.strip())
     if parsed.scheme.lower() not in ALLOWED_SCHEMES:
         return None
+    if parsed.scheme.lower() != "https":
+        return "not_https"
     if not parsed.netloc or _host_blocked(parsed.netloc):
         return None
 
@@ -59,8 +61,25 @@ def test_url(instance_url: str) -> Dict[str, Optional[str]]:
     cleaned = clean_url(instance_url)
     if not cleaned:
         return {"success": False, "region": None, "nom_etab": None, "error": "invalid_url"}
+    elif cleaned == "not_https":
+        return {"success": False, "region": None, "nom_etab": None, "error": "not_https"}
 
-    info_url = f"{cleaned}/{INFO_ENDPOINT}"
+    parsed = urlparse(cleaned)
+    base_path = parsed.path.rstrip("/")
+
+    #Default to the canonical Pronote path if none was provided
+    if not base_path:
+        base_path = "/pronote"
+
+    info_url = urlunparse((
+        parsed.scheme,
+        parsed.netloc,
+        f"{base_path}/{INFO_ENDPOINT}",
+        "",
+        "",
+        ""
+    ))
+    print(f"Testing Pronote link info URL: {info_url}")
     try:
         resp = requests.get(
             info_url,

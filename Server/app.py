@@ -1217,11 +1217,7 @@ def login_user():
                 logger.info(f"Login failed due to timeout: {e}")
                 return jsonify({"error": "Pronote server timed out"}), 504
             
-            elif manual_link_login == "true":
-                logger.info(f"Login failed due to invalid credentials: {e}")
-                return jsonify({"error": "Service suspended"}), 503
-            
-            elif "username / password is invalid" in err_msg or "ent login failed" in err_msg or "pronote login failed" in err_msg:
+            elif "username / password is invalid" in err_msg or "ent login failed" in err_msg or "pronote login failed" in err_msg or " bad username/password" in err_msg:
                 logger.info(f"Login failed due to invalid credentials: {e}")
                 return jsonify({"error": "Invalid username or password"}), 401
             

@@ -1,12 +1,44 @@
 import requests
 from uuid import uuid4
 import pronotepy
+from urllib.parse import urlparse, urlunparse
 
 from .pronotepy_monlycee import ile_de_france
 from ..geocoding.geocoder import get_timezone_from_state
+from ..verify_manual_link import clean_url
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def _normalize_login_link(link: str) -> str | None:
+    """Normalize provided link to a single pronote/eleve.html path."""
+    cleaned = clean_url(link)
+    if not cleaned:
+        return None
+
+    parsed = urlparse(cleaned)
+    path = parsed.path.rstrip("/")
+
+    #Trim trailing /eleve if user sent a partially built link
+    if path.endswith("/eleve"):
+        path = path.rsplit("/", 1)[0]
+
+    # Keep existing pronote path when present if not otherwise default
+    segments = [seg for seg in path.split("/") if seg]
+    if not segments or segments[-1].lower() != "pronote":
+        path = "/pronote"
+    else:
+        path = "/" + "/".join(segments)
+
+    return urlunparse((
+        parsed.scheme,
+        parsed.netloc,
+        f"{path}/eleve.html",
+        "",
+        "",
+        ""
+    ))
 
 def check_if_ent(link: str) ->bool:
     """
@@ -69,13 +101,14 @@ def get_student_data(client: pronotepy.Client, ent_used:bool, qr_code_login:bool
     
 def global_pronote_login(link: str, username:str, password:str, qr_code_login:bool, qrcode_data:dict ,pin:int, region:str):
 
-    if not link.endswith("/eleve.html"):
-        link = f"{link}/eleve.html"
-
+    normalized_link = _normalize_login_link(link)
+    if not normalized_link:
+        return {"error": "Invalid login page link"}, 400
+    
     if isinstance(password, (bytes, bytearray)):
         password = password.decode("utf-8", errors="strict")
 
-    is_ent_login = check_if_ent(link)
+    is_ent_login = check_if_ent(normalized_link)
 
     qr_code_login = bool(qr_code_login)
 
@@ -105,7 +138,7 @@ def global_pronote_login(link: str, username:str, password:str, qr_code_login:bo
         if region=="Île-de-France" or region=="https://psn.monlycee.net":
             logger.debug("Using Île-de-France ENT settings")
             #specific login for Île-de-France
-            client = pronotepy.Client(link, username=username, password=password, ent=ile_de_france)
+            client = pronotepy.Client(normalized_link, username=username, password=password, ent=ile_de_france)
 
             if client.logged_in:
                 return get_student_data(client, ent_used=True, qr_code_login=False, uuid="00000000-0000-0000-0000-000000000000", region=region)
@@ -115,7 +148,7 @@ def global_pronote_login(link: str, username:str, password:str, qr_code_login:bo
     
     elif not is_ent_login: #normal login
         logger.debug("Attempting standard Pronote login")
-        client = pronotepy.Client(link, username=username, password=password)
+        client = pronotepy.Client(normalized_link, username=username, password=password)
 
         if client.logged_in:
             return get_student_data(client, ent_used=False, qr_code_login=False, uuid="00000000-0000-0000-0000-000000000000", region=region)
