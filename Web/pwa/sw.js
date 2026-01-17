@@ -2,7 +2,7 @@
 importScripts('https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.9.0/firebase-messaging-compat.js');
 
-const CACHE_NAME = 'pronotif-pwa-v28';
+const CACHE_NAME = 'pronotif-pwa-v29';
 
 // Global variable to store Firebase Messaging instance
 let messaging = null;
@@ -102,7 +102,6 @@ const ASSETS_TO_CACHE = [
     './styles/pwa-style.css',
     './styles/offline.css',
     './scripts/pwa.js',
-    './scripts/jsQR.js',
     './sw.js',
     '../manifest.json',
 ];
