@@ -1625,7 +1625,6 @@ const loginHandler = {
     
     // Direct link button handler
     handleDirectLinkButtonClick() {
-        toast.warning("Attention", "Cette fonctionalité rencontre actuellement des problèmes et est temporairement désactivée. Une mise à jour est prévue prochainement pour corriger cela.", { persistent: true });
         console.log("Direct link button pressed!");
 
         setLoginFooter('login.geoSafetyText');
@@ -1657,7 +1656,7 @@ const loginHandler = {
         globalLoginContainerInput.style.display = "block";
 
         globalLoginContainerButton.textContent = getI18nValue("login.globalSearchButtonLabel");
-        globalLoginContainerInput.placeholder = getI18nValue("login.enterLinkLabel");
+        globalLoginContainerInput.placeholder = "https://votreetablissement.index-education.net/pronote/eleve.html";
         
         //Add back button container
         const backButtonContainer = document.createElement('div');
