@@ -1024,7 +1024,18 @@ def login_user():
                 if value is None or (isinstance(value, str) and value.strip().lower() in ['null', 'none', '']):
                     sanitized_payload[key] = None
                 else:
-                    sanitized_payload[key] = bleach.clean(str(value))
+                    if key == "student_password":
+                        #keep raw abd if bytes we decode utf-8
+                        if isinstance(value, (bytes, bytearray)):
+                            value = value.decode("utf-8", errors="strict")
+
+                        if len(value) > 256: #max password length
+                            sentry_sdk.capture_message("Password too long during login attempt")
+                            return jsonify({"error": "Password too long"}), 400
+                        
+                        sanitized_payload[key] = value
+                    else:
+                        sanitized_payload[key] = bleach.clean(str(value))
 
             login_page_link = sanitized_payload['login_page_link']
             student_username = sanitized_payload['student_username']

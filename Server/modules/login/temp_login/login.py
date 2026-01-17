@@ -72,6 +72,9 @@ def global_pronote_login(link: str, username:str, password:str, qr_code_login:bo
     if not link.endswith("/eleve.html"):
         link = f"{link}/eleve.html"
 
+    if isinstance(password, (bytes, bytearray)):
+        password = password.decode("utf-8", errors="strict")
+
     is_ent_login = check_if_ent(link)
 
     qr_code_login = bool(qr_code_login)
