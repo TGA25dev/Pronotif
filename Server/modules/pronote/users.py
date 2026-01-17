@@ -190,7 +190,7 @@ class PronotifUser:
             else:
                 logger.error(f"Login error for user {self.user_hash[:4]}**** : {e}")
 
-                if "page html is different than expected" in msg and not self.relogin_needed_notified:
+                if "username / password is invalid" in msg or "ent login failed" in msg or "pronote login failed" in msg or "bad username/password" in msg and not self.relogin_needed_notified:
                     from modules.pronote.notification_system import inform_user_relogin_is_needed #Prevents circular import by importing here
                     inform_user_relogin_is_needed(self)
                     self.relogin_needed_notified = True
