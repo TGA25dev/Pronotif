@@ -215,15 +215,15 @@
                     <div class="login-card-container">
                         <h1 class="login-card-container-title" id="loginCardContainerTitle" data-i18n="login.choose">Faites votre choix</h1>
 
-                        <input type="text" class="global-login-container-input" id="globalLoginContainerInput">
+                        <input type="text" class="global-login-container-input sentry-mask" id="globalLoginContainerInput">
                         <button class="global-login-container-button" id="globalLoginContainerButton"></button>
 
                         <p class="login-username-label" id="loginUsernameLabel" data-i18n="login.username">Identifiant</p>
-                        <input type="text" class="login-username-input" id="loginUsernameInput" placeholder="Votre identifiant Pronote ou ENT", autocomplete="username", name="username" data-i18n-placeholder="login.usernamePlaceholder">
+                        <input type="text" class="login-username-input sentry-mask" id="loginUsernameInput" placeholder="Votre identifiant Pronote ou ENT", autocomplete="username", name="username" data-i18n-placeholder="login.usernamePlaceholder">
                         <p class="login-password-label" id="loginPasswordLabel" data-i18n="login.password">Mot de passe</p>
 
                         <div class="password-input-wrapper">
-                            <input type="password" class="login-password-input" id="loginPasswordInput" placeholder="Votre mot de passe", autocomplete="current-password", name="password" data-i18n-placeholder="login.passwordPlaceholder">
+                            <input type="password" class="login-password-input sentry-mask" id="loginPasswordInput" placeholder="Votre mot de passe", autocomplete="current-password", name="password" data-i18n-placeholder="login.passwordPlaceholder">
 
                             <button type="button" id="togglePassword" class="toggle-password" aria-label="Afficher le mot de passe" data-i18n-aria-label="login.showPassword">
                                 <i class="fa-solid fa-eye" aria-hidden="true"></i>
@@ -266,7 +266,7 @@
             </div>
 
             <!-- Debug Panel (hidden by default) -->
-            <div id="debugPanel" class="debug-panel hidden">
+            <div id="debugPanel" class="debug-panel hidden sentry-mask">
                 <div class="debug-header">
                     <h2>Mode développeur</h2>
                     <button id="closeDebug" class="close-debug">×</button>
@@ -799,7 +799,7 @@
                     <h2 class="name-edit-title" data-i18n="modal.editName">Modifier votre nom</h2>
                 </div>
                 <div class="name-edit-content">
-                    <input type="text" id="nameEditInput" class="name-edit-input" placeholder="Entrez votre nom" maxlength="50" data-i18n-placeholder="modal.enterName">
+                    <input type="text" id="nameEditInput" class="name-edit-input sentry-mask" placeholder="Entrez votre nom" maxlength="50" data-i18n-placeholder="modal.enterName">
                 </div>
                 <div class="name-edit-footer">
                     <button class="name-edit-cancel" id="nameEditCancel" data-i18n="common.cancel">Annuler</button>

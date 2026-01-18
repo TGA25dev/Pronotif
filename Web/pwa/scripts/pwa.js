@@ -859,7 +859,7 @@ async function upateDynamicBanner() {
     const bannerText = document.getElementById('bannerText');
     const bannerIcon = document.getElementById('bannerIcon');
     const bannerInfoBtn = document.getElementById('bannerInfoBtn');
-
+    
     try {
         const response = await wrapFetch("https://api.pronotif.tech/v1/app/dynamic-banner", {
             method: 'GET',
@@ -1373,7 +1373,7 @@ const loginHandler = {
         //create school option boxes
         schools.forEach(school => {
             const schoolBox = document.createElement('button');
-            schoolBox.className = 'login-option-box school-option';
+            schoolBox.className = 'login-option-box school-option sentry-mask';
             
             // Create icon element
             const icon = document.createElement('i');
@@ -1386,14 +1386,14 @@ const loginHandler = {
             
             // Add school name
             const schoolName = document.createElement('h2');
-            schoolName.className = 'options-button-title';
+            schoolName.className = 'options-button-title sentry-mask';
             schoolName.textContent = school.nomEtab;
             textContainer.appendChild(schoolName);
             
             // Add school address if available
             if (school.cp) {
                 const schoolAddress = document.createElement('p');
-                schoolAddress.className = 'options-button-subtitle';
+                schoolAddress.className = 'options-button-subtitle sentry-mask';
                 schoolAddress.textContent = school.cp;
                 textContainer.appendChild(schoolAddress);
             }
@@ -1707,6 +1707,15 @@ const loginHandler = {
         if (directLinkButton) {
             directLinkButton.addEventListener('click', this.handleDirectLinkButtonClick.bind(this));
         }
+        
+        //Add masking to login inputs
+        const loginUsernameInput = document.getElementById('loginUsernameInput');
+        if (loginUsernameInput) loginUsernameInput.classList.add('sentry-mask');
+        
+        const loginPasswordInput = document.getElementById('loginPasswordInput');
+        if (loginPasswordInput) loginPasswordInput.classList.add('sentry-mask');
+        
+        if (this.globalLoginContainerInput) this.globalLoginContainerInput.classList.add('sentry-mask');
     }
 };
 
@@ -2490,6 +2499,11 @@ function updateNextCourseCard(data) {
     
     // Remove loading state
     nextCourseCard.classList.remove('loading-data');
+    nextCourseCard.classList.add('sentry-mask');
+    
+    //masking for course details
+    if (courseTitle) courseTitle.classList.add('sentry-mask');
+    if (courseDetails) courseDetails.classList.add('sentry-mask');
     
     // Check if we have valid next class data (not null/undefined/empty string)
     if (data.next_class_name && data.next_class_name !== null && data.next_class_name !== '') {
@@ -2649,19 +2663,19 @@ function renderHomeworkCard(hw) {
             <div class="homework-card-strip"></div>
             <div class="homework-card-content">
                 <div class="homework-card-header">
-                    <div class="homework-icon">${hw.emoji || '📝'}</div>
-                    <div class="homework-info">
-                        <h3 class="homework-card-title">${hw.subject}</h3>
-                        <p class="homework-date-label">${getI18nValue('homework.forThe')} ${formattedDate}</p>
+                    <div class="homework-icon sentry-mask">${hw.emoji || '📝'}</div>
+                    <div class="homework-info sentry-mask">
+                        <h3 class="homework-card-title sentry-mask">${hw.subject}</h3>
+                        <p class="homework-date-label sentry-mask">${getI18nValue('homework.forThe')} ${formattedDate}</p>
                     </div>
                     ${hw.done ? `<i class="homework-status-icon fa-solid fa-circle-check" style="color: ${hw.color}; font-size: 1.5rem;"></i>` : `<i class="homework-status-icon fa-regular fa-circle" style="color: var(--subtitle-dark); font-size: 1.5rem; opacity: 0.3;"></i>`}
                 </div>
-                <div class="homework-description">
+                <div class="homework-description sentry-mask">
                     ${hw.description || hw.content}
                 </div>
                 <div class="homework-footer">
                     <i class="fa-regular fa-calendar"></i>
-                    <span>${dueDateText}</span>
+                    <span class="sentry-mask">${dueDateText}</span>
                 </div>
             </div>
         </div>
@@ -3683,6 +3697,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function updateCookieContainer() {
         const cookieContainer = document.getElementById('cookieContainer');
         if (cookieContainer) {
+            cookieContainer.classList.add('sentry-mask');
             const cookies = document.cookie.split(';').map(c => c.trim()).filter(Boolean);
             if (cookies.length === 0) {
                 cookieContainer.textContent = "Aucun cookie trouvé.";
@@ -3698,6 +3713,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function updateLocalStorageContainer() {
         const localStorageContainer = document.getElementById('localStorageContainer');
         if (localStorageContainer) {
+            localStorageContainer.classList.add('sentry-mask');
             if (localStorage.length === 0) {
                 localStorageContainer.textContent = "Aucune donnée localStorage.";
             } else {
@@ -3863,6 +3879,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize device info
     const deviceInfo = document.getElementById('deviceInfo');
     if (deviceInfo) {
+        deviceInfo.classList.add('sentry-mask');
         deviceInfo.innerText = JSON.stringify(debugLogger.getDeviceInfo(), null, 2);
     }
     
