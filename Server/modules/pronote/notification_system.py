@@ -716,17 +716,20 @@ async def check_new_grades(user):
     try:
         student_current_period = await retry_with_backoff(fetch_current_period, user)
 
-        if not student_current_period:
+        if not student_current_period and not user.no_grades_for_period_notified:
             logger.debug(f"No current period found for user {user.user_hash[:4]}****")
+            user.no_grades_for_period_notified = True
             return
 
         grades_for_period = student_current_period.grades if student_current_period else []
 
-        if not grades_for_period:
+        if not grades_for_period and not user.no_grades_for_period_notified:
+            user.no_grades_for_period_notified = True
             logger.debug(f"No grades found for user {user.user_hash[:4]}**** in current period")
             return
 
         new_grades_count = 0
+        user.no_grades_for_period_notified = False
 
         #Check if this is first run for grades
         try:

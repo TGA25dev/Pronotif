@@ -96,6 +96,7 @@ class PronotifUser:
         self.class_message_printed_today = False
         self.menu_message_printed_today = False
         self.relogin_needed_notified = False
+        self.no_grades_for_period_notified = False
         
         logger.debug(f"Initialized user {self.user_hash[:4]}**** from database")
     
