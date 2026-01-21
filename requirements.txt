@@ -6,7 +6,7 @@ cryptography==38.0.4
 email_validator==2.2.0
 firebase_admin==6.7.0
 flask==2.2.2
-flask_Cors==5.0.0
+flask_Cors==6.0.0
 flask_Limiter==3.8.0
 flask_session==0.8.0
 flask_talisman==1.1.0
