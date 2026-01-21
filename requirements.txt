@@ -14,7 +14,6 @@ geopy==2.4.1
 infisicalsdk==1.0.11
 jinja2==3.1.2
 loguru==0.7.2
-mysql-connector-python==9.6.0
 pronotepy==2.14.5
 python-dotenv==1.2.1
 pytz==2022.7.1
