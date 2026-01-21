@@ -2,8 +2,8 @@ from flask import Flask, jsonify, render_template, send_from_directory, abort, r
 import logging
 from datetime import timedelta
 import redis
-import os
 import re
+from pathlib import Path
 from flask_cors import CORS
 from flask_talisman import Talisman
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -82,6 +82,19 @@ app.config['SESSION_REDIS'] = Redis(
 )
 
 Session(app)
+
+def validate_path(base_dir, user_path):
+    """Validate that user_path is within base_dir to prevent path traversal attacks"""
+    base = Path(base_dir).resolve()
+    full_path = (base / user_path).resolve()
+    
+    #Ensure the resolved path is within the base directory
+    try:
+        full_path.relative_to(base)
+    except ValueError:
+        return None
+    
+    return full_path
 
 # Setup logging
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -200,13 +213,16 @@ def website_serve_language_file(filename):
 # Serve static files
 @app.route('/assets/<path:filename>')
 def website_serve_assets_file(filename):
-    website_assets_path = os.path.join(app.root_path, 'website/assets', filename)
-    if os.path.isfile(website_assets_path):
+    # Validate path to prevent traversal attacks
+    website_base = Path(app.root_path) / 'website/assets'
+    validated_path = validate_path(website_base, filename)
+    if validated_path and validated_path.is_file():
         return send_from_directory('website/assets', filename)
     
     #fall back to shared assets folder
-    shared_assets_path = os.path.join(app.root_path, 'assets', filename)
-    if os.path.isfile(shared_assets_path):
+    assets_base = Path(app.root_path) / 'assets'
+    validated_path = validate_path(assets_base, filename)
+    if validated_path and validated_path.is_file():
         return send_from_directory('assets', filename)
     
     abort(404)
