@@ -19,7 +19,7 @@ python-dotenv==1.2.1
 pytz==2022.7.1
 redis==5.0.8
 requests==2.32.5
-resend==2.10.0
+resend==2.19.0
 sentry_sdk==2.32.0
 timezonefinder==8.0.0
 werkzeug==2.2.2
