@@ -55,6 +55,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const componentsWithIssues = data.components.filter(component => 
                 component.status !== 'operational');
             
+            //Check for under_maintenance components
+            const underMaintenanceComponents = data.components.filter(component =>
+                component.status === 'under_maintenance');
+            
             if (incidents.length > 0) {
                 // Show most recent incident
                 const latestIncident = incidents[0];
@@ -66,6 +70,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 const nextMaintenance = maintenances[0];
                 if (localStorage.getItem(`dismissed_${nextMaintenance.id}`) !== 'true') {
                     showNotification(nextMaintenance, 'maintenance');
+                }
+            } else if (underMaintenanceComponents.length > 0) {
+                //Show under_maintenance
+                
+                const underMainComponent = underMaintenanceComponents[0];
+                if (localStorage.getItem(`dismissed_${underMainComponent.id}`) !== 'true') {
+                    showNotification(underMainComponent, 'maintenance');
                 }
             } else if (componentsWithIssues.length > 0) {
                 // Show component issues when there's no active incident
@@ -92,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
             typeClass = 'incident';
         } else {
             
-            if (event.status === 'in_progress' || event.status === 'verifying') {
+            if (event.status === 'in_progress' || event.status === 'verifying' || event.status === 'under_maintenance') {
                 typeLabel = 'Maintenance en cours';
                 icon = '🚧';
                 typeClass = 'maintenance-ongoing';
@@ -253,7 +264,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function showComponentIssues(components) {
         // Clear previous classes
-        statusNotification.classList.remove('incident', 'maintenance-planned', 'maintenance-ongoing', 'component-issues');
+        statusNotification.classList.remove('incident', 'maintenance-planned', 'maintenance-ongoing', 'component-issues', 'component-major-outage');
         statusNotification.classList.add('component-issues');
         
         // Determine severity
@@ -264,9 +275,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (components.some(c => c.status === 'major_outage')) {
             severityClass = 'component-major-outage';
             icon = '❌';
+            statusNotification.classList.add('component-major-outage');
+
         } else if (components.some(c => c.status === 'partial_outage')) {
             severityClass = 'component-partial-outage';
             icon = '⚠️';
+
         } else if (components.some(c => c.status === 'degraded_performance')) {
             severityClass = 'component-degraded';
             icon = '⚠️';

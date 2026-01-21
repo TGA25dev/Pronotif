@@ -226,10 +226,6 @@ body {
     margin-bottom: 2.5rem;
 }
 
-.hero-cta-top {
-    margin-bottom: 1.5rem;
-}
-
 .hero-buttons {
     display: flex;
     gap: 1.5rem;
@@ -899,6 +895,257 @@ body {
     opacity: 0.6;
 }
 
+/* Status notification */
+.status-notification {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-width: 600px;
+    margin: 1rem;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fbfc 100%);
+    border-left: 4px solid var(--primary-teal);
+    padding: 0.75rem 1.2rem;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    font-size: 0.9rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    transform: translateY(calc(100% + 1rem));
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.status-notification.visible {
+    transform: translateY(0);
+}
+
+.status-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8rem;
+    flex: 1;
+    position: relative;
+    padding-right: 1.8rem;
+}
+
+.status-icon {
+    font-size: 1.3rem;
+    flex-shrink: 0;
+    margin-top: 0.15rem;
+}
+
+.status-content-wrapper {
+    flex: 1;
+}
+
+.status-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.2rem;
+}
+
+.status-title-row strong {
+    color: var(--text-dark);
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.status-update-time {
+    font-size: 0.75rem;
+    color: var(--text-gray);
+    font-weight: 500;
+}
+
+.status-description {
+    margin: 0.2rem 0 0;
+    color: var(--text-gray);
+    line-height: 1.3;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.status-description p {
+    margin: 0;
+}
+
+.component-status {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    font-size: 0.9rem;
+}
+
+.component-status:last-child {
+    border-bottom: none;
+}
+
+.component-status strong {
+    color: var(--text-dark);
+}
+
+.status-type-label {
+    display: inline-block;
+    padding: 0.3rem 0.65rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 0.4rem;
+    color: white;
+}
+
+.status-notification.incident {
+    border-left-color: #e74c3c;
+    background: linear-gradient(135deg, #ffffff 0%, #fef5f5 100%);
+}
+
+.status-notification.maintenance-ongoing {
+    border-left-color: #3498db;
+    background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%);
+}
+
+.status-notification.maintenance-planned {
+    border-left-color: #3498db;
+    background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%);
+}
+
+.status-notification.component-issues {
+    border-left-color: #f39c12;
+    background: linear-gradient(135deg, #ffffff 0%, #fffaf5 100%);
+}
+
+.status-notification.component-major-outage {
+    border-left-color: #e74c3c;
+    background: linear-gradient(135deg, #ffffff 0%, #fef5f5 100%);
+}
+
+.status-notification.component-under-maintenance {
+    border-left-color: #3498db;
+    background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%);
+}
+
+.status-type-label.incident {
+    background-color: #e74c3c;
+    box-shadow: 0 2px 6px rgba(231, 76, 60, 0.2);
+}
+
+.status-type-label.maintenance-ongoing {
+    background-color: #3498db;
+    color: white;
+    box-shadow: 0 2px 6px rgba(52, 152, 219, 0.2);
+}
+
+.status-type-label.maintenance-planned {
+    background-color: #3498db;
+    color: white;
+    box-shadow: 0 2px 6px rgba(52, 152, 219, 0.2);
+}
+
+.status-type-label.component-issues {
+    background-color: #f39c12;
+    color: white;
+    box-shadow: 0 2px 6px rgba(243, 156, 18, 0.2);
+}
+
+.status-type-label.component-major-outage {
+    background-color: #e74c3c;
+    box-shadow: 0 2px 6px rgba(231, 76, 60, 0.2);
+}
+
+.status-type-label.component-under-maintenance {
+    background-color: #3498db;
+    box-shadow: 0 2px 6px rgba(52, 152, 219, 0.2);
+}
+
+.status-type-label.component-partial-outage {
+    background-color: #f39c12;
+    box-shadow: 0 2px 6px rgba(243, 156, 18, 0.2);
+}
+
+.status-type-label.component-degraded {
+    background-color: #f39c12;
+    color: white;
+    box-shadow: 0 2px 6px rgba(243, 156, 18, 0.2);
+}
+
+.status-time {
+    font-size: 0.8rem;
+    color: var(--text-gray);
+    margin-top: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    opacity: 0.85;
+    font-weight: 600;
+    padding: 0.4rem 0.6rem;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 6px;
+    width: fit-content;
+}
+
+.status-notification.incident .status-time {
+    color: #e74c3c;
+    opacity: 1;
+    background: rgba(231, 76, 60, 0.06);
+}
+
+.status-notification.maintenance-ongoing .status-time {
+    color: #3498db;
+    opacity: 1;
+    background: rgba(52, 152, 219, 0.06);
+}
+
+.status-notification.maintenance-planned .status-time {
+    color: #3498db;
+    opacity: 1;
+    background: rgba(52, 152, 219, 0.06);
+}
+
+.status-notification.component-issues .status-time {
+    color: #f39c12;
+    opacity: 1;
+    background: rgba(243, 156, 18, 0.06);
+}
+
+.status-notification.component-major-outage .status-time {
+    color: #e74c3c;
+    opacity: 1;
+    background: rgba(231, 76, 60, 0.06);
+}
+
+.status-notification.component-under-maintenance .status-time {
+    color: #3498db;
+    opacity: 1;
+    background: rgba(52, 152, 219, 0.06);
+}
+
+.status-time svg {
+    color: currentColor;
+    opacity: 0.8;
+}
+
+.status-close {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.8rem;
+    background: none;
+    border: none;
+    font-size: 1.3rem;
+    cursor: pointer;
+    color: var(--text-gray);
+    opacity: 0.5;
+    transition: all 0.2s ease;
+    padding: 0.2rem;
+    line-height: 1;
+}
+
+.status-close:hover {
+    opacity: 1;
+    color: var(--text-dark);
+}
+
 
 @media (max-width: 968px) {
     :root {
@@ -1200,6 +1447,31 @@ body {
         width: 85%;
         max-width: 350px;
         min-width: auto;
+    }
+
+    .status-notification {
+        margin: 0.8rem;
+        padding: 1.2rem 1rem 1.2rem 1.2rem;
+        border-radius: 16px;
+        font-size: 0.85rem;
+    }
+
+    .status-content {
+        padding-right: 1.8rem;
+    }
+
+    .status-icon {
+        font-size: 1.25rem;
+    }
+
+    .status-title-row strong {
+        font-size: 0.95rem;
+    }
+
+    .status-close {
+        top: 0.5rem;
+        right: 0.5rem;
+        font-size: 1.25rem;
         padding: 0.9rem 1.5rem;
         font-size: 1rem;
     }
