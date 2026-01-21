@@ -1,0 +1,9 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"          # Python packages
+    directory: "/"                     # Root of repo requirements.txt
+    schedule:
+      interval: "weekly"
+    ignore:
+      - dependency-name: "mysql-connector-python"
+        versions: ["9.6.0"]
