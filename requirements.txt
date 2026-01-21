@@ -5,7 +5,7 @@ bleach==6.2.0
 cryptography==44.0.1
 email_validator==2.2.0
 firebase_admin==6.7.0
-flask==2.2.5
+flask==3.1.2
 flask_Cors==6.0.2
 flask_Limiter==4.1.1
 flask_session==0.8.0
@@ -22,5 +22,5 @@ requests==2.32.5
 resend==2.19.0
 sentry_sdk==2.50.0
 timezonefinder==8.0.0
-werkzeug==2.2.2
+werkzeug==3.1.5
 gunicorn==23.0.0
