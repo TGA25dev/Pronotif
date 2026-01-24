@@ -3,7 +3,7 @@ aiohttp==3.13.3
 beautifulsoup4==4.14.3
 bleach==6.2.0
 cryptography==44.0.1
-email_validator==2.2.0
+email_validator==2.3.0
 firebase_admin==6.7.0
 flask==3.1.2
 flask_Cors==6.0.2
