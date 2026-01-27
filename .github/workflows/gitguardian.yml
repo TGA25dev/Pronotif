@@ -1,20 +1,20 @@
 name: GitGuardian scan
 
-on: [push]
+on:
+  push:
+    branches: [main]
 
 jobs:
   scanning:
-    name: GitGuardian scan
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # fetch all history so multiple commits can be scanned
-      - name: GitGuardian scan
-        uses: GitGuardian/ggshield-action@v1
+          fetch-depth: 0
+
+      - uses: GitGuardian/ggshield-action@v1
         env:
           GITHUB_PUSH_BEFORE_SHA: ${{ github.event.before }}
           GITHUB_PUSH_BASE_SHA: ${{ github.event.base }}
