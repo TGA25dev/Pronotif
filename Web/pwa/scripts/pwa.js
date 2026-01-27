@@ -3274,15 +3274,13 @@ if (allowNotifButton) {
             // Update stored permission
             localStorage.setItem('notificationPermission', currentPermission);
 
-            if (isIOS) {
-                console.log('iOS detected, showing success message then reloading');
-                infoNotifText.textContent = getI18nValue("toast.iosNotificationsAppRestartMessage");
-                // Show success message for 5 seconds and reload
-                setTimeout(() => {
-                    window.location.reload();
-                }, 3000);
-                return;
-            }
+            console.log('Permission granted, reloading app to apply changes');
+            infoNotifText.textContent = getI18nValue("toast.iosNotificationsAppRestartMessage");
+            // Show success message for 3 seconds and reload
+            setTimeout(() => {
+                window.location.reload();
+            }, 3000);
+            return;
 
             // For non-iOS: show success message then hide modal
             setTimeout(() => {
