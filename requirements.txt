@@ -18,7 +18,7 @@ mysql-connector-python>=9.5.0
 pronotepy==2.14.5
 python-dotenv==1.2.1
 pytz==2025.2
-redis==5.0.8
+redis==7.1.0
 requests==2.32.5
 resend==2.21.0
 sentry_sdk==2.50.0
