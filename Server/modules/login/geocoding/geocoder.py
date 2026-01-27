@@ -1,10 +1,20 @@
 import logging
 from geopy.geocoders import Nominatim
-from timezonefinder import TimezoneFinder
+import sys
+import os
+import requests
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+server_dir = os.path.abspath(os.path.join(current_dir, "../../../"))
+sys.path.append(server_dir)
+
+from modules.secrets.secrets_manager import get_secret
 
 logger = logging.getLogger(__name__)
 geolocator = Nominatim(user_agent="Pronotif")
 timeouts = [5, 10, 20]
+
+GEONAMES_USERNAME = get_secret("GEONAMES_USERNAME")
 
 def geocode_city(city_name: str) -> tuple[float, float] | None:
     """
@@ -45,22 +55,44 @@ def get_country_name(latitude: float, longitude: float) -> str | None:
     logger.warning(f"get_country_name: Failed after {len(timeouts)} attempts.")
     return None
 
-def get_timezone(latitude: str, longitude: str) -> str | None:
+def get_timezone(latitude: float, longitude: float) -> str | None:
     """
-    Get the timezone of the user's city using the geocode and set data class.
-    This function is local and does not require network retries.
+    Get the timezone for given latitude and longitude using GeoNames.
+    Retries with increasing timeouts on network errors.
     """
-    try:
-        tf = TimezoneFinder()
-        timezone_str = tf.timezone_at(lng=longitude, lat=latitude)
-        if timezone_str:
-            return timezone_str
-        else:
-            logger.warning(f"get_timezone: No timezone found.")
+    for attempt, timeout in enumerate(timeouts, 1):
+        try:
+            response = requests.get(
+                "https://secure.geonames.org/timezoneJSON",
+                params={
+                    "lat": latitude,
+                    "lng": longitude,
+                    "username": GEONAMES_USERNAME,
+                },
+                timeout=timeout,
+            )
+            response.raise_for_status()
+            data = response.json()
+
+            timezone_id = data.get("timezoneId")
+            if timezone_id:
+                return timezone_id
+
+            logger.warning(
+                f"get_timezone: No timezone found after {attempt} attempts"
+            )
             return None
-    except Exception as e:
-        logger.warning(f"get_timezone: Error: {e}")
-        return None
+        
+        except Exception as e:
+            logger.warning(
+                f"get_timezone: Attempt {attempt} failed due to: {e}"
+            )
+            continue
+
+    logger.warning(
+        f"get_timezone: Failed after {len(timeouts)} attempts"
+    )
+    return None
 
 def get_postal_code(latitude: float, longitude: float) -> str | None:
     """
@@ -113,26 +145,27 @@ def get_timezone_from_state(state_name: str) -> str | None:
     if state_name in static_timezones:
         return static_timezones[state_name]
 
-    retries = 0
-    for timeout in timeouts:
+    for attempt, timeout in enumerate(timeouts):
         try:
             location = geolocator.geocode(state_name, timeout=timeout)
-            if location:
-                tf = TimezoneFinder()
-                timezone_str = tf.timezone_at(lng=location.longitude, lat=location.latitude)
-
-                if retries > 0:
-                    logger.warning(f"get_timezone_from_state: succeeded after {retries} retries")
-                return timezone_str
-            else:
-
-                logger.warning(f"get_timezone_from_state: No location found after {retries+1} attempts")
+            if not location:
+                logger.warning(
+                    f"get_timezone_from_state: No location found after {attempt} attempts"
+                )
                 return None
-            
-        except Exception as e:
-            retries += 1
-            logger.warning(f"get_timezone_from_state: retry {retries} due to error: {e}")
-            continue
+
+            return get_timezone(
+                location.latitude,
+                location.longitude,
+            )
         
-    logger.warning(f"get_timezone_from_state: failed after {retries} retries")
+        except Exception as e:
+            logger.warning(
+                f"get_timezone_from_state: Attempt {attempt} failed due to: {e}"
+            )
+            continue
+
+    logger.warning(
+        f"get_timezone_from_state: Failed after {len(timeouts)} attempts"
+    )
     return None
