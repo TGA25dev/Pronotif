@@ -4,7 +4,7 @@ beautifulsoup4==4.14.3
 bleach==6.3.0
 cryptography==46.0.4
 email_validator==2.3.0
-firebase_admin==6.7.0
+firebase_admin==7.1.0
 flask==3.1.2
 flask_Cors==6.0.2
 flask_Limiter==4.1.1
