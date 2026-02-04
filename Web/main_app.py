@@ -177,7 +177,7 @@ def website_index():
 
 @app.route('/fonts_manager.css', methods=['GET'])
 def website_serve_fonts_manager():
-    return send_from_directory("/", "fonts_manager.css")
+    return send_from_directory(".", "fonts_manager.css")
 
 @app.route('/<filename>')
 def website_serve_seo_files(filename):
