@@ -11,7 +11,7 @@ flask_Limiter==4.1.1
 flask_session==0.8.0
 flask_talisman==1.1.0
 geopy==2.4.1
-infisicalsdk==1.0.15
+infisicalsdk==1.0.16
 jinja2==3.1.6
 loguru==0.7.3
 mysql-connector-python>=9.5.0
