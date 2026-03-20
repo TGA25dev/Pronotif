@@ -167,6 +167,7 @@ connection_pool = pooling.MySQLConnectionPool(**default_connection_pool_settings
 
 auth_table_name = get_secret('DB_AUTH_TABLE_NAME')
 student_table_name = get_secret('DB_STUDENT_TABLE_NAME')
+student_grades_table_name = get_secret('DB_GRADES_TABLE_NAME')
 beta_table_name = get_secret('DB_BETA_TABLE_NAME')
 app.secret_key = get_secret('FLASK_KEY')
 app.config['SESSION_COOKIE_SAMESITE'] = 'Strict'
@@ -650,17 +651,24 @@ def delete_account():
             cursor = connection.cursor(dictionary=True)
             try:
                 query = f"""
-                    SELECT app_session_id, app_token FROM {student_table_name}
+                    SELECT app_session_id, app_token, user_hash FROM {student_table_name}
                     WHERE app_session_id = %s AND app_token = %s AND is_active = TRUE
                 """
                 cursor.execute(query, (app_session_id, app_token))
                 user = cursor.fetchone()
 
+                user_hash = user['user_hash'] if user else None
+
                 if not user:
                     logger.warning(f"Delete account attempt with invalid credentials from {request.remote_addr}")
                     return jsonify({"error": "Authentication failed"}), 401
 
-                #Delete the user record from database
+                #delete user from grades table
+                delete_grades_query = f"DELETE FROM {student_grades_table_name} WHERE user_hash = %s"
+                cursor.execute(delete_grades_query, (user_hash,))
+                logger.debug(f"Deleted grades for user_hash: {user_hash[:12]}...")
+
+                #delete user from student table
                 delete_query = f"DELETE FROM {student_table_name} WHERE app_session_id = %s"
                 cursor.execute(delete_query, (app_session_id,))
 
