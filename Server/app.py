@@ -125,10 +125,47 @@ def get_shared_loop():
     _shared_loop["loop"] = loop
     return loop
 
+#Filter to srub sensitive data in logs
+class SensitiveDataFilter(logging.Filter):
+    def __init__(self):
+        super().__init__()
+        #regex to match sensitive query parameters
+        self.sensitive_patterns = [
+            re.compile(r'([\?&])(city_name|lat|lon|latitude|longitude|coords|student_username|student_password|password)=[^&\s]*', re.IGNORECASE)
+        ]
+
+    def filter(self, record):
+        if hasattr(record, 'msg') and isinstance(record.msg, str):
+            for pattern in self.sensitive_patterns:
+                record.msg = pattern.sub(r'\1\2=[Filtered]', record.msg)
+        
+        #check log message uses % formatting
+        if hasattr(record, 'args') and isinstance(record.args, tuple):
+            new_args = []
+            for arg in record.args:
+                if isinstance(arg, str):
+                    for pattern in self.sensitive_patterns:
+                        arg = pattern.sub(r'\1\2=[Filtered]', arg)
+                new_args.append(arg)
+            record.args = tuple(new_args)
+            
+        return True
+
+
+#apply the filter globally to the root logger handlers
+for handler in logging.getLogger().handlers:
+    handler.addFilter(SensitiveDataFilter())
+
+werkzeug_logger = logging.getLogger('werkzeug') #apply the filter to the Werkzeug logger (gunicorn)
+werkzeug_logger.addFilter(SensitiveDataFilter())
+for handler in werkzeug_logger.handlers:
+    handler.addFilter(SensitiveDataFilter())
+
 # Setup logging
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 logging.getLogger('pronotepy').setLevel(logging.WARNING)
+logger.addFilter(SensitiveDataFilter())
 
 app.config['SESSION_TYPE'] = 'redis'
 app.config['SESSION_PERMANENT'] = False
