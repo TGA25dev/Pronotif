@@ -609,31 +609,23 @@ def inform_user_relogin_is_needed(user):
     title = get_i18n_value(lang, 'notification.logoutInfoTitle')
     body = get_i18n_value(lang, 'notification.logoutInfoDesc')
 
-    send_notification_to_device(
-        user.fcm_token,
-        title=title,
-        body=body
-    )
-    
-    # Clear session data from database
     try:
-        with get_db_connection() as connection:
-            cursor = connection.cursor()
-            query = f"""
-            UPDATE {table_name}
-            SET app_session_id = NULL, 
-                app_token = NULL
-            WHERE user_hash = %s
-            """
-            cursor.execute(query, (user.user_hash,))
-            connection.commit()
-            logger.success(f"Cleared session data for user {user.user_hash[:4]}****")
+        # Only send notification if fcm_token is available
+        if user.fcm_token:
+            result = send_notification_to_device(
+                user.fcm_token,
+                title=title,
+                body=body
+            ) 
+        else:
+            logger.warning(f"Cannot send relogin notification for user {user.user_hash[:4]}****: FCM token is empty")
+
 
     except Exception as e:
-        logger.error(f"Failed to clear session data for user {user.user_hash[:4]}****: {e}")
+        logger.error(f"Failed to send relogin notification for user {user.user_hash[:4]}****: {e}")
         sentry_sdk.capture_exception(e)
     
-    logger.info(f"Informed user {user.user_hash[4:]}**** about error that needed relogin")
+    logger.info(f"Informed user {user.user_hash[:4]}**** about error that needed relogin")
 
 async def lesson_check(user):
     """Check for upcoming lessons and send notifications"""
