@@ -283,11 +283,9 @@ async def check_internet_connection() -> bool:
 
 async def get_user_by_auth(app_session_id: str, app_token: str) -> PronotifUser:
     """Get an existing PronotifUser instance by authentication credentials"""
-    
-    #first check local _existing_users 
-    for user_hash, user in _existing_users.items():
-        if user.app_session_id == app_session_id and user.app_token == app_token:
-            return user
+
+    if not app_session_id or not app_token:
+        return None
     
     try:
         with get_db_connection() as connection:
@@ -304,6 +302,15 @@ async def get_user_by_auth(app_session_id: str, app_token: str) -> PronotifUser:
                 return None
                 
             user_hash = result['user_hash']
+
+            #if we already have the correct user in memory, reuse it after DB validation
+            existing_user = _existing_users.get(user_hash)
+            if (
+                existing_user
+                and existing_user.app_session_id == app_session_id
+                and existing_user.app_token == app_token
+            ):
+                return existing_user
             
             # Check if this user has an active session in Redis
             try:
