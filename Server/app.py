@@ -1103,7 +1103,14 @@ def login_user():
             )
             
             if not isinstance(user_data, dict):
-                return jsonify({"error": "Failed to retrieve user data"}), 500
+                if isinstance(user_data, tuple) and len(user_data) >= 2: #err tuple with (error_dict, status_code)
+                    error_dict, status_code = user_data[0], user_data[1]
+                    logger.warning(f"Login validation failed - Status: {status_code} - Error: {error_dict}")
+                    return jsonify(error_dict), status_code
+                else:
+                    #Unexpected type
+                    logger.error(f"Pronote login returned unexpected type - Type: {type(user_data)} - Result: {user_data}")
+                    return jsonify({"error": "Failed to retrieve user data"}), 500
             
             app_session_id = secrets.token_urlsafe(16)
             app_token = secrets.token_urlsafe(32)
@@ -1262,7 +1269,7 @@ def login_user():
                 logger.info(f"Login failed due to timeout: {e}")
                 return jsonify({"error": "Pronote server timed out"}), 504
             
-            elif "username / password is invalid" in err_msg or "ent login failed" in err_msg or "pronote login failed" in err_msg or "bad username/password" in err_msg:
+            elif any(msg in err_msg for msg in ["username / password is invalid", "ent login failed", "pronote login failed", "bad username/password", "probably wrong login information"]):
                 logger.info(f"Login failed due to invalid credentials: {e}")
                 return jsonify({"error": "Invalid username or password"}), 401
             
