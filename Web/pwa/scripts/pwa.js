@@ -1452,6 +1452,7 @@ const loginHandler = {
             }
         })
         .catch(() => {
+            console.error("[MANUAL LINK] Network error during link verification");
             toast.error(getI18nValue("toast.networkErrorTitle"), getI18nValue("toast.networkErrorDesc"));
             return { isValid: false };
         });
@@ -1610,6 +1611,7 @@ const loginHandler = {
                             console.error("Manual link has been disabled.");
                             return;
                         }
+                        console.error("Login failed:", data.message || `Status ${response.status}`);
                         toast.error(data.message || getI18nValue("toast.networkErrorTitle"), getI18nValue("toast.networkErrorDesc"));
 
                         loginSubmitButton.disabled = false;
