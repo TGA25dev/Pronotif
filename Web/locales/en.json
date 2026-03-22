@@ -169,6 +169,8 @@
     "missingLinkDesc": "Please enter the Pronote link of your school.",
     "emptyCityNameTitle": "Warning",
     "emptyCityNameDesc": "Please enter your city's name.",
+    "unknownCityTitle": "City not found",
+    "unknownCityDesc": "No matching city was found. Check spelling and try again.",
     "searchFailedTitle": "An error has occured while performing the search.",
     "geolocUnavailableDesc": "Geolocation is not available on this device.",
     "geolocRequestRefusedTitle": "You denied the geolocation request.",

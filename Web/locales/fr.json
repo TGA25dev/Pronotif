@@ -169,6 +169,8 @@
     "missingLinkDesc": "Veuillez entrer le lien Pronote de votre établissement.",
     "emptyCityNameTitle": "Attention",
     "emptyCityNameDesc": "Veuillez entrer le nom de votre ville",
+    "unknownCityTitle": "Ville introuvable",
+    "unknownCityDesc": "Aucune ville correspondante n'a été trouvée. Vérifiez l'orthographe et réessayez.",
     "searchFailedTitle": "Une erreur est survenue lors de la recherche.",
     "geolocUnavailableDesc": "La géolocalisation n'est pas disponible sur cet appareil.",
     "geolocRequestRefusedTitle": "Vous avez refusé la demande de géolocalisation.",
