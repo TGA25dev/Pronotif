@@ -21,6 +21,6 @@ pytz==2026.1.post1
 redis==7.1.0
 requests==2.32.5
 resend==2.23.0
-sentry_sdk==2.54.0
+sentry_sdk==2.55.0
 werkzeug==3.1.6
 gunicorn==25.0.2

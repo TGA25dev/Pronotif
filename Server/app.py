@@ -1041,6 +1041,7 @@ def login_user():
         if not request.is_json:
             return jsonify({"error": "Content-Type must be application/json"}), 400
 
+        qr_code_login = False
         try:
             request.timeout = 60
             data = request.get_json()
@@ -1091,6 +1092,32 @@ def login_user():
             region = sanitized_payload['region']
             manual_link_login = sanitized_payload['manual_link_login']
 
+            #parse qr_code_login to handle "translation"
+            if isinstance(qr_code_login, str):
+                qr_code_login_normalized = qr_code_login.strip().lower()
+
+                if qr_code_login_normalized == "true":
+                    qr_code_login = True
+
+                elif qr_code_login_normalized == "false":
+                    qr_code_login = False
+
+                else:
+                    return jsonify({"error": "Invalid qr_code_login value"}), 400
+            else:
+                return jsonify({"error": "Invalid qr_code_login type"}), 400
+
+            if qr_code_login and (not pin or not qrcode_data): #missing data
+                return jsonify({"error": "Missing QR login data"}), 400
+            
+            if not qr_code_login: #if not a qr login it'll be ignored later
+                qrcode_data = None
+                pin = None
+
+            sanitized_payload['qr_code_login'] = qr_code_login
+            sanitized_payload['qrcode_data'] = qrcode_data
+            sanitized_payload['pin'] = pin
+
             # Call the module to get user data
             user_data = global_pronote_login(
                 login_page_link, 
@@ -1103,7 +1130,14 @@ def login_user():
             )
             
             if not isinstance(user_data, dict):
-                return jsonify({"error": "Failed to retrieve user data"}), 500
+                if isinstance(user_data, tuple) and len(user_data) >= 2: #err tuple with (error_dict, status_code)
+                    error_dict, status_code = user_data[0], user_data[1]
+                    logger.warning(f"Login validation failed - Status: {status_code} - Error: {error_dict}")
+                    return jsonify(error_dict), status_code
+                else:
+                    #Unexpected type
+                    logger.error(f"Pronote login returned unexpected type - Type: {type(user_data)}")
+                    return jsonify({"error": "Failed to retrieve user data"}), 500
             
             app_session_id = secrets.token_urlsafe(16)
             app_token = secrets.token_urlsafe(32)
@@ -1112,6 +1146,7 @@ def login_user():
 
             # Generate user hash (unique logical identity)
             user_hash = generate_user_hash(user_data)
+            logger.debug(f"Generated user hash: {user_hash[:4]}**** for session: {app_session_id[:4]}****")
             timestamp = datetime.now()
 
             encrypted_username   = encrypt(sanitized_payload['student_username'])
@@ -1258,13 +1293,24 @@ def login_user():
         except Exception as e:
             err_msg = str(e).lower()
 
-            if "Read timed out." in err_msg:
+            if "read timed out" in err_msg:
                 logger.info(f"Login failed due to timeout: {e}")
                 return jsonify({"error": "Pronote server timed out"}), 504
             
-            elif "username / password is invalid" in err_msg or "ent login failed" in err_msg or "pronote login failed" in err_msg or "bad username/password" in err_msg:
+            elif any(msg in err_msg for msg in ["username / password is invalid", "ent login failed", "pronote login failed", "bad username/password", "probably wrong login information"]):
                 logger.info(f"Login failed due to invalid credentials: {e}")
                 return jsonify({"error": "Invalid username or password"}), 401
+
+            elif qr_code_login and "invalid confirmation code" in err_msg:
+                logger.info(f"Login failed due to invalid QR code pin: {e}")
+                return jsonify({"error": "Invalid QR Code PIN", "error_code": "INVALID_QR_PIN"}), 401
+            
+            elif qr_code_login and (
+                "decryption failed while trying to un pad" in err_msg
+                or "qr code has expired" in err_msg
+            ):
+                logger.info(f"Login failed due to invalid QR code data (probably expired): {e}")
+                return jsonify({"error": "Decryption error (probably expired)", "error_code": "QR_EXPIRED"}), 400
             
             else:
                 sentry_sdk.capture_exception(e)

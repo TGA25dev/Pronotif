@@ -64,22 +64,34 @@ DB_POOL_CONFIG = {
 
 # Get the absolute path to the data directory
 script_dir = os.path.dirname(os.path.abspath(__file__))  # /modules/pronote
-server_dir = os.path.dirname(os.path.dirname(script_dir))
+server_dir = os.path.dirname(os.path.dirname(script_dir))  # /Server
+project_root = os.path.dirname(server_dir)  #root
 data_dir = os.path.join(server_dir, 'data')
+web_dir = os.path.join(project_root, 'Web')
+locales_dir = os.path.join(web_dir, 'locales')
 
-# Initialize connection pool
-try:
-    connection_pool = pooling.MySQLConnectionPool(**DB_POOL_CONFIG)
-    logger.info(f"Database connection pool initialized with size {DB_POOL_CONFIG['pool_size']}")
-except Exception as e:
-    logger.critical(f"Failed to initialize connection pool: {e}")
-    sentry_sdk.capture_exception(e)
-    sys.exit(1)
+#Initialize connection pool globally
+connection_pool = None
+def _init_connection_pool():
+    """Initialize connection pool on first use"""
+    global connection_pool
+    if connection_pool is None:
+        try:
+            connection_pool = pooling.MySQLConnectionPool(**DB_POOL_CONFIG)
+            logger.info(f"Database connection pool initialized with size {DB_POOL_CONFIG['pool_size']}")
+
+        except Exception as e:
+            logger.critical(f"Failed to initialize connection pool: {e}")
+            sentry_sdk.capture_exception(e)
+            sys.exit(1)
 
 # Context manager for database connections
 @contextmanager
 def get_db_connection():
     """Get a database connection from the pool and handle errors"""
+    global connection_pool
+    _init_connection_pool()  # Ensure pool is initialized
+    
     connection = None
     max_retries = 3
     retry_count = 0
@@ -148,6 +160,42 @@ redis_client = redis.Redis(
     db=int(get_secret('REDIS_DB', '0')),
     password=get_secret('REDIS_PASSWORD', None),
 )
+
+#Initialize i18n files at module level
+fr_file = None
+en_file = None
+es_file = None
+
+def _load_i18n_files():
+    """
+    Load i18n translation files at module initialization
+    """
+
+    global fr_file, en_file, es_file
+    
+    if fr_file is not None:  # Already loaded
+        return
+    
+    try:
+        fr_path = os.path.join(locales_dir, 'fr.json')
+        en_path = os.path.join(locales_dir, 'en.json')
+        es_path = os.path.join(locales_dir, 'es.json')
+        
+        with open(fr_path, 'r', encoding='utf-8') as f:
+            fr_file = json.load(f)
+        
+        with open(en_path, 'r', encoding='utf-8') as f:
+            en_file = json.load(f)
+        
+        with open(es_path, 'r', encoding='utf-8') as f:
+            es_file = json.load(f)
+        
+        logger.debug(f"Loaded i18n translation files from {locales_dir}")
+    except Exception as e:
+        logger.warning(f"Failed to load i18n files at module init: {e}")
+
+#Load translations immediately when module is imported
+_load_i18n_files()
 
 async def load_active_users() -> list:
     """Load all active users from the database using connection pooling"""
@@ -235,11 +283,9 @@ async def check_internet_connection() -> bool:
 
 async def get_user_by_auth(app_session_id: str, app_token: str) -> PronotifUser:
     """Get an existing PronotifUser instance by authentication credentials"""
-    
-    #first check local _existing_users 
-    for user_hash, user in _existing_users.items():
-        if user.app_session_id == app_session_id and user.app_token == app_token:
-            return user
+
+    if not app_session_id or not app_token:
+        return None
     
     try:
         with get_db_connection() as connection:
@@ -256,6 +302,15 @@ async def get_user_by_auth(app_session_id: str, app_token: str) -> PronotifUser:
                 return None
                 
             user_hash = result['user_hash']
+
+            #if we already have the correct user in memory, reuse it after DB validation
+            existing_user = _existing_users.get(user_hash)
+            if (
+                existing_user
+                and existing_user.app_session_id == app_session_id
+                and existing_user.app_token == app_token
+            ):
+                return existing_user
             
             # Check if this user has an active session in Redis
             try:
@@ -263,11 +318,11 @@ async def get_user_by_auth(app_session_id: str, app_token: str) -> PronotifUser:
                 if user_session_data:
                     user_info = json.loads(user_session_data)
                     if user_info.get('logged_in'):
-                        logger.success(f"Found active user session in Redis for {user_hash}")
+                        logger.success(f"Found active user session in Redis for {user_hash[:4]}****")
                     else:
-                        logger.warning(f"User {user_hash} found in Redis but not logged in - attempting direct login")
+                        logger.warning(f"User {user_hash[:4]}**** found in Redis but not logged in - attempting direct login")
                 else:
-                    logger.info(f"User {user_hash} not found in Redis active sessions - attempting direct login")
+                    logger.info(f"User {user_hash[:4]}**** not found in Redis active sessions - attempting direct login")
                 
                 # Create a temporary user object for API use
                 user = await create_temp_user_for_api(user_hash, app_session_id, app_token)
@@ -300,13 +355,13 @@ async def create_temp_user_for_api(user_hash: str, app_session_id: str, app_toke
                 # Create user and attempt login
                 temp_user = PronotifUser(result)
                 if await temp_user.login():
-                    logger.info(f"Created temporary user for API access: {user_hash}")
+                    logger.info(f"Created temporary user for API access: {user_hash[:4]}****")
                     return temp_user
                 else:
-                    logger.error(f"Failed to login temporary user for API: {user_hash}")
+                    logger.error(f"Failed to login temporary user for API: {user_hash[:4]}****")
                     return None
             else:
-                logger.error(f"User data not found for hash: {user_hash}")
+                logger.error(f"User data not found for hash: {user_hash[:4]}****")
                 return None
                 
     except Exception as e:
@@ -322,7 +377,7 @@ async def user_process_loop(user:PronotifUser) -> None:
     try:
         # Login
         if not await user.login():
-            logger.error(f"Failed to login user {user.user_hash}, skipping...")
+            logger.error(f"Failed to login user {user.user_hash[:4]}****, skipping...")
             return
             
         # Update Redis with logged in status
@@ -338,7 +393,7 @@ async def user_process_loop(user:PronotifUser) -> None:
                 json.dumps(user_info)
             )
         except Exception as e:
-            logger.error(f"Failed to update Redis session for user {user.user_hash}: {e}")
+            logger.error(f"Failed to update Redis session for user {user.user_hash[:4]}****: {e}")
             
         no_internet_message = False
         instance_not_reachable_message = False
@@ -498,7 +553,7 @@ async def retry_with_backoff(func, user, *args, max_attempts=5) -> None:
             await asyncio.sleep(wait_time)
 
         except Exception as e:
-            logger.error(f"Error in {func.__name__} for user {user.user_hash}: {e}")
+            logger.error(f"Error in {func.__name__} for user {user.user_hash[:4]}****: {e}")
             sentry_sdk.capture_exception(e)
             if not await user.handle_error_with_relogin(e):
                 return [] if func.__name__ in ['fetch_lessons', 'fetch_menus'] else None
@@ -518,8 +573,8 @@ def get_i18n_value(lang: str, key: str, **kwargs) -> str:
     translations = i18n_files.get(lang, fr_file)
     
     if not translations:
-        logger.warning(f"No translations loaded for language: {lang}")
-        return key
+        logger.warning(f"No translations loaded for language: {lang} - falling back to placeholder key")
+        return f"[{key}]"
     
     #nested keys
     keys = key.split('.')
@@ -529,12 +584,12 @@ def get_i18n_value(lang: str, key: str, **kwargs) -> str:
         if isinstance(value, dict):
             value = value.get(k)
         else:
-            logger.warning(f"Missing translation key: {key} for language: {lang}")
-            return key
+            logger.warning(f"Missing translation key : {key} for language: {lang}")
+            return f"[{key}]"
     
     if not isinstance(value, str):
-        logger.warning(f"Translation key {key} is not a string for language: {lang}")
-        return key
+        logger.warning(f"Translation key {key} is not a string for language : {lang}")
+        return f"[{key}]"
     
     #placeholders substitution
     if kwargs:
@@ -554,31 +609,23 @@ def inform_user_relogin_is_needed(user):
     title = get_i18n_value(lang, 'notification.logoutInfoTitle')
     body = get_i18n_value(lang, 'notification.logoutInfoDesc')
 
-    send_notification_to_device(
-        user.fcm_token,
-        title=title,
-        body=body
-    )
-    
-    # Clear session data from database
     try:
-        with get_db_connection() as connection:
-            cursor = connection.cursor()
-            query = f"""
-            UPDATE {table_name}
-            SET app_session_id = NULL, 
-                app_token = NULL
-            WHERE user_hash = %s
-            """
-            cursor.execute(query, (user.user_hash,))
-            connection.commit()
-            logger.success(f"Cleared session data for user {user.user_hash[:4]}****")
+        # Only send notification if fcm_token is available
+        if user.fcm_token:
+            result = send_notification_to_device(
+                user.fcm_token,
+                title=title,
+                body=body
+            ) 
+        else:
+            logger.warning(f"Cannot send relogin notification for user {user.user_hash[:4]}****: FCM token is empty")
+
 
     except Exception as e:
-        logger.error(f"Failed to clear session data for user {user.user_hash[:4]}****: {e}")
+        logger.error(f"Failed to send relogin notification for user {user.user_hash[:4]}****: {e}")
         sentry_sdk.capture_exception(e)
     
-    logger.info(f"Informed user {user.user_hash[4:]}**** about error that needed relogin")
+    logger.info(f"Informed user {user.user_hash[:4]}**** about error that needed relogin")
 
 async def lesson_check(user):
     """Check for upcoming lessons and send notifications"""
@@ -600,7 +647,7 @@ async def lesson_check(user):
         
         if not lessons:
             if not user.class_message_printed_today:
-                logger.debug(f"No lessons found for user {user.user_hash} today")
+                logger.debug(f"No lessons found for user {user.user_hash[:4]}**** today")
                 user.class_message_printed_today = True
             return
         
@@ -662,7 +709,7 @@ async def lesson_check(user):
                         title=title,
                         body=body,
                     )
-                    logger.success(f"Sent cancellation notification to user {user.user_hash}")
+                    logger.success(f"Sent cancellation notification to user {user.user_hash[:4]}****")
 
                 elif not canceled:
                     # S grammar for minutes
@@ -697,10 +744,10 @@ async def lesson_check(user):
                         title=title,
                         body=class_time_message,
                     ) #Send notification using Firebase
-                    logger.success(f"Sent lesson notification to user {user.user_hash}")
+                    logger.success(f"Sent lesson notification to user {user.user_hash[:4]}****")
         
     except Exception as e:
-        logger.error(f"Error checking lessons for user {user.user_hash}: {e}")
+        logger.error(f"Error checking lessons for user {user.user_hash[:4]}****: {e}")
         sentry_sdk.capture_exception(e)
         
 async def check_new_grades(user):
@@ -1023,9 +1070,9 @@ async def send_menu_notification(user, menus, dinner_time):
                     title=title,
                     body=body,
                 )
-                logger.success(f"Sent lunch menu notification to user {user.user_hash}")
+                logger.success(f"Sent lunch menu notification to user {user.user_hash[:4]}****")
             else:
-                logger.warning(f"Incomplete lunch menu for {menu.date} for user {user.user_hash}. Skipping notification.")
+                logger.warning(f"Incomplete lunch menu for {menu.date} for user {user.user_hash[:4]}****. Skipping notification.")
 
         elif dinner_time is True and menu.is_dinner:
             # Format dinner menu items
@@ -1042,9 +1089,9 @@ async def send_menu_notification(user, menus, dinner_time):
                     title=title,
                     body=body,
                 )
-                logger.success(f"Sent dinner menu notification to user {user.user_hash}")
+                logger.success(f"Sent dinner menu notification to user {user.user_hash[:4]}****")
             else:
-                logger.warning(f"Incomplete dinner menu for {menu.date} for user {user.user_hash}. Skipping notification.")
+                logger.warning(f"Incomplete dinner menu for {menu.date} for user {user.user_hash[:4]}****. Skipping notification.")
 
 async def check_reminder_notifications(user):
     """Check for homework and bag reminders"""
@@ -1160,7 +1207,7 @@ async def check_reminder_notifications(user):
                     logger.success(f"Sent homework reminder to user {user.user_hash[:4]}**** !")
                 
             except Exception as homework_error:
-                logger.error(f"Error checking homework for user {user.user_hash}: {homework_error}")
+                logger.error(f"Error checking homework for user {user.user_hash[:4]}****: {homework_error}")
                 sentry_sdk.capture_exception(homework_error)
 
     except Exception as e:
@@ -1265,48 +1312,57 @@ def get_subject_emoji(clean_subject_name: str) -> str:
     
 async def main():
     """Main function to run the multi-user system"""
+    #Initialize connection pool early
+    _init_connection_pool()
+    
     # Check internet connection
     if not await check_internet_connection():
         logger.critical("No internet connection! Program will close in 2 seconds...")
         await asyncio.sleep(2)
         sys.exit(1)
+
+    # Initialize i18n before users
+    global fr_file, en_file, es_file
+    
+    try:
+        fr_path = os.path.join(locales_dir, 'fr.json')
+        en_path = os.path.join(locales_dir, 'en.json')
+        es_path = os.path.join(locales_dir, 'es.json')
         
-    # Initial user loading
-    users = await load_active_users()
+        with open(fr_path, 'r', encoding='utf-8') as f:
+            fr_file = json.load(f)
+            globals()['fr_file'] = fr_file
+        
+        with open(en_path, 'r', encoding='utf-8') as f:
+            en_file = json.load(f)
+            globals()['en_file'] = en_file
+        
+        with open(es_path, 'r', encoding='utf-8') as f:
+            es_file = json.load(f)
+            globals()['es_file'] = es_file
+        
+        logger.success(f"Loaded i18n translation files from {locales_dir} successfully")
+
+    except FileNotFoundError as e:
+        logger.error(f"Failed to load i18n files - file not found: {e}")
+        sentry_sdk.capture_exception(e)
+        sys.exit(1)
+
+    except PermissionError as e:
+        logger.error(f"Permission denied reading i18n files: {e}")
+        sentry_sdk.capture_exception(e)
+        sys.exit(1)
+        
+    users = await load_active_users() #load the users from db
     if not users:
         logger.critical("No active users found! Program will close in 2 seconds...")
         await asyncio.sleep(2)
         sys.exit(1)
 
-
-    #Initialize i18n
-    global fr_file, en_file, es_file
-    
-    try:
-        web_dir = os.path.join(os.path.dirname(server_dir), 'Web')
-        locales_dir = os.path.join(web_dir, 'locales')
-        
-        with open(os.path.join(locales_dir, 'fr.json'), 'r', encoding='utf-8') as f:
-            fr_file = json.load(f)
-        
-        with open(os.path.join(locales_dir, 'en.json'), 'r', encoding='utf-8') as f:
-            en_file = json.load(f)
-        
-        with open(os.path.join(locales_dir, 'es.json'), 'r', encoding='utf-8') as f:
-            es_file = json.load(f)
-        
-        logger.success("Loaded i18n translation files from Web/locales successfully")
-
-    except FileNotFoundError as e:
-        logger.error(f"Failed to load i18n files from Web/locales: {e}")
-        sentry_sdk.capture_exception(e)
-        sys.exit(1)
-    
-    # Start user processing tasks
-    user_tasks = {}
+    user_tasks = {} #and now start tasks
     for user in users:
         task = asyncio.create_task(user_process_loop(user))
-        user_tasks[user.user_hash] = task  # Use user_hash as key
+        user_tasks[user.user_hash] = task
     
     # Periodically check for new/updated/removed users
     while True:
@@ -1320,7 +1376,7 @@ async def main():
             # Add new users
             for user in current_users:
                 if user.user_hash not in existing_user_hashes:
-                    logger.info(f"Adding new user: {user.user_hash}")
+                    logger.info(f"Adding new user: {user.user_hash[:4]}****")
                     task = asyncio.create_task(user_process_loop(user))
                     user_tasks[user.user_hash] = task
             
