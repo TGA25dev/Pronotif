@@ -1136,7 +1136,7 @@ def login_user():
                     return jsonify(error_dict), status_code
                 else:
                     #Unexpected type
-                    logger.error(f"Pronote login returned unexpected type - Type: {type(user_data)} - Result: {user_data}")
+                    logger.error(f"Pronote login returned unexpected type - Type: {type(user_data)}")
                     return jsonify({"error": "Failed to retrieve user data"}), 500
             
             app_session_id = secrets.token_urlsafe(16)
