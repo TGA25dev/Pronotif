@@ -2,13 +2,75 @@ import requests
 from uuid import uuid4
 import pronotepy
 from urllib.parse import urlparse, urlunparse
+import ipaddress
 
 from .pronotepy_monlycee import ile_de_france
 from ..geocoding.geocoder import get_timezone_from_state
 from ..verify_manual_link import clean_url
 import logging
+import json
 
 logger = logging.getLogger(__name__)
+
+
+def _is_disallowed_host(hostname: str) -> bool:
+    """Block untrusted QR URLs"""
+    if not hostname:
+        return True
+
+    host = hostname.strip().lower()
+    if host in {"localhost", "127.0.0.1", "::1"} or host.endswith(".local"):
+        return True
+
+    try:
+        ip = ipaddress.ip_address(host)
+        return ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast #block ip literals that are not globally routable
+    
+    except ValueError:
+        # Not an IP literal Keep domain names allowed
+        return False
+
+
+def _normalize_qrcode_payload(qrcode_data):
+    """Validate and normalize untrusted QR payload before passing to login module."""
+
+    if isinstance(qrcode_data, str):
+
+        try:
+            qrcode_data = json.loads(qrcode_data)
+
+        except json.JSONDecodeError:
+            return None, {"error": "Invalid QR code data format", "error_code": "INVALID_QR_DATA"}, 400
+
+    if not isinstance(qrcode_data, dict):
+        return None, {"error": "Invalid QR code data format", "error_code": "INVALID_QR_DATA"}, 400
+
+    required_keys = ("login", "jeton", "url")
+    normalized = {}
+
+    for key in required_keys:
+
+        value = qrcode_data.get(key)
+        if not isinstance(value, str) or not value.strip():
+
+            return None, {"error": "Invalid QR code data format", "error_code": "INVALID_QR_DATA"}, 400
+        normalized[key] = value.strip()
+
+    try: #ensure we get hex data
+        bytes.fromhex(normalized["login"])
+        bytes.fromhex(normalized["jeton"])
+
+    except ValueError:
+        return None, {"error": "Invalid QR code data format", "error_code": "INVALID_QR_DATA"}, 400
+
+    parsed_qr_url = urlparse(normalized["url"])
+    if parsed_qr_url.scheme.lower() != "https" or not parsed_qr_url.netloc:
+        return None, {"error": "Invalid QR code URL", "error_code": "INVALID_QR_URL"}, 400
+
+    if _is_disallowed_host(parsed_qr_url.hostname or ""):
+        return None, {"error": "Invalid QR code URL", "error_code": "INVALID_QR_URL"}, 400
+
+    return normalized, None, None
 
 
 def _normalize_login_link(link: str) -> str | None:
@@ -55,14 +117,27 @@ def check_if_ent(link: str) ->bool:
     
     else:
         return None
+
+def to_text(value):
+    if value is None:
+        return None
+    
+    if isinstance(value, str):
+        return value
+    
+    elif isinstance(value, (bytes, bytearray)):
+        return value.decode("utf-8", errors="strict")
+    
+    else:
+        return str(value)
     
 def get_student_data(client: pronotepy.Client, ent_used:bool, qr_code_login:bool, uuid:str, region:str):
-    student_fullname = client.info.name
-    student_class = client.info.class_name
-    login_page_link = client.pronote_url
+    student_fullname = to_text(client.info.name)
+    student_class = to_text(client.info.class_name)
+    login_page_link = to_text(client.pronote_url)
 
-    user_username = client.username
-    user_password = client.password
+    user_username = to_text(client.username)
+    user_password = to_text(client.password)
 
     try:
         timezone = get_timezone_from_state(region)
@@ -70,6 +145,8 @@ def get_student_data(client: pronotepy.Client, ent_used:bool, qr_code_login:bool
     except Exception as e:
         logger.error(f"An error occurred while trying to get the timezone from state: '{e}' -> (Timezone set to default)")
         timezone = "Europe/Paris"
+
+    student_firstname = "None"
 
     if student_fullname:
         # Split the name into words
@@ -108,34 +185,40 @@ def global_pronote_login(link: str, username:str, password:str, qr_code_login:bo
     if isinstance(password, (bytes, bytearray)):
         password = password.decode("utf-8", errors="strict")
 
-    is_ent_login = check_if_ent(normalized_link)
+    if qr_code_login:
+        logger.debug("Attempting QR code login")
+        pin_str = str(pin).strip()
 
-    qr_code_login = bool(qr_code_login)
+        if not pin_str.isdigit() or len(pin_str) != 4:
+            return {"error": "Invalid QR PIN format", "error_code": "INVALID_QR_PIN_FORMAT"}, 400
 
-    if qr_code_login and pin and qrcode_data:
+        qrcode_data, validation_error, validation_status = _normalize_qrcode_payload(qrcode_data)
+        if validation_error:
+            return validation_error, validation_status
 
         uuid=uuid4()
-        client=pronotepy.Client.qrcode_login(qrcode_data, pin, str(uuid))
+        client=pronotepy.Client.qrcode_login(qrcode_data, pin_str, str(uuid))
 
         if client.logged_in:
+            logger.debug(f"QR code login successful! {uuid} - {region}")
             return get_student_data(client, ent_used=False, qr_code_login=True, uuid=str(uuid), region=region)
 
         else:
-            return {"error": "QR code login failed"}, 400
+            return {"error": "QR code login failed", "error_code": "QR_LOGIN_FAILED"}, 400
+
+    is_ent_login = check_if_ent(normalized_link)
+    
+    if is_ent_login is None:
+        return {"error": "Invalid login page link"}, 400
     
     elif is_ent_login: #login with ENT
         logger.debug("Attempting ENT login")
         
-        if is_ent_login is None:
-            return {"error": "Invalid login page link"}, 400
-        
-        if region is None or region == "":
+        if not region: #none or empty string
+            logger.error("Region is required for ENT login but was not provided")
             return {"error": "Region is required for ENT login"}, 400
-    
-        if region!="Île-de-France" and region!="https://psn.monlycee.net":
-            return {"error": "Region not supported yet"}, 400
         
-        if region=="Île-de-France" or region=="https://psn.monlycee.net":
+        if region in ["Île-de-France", "https://psn.monlycee.net"]:
             logger.debug("Using Île-de-France ENT settings")
             #specific login for Île-de-France
             client = pronotepy.Client(normalized_link, username=username, password=password, ent=ile_de_france)
@@ -144,7 +227,11 @@ def global_pronote_login(link: str, username:str, password:str, qr_code_login:bo
                 return get_student_data(client, ent_used=True, qr_code_login=False, uuid="00000000-0000-0000-0000-000000000000", region=region)
 
             else:
-                return {"error": "ENT login failed"}, 400
+                logger.error("Île-de-France ENT login failed")
+                return {"error": "ENT IDF login failed"}, 400
+        else:
+            logger.error(f"Region '{region}' is not supported yet for ENT login")
+            return {"error": "Region not supported yet"}, 400
     
     elif not is_ent_login: #normal login
         logger.debug("Attempting standard Pronote login")
