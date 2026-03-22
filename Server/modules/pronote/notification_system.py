@@ -318,11 +318,11 @@ async def get_user_by_auth(app_session_id: str, app_token: str) -> PronotifUser:
                 if user_session_data:
                     user_info = json.loads(user_session_data)
                     if user_info.get('logged_in'):
-                        logger.success(f"Found active user session in Redis for {user_hash}")
+                        logger.success(f"Found active user session in Redis for {user_hash[:4]}****")
                     else:
-                        logger.warning(f"User {user_hash} found in Redis but not logged in - attempting direct login")
+                        logger.warning(f"User {user_hash[:4]}**** found in Redis but not logged in - attempting direct login")
                 else:
-                    logger.info(f"User {user_hash} not found in Redis active sessions - attempting direct login")
+                    logger.info(f"User {user_hash[:4]}**** not found in Redis active sessions - attempting direct login")
                 
                 # Create a temporary user object for API use
                 user = await create_temp_user_for_api(user_hash, app_session_id, app_token)
@@ -355,13 +355,13 @@ async def create_temp_user_for_api(user_hash: str, app_session_id: str, app_toke
                 # Create user and attempt login
                 temp_user = PronotifUser(result)
                 if await temp_user.login():
-                    logger.info(f"Created temporary user for API access: {user_hash}")
+                    logger.info(f"Created temporary user for API access: {user_hash[:4]}****")
                     return temp_user
                 else:
-                    logger.error(f"Failed to login temporary user for API: {user_hash}")
+                    logger.error(f"Failed to login temporary user for API: {user_hash[:4]}****")
                     return None
             else:
-                logger.error(f"User data not found for hash: {user_hash}")
+                logger.error(f"User data not found for hash: {user_hash[:4]}****")
                 return None
                 
     except Exception as e:
@@ -377,7 +377,7 @@ async def user_process_loop(user:PronotifUser) -> None:
     try:
         # Login
         if not await user.login():
-            logger.error(f"Failed to login user {user.user_hash}, skipping...")
+            logger.error(f"Failed to login user {user.user_hash[:4]}****, skipping...")
             return
             
         # Update Redis with logged in status
@@ -393,7 +393,7 @@ async def user_process_loop(user:PronotifUser) -> None:
                 json.dumps(user_info)
             )
         except Exception as e:
-            logger.error(f"Failed to update Redis session for user {user.user_hash}: {e}")
+            logger.error(f"Failed to update Redis session for user {user.user_hash[:4]}****: {e}")
             
         no_internet_message = False
         instance_not_reachable_message = False
@@ -553,7 +553,7 @@ async def retry_with_backoff(func, user, *args, max_attempts=5) -> None:
             await asyncio.sleep(wait_time)
 
         except Exception as e:
-            logger.error(f"Error in {func.__name__} for user {user.user_hash}: {e}")
+            logger.error(f"Error in {func.__name__} for user {user.user_hash[:4]}****: {e}")
             sentry_sdk.capture_exception(e)
             if not await user.handle_error_with_relogin(e):
                 return [] if func.__name__ in ['fetch_lessons', 'fetch_menus'] else None
@@ -647,7 +647,7 @@ async def lesson_check(user):
         
         if not lessons:
             if not user.class_message_printed_today:
-                logger.debug(f"No lessons found for user {user.user_hash} today")
+                logger.debug(f"No lessons found for user {user.user_hash[:4]}**** today")
                 user.class_message_printed_today = True
             return
         
@@ -709,7 +709,7 @@ async def lesson_check(user):
                         title=title,
                         body=body,
                     )
-                    logger.success(f"Sent cancellation notification to user {user.user_hash}")
+                    logger.success(f"Sent cancellation notification to user {user.user_hash[:4]}****")
 
                 elif not canceled:
                     # S grammar for minutes
@@ -744,10 +744,10 @@ async def lesson_check(user):
                         title=title,
                         body=class_time_message,
                     ) #Send notification using Firebase
-                    logger.success(f"Sent lesson notification to user {user.user_hash}")
+                    logger.success(f"Sent lesson notification to user {user.user_hash[:4]}****")
         
     except Exception as e:
-        logger.error(f"Error checking lessons for user {user.user_hash}: {e}")
+        logger.error(f"Error checking lessons for user {user.user_hash[:4]}****: {e}")
         sentry_sdk.capture_exception(e)
         
 async def check_new_grades(user):
@@ -1070,9 +1070,9 @@ async def send_menu_notification(user, menus, dinner_time):
                     title=title,
                     body=body,
                 )
-                logger.success(f"Sent lunch menu notification to user {user.user_hash}")
+                logger.success(f"Sent lunch menu notification to user {user.user_hash[:4]}****")
             else:
-                logger.warning(f"Incomplete lunch menu for {menu.date} for user {user.user_hash}. Skipping notification.")
+                logger.warning(f"Incomplete lunch menu for {menu.date} for user {user.user_hash[:4]}****. Skipping notification.")
 
         elif dinner_time is True and menu.is_dinner:
             # Format dinner menu items
@@ -1089,9 +1089,9 @@ async def send_menu_notification(user, menus, dinner_time):
                     title=title,
                     body=body,
                 )
-                logger.success(f"Sent dinner menu notification to user {user.user_hash}")
+                logger.success(f"Sent dinner menu notification to user {user.user_hash[:4]}****")
             else:
-                logger.warning(f"Incomplete dinner menu for {menu.date} for user {user.user_hash}. Skipping notification.")
+                logger.warning(f"Incomplete dinner menu for {menu.date} for user {user.user_hash[:4]}****. Skipping notification.")
 
 async def check_reminder_notifications(user):
     """Check for homework and bag reminders"""
@@ -1207,7 +1207,7 @@ async def check_reminder_notifications(user):
                     logger.success(f"Sent homework reminder to user {user.user_hash[:4]}**** !")
                 
             except Exception as homework_error:
-                logger.error(f"Error checking homework for user {user.user_hash}: {homework_error}")
+                logger.error(f"Error checking homework for user {user.user_hash[:4]}****: {homework_error}")
                 sentry_sdk.capture_exception(homework_error)
 
     except Exception as e:
@@ -1376,7 +1376,7 @@ async def main():
             # Add new users
             for user in current_users:
                 if user.user_hash not in existing_user_hashes:
-                    logger.info(f"Adding new user: {user.user_hash}")
+                    logger.info(f"Adding new user: {user.user_hash[:4]}****")
                     task = asyncio.create_task(user_process_loop(user))
                     user_tasks[user.user_hash] = task
             
