@@ -1003,6 +1003,14 @@ const loginHandler = {
                 </div>
             </button>
 
+            <button class="login-option-box" id="loginQrCodeButton">
+                <i class="fa-solid fa-qrcode"></i>
+                <div class="option-text-container">
+                    <h2 class="options-button-title" data-i18n="login.QrCodeTitle">Scannez le QR Code</h2>
+                    <p class="options-button-subtitle" data-i18n="login.QrCodeDesc">Scannez directement le QR Code de connexion que vous avez généré sur le site officiel</p>
+                </div>
+            </button>
+
             <button class="login-option-box" id="loginLinkButton">
                 <i class="fa-solid fa-link"></i>
                 <div class="option-text-container">
@@ -1106,6 +1114,426 @@ const loginHandler = {
             globalLoginContainerButton.textContent = getI18nValue("login.globalSearchButtonLabel");
         });
 
+    },
+    
+
+    async handleQrCodeLogin() {
+        console.log("[QR LOGIN] QR code login button clicked");
+        //toast.info("Patience..", "Cette fonctionnalité est encore en développement. Elle arrive bientôt !");
+        //return;
+
+        // request camera access
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            console.error('[QR LOGIN] Camera access not supported');
+            toast.error("Erreur", "No camera found");
+            return;
+        }
+
+        let stream;
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: { exact: 'environment' },
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                },
+                audio: false
+            });
+            console.log('[QR LOGIN] Back camera access granted');
+            
+        } catch (backCameraError) {
+            console.log('[QR LOGIN] Back camera not available, trying front camera or default');
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' } //fallback
+                });
+            } catch (secondError) {
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ video: true }); // Ultimate fallback
+
+                } catch (finalError) {
+                    if (finalError.name === "NotAllowedError") {
+                        console.error('[QR LOGIN] Camera access denied by user:', finalError);
+                        toast.warning("Mince !", "Sans votre permission d'accéder à la caméra, il n'est pas possible de scanner le QR code..");
+                        return;
+                    }
+
+                    else if (finalError.name === "NotFoundError") {
+                        console.error('[QR LOGIN] No camera found:', finalError);
+                        toast.error("Erreur", "Aucune caméra trouvée sur cet appareil");
+                        return;
+                    }
+
+                    else {
+                        console.error('[QR LOGIN] Camera access error:', finalError);
+                        toast.error("Erreur", "Une erreur est survenue lors de l'accès à la caméra");
+                        return;
+
+                    }
+                }
+            }
+        }
+
+        const qrScannerView = document.getElementById('qrScannerView');
+        const loginView = document.getElementById('loginView');
+        const video = document.getElementById('qrVideo');
+        const canvasElement = document.getElementById('qrCanvas');
+        const canvas = canvasElement.getContext('2d', { willReadFrequently: true });
+        const closeBtn = document.getElementById('qrCloseBtn');
+        const qrInstruction = document.getElementById('qrInstruction');
+        const targetBox = document.querySelector('.qr-target-box');
+        const pinModal = document.getElementById('qrPinModal');
+        const pinOverlay = pinModal ? pinModal.querySelector('.qr-pin-overlay') : null;
+        const pinInput = document.getElementById('qrPinInput');
+        const pinCancel = document.getElementById('qrPinCancel');
+        const pinSave = document.getElementById('qrPinSave');
+        const pinError = document.getElementById('qrPinError');
+
+        if (!qrScannerView || !loginView || !video || !canvas || !closeBtn || !pinModal || !pinInput || !pinCancel || !pinSave || !pinError) {
+            console.error('[QR LOGIN] Missing scanner or PIN modal elements');
+            toast.error('Erreur', 'Impossible de demarrer le scanner QR Code. Veuillez réessayer ou utiliser une autre méthode de connexion.');
+            stream.getTracks().forEach(track => track.stop());
+            return;
+        }
+
+        let scanning = true;
+        let lastScanTime = 0;
+
+        let invalidQrFeedbackUntil = 0;
+        let scannerFeedbackUntil = 0;
+        let scannerFeedbackMessage = '';
+
+        const setQrStep = () => {};
+
+        const showScannerFeedback = (message, {
+            cooldownMs = 2200,
+            holdMs = 1400
+        } = {}) => {
+            const now = Date.now();
+            scannerFeedbackMessage = message;
+            scannerFeedbackUntil = now + holdMs;
+
+            if (qrInstruction) {
+                qrInstruction.textContent = message;
+            }
+
+            if (now > invalidQrFeedbackUntil) {
+                invalidQrFeedbackUntil = now + cooldownMs;
+            }
+        };
+
+        const sanitizePinInput = (value) => value.replace(/\D/g, '').slice(0, 4);
+
+        const showPinError = (message) => {
+            pinError.textContent = message;
+            pinError.classList.remove('hidden');
+        };
+
+        const hidePinError = () => {
+            pinError.classList.add('hidden');
+        };
+
+        const resetPinState = () => {
+            pinInput.value = '';
+            pinInput.disabled = false;
+            pinCancel.disabled = false;
+            pinSave.disabled = false;
+            pinSave.innerHTML = 'Continuer';
+            hidePinError();
+        };
+
+        const closePinModal = ({ immediate = false } = {}) => {
+            const hide = () => {
+                pinModal.classList.add('hidden');
+                pinModal.classList.remove('closing');
+                resetPinState();
+            };
+
+            if (immediate) {
+                hide();
+                return;
+            }
+
+            pinModal.classList.add('closing');
+            setTimeout(hide, 250);
+        };
+
+        const stopStream = () => {
+            video.pause();
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        };
+
+        const stopScanner = () => {
+            scanning = false;
+            closePinModal({ immediate: true });
+            stopStream();
+            qrScannerView.classList.add('hidden');
+            loginView.classList.remove('hidden');
+            if (targetBox) targetBox.classList.remove('success');
+            setQrStep('scan');
+        };
+
+        const submitPin = async (qrData) => {
+            const pin = sanitizePinInput(pinInput.value.trim());
+            pinInput.value = pin;
+
+            if (pin.length !== 4) {
+                showPinError('Le code PIN doit contenir 4 chiffres.');
+                pinInput.focus();
+                return;
+            }
+
+            hidePinError();
+            setQrStep('connect');
+
+            pinSave.disabled = true;
+            pinCancel.disabled = true;
+            pinInput.disabled = true;
+            pinSave.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i>';
+
+            try {
+                const response = await wrapFetch('https://api.pronotif.tech/v1/login/auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        student_username: 'qr',
+                        student_password: 'qr',
+                        login_page_link: qrData.url,
+                        qr_code_login: 'true',
+                        qrcode_data: JSON.stringify(qrData),
+                        pin: String(pin),
+                        region: 'none',
+                        manual_link_login: 'false'
+                    }),
+                    credentials: 'include'
+                });
+
+                const data = await response.json().catch(() => ({}));
+                const errorCode = typeof data.error_code === 'string' ? data.error_code : '';
+
+                if (response.status === 401 || errorCode === 'INVALID_QR_PIN') {
+                    console.warn('[QR LOGIN] Invalid PIN entered for QR code login');
+
+                    setQrStep('pin');
+                    resetPinState();
+                    showPinError('Code PIN incorrect ! Veuillez réessayer.');
+                    pinInput.focus();
+                    return;
+                }
+
+                if (response.status === 400) {
+                    if (errorCode === 'QR_EXPIRED') {
+                        console.warn('[QR LOGIN] QR code expired', data);
+                        setQrStep('pin');
+                        resetPinState();
+                        showPinError('Oups.. On dirait que ce QR Code a expiré.\nVeuillez en regénérer un nouveau sur le site officiel et réessayer.');
+                        pinInput.focus();
+                        return;
+                    }
+
+                    if (errorCode === 'INVALID_QR_DATA' || errorCode === 'INVALID_QR_URL') {
+                        console.warn('[QR LOGIN] Invalid QR payload received', data);
+                        setQrStep('pin');
+                        resetPinState();
+                        showPinError('QR code invalide. Veuillez scanner un QR code Pronote valide et réessayer.');
+                        pinInput.focus();
+                        return;
+                    }
+
+                    if (errorCode === 'INVALID_QR_PIN_FORMAT') {
+                        setQrStep('pin');
+                        resetPinState();
+                        showPinError('Le code PIN doit contenir 4 chiffres.');
+                        pinInput.focus();
+                        return;
+                    }
+
+                    if (errorCode === 'QR_LOGIN_FAILED') {
+                        setQrStep('pin');
+                        resetPinState();
+                        showPinError('Connexion QR impossible pour le moment. Veuillez réessayer.');
+                        pinInput.focus();
+                        return;
+                    }
+                }
+
+                if (!response.ok) {
+                    setQrStep('pin');
+                    resetPinState();
+                    showPinError(data.error || data.message || 'Erreur lors de la connexion via QR Code... Veuillez réessayer plus tard.');
+                    pinInput.focus();
+                    return;
+                }
+
+                if (data.success) {
+                    toast.success('Succes', 'Connexion reussie !');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                    return;
+                }
+
+                setQrStep('pin');
+                resetPinState();
+                showPinError(data.message || 'Erreur lors de la connexion via QR Code... Veuillez réessayer plus tard.');
+                pinInput.focus();
+
+            } catch (err) {
+                console.error('QR Login Request failed:', err);
+                setQrStep('pin');
+                resetPinState();
+                showPinError('Impossible de joindre le serveur...');
+                pinInput.focus();
+            }
+        };
+
+        pinInput.oninput = () => {
+            pinInput.value = sanitizePinInput(pinInput.value);
+            if (!pinError.classList.contains('hidden')) {
+                hidePinError();
+            }
+        };
+
+        pinInput.onkeydown = (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                pinSave.click();
+            }
+        };
+
+        pinCancel.onclick = () => {
+            closePinModal();
+            stopScanner();
+        };
+
+        if (pinOverlay && !pinOverlay.dataset.bound) {
+            pinOverlay.addEventListener('click', () => {
+                closePinModal();
+                stopScanner();
+            });
+            pinOverlay.dataset.bound = 'true';
+        }
+
+        //show scanner view
+        setQrStep('scan');
+        loginView.classList.add('hidden');
+        qrScannerView.classList.remove('hidden');
+
+        video.srcObject = stream;
+
+        video.playsInline = true;
+        video.setAttribute('playsinline', 'true'); //for iOS Safari
+
+        video.play();
+
+        closeBtn.onclick = stopScanner;
+
+        const tick = () => {
+            if (!scanning) return;
+
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                const scanWidth = video.videoWidth;
+                const scanHeight = video.videoHeight;
+
+                if (scanWidth > 0 && scanHeight > 0) {
+                    canvasElement.width = scanWidth;
+                    canvasElement.height = scanHeight;
+                    canvas.drawImage(video, 0, 0, scanWidth, scanHeight);
+
+                    const imageData = canvas.getImageData(0, 0, scanWidth, scanHeight);
+                    const data = imageData.data;
+
+                    let luminanceSum = 0;
+                    let sampleCount = 0;
+                    const lowLightThreshold = 32;
+
+                    //weighted luminance calculations
+                    for (let i = 0; i < data.length; i += 24) {
+                        const r = data[i];
+                        const g = data[i + 1];
+                        const b = data[i + 2];
+                        luminanceSum += (0.2126 * r) + (0.7152 * g) + (0.0722 * b);
+                        sampleCount++;
+                    }
+
+                    const avgBrightness = luminanceSum / Math.max(1, sampleCount);
+                    const now = Date.now();
+
+                    if (qrInstruction) {
+                        if (now < scannerFeedbackUntil) {
+                            qrInstruction.textContent = scannerFeedbackMessage;
+                        } else {
+                            qrInstruction.textContent = avgBrightness < lowLightThreshold
+                                ? 'Zut! Où est passée la lumière.. ?'
+                                : 'Placez votre QR Code dans le cadre';
+                        }
+                    }
+
+                    if (window.jsQR && (now - lastScanTime > 150)) {
+                        lastScanTime = now;
+
+                        const code = window.jsQR(imageData.data, imageData.width, imageData.height, {
+                            inversionAttempts: 'attemptBoth'
+                        });
+
+                        if (code) {
+                            if (!code.data || typeof code.data !== 'string' || code.data.trim() === '') {
+                                const canLog = now > invalidQrFeedbackUntil;
+                                showScannerFeedback('Ce QR Code ne contient aucune donnée utile...');
+                                if (canLog) {
+                                    console.warn('QR code has empty data payload');
+                                }
+                                requestAnimationFrame(tick);
+                                return;
+                            }
+
+                            let qrData;
+                            try {
+                                qrData = JSON.parse(code.data);
+
+                            } catch (parseError) {
+                                const canLog = now > invalidQrFeedbackUntil;
+                                showScannerFeedback('Mince, ce QR Code ne semble pas être valide...');
+                                if (canLog) {
+                                    console.warn('QR code parse error:', parseError);
+                                }
+                                requestAnimationFrame(tick);
+                                return;
+                            }
+
+                            if (!qrData.jeton || !qrData.login || !qrData.url) {
+                                const canLog = now > invalidQrFeedbackUntil;
+                                showScannerFeedback('Des données sont manquantes dans ce QR Code...');
+                                if (canLog) {
+                                    console.warn('QR code missing required Pronote fields:', qrData);
+                                }
+                                requestAnimationFrame(tick);
+                                return;
+                            }
+
+                            scanning = false;
+                            stopStream();
+
+                            if (targetBox) targetBox.classList.add('success');
+                            setQrStep('pin');
+                            console.log('[QR LOGIN] Valid Pronote QR code detected:', qrData);
+
+                            resetPinState();
+                            pinModal.classList.remove('hidden');
+                            pinSave.onclick = () => submitPin(qrData);
+                            setTimeout(() => pinInput.focus(), 50);
+                            return;
+                        }
+                    }
+                }
+            }
+
+            requestAnimationFrame(tick);
+        };
+
+        requestAnimationFrame(tick);
     },
     
     handleCitySearch() {
@@ -1690,6 +2118,7 @@ const loginHandler = {
         const citySearchButton = document.getElementById('loginSearchCityButton');
         const geolocButton = document.getElementById('loginGeolocButton');
         const directLinkButton = document.getElementById('loginLinkButton');
+        const qrCodeButton = document.getElementById('loginQrCodeButton');
         
         this.loginHeaderAppTitle = document.getElementById('loginHeaderAppTitle');
         this.loginHeaderAppSubTitle = document.getElementById('loginHeaderAppSubTitle');
@@ -1708,6 +2137,10 @@ const loginHandler = {
 
         if (directLinkButton) {
             directLinkButton.addEventListener('click', this.handleDirectLinkButtonClick.bind(this));
+        }
+        
+        if (qrCodeButton) {
+            qrCodeButton.addEventListener('click', this.handleQrCodeLogin.bind(this));
         }
         
         //Add masking to login inputs
