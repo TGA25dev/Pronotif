@@ -20,17 +20,29 @@ def get_city_coords(raw_city_name: str) -> Optional[Dict[str, Any]]:
     """
     if not raw_city_name or not raw_city_name.strip():
         logger.warning("Empty city name supplied")
-        return None
+        return {
+            "error": "empty city name",
+            "error_code": "EMPTY_CITY_NAME",
+            "status": 400
+        }
 
     try:
         geocoded_city_coords = geocode_city(raw_city_name)
     except Exception as e:
-        logger.error(f"City geocoding failed for '{raw_city_name}': {e}")
-        return None
+        logger.error(f"City geocoding failed: {e}")
+        return {
+            "error": "city geocoding failed",
+            "error_code": "CITY_GEOCODING_FAILED",
+            "status": 500
+        }
 
     if not geocoded_city_coords or len(geocoded_city_coords) < 2:
-        logger.info(f"Unknown city: {raw_city_name}")
-        return None
+        logger.info(f"Unknown city provided...")
+        return {
+            "error": "unknown city",
+            "error_code": "UNKNOWN_CITY",
+            "status": 404
+        }
 
     lat, lon = geocoded_city_coords[0], geocoded_city_coords[1]
 
@@ -44,7 +56,7 @@ def get_city_coords(raw_city_name: str) -> Optional[Dict[str, Any]]:
             "timezone": get_timezone(lat, lon)
         }
     except Exception as e:
-        logger.error(f"Failed enriching geocode data for '{raw_city_name}': {e}")
+        logger.error(f"Failed enriching geocode data: {e}")
         return None
 
 
@@ -63,7 +75,11 @@ def get_schools_from_city(
     if coords:
         if lat is None or lon is None:
             logger.warning("Coordinates mode selected but lat/lon missing")
-            return None
+            return {
+                "error": "missing coordinates",
+                "error_code": "MISSING_COORDINATES",
+                "status": 400
+            }
         try:
             city_coords = {
                 "latitude": lat,
@@ -74,16 +90,27 @@ def get_schools_from_city(
                 "timezone": get_timezone(lat, lon)
             }
         except Exception as e:
-            logger.error(f"Reverse geo enrichment failed ({lat},{lon}): {e}")
-            return None
+            logger.error(f"Reverse geo enrichment failed: {e}")
+            return {
+                "error": "reverse geocoding failed",
+                "error_code": "REVERSE_GEOCODING_FAILED",
+                "status": 500
+            }
     else:
         if not city_name:
             logger.warning("Neither city name nor coordinates provided")
-            return None
+            return {
+                "error": "city name is required",
+                "error_code": "MISSING_CITY_NAME",
+                "status": 400
+            }
         
         city_coords = get_city_coords(city_name)
         if not city_coords:
             return None
+
+        if isinstance(city_coords, dict) and city_coords.get("error_code"):
+            return city_coords
 
     #Check if the school is international
     is_international_school = False
@@ -107,7 +134,11 @@ def get_schools_from_city(
             schools_raw = search_school_from_coords(str(latitude), str(longitude))
         except Exception as e:
             logger.error(f"School search failed {e}")
-            return None
+            return {
+                "error": "school search failed",
+                "error_code": "SCHOOL_SEARCH_FAILED",
+                "status": 500
+            }
 
         try:
             if isinstance(schools_raw, str):
@@ -117,11 +148,19 @@ def get_schools_from_city(
 
         except (TypeError, json.JSONDecodeError) as e:
             logger.error(f"Failed parsing school search result: {e}")
-            return None
+            return {
+                "error": "invalid school search response",
+                "error_code": "INVALID_SCHOOL_SEARCH_RESPONSE",
+                "status": 500
+            }
 
         if not isinstance(schools, list):
             logger.warning("Unexpected school search result structure")
-            return None
+            return {
+                "error": "invalid school search response",
+                "error_code": "INVALID_SCHOOL_SEARCH_RESPONSE",
+                "status": 500
+            }
 
         if postal_code:
             city_schools = [s for s in schools if s.get("cp") == postal_code]

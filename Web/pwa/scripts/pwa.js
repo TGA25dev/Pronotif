@@ -1564,11 +1564,17 @@ const loginHandler = {
         wrapFetch(apiUrl, {
             method: 'GET',
         })
-        .then(response => {
+        .then(async response => {
+            const payload = await response.json().catch(() => ({}));
+
             if (!response.ok) {
-                throw new Error(`Error ${response.status}: ${response.statusText}`);
+                const err = new Error(payload.error || `Error ${response.status}: ${response.statusText}`);
+                err.status = response.status;
+                err.errorCode = payload.error_code;
+                throw err;
             }
-            return response.json();
+
+            return payload;
         })
         .then(data => {
             // Reset button state
@@ -1585,6 +1591,12 @@ const loginHandler = {
         })
         .catch(error => {
             console.error("[SEARCH] Search failed:", error);
+
+            if (error?.errorCode === 'UNKNOWN_CITY') {
+                toast.warning(getI18nValue("toast.unknownCityTitle"), getI18nValue("toast.unknownCityDesc"));
+                return;
+            }
+
             toast.error(getI18nValue("toast.searchFailedTitle"), getI18nValue("toast.generalErrorDesc"));
         })
         .finally(() => {

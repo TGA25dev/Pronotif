@@ -318,6 +318,13 @@ def get_school_names():
 
             schools = get_schools_from_city(city_name, coords, lat, lon)
 
+            if isinstance(schools, dict) and schools.get("error_code"):
+                status_code = schools.get("status", 400)
+                return jsonify({
+                    "error": schools.get("error", "School lookup failed"),
+                    "error_code": schools.get("error_code")
+                }), status_code
+
             if schools is None:
                 return jsonify({"error": "Failed to retrieve schools"}), 500
 
