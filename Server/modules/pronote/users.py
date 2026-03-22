@@ -13,6 +13,7 @@ import pytz
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from modules.security.encryption import decrypt
+from modules.secrets.secrets_manager import get_secret
 
 from ..login.temp_login.pronotepy_monlycee import ile_de_france
 from ..pronote.id_creator import generate_id
@@ -21,7 +22,10 @@ from ..pronote.id_creator import generate_id
 from modules.sentry.sentry_config import sentry_sdk
 from modules.utils.subject_utils import get_subject_color, get_subject_emoji, get_subject_clean_name
 
-table_name = os.getenv('DB_STUDENT_TABLE_NAME')
+table_name = get_secret('DB_STUDENT_TABLE_NAME')
+if not table_name:
+    logger.critical("DB_STUDENT_TABLE_NAME is missing!")
+    raise RuntimeError("Missing DB_STUDENT_TABLE_NAME")
 
 class PronotifUser:
     def __init__(self, user_data):
@@ -141,6 +145,8 @@ class PronotifUser:
                 return False
             
             if self.qr_code_login:
+                logger.debug(f"Attempting QR code login for user {self.user_hash[:4]}**** with UUID {self.uuid}")
+
                 self.client = pronotepy.Client.token_login(
                     self.login_page_link, 
                     username=self.username, 
@@ -191,7 +197,14 @@ class PronotifUser:
             else:
                 logger.error(f"Login error for user {self.user_hash[:4]}**** : {e}")
 
-                if "username / password is invalid" in msg or "ent login failed" in msg or "pronote login failed" in msg or "bad username/password" in msg and not self.relogin_needed_notified:
+                invalid_credentials_error = (
+                    "username / password is invalid" in msg
+                    or "ent login failed" in msg
+                    or "pronote login failed" in msg
+                    or "bad username/password" in msg
+                )
+
+                if invalid_credentials_error and not self.relogin_needed_notified:
                     from modules.pronote.notification_system import inform_user_relogin_is_needed #Prevents circular import by importing here
                     inform_user_relogin_is_needed(self)
                     self.relogin_needed_notified = True
@@ -200,43 +213,42 @@ class PronotifUser:
                 return False
             
     async def _save_password(self, db_connection=None) -> None:
-        """Save updated token password to database"""
+        """
+        Save updated token password to database
+        Used for QR code logins where password is dynamic and changes on each login
+        """
         from modules.security.encryption import encrypt
         from app import get_db_connection
         
-        close_connection = False
-        try:
-            # If no connection provided, get one
+        try: #helpper to handle both connections
             if not db_connection:
-                db_connection = get_db_connection()
-                close_connection = True
-                
-            cursor = db_connection.cursor()
-            
-            # Encrypt the new password
-            encrypted_password = encrypt(self.client.password)
-            
-            # Update in database
-            query = f"""
-            UPDATE {table_name}
-            SET student_password = %s, token_updated_at = NOW()
-            WHERE app_session_id = %s AND is_active = 1
-            """
-            cursor.execute(query, (encrypted_password, self.app_session_id))
-            db_connection.commit()
-            
-            if cursor.rowcount > 0:
-                logger.success(f"Updated token password for user {self.user_hash[:4]}****")
+                with get_db_connection() as conn:
+                    await self._execute_update(conn, encrypt)
             else:
-                logger.warning(f"Failed to update token password for user {self.user_hash[:4]}****")
+                #if a connection was passed in, use it directly
+                await self._execute_update(db_connection, encrypt)
                 
         except Exception as e:
             logger.error(f"Error saving new password for user {self.user_hash[:4]}**** : {e}")
             sentry_sdk.capture_exception(e)
+
+    async def _execute_update(self, conn, encrypt_func):
+        """Internal helper to avoid repeating the SQL logic"""
+        cursor = conn.cursor()
+        encrypted_password = encrypt_func(self.client.password)
         
-        finally:
-            if close_connection and db_connection:
-                db_connection.close()
+        query = f"""
+            UPDATE {table_name}
+            SET student_password = %s
+            WHERE app_session_id = %s AND is_active = 1
+        """
+        cursor.execute(query, (encrypted_password, self.app_session_id))
+        conn.commit()
+        
+        if cursor.rowcount > 0:
+            logger.success(f"Updated token password for user {self.user_hash[:4]}****")
+        else:
+            logger.warning(f"Failed to update token password for user {self.user_hash[:4]}****")
         
     async def check_session(self) -> None:
         """Check and refresh user's session if needed"""
