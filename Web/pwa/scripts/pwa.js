@@ -1100,7 +1100,7 @@ const loginHandler = {
             if (result && result.isValid) {
                 const school = { nomEtab: result.nomEtab };
                 console.log("[MANUAL LINK] Link verified successfully:", manualPronoteLink);
-                self.handleSchoolSelection(school, manualPronoteLink, null, null, null, result.region, true);
+                self.handleSchoolSelection(school, manualPronoteLink, false, false, false, result.region, true);
             } else {
                 console.error("[MANUAL LINK] Link verification failed or was unverified.");
             }
@@ -1843,7 +1843,7 @@ const loginHandler = {
             // Add click handler for school selection
             schoolBox.addEventListener('click', () => {
                 console.log(`[SCHOOL] Selected: ${school.nomEtab}`);
-                this.handleSchoolSelection(school, school.url, null, null, null, data.schools.region, false);
+                this.handleSchoolSelection(school, school.url, false, false, false, data.schools.region, false);
                                         //School name, login_page_link, qrcode_login, qrcode_data, pin, region, manual_link_login
             });
             

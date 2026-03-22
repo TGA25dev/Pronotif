@@ -1100,7 +1100,7 @@ def login_user():
             manual_link_login = sanitized_payload['manual_link_login']
 
             #parse qr_code_login to handle "translation"
-            if isinstance(qr_code_login, str):
+            if qr_code_login is not None and isinstance(qr_code_login, str):
                 qr_code_login_normalized = qr_code_login.strip().lower()
 
                 if qr_code_login_normalized == "true":
@@ -1110,14 +1110,18 @@ def login_user():
                     qr_code_login = False
 
                 else:
+                    logger.warning(f"Invalid qr_code_login value received: '{qr_code_login}'")
                     return jsonify({"error": "Invalid qr_code_login value"}), 400
             else:
+                logger.warning(f"Invalid qr_code_login type received: {type(qr_code_login)}")
                 return jsonify({"error": "Invalid qr_code_login type"}), 400
 
             if qr_code_login and (not pin or not qrcode_data): #missing data
+                logger.warning("QR code login attempt with missing QR data or PIN")
                 return jsonify({"error": "Missing QR login data"}), 400
             
             if not qr_code_login: #if not a qr login it'll be ignored later
+                logger.debug("Not a QR code login, ignoring QR data")
                 qrcode_data = None
                 pin = None
 
