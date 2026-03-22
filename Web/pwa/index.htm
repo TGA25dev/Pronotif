@@ -250,6 +250,15 @@
                                 </div>
                             </button>
 
+                            <!-- TODO: Add i18n implementation-->
+                            <button class="login-option-box" id="loginQrCodeButton">
+                                <i class="fa-solid fa-qrcode"></i>
+                                <div class="option-text-container">
+                                    <h2 class="options-button-title" data-i18n="login.QrCodeTitle">Scannez le QR Code</h2>
+                                    <p class="options-button-subtitle" data-i18n="login.QrCodeDesc">Scannez directement le QR Code de connexion que vous avez généré sur le site officiel</p>
+                                </div>
+                            </button>
+
                             <button class="login-option-box" id="loginLinkButton">
                                 <i class="fa-solid fa-link"></i>
                                 <div class="option-text-container">
@@ -263,6 +272,21 @@
                             <i class="fa-solid fa-lock" data-i18n-slot="lockIcon"></i>
                         </p>
                     </div>
+            </div>
+
+            <!-- QR Scanner View -->
+            <div id="qrScannerView" class="view hidden">
+                <div class="qr-scanner-container">
+                    <video id="qrVideo" autoplay muted playsinline webkit-playsinline></video>
+                    <div class="qr-overlay">
+                        <div class="qr-target-box"></div>
+                        <p class="qr-instruction" id="qrInstruction">Placez votre QR Code dans le cadre</p>
+                        <button class="qr-close-btn" id="qrCloseBtn">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <canvas id="qrCanvas" class="hidden"></canvas>
+                </div>
             </div>
 
             <!-- Debug Panel (hidden by default) -->
@@ -804,6 +828,25 @@
                 <div class="name-edit-footer">
                     <button class="name-edit-cancel" id="nameEditCancel" data-i18n="common.cancel">Annuler</button>
                     <button class="name-edit-save" id="nameEditSave" data-i18n="common.save">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- QR PIN Modal -->
+        <div id="qrPinModal" class="qr-pin-modal hidden" role="dialog" aria-modal="true" aria-labelledby="qrPinTitle" aria-describedby="qrPinSubtitle">
+            <div class="qr-pin-overlay"></div>
+            <div class="qr-pin-container">
+                <div class="qr-pin-header">
+                    <h2 id="qrPinTitle" class="qr-pin-title">Entrez votre code PIN</h2>
+                    <p id="qrPinSubtitle" class="qr-pin-subtitle">Saisissez les 4 chiffres definis dans Pronote pour terminer la connexion.</p>
+                </div>
+                <div class="qr-pin-content">
+                    <input type="password" inputmode="numeric" pattern="[0-9]*" id="qrPinInput" class="qr-pin-input sentry-mask" placeholder="0000" maxlength="4" autocomplete="one-time-code" />
+                    <p class="qr-pin-error hidden" id="qrPinError">Le code PIN doit contenir 4 chiffres.</p>
+                </div>
+                <div class="qr-pin-footer">
+                    <button class="qr-pin-btn qr-pin-btn-secondary" id="qrPinCancel">Annuler</button>
+                    <button class="qr-pin-btn qr-pin-btn-primary" id="qrPinSave">Continuer</button>
                 </div>
             </div>
         </div>
