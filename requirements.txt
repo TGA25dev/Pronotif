@@ -17,10 +17,10 @@ loguru==0.7.3
 mysql-connector-python>=9.5.0
 pronotepy==2.14.5
 python-dotenv==1.2.2
-pytz==2025.2
+pytz==2026.1.post1
 redis==7.1.0
 requests==2.32.5
 resend==2.23.0
 sentry_sdk==2.55.0
 werkzeug==3.1.6
-gunicorn==25.0.2
+gunicorn==25.1.0
