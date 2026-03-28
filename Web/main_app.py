@@ -62,12 +62,66 @@ CORS(app,
      }}
 )
 
+#csp policy
+csp = {
+    'default-src': '\'self\'',
+    'worker-src': ['\'self\'', 'blob:', 'https://pronotif.tech/*'],
+    'connect-src': [
+        '\'self\'', 
+        'https://kit.fontawesome.com', 
+        'https://ka-f.fontawesome.com', 
+        '*.sentry.io',
+        'https://*.sentry-cdn.com',
+        'https://api.github.com',
+        'https://cdn.statuspage.io',
+        'https://x5xv7gdnw25h.statuspage.io',
+        'https://drive.pronotif.tech',
+        'https://www.gstatic.com',
+        'https://*.googleapis.com',
+        'https://api.pronotif.tech',
+        'https://pronotif.tech',
+        'https://cdn.jsdelivr.net'
+    ],
+    'img-src': ['\'self\'', 'https://drive.pronotif.tech', 'data:'],
+    'font-src': [
+        '\'self\'', 
+        'https://kit.fontawesome.com', 
+        'https://ka-f.fontawesome.com', 
+        'https://fonts.googleapis.com', 
+        'https://fonts.gstatic.com', 
+        'https://fonts.macpaw.com'
+    ],
+    'script-src': [
+            '\'self\'',
+            '\'strict-dynamic\'',
+            'https:',
+            'https://storage.googleapis.com',
+            'https://sentry.io',
+            'https://kit.fontawesome.com',
+            'https://ka-f.fontawesome.com',
+            'https://*.sentry-cdn.com',
+            'https://www.gstatic.com',
+            'https://cdn.jsdelivr.net',
+            'https://static.cloudflareinsights.com',
+            'https://cdn.statuspage.io'
+        ],
+    'style-src': [
+        '\'self\'',
+        '\'unsafe-inline\'',
+        'https://kit.fontawesome.com', 
+        'https://ka-f.fontawesome.com', 
+        'https://pronotif.tech'
+    ],
+    'frame-src': ['\'self\'', 'https://ko-fi.com']
+}
+
 Talisman(app,
     force_https=True,
     strict_transport_security=True,
     session_cookie_secure=True,
     session_cookie_http_only=True,
-    content_security_policy=False
+    content_security_policy=csp,
+    content_security_policy_nonce_in=['script-src'] #add random nonces to scripts
 )
 
 app.config['SESSION_TYPE'] = 'redis'

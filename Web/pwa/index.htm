@@ -43,7 +43,10 @@
         <link rel="icon" href="../assets/logo_pronotif_rounded_64.webp" type="image/webp">
 
         <!-- FontAwesome -->
-        <script src="https://kit.fontawesome.com/c1bbd01730.js" crossorigin="anonymous"></script>
+        <script nonce="{{ csp_nonce() }}" src="https://kit.fontawesome.com/c1bbd01730.js" crossorigin="anonymous"></script>
+
+        <!--Confetti-->
+        <script nonce="{{ csp_nonce() }}" src="https://cdn.jsdelivr.net/npm/@hiseb/confetti@2.1.0/dist/confetti.min.js"></script>
 
         <!-- Stylesheets -->
         <link rel="stylesheet" href="https://pronotif.tech/fonts_manager.css?v4">
@@ -52,13 +55,14 @@
 
         <!-- Sentry -->
         <script
+        nonce="{{ csp_nonce() }}"
         src="https://browser.sentry-cdn.com/9.27.0/bundle.tracing.replay.feedback.min.js"
         data-cfasync="false"
         integrity="sha384-bgLpuKJGJQ6NPLP1BK6iD0rCcN2QwUa771+6r1/rF4A37cOSS8EYyc2AxeQARkRf"
         crossorigin="anonymous"
         ></script>
 
-        <script>
+        <script nonce="{{ csp_nonce() }}">
             function scrubObject(obj) {
                 if (!obj || typeof obj !== "object") return obj;
 
@@ -184,7 +188,7 @@
         </script>
 
         <!--jsQR Script-->
-        <script src="scripts/jsQR.js"></script>
+        <script nonce="{{ csp_nonce() }}" src="scripts/jsQR.js"></script>
         
     </head>
     <body>
@@ -928,6 +932,6 @@
             </div>
         </div>
 
-        <script type="module" src="scripts/pwa.js?v={{ cache_buster }}" crossorigin="anonymous"></script>
+        <script nonce="{{ csp_nonce() }}" type="module" src="scripts/pwa.js?v={{ cache_buster }}" crossorigin="anonymous"></script>
     </body>
 </html>

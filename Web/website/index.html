@@ -276,7 +276,7 @@
             </div>
             <button class="status-close" id="closeStatus">&times;</button>
         </div>
-        <script src="scripts/status_checker.js"></script>
-        <script src="scripts/index.js"></script>
+        <script nonce="{{ csp_nonce() }}" src="scripts/status_checker.js"></script>
+        <script nonce="{{ csp_nonce() }}" src="scripts/index.js"></script>
     </body>
 </html>
