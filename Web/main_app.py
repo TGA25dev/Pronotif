@@ -117,7 +117,7 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 def add_static_cache_headers(response):
     """Give static assets long lived caching headers"""
     cacheable_exts = {
-        "svg', 'png', 'jpg', 'jpeg', 'webp', 'gif', 'ico', 'woff2', 'ttf'"
+        "svg", "png", "jpg", "jpeg", "webp", "gif", "ico", "woff2", "ttf"
     }
 
     # Only touch GET/HEAD for static paths
@@ -179,31 +179,17 @@ def website_index():
 def website_serve_fonts_manager():
     return send_from_directory(".", "fonts_manager.css")
 
-@app.route('/<filename>')
-def website_serve_seo_files(filename):
-    if filename not in ['robots.txt', 'sitemap.xml', 'favicon.ico']:
-        abort(404)
-    return send_from_directory('.', filename)
+@app.route('/robots.txt', methods=['GET'])
+def website_serve_robots():
+    return send_from_directory('.', 'robots.txt')
 
-@app.route('/<filename>', methods=['GET'])
-@limiter.limit("50 per minute")
-def website_index2(filename):
-    #only allow alphanumeric, hyphens, and underscores
-    if not re.match(r'^[a-zA-Z0-9_-]+$', filename):
-        logger.warning(f"Invalid filename attempted: {filename}")
-        abort(404)
-    
-    allowed_pages = ['support', 'download']
-    if filename not in allowed_pages:
-        abort(404)
-    
-    cache_buster = datetime.now().strftime("%Y%m%d%H%M%S")
-    
-    try:
-        return render_template(f'website/{filename}.html', cache_buster=cache_buster)
-    except TemplateNotFound:
-        logger.warning(f"Template not found: website/{filename}.html")
-        abort(404)
+@app.route('/sitemap.xml', methods=['GET'])
+def website_serve_sitemap():
+    return send_from_directory('.', 'sitemap.xml')
+
+@app.route('/favicon.ico', methods=['GET'])
+def website_serve_favicon():
+    return send_from_directory('.', 'favicon.ico')
 
 # Serve static files
 @app.route('/langs/<filename>')
