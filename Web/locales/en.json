@@ -183,6 +183,8 @@
     "fillAllEntriesErrorDesc": "Please fill in all fields.",
     "wrongCredentialsTitle": "Oops..",
     "wrongCredentialsDesc": "Incorrect username or password.",
+    "regionUnsupportedTitle": "Region not supported",
+    "regionUnsupportedDesc": "Sorry.. this region is not supported yet. If you want us to add it, please contact us on GitHub.",
     "generalErrorTitle": "An error has occured",
     "generalErrorDesc": "Please try again later.",
     "comingSoonTitle": "Be Patient !",

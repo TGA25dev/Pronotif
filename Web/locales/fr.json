@@ -183,6 +183,8 @@
     "fillAllEntriesErrorDesc": "Veuillez remplir tous les champs.",
     "wrongCredentialsTitle": "Oups..",
     "wrongCredentialsDesc": "Identifiant ou mot de passe incorrect.",
+    "regionUnsupportedTitle": "Région non prise en charge",
+    "regionUnsupportedDesc": "Désole.. mais votre région n'est pas encore prise en charge. Contactez nous sur GitHub si vous souhaitez que nous l'ajoutions.",
     "generalErrorTitle": "Une erreur est survenue",
     "generalErrorDesc": "Veuillez réessayer plus tard.",
     "comingSoonTitle": "Patience !",
