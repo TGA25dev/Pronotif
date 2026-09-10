@@ -1,7 +1,7 @@
 aiofiles==25.1.0
-aiohttp==3.13.5
+aiohttp==3.14.3
 beautifulsoup4==4.14.3
-bleach==6.3.0
+bleach==6.4.0
 cryptography==46.0.7
 email_validator==2.3.0
 firebase_admin==7.4.0
@@ -14,13 +14,13 @@ geopy==2.4.1
 infisicalsdk==1.0.16
 jinja2==3.1.6
 loguru==0.7.3
-mysql-connector-python>=9.5.0
-pronotepy==2.14.6
+mysql-connector-python>=9.7.0
+pronotepy==2.15.17
 python-dotenv==1.2.2
 pytz==2026.1.post1
 redis==7.4.0
 requests==2.33.1
 resend==2.30.1
-sentry_sdk==2.60.0
+sentry_sdk==2.61.0
 werkzeug==3.1.8
 gunicorn==25.3.0
