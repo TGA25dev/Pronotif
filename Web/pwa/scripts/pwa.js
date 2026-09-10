@@ -2051,6 +2051,18 @@ const loginHandler = {
                             console.error("Manual link has been disabled.");
                             return;
                         }
+
+                        else if (data.error === "Region not supported yet") {
+                            toast.warning(getI18nValue("toast.regionUnsupportedTitle"), getI18nValue("toast.regionUnsupportedDesc"));
+                            console.error("The selected region is not supported yet.");
+
+                            loginSubmitButton.disabled = false;
+                            loginSubmitButton.style.cursor = "pointer";
+                            loginSubmitButton.style.opacity = "1";
+                            loginSubmitButton.textContent = getI18nValue("login.loginButtonLabel");
+                            return;
+                        }
+
                         console.error("Login failed:", data.message || `Status ${response.status}`);
                         toast.error(data.message || getI18nValue("toast.networkErrorTitle"), getI18nValue("toast.networkErrorDesc"));
 
