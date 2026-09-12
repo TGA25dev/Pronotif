@@ -17,7 +17,7 @@ loguru==0.7.3
 mysql-connector-python>=9.7.0
 pronotepy==2.15.7
 python-dotenv==1.2.2
-pytz==2026.1.post1
+pytz==2026.3.post1
 redis==7.4.0
 requests==2.33.1
 resend==2.30.1
