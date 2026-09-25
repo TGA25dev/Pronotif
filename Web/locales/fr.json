@@ -234,7 +234,9 @@
   },
   "notification": {
     "logoutInfoTitle": "Vous avez été déconnecté(e)",
-    "logoutInfoDesc": "Pour continuer, veuillez vous reconnecter à votre compte. Cela peut se produire si votre mot de passe a changé récemment ou si une erreur inconnue est survenue.",
+    "logoutInfoDesc": "Pour continuer, veuillez vous reconnecter à votre compte. Cela peut se produire si votre mot de passe a changé récemment ou si une erreur inconnue est survenue. Si le problème persiste, veuillez ouvrir une issue sur GitHub : https://github.com/TGA25dev/Pronotif/issues",
+    "initialLoginFailedTitle": "Échec de la connexion",
+    "initialLoginFailedDesc": "Pronot'if n'a pas pu se connecter à votre compte, essayez de vous reconnecter. Si le problème persiste, veuillez ouvrir une issue sur GitHub : https://github.com/TGA25dev/Pronotif/issues",
     "cancelledClassTitle": "❌ Cours annulé !",
     "cancelledClassBody": "Le cours {det}{extra_space}{name} initialement prévu à {class_start_time} est annulé.",
     "classTimeMessageTitle": "🔔 Prochain cours dans {delay} minute{s} !",

@@ -234,7 +234,9 @@
   },
   "notification": {
     "logoutInfoTitle": "Has sido desconectad@",
-    "logoutInfoDesc": "Para continuar, tienes que volver a iniciar sesión en tu cuenta. Esto puede ocurrir si has cambiando tu contraseña recientemente o si se ha producido un error desconocido.",
+    "logoutInfoDesc": "Para continuar, tienes que volver a iniciar sesión en tu cuenta. Esto puede ocurrir si has cambiando tu contraseña recientemente o si se ha producido un error desconocido. Si el problema persiste, abre una incidencia en GitHub: https://github.com/TGA25dev/Pronotif/issues",
+    "initialLoginFailedTitle": "Error de inicio de sesión en Pronotif",
+    "initialLoginFailedDesc": "Pronot'if no pudo iniciar sesión en tu cuenta. Si el problema persiste, abre una incidencia en GitHub: https://github.com/TGA25dev/Pronotif/issues",
     "cancelledClassTitle": "❌ ¡Clase cancelada!",
     "cancelledClassBody": "La clase {det}{extra_space}{name} prevista inicialmente a las {class_start_time} ha sido cancelada.",
     "classTimeMessageTitle": "🔔 ¡Próxima clase en {delay} minuto{s}!",

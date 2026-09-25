@@ -377,6 +377,9 @@ async def user_process_loop(user:PronotifUser) -> None:
     try:
         # Login
         if not await user.login():
+            if not user.relogin_needed_notified:
+                inform_user_initial_login_failed(user)
+                user.relogin_needed_notified = True
             logger.error(f"Failed to login user {user.user_hash[:4]}****, skipping...")
             return
             
@@ -626,6 +629,24 @@ def inform_user_relogin_is_needed(user):
         sentry_sdk.capture_exception(e)
     
     logger.info(f"Informed user {user.user_hash[:4]}**** about error that needed relogin")
+
+
+def inform_user_initial_login_failed(user):
+    """Inform the user when the background service cannot log in initially."""
+    lang = user.lang
+    title = get_i18n_value(lang, 'notification.initialLoginFailedTitle')
+    body = get_i18n_value(lang, 'notification.initialLoginFailedDesc')
+
+    try:
+        if user.fcm_token:
+            send_notification_to_device(user.fcm_token, title=title, body=body)
+        else:
+            logger.warning(f"Cannot send initial login notification for user {user.user_hash[:4]}****: FCM token is empty")
+    except Exception as e:
+        logger.error(f"Failed to send initial login notification for user {user.user_hash[:4]}****: {e}")
+        sentry_sdk.capture_exception(e)
+
+    logger.info(f"Informed user {user.user_hash[:4]}**** about initial login failure")
 
 async def lesson_check(user):
     """Check for upcoming lessons and send notifications"""
