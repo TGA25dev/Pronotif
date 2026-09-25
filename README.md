@@ -1,8 +1,8 @@
-> [!IMPORTANT]
->**Projet indépendant** <br>
->Pronot'if **n'est pas affilié** à Index Education ni à l'application **Pronote**.  
->Il s'agit d'un projet **indépendant**, sans lien avec les services officiels de Pronote
-
+> [!WARNING]
+>**Projet non maintenu activement**<br>
+>Ce projet n'est actuellement plus maintenu activement. Il est possible que certaines fonctionnalités ne fonctionnent pas ou fonctionnent mal. **La connexion aux comptes Pronote peut par exemple échouer.**
+> 
+>Les issues et pull requests restent ouvertes. Elles seront traitées et pourront être intégrée au projet si besoin.
 
 # Pronot'if <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Books.png" alt="Books" width="25" height="25" />
 
