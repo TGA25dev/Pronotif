@@ -188,7 +188,7 @@ class PronotifUser:
         except Exception as e:
             msg = str(e).lower()
             # Detect suspended IP error and set a pause window
-            if "suspended" in msg or "ip address is suspended" in msg:
+            if "suspended" in msg or "ip address is suspended" in msg or "provisoirement suspendue" in msg:
                 self.suspended_until = datetime.now(self.timezone_obj) + timedelta(minutes=10)
                 logger.critical(f"Login error for user {self.user_hash[:4]}**** : {e} -- IP suspended. Pausing tasks until {self.suspended_until}")
                 sentry_sdk.capture_message(f"IP suspended for user {self.user_hash}; paused until {self.suspended_until}")
