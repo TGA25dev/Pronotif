@@ -113,6 +113,11 @@
     "done": "Acabados"
   },
   "modal": {
+    "entLoginTitle": "Cómo usar el inicio de sesión con código QR ?",
+    "entLoginStepOne": "Abre el sitio oficial de Pronote de tu instituto.",
+    "entLoginStepTwo": "Genera allí un código QR de conexión y añade un código PIN.",
+    "entLoginStepThree": "Elige el inicio de sesión con código QR en Pronot'if y escanéalo.",
+    "entLoginStepFour": "Introduce el PIN.",
     "theme": "Tema",
     "light": "Claro",
     "dark": "Oscuro",
@@ -130,6 +135,7 @@
   },
   "common": {
     "cancel": "Cancelar",
+    "close": "Cerrar",
     "save": "Guardar",
     "set": "Definir"
   },
@@ -154,6 +160,9 @@
     "canceledStatus": "Cancelado"
   },
   "toast": {
+    "entLoginUnstableTitle": "Advertencia de conexión ENT",
+    "entLoginUnstableDesc": "Las conexiones ENT son actualmente muy inestables. Se recomienda encarecidamente iniciar sesión con el código QR.",
+    "entLoginUnstableAction": "Haz clic aquí para obtener más información",
     "settingsSavedSuccessTitle": "Parámetros guardados",
     "settingsSavedSuccessDesc": "Sus modificaciónes han sido guardadas.",
     "settingsSavedErrorDesc": "Ha sido imposible guardar tus cambios.",
