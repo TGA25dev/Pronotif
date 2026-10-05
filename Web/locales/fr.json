@@ -113,6 +113,11 @@
     "done": "Terminés"
   },
   "modal": {
+    "entLoginTitle": "Comment utiliser la connexion par QR code ?",
+    "entLoginStepOne": "Ouvrez le site officiel Pronote de votre établissement.",
+    "entLoginStepTwo": "Générez-y un QR code de connexion et ajoutez un code pin.",
+    "entLoginStepThree": "Choisissez la connexion par QR code dans Pronot'if et scannez-le.",
+    "entLoginStepFour": "Saisissez le code PIN choisi.",
     "theme": "Thème",
     "light": "Clair",
     "dark": "Sombre",
@@ -130,6 +135,7 @@
   },
   "common": {
     "cancel": "Annuler",
+    "close": "Fermer",
     "save": "Enregistrer",
     "set": "Définir"
   },
@@ -154,6 +160,9 @@
     "canceledStatus": "Annulé"
   },
   "toast": {
+    "entLoginUnstableTitle": "Attention : connexion ENT",
+    "entLoginUnstableDesc": "Les connexions ENT sont actuellement très instables. La connexion par QR code est fortement recommandée.",
+    "entLoginUnstableAction": "Cliquez ici pour plus d'informations",
     "settingsSavedSuccessTitle": "Paramètres sauvegardés",
     "settingsSavedSuccessDesc": "Vos modifications ont été enregistrées.",
     "settingsSavedErrorDesc": "Impossible de sauvegarder vos modifications.",
