@@ -87,7 +87,7 @@ app = Flask(__name__)
 limiter.init_app(app)
 app.wsgi_app = ProxyFix(
     app.wsgi_app,
-    x_for=2,       # Number of proxies setting X-Forwarded-For
+    x_for=1,       # Nginx is the only proxy setting X-Forwarded-For
     x_proto=1,     # Number of proxies setting X-Forwarded-Proto
     x_host=1,      # Number of proxies setting X-Forwarded-Host
     x_port=0,      # Number of proxies setting X-Forwarded-Port

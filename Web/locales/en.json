@@ -113,6 +113,11 @@
     "done": "Done"
   },
   "modal": {
+    "entLoginTitle": "How to use QR code login ?",
+    "entLoginStepOne": "Open your school's official Pronote website.",
+    "entLoginStepTwo": "Generate a connection QR code there and add a pin code.",
+    "entLoginStepThree": "Choose QR code login in Pronot'if and scan it.",
+    "entLoginStepFour": "Enter the PIN.",
     "theme": "Theme",
     "light": "Light",
     "dark": "Dark",
@@ -130,6 +135,7 @@
   },
   "common": {
     "cancel": "Cancel",
+    "close": "Close",
     "save": "Save",
     "set": "Set"
   },
@@ -154,6 +160,9 @@
     "canceledStatus": "Canceled"
   },
   "toast": {
+    "entLoginUnstableTitle": "ENT login warning",
+    "entLoginUnstableDesc": "ENT logins are currently very unstable. QR code login is strongly recommended.",
+    "entLoginUnstableAction": "Click here for more information",
     "settingsSavedSuccessTitle": "Settings saved",
     "settingsSavedSuccessDesc": "Your changes have been saved.",
     "settingsSavedErrorDesc": "Failed to save your changes.",
