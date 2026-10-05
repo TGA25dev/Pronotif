@@ -10,7 +10,7 @@ flask_Cors==6.0.5
 flask_Limiter==4.1.1
 flask_session==0.8.0
 flask_talisman==1.1.0
-geopy==2.4.1
+geopy==2.5.0
 infisicalsdk==1.0.16
 jinja2==3.1.6
 loguru==0.7.3
