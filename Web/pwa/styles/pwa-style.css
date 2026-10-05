@@ -2781,6 +2781,19 @@ body:has(#homeworkView:not(.hidden)) .toast-container {
     color: var(--subtitle-black);
 }
 
+.toast-action {
+    display: block;
+    margin-top: 0.5rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--primary);
+    font: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
 .toast-close {
     background: none;
     border: none;
@@ -2907,6 +2920,44 @@ body:has(#homeworkView:not(.hidden)) .toast-container {
     border-top: 1px solid var(--primary-light);
     padding-top: 0.5rem;
 }
+
+.ent-login-modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: var(--modal-overlay);
+    z-index: 1200;
+    padding: 1rem;
+}
+
+.ent-login-modal.show { display: flex; }
+
+.ent-login-modal-content {
+    width: 100%;
+    max-width: 420px;
+    background: var(--card-bg);
+    color: var(--text-black);
+    border-radius: 1rem;
+    padding: 1rem;
+    box-shadow: 0 10px 30px var(--shadow-md);
+}
+
+.ent-login-modal-content h2 {
+    font-family: "Cabinet";
+    font-weight: 800;
+    font-size: 1.25rem;
+    margin: 0 0 0.75rem;
+}
+
+.ent-login-modal-content ol {
+    margin: 0 0 1rem;
+    padding-left: 1.25rem;
+    color: var(--subtitle-black);
+}
+
+.ent-login-modal-content li { margin-bottom: 0.5rem; }
 
 .demo-mode-indicator {
     position: fixed;

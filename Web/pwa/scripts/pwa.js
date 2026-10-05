@@ -251,7 +251,9 @@ class ToastManager {
             type = 'info', // success, error, warning, info
             duration = 5000,
             persistent = false,
-            icon = null
+            icon = null,
+            actionLabel = null,
+            onAction = null
         } = options;
         
         // Remove oldest toast if too many
@@ -259,7 +261,7 @@ class ToastManager {
             this.hide(this.toasts[0]);
         }
         
-        const toast = this.createToast({ title, message, type, duration, persistent, icon });
+        const toast = this.createToast({ title, message, type, duration, persistent, icon, actionLabel, onAction });
         this.container.appendChild(toast);
         this.toasts.push(toast);
         
@@ -282,7 +284,7 @@ class ToastManager {
     }
 
     
-    createToast({ title, message, type, duration, persistent, icon }) {
+    createToast({ title, message, type, duration, persistent, icon, actionLabel, onAction }) {
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
         
@@ -302,6 +304,7 @@ class ToastManager {
             <div class="toast-content">
                 <div class="toast-title">${title}</div>
                 ${message ? `<div class="toast-message">${message}</div>` : ''}
+                ${actionLabel ? `<button class="toast-action" type="button">${actionLabel}</button>` : ''}
             </div>
             <button class="toast-close" aria-label="Fermer la notification">
                 <i class="fa-solid fa-times"></i>
@@ -312,6 +315,15 @@ class ToastManager {
         closeBtn.addEventListener('click', () => {
             this.hide(toast);
         });
+
+        const actionBtn = toast.querySelector('.toast-action');
+        if (actionBtn && onAction) {
+            actionBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
+                onAction();
+                this.hide(toast);
+            });
+        }
         
         toast.addEventListener('click', (e) => {
             if (!e.target.closest('.toast-close') && !persistent) {
@@ -4397,6 +4409,46 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    function showEntLoginWarning() {
+        const warningShownKey = 'entLoginWarningShown';
+        if (localStorage.getItem(warningShownKey)) {
+            return;
+        }
+
+        localStorage.setItem(warningShownKey, 'true');
+        toast.warning(
+            getI18nValue('toast.entLoginUnstableTitle'),
+            getI18nValue('toast.entLoginUnstableDesc'),
+            {
+                duration: 12000,
+                actionLabel: getI18nValue('toast.entLoginUnstableAction'),
+                onAction: showEntLoginInfoModal
+            }
+        );
+    }
+
+    function showEntLoginInfoModal() {
+        const modal = document.getElementById('entLoginInfoModal');
+        const closeBtn = document.getElementById('entLoginInfoCloseBtn');
+        if (!modal || !closeBtn) return;
+
+        const closeModal = () => {
+            modal.classList.remove('show');
+            modal.setAttribute('aria-hidden', 'true');
+        };
+
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        closeBtn.onclick = closeModal;
+
+        if (!modal.dataset.bound) {
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) closeModal();
+            });
+            modal.dataset.bound = 'true';
+        }
+    }
+
     // Function to show login view
     function showLoginView() {
         return new Promise((resolve) => {
@@ -4422,6 +4474,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         
                         // Initialize login buttons
                         loginHandler.init();
+                        showEntLoginWarning();
                         console.log('[Login] Login view displayed and buttons initialized');
 
                         // Password visibility toggle (eye icon)
@@ -4451,6 +4504,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     loginView.classList.remove('hidden');
                     loginView.classList.add('fade-in');
                     loginView.style.display = 'flex';
+                    showEntLoginWarning();
                 }
                 resolve();
             }
