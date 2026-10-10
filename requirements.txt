@@ -17,7 +17,7 @@ loguru==0.7.3
 mysql-connector-python>=9.7.0
 pronotepy==2.15.7
 pytz==2026.4
-python-dotenv==1.2.3
+python-dotenv==1.2.4
 redis==8.1.0
 requests==2.34.2
 sentry_sdk==2.71.0
