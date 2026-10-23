@@ -249,10 +249,10 @@ async def load_active_users() -> list:
                             'user_hash': user.user_hash,
                             'logged_in': user.client and user.client.logged_in if user.client else False
                         }
-                        redis_client.setex(
-                            f"user_session:{user_hash}", 
-                            300,  # 5 minutes TTL
-                            json.dumps(user_info)
+                        redis_client.set(
+                            f"user_session:{user_hash}",
+                            json.dumps(user_info),
+                            ex=300,  # 5 minutes TTL
                         )
                 except Exception as e:
                     logger.error(f"Failed to store user sessions in Redis: {e}")
@@ -390,10 +390,10 @@ async def user_process_loop(user:PronotifUser) -> None:
                 'user_hash': user.user_hash,
                 'logged_in': True
             }
-            redis_client.setex(
-                f"user_session:{user.user_hash}", 
-                300,  # 5 minutes TTL
-                json.dumps(user_info)
+            redis_client.set(
+                f"user_session:{user.user_hash}",
+                json.dumps(user_info),
+                ex=300,  # 5 minutes TTL
             )
         except Exception as e:
             logger.error(f"Failed to update Redis session for user {user.user_hash[:4]}****: {e}")
@@ -429,10 +429,10 @@ async def user_process_loop(user:PronotifUser) -> None:
                             'user_hash': user.user_hash,
                             'logged_in': user.client and user.client.logged_in if user.client else False
                         }
-                        redis_client.setex(
-                            f"user_session:{user.user_hash}", 
-                            300,  # 5 minutes TTL
-                            json.dumps(user_info)
+                        redis_client.set(
+                            f"user_session:{user.user_hash}",
+                            json.dumps(user_info),
+                            ex=300,  # 5 minutes TTL
                         )
                     except Exception as e:
                         logger.error(f"Failed to update Redis session: {e}")
