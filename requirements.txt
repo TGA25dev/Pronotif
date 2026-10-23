@@ -1,7 +1,7 @@
 aiofiles==25.1.0
-aiohttp==3.14.3
+aiohttp==3.14.5
 beautifulsoup4==4.15.0
-cryptography==50.0.1
+cryptography==50.0.2
 bleach==6.4.0
 email_validator==2.3.0
 firebase_admin==7.7.0
@@ -20,7 +20,7 @@ python-dotenv==1.2.4
 pytz==2026.5
 redis==8.1.0
 requests==2.34.2
-sentry_sdk==2.71.0
+sentry_sdk==2.72.0
 resend==2.49.1
 werkzeug==3.1.9
 gunicorn==26.2.0
