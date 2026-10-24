@@ -21,6 +21,6 @@ pytz==2026.5
 redis==8.1.0
 requests==2.34.2
 sentry_sdk==2.72.0
-resend==2.49.1
+resend==2.50.0
 werkzeug==3.1.9
 gunicorn==26.2.0
