@@ -2525,6 +2525,11 @@ body::before {
     justify-content: flex-start;
 }
 
+.settings-link-item {
+    color: inherit;
+    text-decoration: none;
+}
+
 .settings-item:last-child {
     border-bottom: none;
 }
