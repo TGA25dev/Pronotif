@@ -194,6 +194,8 @@
     "wrongCredentialsDesc": "Nombre de usuario o contraseña incorrectos.",
     "regionUnsupportedTitle": "Región no compatible",
     "regionUnsupportedDesc": "Tu región aún no es compatible. Contáctanos en GitHub si deseas que la añademos.",
+    "regionMissingTitle": "Falta la región",
+    "regionMissingDesc": "Nos se ha podido encontrar tu region vuelve a intentarlo.",
     "generalErrorTitle": "Se ha producido un error",
     "generalErrorDesc": "Vuelve a intentarlo más tarde.",
     "comingSoonTitle": "Paciencia !",

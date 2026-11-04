@@ -2075,8 +2075,16 @@ const loginHandler = {
                             return;
                         }
 
-                        console.error("Login failed:", data.message || `Status ${response.status}`);
-                        toast.error(data.message || getI18nValue("toast.networkErrorTitle"), getI18nValue("toast.networkErrorDesc"));
+                        else if (data.error === "Region is required for ENT login") {
+                            toast.error(getI18nValue("toast.regionMissingTitle"), getI18nValue("toast.regionMissingDesc"));
+                            console.error("The ENT login region was not provided.");
+                        } else if (data.error || data.message) {
+                            console.error("Login failed with server response:", response.status);
+                            toast.error(getI18nValue("toast.generalErrorTitle"), getI18nValue("toast.generalErrorDesc"));
+                        } else {
+                            console.error("Login failed:", `Status ${response.status}`);
+                            toast.error(getI18nValue("toast.networkErrorTitle"), getI18nValue("toast.networkErrorDesc"));
+                        }
 
                         loginSubmitButton.disabled = false;
                         loginSubmitButton.style.cursor = "pointer";

@@ -194,6 +194,8 @@
     "wrongCredentialsDesc": "Identifiant ou mot de passe incorrect.",
     "regionUnsupportedTitle": "Région non prise en charge",
     "regionUnsupportedDesc": "Désole.. mais votre région n'est pas encore prise en charge. Contactez nous sur GitHub si vous souhaitez que nous l'ajoutions.",
+    "regionMissingTitle": "Région manquante",
+    "regionMissingDesc": "Nous n'avons pas été en mesure de trouver votre région veuillez réessayer.",
     "generalErrorTitle": "Une erreur est survenue",
     "generalErrorDesc": "Veuillez réessayer plus tard.",
     "comingSoonTitle": "Patience !",
