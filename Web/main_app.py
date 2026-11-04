@@ -68,6 +68,7 @@ csp = {
     'worker-src': ['\'self\'', 'blob:', 'https://pronotif.tech/*'],
     'connect-src': [
         '\'self\'', 
+        'https://analytics.pronotif.tech',
         'https://kit.fontawesome.com', 
         'https://ka-f.fontawesome.com', 
         '*.sentry.io',
@@ -94,6 +95,7 @@ csp = {
     'script-src': [
             '\'self\'',
             '\'strict-dynamic\'',
+            'https://analytics.pronotif.tech',
             'https:',
             'https://storage.googleapis.com',
             'https://sentry.io',
