@@ -381,6 +381,32 @@ const toast = new ToastManager();
 // Make it globally available
 window.toast = toast;
 
+async function openSentryFeedback() {
+    try {
+        const feedback = window.Sentry?.getFeedback?.();
+        if (!feedback) {
+            console.warn('[Feedback] Sentry feedback is not available');
+            return false;
+        }
+
+        const form = await feedback.createForm();
+        form.appendToDom();
+        form.open();
+        return true;
+    } catch (error) {
+        console.error('[Feedback] Error opening Sentry feedback:', error);
+        return false;
+    }
+}
+
+function showUnauthenticatedLoginError(message, type = 'error') {
+    return toast[type]('Impossible de se connecter ?', message, {
+        actionLabel: 'Signaler un problème',
+        onAction: openSentryFeedback,
+        persistent: true
+    });
+}
+
 window.fetch = async function(...args) {
     const start = performance.now();
     try {
@@ -1053,7 +1079,7 @@ const loginHandler = {
             </div>
         `;
         loginOptionsContainer.style.display = "block";
-        applyLanguageToPage();
+        window.applyLanguageToPage?.();
         
         //Reinitialize button listeners
         this.init();
@@ -1235,20 +1261,31 @@ const loginHandler = {
 
         let invalidQrFeedbackUntil = 0;
         let scannerFeedbackUntil = 0;
-        let scannerFeedbackMessage = '';
 
         const setQrStep = () => {};
 
         const showScannerFeedback = (message, {
             cooldownMs = 2200,
-            holdMs = 1400
+            holdMs = 1400,
+            reportable = false
         } = {}) => {
             const now = Date.now();
-            scannerFeedbackMessage = message;
             scannerFeedbackUntil = now + holdMs;
 
             if (qrInstruction) {
-                qrInstruction.textContent = message;
+                qrInstruction.replaceChildren(document.createTextNode(message));
+
+                if (reportable) {
+                    const reportButton = document.createElement('button');
+                    reportButton.type = 'button';
+                    reportButton.className = 'qr-scanner-report-button';
+                    reportButton.textContent = 'Signaler un problème';
+                    reportButton.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                        openSentryFeedback();
+                    });
+                    qrInstruction.appendChild(reportButton);
+                }
             }
 
             if (now > invalidQrFeedbackUntil) {
@@ -1259,7 +1296,15 @@ const loginHandler = {
         const sanitizePinInput = (value) => value.replace(/\D/g, '').slice(0, 4);
 
         const showPinError = (message) => {
-            pinError.textContent = message;
+            pinError.replaceChildren(document.createTextNode(message));
+
+            const reportButton = document.createElement('button');
+            reportButton.type = 'button';
+            reportButton.className = 'qr-pin-report-button';
+            reportButton.textContent = 'Signaler un problème';
+            reportButton.addEventListener('click', openSentryFeedback);
+            pinError.appendChild(reportButton);
+
             pinError.classList.remove('hidden');
         };
 
@@ -1496,9 +1541,7 @@ const loginHandler = {
                     const now = Date.now();
 
                     if (qrInstruction) {
-                        if (now < scannerFeedbackUntil) {
-                            qrInstruction.textContent = scannerFeedbackMessage;
-                        } else {
+                        if (now >= scannerFeedbackUntil) {
                             qrInstruction.textContent = avgBrightness < lowLightThreshold
                                 ? 'Zut! Où est passée la lumière.. ?'
                                 : 'Placez votre QR Code dans le cadre';
@@ -1515,7 +1558,7 @@ const loginHandler = {
                         if (code) {
                             if (!code.data || typeof code.data !== 'string' || code.data.trim() === '') {
                                 const canLog = now > invalidQrFeedbackUntil;
-                                showScannerFeedback('Ce QR Code ne contient aucune donnée utile...');
+                                showScannerFeedback('Ce QR Code ne contient aucune donnée utile...', { reportable: true });
                                 if (canLog) {
                                     console.warn('QR code has empty data payload');
                                 }
@@ -1524,14 +1567,25 @@ const loginHandler = {
                             }
 
                             let qrData;
+                            const qrPayload = code.data.trim();
+                            if (!qrPayload.startsWith('{')) {
+                                const canLog = now > invalidQrFeedbackUntil;
+                                showScannerFeedback('Mince, ce QR Code ne semble pas être valide...', { reportable: true });
+                                if (canLog) {
+                                    console.info('QR code does not contain a Pronote JSON payload');
+                                }
+                                requestAnimationFrame(tick);
+                                return;
+                            }
+
                             try {
-                                qrData = JSON.parse(code.data);
+                                qrData = JSON.parse(qrPayload);
 
                             } catch (parseError) {
                                 const canLog = now > invalidQrFeedbackUntil;
-                                showScannerFeedback('Mince, ce QR Code ne semble pas être valide...');
+                                showScannerFeedback('Mince, ce QR Code ne semble pas être valide...', { reportable: true });
                                 if (canLog) {
-                                    console.warn('QR code parse error:', parseError);
+                                    console.info('QR code contains malformed JSON payload');
                                 }
                                 requestAnimationFrame(tick);
                                 return;
@@ -1539,7 +1593,7 @@ const loginHandler = {
 
                             if (!qrData.jeton || !qrData.login || !qrData.url) {
                                 const canLog = now > invalidQrFeedbackUntil;
-                                showScannerFeedback('Des données sont manquantes dans ce QR Code...');
+                                showScannerFeedback('Des données sont manquantes dans ce QR Code...', { reportable: true });
                                 if (canLog) {
                                     console.warn('QR code missing required Pronote fields:', qrData);
                                 }
@@ -2050,7 +2104,7 @@ const loginHandler = {
                     const data = await response.json().catch(() => ({}));
 
                     if (response.status === 401) {
-                        toast.warning(getI18nValue("toast.wrongCredentialsTitle"), getI18nValue("toast.wrongCredentialsDesc"));
+                        showUnauthenticatedLoginError(getI18nValue("toast.wrongCredentialsDesc"), 'warning');
                         console.error("Wrong credentials provided.");
 
                         loginSubmitButton.disabled = false;
@@ -2075,19 +2129,27 @@ const loginHandler = {
 
                     } else {
                         if (response.status === 504) {
-                            toast.error(getI18nValue("toast.wrongCredentialsTitle"), getI18nValue("toast.pronoteTimeoutDesc"));
+                            showUnauthenticatedLoginError(getI18nValue("toast.pronoteTimeoutDesc"));
                             console.error("Pronote server timed out.");
+                            loginSubmitButton.disabled = false;
+                            loginSubmitButton.style.cursor = "pointer";
+                            loginSubmitButton.style.opacity = "1";
+                            loginSubmitButton.textContent = getI18nValue("login.loginButtonLabel");
                             return;
                         }
 
                         else if (response.status === 503) {
-                            toast.warning(getI18nValue("Service désactivé"), "La fonctionnalité de connexion manuelle est temporairement indisponible, elle sera réactivée sous peu.", { persistent: true });
+                            showUnauthenticatedLoginError("La fonctionnalité de connexion manuelle est temporairement indisponible, elle sera réactivée sous peu.", 'warning');
                             console.error("Manual link has been disabled.");
+                            loginSubmitButton.disabled = false;
+                            loginSubmitButton.style.cursor = "pointer";
+                            loginSubmitButton.style.opacity = "1";
+                            loginSubmitButton.textContent = getI18nValue("login.loginButtonLabel");
                             return;
                         }
 
                         else if (data.error === "Region not supported yet") {
-                            toast.warning(getI18nValue("toast.regionUnsupportedTitle"), getI18nValue("toast.regionUnsupportedDesc"));
+                            showUnauthenticatedLoginError(getI18nValue("toast.regionUnsupportedDesc"), 'warning');
                             console.error("The selected region is not supported yet.");
 
                             loginSubmitButton.disabled = false;
@@ -2098,14 +2160,14 @@ const loginHandler = {
                         }
 
                         else if (data.error === "Region is required for ENT login") {
-                            toast.error(getI18nValue("toast.regionMissingTitle"), getI18nValue("toast.regionMissingDesc"));
+                            showUnauthenticatedLoginError(getI18nValue("toast.regionMissingDesc"));
                             console.error("The ENT login region was not provided.");
                         } else if (data.error || data.message) {
                             console.error("Login failed with server response:", response.status);
-                            toast.error(getI18nValue("toast.generalErrorTitle"), getI18nValue("toast.generalErrorDesc"));
+                            showUnauthenticatedLoginError(getI18nValue("toast.generalErrorDesc"));
                         } else {
                             console.error("Login failed:", `Status ${response.status}`);
-                            toast.error(getI18nValue("toast.networkErrorTitle"), getI18nValue("toast.networkErrorDesc"));
+                            showUnauthenticatedLoginError(getI18nValue("toast.networkErrorDesc"));
                         }
 
                         loginSubmitButton.disabled = false;
@@ -4156,6 +4218,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             updateDashboardWithData(window.lastDashboardData);
         }
     }
+    window.applyLanguageToPage = applyLanguageToPage;
 
     function updateLanguageOptions() {
         const currentLanguage = localStorage.getItem('language') || 'fr';
@@ -4901,19 +4964,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (reportBugItem) {
         reportBugItem.addEventListener('click', async () => {
             console.log('[Settings] Opening Sentry feedback');
-            try {
-                const feedback = window.Sentry?.getFeedback?.();
-                if (feedback) {
-
-                    const form = await feedback.createForm();
-                    form.appendToDom();
-                    form.open();
-                } else {
-                    toast.warning(getI18nValue("toast.globalErrorTitle"), getI18nValue("toast.reportSystemUnavailableDes"));
-                    console.warn('[Settings] Sentry feedback not available');
-                }
-            } catch (error) {
-                console.error('[Settings] Error opening feedback:', error);
+            const opened = await openSentryFeedback();
+            if (!opened) {
                 toast.error(getI18nValue("toast.globalErrorTitle"), getI18nValue("toast.reportSystemErrorDesc"));
             }
         });

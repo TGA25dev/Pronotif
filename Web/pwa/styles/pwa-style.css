@@ -3753,6 +3753,35 @@ body:has(#homeworkView:not(.hidden)) .bottom-navbar {
     margin-top: -0.15rem;
 }
 
+.qr-pin-report-button {
+    display: block;
+    margin: 0.45rem auto 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--primary);
+    font: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.qr-scanner-report-button {
+    display: block;
+    margin: 0.45rem auto 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+    cursor: pointer;
+    pointer-events: auto;
+    position: relative;
+    z-index: 3;
+}
+
 .qr-pin-footer {
     display: grid;
     grid-template-columns: 1fr 1fr;
