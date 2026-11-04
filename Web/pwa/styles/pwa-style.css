@@ -19,6 +19,13 @@
     --login-view-main-card: #FFEEDB;
 
     --box-accent-color: #FFECD6;
+    --login-badge-bg: var(--login-view-bg);
+    --login-helper-border: var(--login-view-bg);
+    --login-helper-bg: rgba(255, 255, 255, 0.55);
+    --login-divider: rgba(30, 45, 45, 0.2);
+    --login-card-shadow: rgba(0, 0, 0, 0.12);
+    --login-warning-text: #9a5a16;
+    --login-warning-bg: rgba(180, 83, 9, 0.08);
 
     --white: #ffffff;
     --black: #000000;
@@ -128,6 +135,13 @@
     --login-view-main-card: #1E2629;
 
     --box-accent-color: #232B2E;
+    --login-badge-bg: rgba(6, 108, 106, 0.35);
+    --login-helper-border: #55b8b3;
+    --login-helper-bg: rgba(255, 255, 255, 0.06);
+    --login-divider: rgba(255, 255, 255, 0.18);
+    --login-card-shadow: rgba(0, 0, 0, 0.25);
+    --login-warning-text: #fbbf24;
+    --login-warning-bg: rgba(251, 191, 36, 0.1);
 
     --white: #FFFFFF;
     --black: #000000;
@@ -448,8 +462,159 @@ body::before {
     font-family: "Satoshi", sans-serif;
     color: var(--text);
     margin-bottom: 0.75rem;
-    box-shadow: 0px 0px 3px 0px var(--shadow-md);
+    box-shadow: 0 1px 3px var(--login-card-shadow);
     padding: 0.8rem;
+}
+
+.login-primary-option-box {
+    min-height: 6.25rem;
+}
+
+.login-primary-option-box i {
+    font-size: 1.7rem;
+    color: var(--text-black);
+}
+
+.login-recommended-badge {
+    position: absolute;
+    top: 0.65rem;
+    right: 0.65rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    background-color: var(--login-badge-bg);
+    color: var(--text-white);
+    font-size: 0.65rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.login-helper-toggle,
+.login-secondary-toggle {
+    border: 0;
+    background: transparent;
+    color: var(--text-black);
+    cursor: pointer;
+    font-family: "Satoshi", sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.login-helper-toggle {
+    align-self: flex-start;
+    margin: 0.1rem 0 0.35rem;
+    padding: 0.25rem 0;
+    color: var(--text-secondary);
+}
+
+.login-helper-toggle::after {
+    content: "";
+    display: inline-block;
+    width: 0.4rem;
+    height: 0.4rem;
+    margin-left: 0.5rem;
+    border-right: 1px solid currentColor;
+    border-bottom: 1px solid currentColor;
+    transform: translateY(-0.15rem) rotate(45deg);
+    transition: transform 0.2s ease;
+}
+
+.login-helper-toggle[aria-expanded="true"]::after {
+    transform: translateY(0.1rem) rotate(225deg);
+}
+
+.login-helper-panel {
+    max-height: 15rem;
+    margin: -0.2rem 0 0.55rem;
+    padding: 0.25rem 0.85rem 0.25rem 0.75rem;
+    overflow: hidden;
+    border-left: 2px solid var(--login-helper-border);
+    border-radius: 0;
+    background: transparent;
+    color: var(--subtitle-black);
+    font-size: 0.75rem;
+    line-height: 1.35;
+    opacity: 1;
+    transition: max-height 0.25s ease, margin 0.25s ease, opacity 0.2s ease, padding 0.25s ease;
+}
+
+.login-helper-panel[aria-hidden="true"] {
+    max-height: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    opacity: 0;
+}
+
+.login-helper-panel p + p {
+    margin-top: 0.35rem;
+}
+
+.login-secondary-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 0.35rem;
+    padding: 0.85rem 0 0.7rem;
+    text-align: left;
+    border-top: 0;
+}
+
+.login-secondary-toggle i {
+    font-size: 0.75rem;
+    transition: transform 0.2s ease;
+}
+
+.login-secondary-toggle[aria-expanded="true"] i {
+    transform: rotate(180deg);
+}
+
+.login-secondary-options {
+    max-height: 18rem;
+    overflow: hidden;
+    margin-top: 0.25rem;
+    opacity: 1;
+    transition: max-height 0.3s ease, margin 0.3s ease, opacity 0.2s ease;
+}
+
+.login-secondary-options[aria-hidden="true"] {
+    max-height: 0;
+    margin-top: 0;
+    opacity: 0;
+}
+
+.login-secondary-options .login-option-box {
+    min-height: 4.25rem;
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    box-shadow: none;
+}
+
+.login-secondary-options .login-option-box:hover,
+.login-secondary-options .login-option-box:focus-visible {
+    background: var(--primary-surface);
+    border-color: var(--primary-alpha-30);
+}
+
+.login-legacy-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.45rem;
+    margin: 0 0 0.55rem;
+    padding: 0.45rem 0.6rem;
+    border-radius: 0.45rem;
+    background: var(--login-warning-bg);
+    color: var(--login-warning-text);
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.login-legacy-warning i {
+    flex: 0 0 auto;
+    margin-top: 0.1rem;
+    font-size: 0.75rem;
 }
 
 .login-option-box:last-child {

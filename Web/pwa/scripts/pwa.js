@@ -999,39 +999,61 @@ const loginHandler = {
         
         //Show main login options
         loginOptionsContainer.innerHTML = `
-            <button class="login-option-box" id="loginGeolocButton">
-                <i class="fa-regular fa-compass"></i>
-                <div class="option-text-container">
-                    <h2 class="options-button-title" id="geolocButtonTitle" data-i18n="login.geolocationTitle">Utilisez la géolocalisation</h2>
-                    <p class="options-button-subtitle" id="geolocButtonSubtitle" data-i18n="login.geolocationDesc">Activez la géolocalisation afin de localiser les établissements proches de vous</p>
-                </div>
-            </button>
-
-            <button class="login-option-box" id="loginSearchCityButton">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <div class="option-text-container">
-                    <h2 class="options-button-title" data-i18n="login.searchCityTitle">Recherchez votre ville</h2>
-                    <p class="options-button-subtitle" data-i18n="login.searchCityDesc">Recherchez le nom de votre ville dans la barre de recherche</p>
-                </div>
-            </button>
-
-            <button class="login-option-box" id="loginQrCodeButton">
+            <button class="login-option-box login-primary-option-box" id="loginQrCodeButton" type="button">
                 <i class="fa-solid fa-qrcode"></i>
                 <div class="option-text-container">
-                    <h2 class="options-button-title" data-i18n="login.QrCodeTitle">Scannez le QR Code</h2>
-                    <p class="options-button-subtitle" data-i18n="login.QrCodeDesc">Scannez directement le QR Code de connexion que vous avez généré sur le site officiel</p>
+                    <h2 class="options-button-title" data-i18n="login.qrCodeTitle">Scannez le QR Code</h2>
+                    <p class="options-button-subtitle" data-i18n="login.qrCodeDesc">Scannez directement le QR Code de connexion que vous avez généré sur le site officiel</p>
                 </div>
+                <span class="login-recommended-badge" data-i18n="login.recommended">Recommandé</span>
             </button>
 
-            <button class="login-option-box" id="loginLinkButton">
-                <i class="fa-solid fa-link"></i>
-                <div class="option-text-container">
-                    <h2 class="options-button-title" data-i18n="login.gotALinkTitle">Vous avez un lien ?</h2>
-                    <p class="options-button-subtitle" data-i18n="login.gotALinkDesc">Utilisez le lien direct de votre établissement</p>
-                </div>
+            <button class="login-helper-toggle" id="loginQrHelpToggle" type="button" aria-expanded="false" aria-controls="loginQrHelp" data-i18n="login.qrCodeHelp">Où trouver mon QR Code ?</button>
+            <div class="login-helper-panel" id="loginQrHelp" aria-hidden="true">
+                <p><strong>1. <span data-i18n="login.qrCodeHelpStepOneLead">Allez sur Pronote</span></strong> <span data-i18n="login.qrCodeHelpStepOneRest">depuis un ordinateur.</span></p>
+                <p><strong>2. <span data-i18n="login.qrCodeHelpStepTwoLead">Cliquez sur l'icône QR Code</span></strong> <span data-i18n="login.qrCodeHelpStepTwoRest">située en haut de l'écran.</span></p>
+                <p><strong>3. <span data-i18n="login.qrCodeHelpStepThreeLead">Créez un code PIN</span></strong> <span data-i18n="login.qrCodeHelpStepThreeRest">(vous pouvez choisir des chiffres au hasard).</span></p>
+                <p><strong>4. <span data-i18n="login.qrCodeHelpStepFourLead">Scannez le QR Code</span></strong> <span data-i18n="login.qrCodeHelpStepFourRest">affiché avec l'application et entrez ce code PIN.</span></p>
+                <p><strong>5. <span data-i18n="login.qrCodeHelpStepFiveLead">C'est terminé</span></strong> <span data-i18n="login.qrCodeHelpStepFiveRest">votre compte est connecté !</span></p>
+            </div>
+
+            <button class="login-secondary-toggle" id="loginOtherOptionsToggle" type="button" aria-expanded="false" aria-controls="loginOtherOptions">
+                <span data-i18n="login.otherOptions">Autres options de connexion</span>
+                <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
             </button>
+
+            <div class="login-secondary-options" id="loginOtherOptions" aria-hidden="true">
+                <p class="login-legacy-warning">
+                    <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+                    <span data-i18n="login.legacyWarning">Attention : Ces méthodes ne fonctionnent pas avec les ENT.</span>
+                </p>
+                <button class="login-option-box" id="loginGeolocButton" type="button">
+                    <i class="fa-regular fa-compass"></i>
+                    <div class="option-text-container">
+                        <h2 class="options-button-title" id="geolocButtonTitle" data-i18n="login.geolocationTitle">Utilisez la géolocalisation</h2>
+                        <p class="options-button-subtitle" id="geolocButtonSubtitle" data-i18n="login.geolocationDesc">Activez la géolocalisation afin de localiser les établissements proches de vous</p>
+                    </div>
+                </button>
+
+                <button class="login-option-box" id="loginSearchCityButton" type="button">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <div class="option-text-container">
+                        <h2 class="options-button-title" data-i18n="login.searchCityTitle">Recherchez votre ville</h2>
+                        <p class="options-button-subtitle" data-i18n="login.searchCityDesc">Recherchez le nom de votre ville dans la barre de recherche</p>
+                    </div>
+                </button>
+
+                <button class="login-option-box" id="loginLinkButton" type="button">
+                    <i class="fa-solid fa-link"></i>
+                    <div class="option-text-container">
+                        <h2 class="options-button-title" data-i18n="login.gotALinkTitle">Vous avez un lien ?</h2>
+                        <p class="options-button-subtitle" data-i18n="login.gotALinkDesc">Utilisez le lien direct de votre établissement</p>
+                    </div>
+                </button>
+            </div>
         `;
         loginOptionsContainer.style.display = "block";
+        applyLanguageToPage();
         
         //Reinitialize button listeners
         this.init();
@@ -2163,6 +2185,10 @@ const loginHandler = {
         const geolocButton = document.getElementById('loginGeolocButton');
         const directLinkButton = document.getElementById('loginLinkButton');
         const qrCodeButton = document.getElementById('loginQrCodeButton');
+        const qrHelpToggle = document.getElementById('loginQrHelpToggle');
+        const qrHelpPanel = document.getElementById('loginQrHelp');
+        const otherOptionsToggle = document.getElementById('loginOtherOptionsToggle');
+        const otherOptionsPanel = document.getElementById('loginOtherOptions');
         
         this.loginHeaderAppTitle = document.getElementById('loginHeaderAppTitle');
         this.loginHeaderAppSubTitle = document.getElementById('loginHeaderAppSubTitle');
@@ -2185,6 +2211,22 @@ const loginHandler = {
         
         if (qrCodeButton) {
             qrCodeButton.addEventListener('click', this.handleQrCodeLogin.bind(this));
+        }
+
+        if (qrHelpToggle && qrHelpPanel) {
+            qrHelpToggle.addEventListener('click', () => {
+                const isExpanded = qrHelpToggle.getAttribute('aria-expanded') === 'true';
+                qrHelpToggle.setAttribute('aria-expanded', String(!isExpanded));
+                qrHelpPanel.setAttribute('aria-hidden', String(isExpanded));
+            });
+        }
+
+        if (otherOptionsToggle && otherOptionsPanel) {
+            otherOptionsToggle.addEventListener('click', () => {
+                const isExpanded = otherOptionsToggle.getAttribute('aria-expanded') === 'true';
+                otherOptionsToggle.setAttribute('aria-expanded', String(!isExpanded));
+                otherOptionsPanel.setAttribute('aria-hidden', String(isExpanded));
+            });
         }
         
         //Add masking to login inputs
