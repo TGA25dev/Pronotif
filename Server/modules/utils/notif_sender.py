@@ -1,7 +1,18 @@
 import mysql.connector
-from modules.messaging.firebase import send_notification_to_device
-from modules.secrets.secrets_manager import get_secret
-from modules.sentry.sentry_config import get_logger_enabled_sentry
+import sys
+from pathlib import Path
+
+#support running this module directly and importing it from repo root scripts
+_THIS_FILE = Path(__file__).resolve()
+_PROJECT_ROOT = _THIS_FILE.parents[3]
+_SERVER_ROOT = _THIS_FILE.parents[2]
+for _path in (str(_PROJECT_ROOT), str(_SERVER_ROOT)):
+    if _path not in sys.path:
+        sys.path.insert(0, _path)
+
+from Server.modules.messaging.firebase import send_notification_to_device
+from Server.modules.secrets.secrets_manager import get_secret
+from Server.modules.sentry.sentry_config import get_logger_enabled_sentry
 
 sentry_sdk, sentry_logger, logger = get_logger_enabled_sentry()
 
