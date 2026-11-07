@@ -174,7 +174,11 @@
   "notif": {
     "title": "Notifications",
     "enableDesc": "Activez les notifications pour profiter pleinement de l'expérience Pronot'if.",
+    "tokenMissingDesc": "Les notifications sont autorisées, mais votre appareil n'est pas encore enregistré. Vous pouvez réessayer maintenant.",
+    "blockedDesc": "Les notifications sont bloquées dans les réglages de votre appareil. Vous pouvez les autoriser quand vous le souhaitez.",
+    "retryFailedDesc": "Nous n'avons pas pu enregistrer votre appareil. Veuillez réessayer.",
     "enableBtn": "Activer maintenant",
+    "retryBtn": "Réessayer",
     "laterBtn": "Plus tard"
   },
   "schedule": {

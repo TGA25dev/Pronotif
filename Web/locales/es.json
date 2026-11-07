@@ -174,7 +174,11 @@
   "notif": {
     "title": "Notificaciones",
     "enableDesc": "Activa las notificaciones para disfrutar plenamente de la experiencia Pronot'if.",
+    "tokenMissingDesc": "Las notificaciones están permitidas, pero este dispositivo aún no está registrado. Puedes volver a intentarlo ahora.",
+    "blockedDesc": "Las notificaciones están bloqueadas en la configuración de tu móvil. Puedes activarlas cuando quieras.",
+    "retryFailedDesc": "No hemos podido registrar tu móvil. Inténtalo de nuevo.",
     "enableBtn": "Activar ahora",
+    "retryBtn": "Reintentar",
     "laterBtn": "Más tarde"
   },
   "schedule": {

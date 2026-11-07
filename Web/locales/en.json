@@ -174,7 +174,11 @@
   "notif": {
     "title": "Notifications",
     "enableDesc": "Enable notifications to get the most out of Pronot'if.",
+    "tokenMissingDesc": "Notifications are allowed, but this device is not registered yet. You can try again now.",
+    "blockedDesc": "Notifications are blocked in your browser settings. You can allow them whenever you are ready.",
+    "retryFailedDesc": "We couldn't register your device. Please try again.",
     "enableBtn": "Enable now",
+    "retryBtn": "Try again",
     "laterBtn": "Later"
   },
   "schedule": {

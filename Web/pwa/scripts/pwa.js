@@ -3681,9 +3681,8 @@ async function revokeFCMToken() {
 async function sendFCMTokenToServer(token) {
     if (token === lastSentToken) {
         console.log('FCM token already sent, skipping duplicate.');
-        return;
+        return true;
     }
-    lastSentToken = token;
     try {
         const response = await wrapFetch('https://api.pronotif.tech/v1/app/fcm-token', {
             method: 'POST',
@@ -3695,6 +3694,7 @@ async function sendFCMTokenToServer(token) {
         const data = await response.json();
         if (data.status === 200) {
             console.log('FCM token saved on server successfully');
+            lastSentToken = token;
             localStorage.setItem('fcmToken', token);
             localStorage.setItem('fcmTokenTimestamp', Date.now().toString());
             // Update debug panel
@@ -3702,12 +3702,14 @@ async function sendFCMTokenToServer(token) {
             if (deviceInfoEl) {
                 deviceInfoEl.innerText = JSON.stringify(debugLogger.getDeviceInfo(), null, 2);
             }
+            return true;
         } else {
             console.error('Failed to save FCM token on server:', data.error);
         }
     } catch (error) {
         console.error('Error sending FCM token to server:', error);
     }
+    return false;
 }
 
 // Handle FCM token registration when notifications are enabled
@@ -3727,9 +3729,7 @@ async function registerFCMToken() {
 
         if (currentToken) {
             console.log('FCM token acquired');
-            localStorage.setItem('fcmToken', currentToken);
-            await sendFCMTokenToServer(currentToken);
-            return currentToken;
+            return await sendFCMTokenToServer(currentToken) ? currentToken : null;
         } else {
             console.warn('No FCM token available');
             return null;
@@ -3766,6 +3766,20 @@ async function checkNotifEnabled() {
     const infoNotifText = document.getElementById('infoNotifText');
     const infoNotifTitle = document.getElementById('infoNotifTitle');
     const laterButton = document.getElementById('laterButton');
+    const showPrompt = (description, { canEnable = true } = {}) => {
+        if (document.cookie.includes("notifDismissed=true")) return;
+        infoNotifText.textContent = description;
+        allowNotifButton.style.display = canEnable ? 'block' : 'none';
+        allowNotifButton.textContent = Notification.permission === 'granted'
+            ? getI18nValue('notif.retryBtn')
+            : getI18nValue('notif.enableBtn');
+        laterButton.onclick = () => {
+            document.cookie = "notifDismissed=true; path=/; max-age=31536000";
+            notifPrompt.classList.add("fade-out");
+            setTimeout(() => notifPrompt.classList.remove("visible"), 300);
+        };
+        notifPrompt.classList.add("visible");
+    };
 
     if (!('Notification' in window)) {
         console.warn('This browser does not support notifications !');
@@ -3805,18 +3819,21 @@ async function checkNotifEnabled() {
 
             if (currentToken) {
                 console.log('FCM Registration Token:', currentToken);
-                sendFCMTokenToServer(currentToken);
-                return true;
+                if (await sendFCMTokenToServer(currentToken)) return true;
+                showPrompt(getI18nValue('notif.tokenMissingDesc'));
+                return false;
             } else {
                 console.warn('No registration token available');
+                showPrompt(getI18nValue('notif.tokenMissingDesc'));
                 return false;
             }
 
         } catch (error) {
             console.error('Error getting FCM token:', error);
+            showPrompt(getI18nValue('notif.tokenMissingDesc'));
             return false;
         }
-    }    
+    }
 
     if (Notification.permission === 'default') {
         console.log('Permission is default, checking if we should show popup...');
@@ -3833,16 +3850,11 @@ async function checkNotifEnabled() {
                 return; // Don't show the prompt again
             }
 
-            // Show the notification prompt
-            notifPrompt.classList.add("visible");
+            showPrompt(getI18nValue('notif.enableDesc'));
 
-            //"Later" button
-            laterButton.addEventListener("click", () => {
-                document.cookie = "notifDismissed=true; path=/; max-age=31536000"; // 1 year
-                notifPrompt.classList.add("fade-out");
-                setTimeout(() => notifPrompt.classList.remove("visible"), 300);
-            });
         }
+    } else if (Notification.permission === 'denied') {
+        showPrompt(getI18nValue('notif.blockedDesc'), { canEnable: false });
     }
 
     console.log('Notification permission:', Notification.permission);
@@ -3853,6 +3865,27 @@ if (allowNotifButton) {
     allowNotifButton.addEventListener('click', async () => {
         const notifPrompt = document.querySelector(".notification-prompt");
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+        if (Notification.permission === 'granted') {
+            allowNotifButton.disabled = true;
+            const token = await registerFCMToken();
+            if (!token) {
+                allowNotifButton.disabled = false;
+                document.getElementById('infoNotifText').textContent =
+                    getI18nValue('notif.retryFailedDesc');
+                return;
+            }
+            notifPrompt.classList.add("fade-out");
+            setTimeout(() => {
+                notifPrompt.classList.remove("visible", "fade-out");
+                toast.success(
+                    getI18nValue('toast.enableNotificationSuccessTitle'),
+                    getI18nValue('toast.enableNotificationSuccessDesc')
+                );
+            }, 300);
+            return;
+        }
+
         await Notification.requestPermission();
         console.info("Requesting notification permission...");
 
