@@ -3008,6 +3008,12 @@ function loadDemoData() {
     }
 }
 
+function loadFallbackData() {
+    updateDashboardWithData({
+        homeworks: []
+    });
+}
+
 async function fetchDashboardData() {
     try {
         const controller = new AbortController();
@@ -3581,8 +3587,16 @@ async function unmarkHomeworkAsDone(homework) {
 
 function showDataFetchError() {
     console.warn('[Dashboard] Data fetch error - continuing with fallback');
+    toast.error(
+        getI18nValue("toast.dashboardDataErrorTitle"),
+        getI18nValue("toast.dashboardDataErrorDesc"),
+        {
+            actionLabel: getI18nValue("dashboard.retry"),
+            onAction: fetchDashboardData,
+            persistent: true
+        }
+    );
     
-    // Optionally add a small retry button or indicator
     const nextCourseCard = document.querySelector('.next-course-card');
     if (nextCourseCard) {
         const refreshButton = document.createElement('button');

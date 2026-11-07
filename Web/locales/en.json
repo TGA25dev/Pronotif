@@ -127,7 +127,8 @@
     "roomWord": "Room",
     "startAtWord": "Start at",
     "noHomeworkSubject": "No subject",
-    "noHomeworkDescription": "No description"
+    "noHomeworkDescription": "No description",
+    "retry": "Retry"
   },
   "homework": {
     "title": "Homeworks",
@@ -193,6 +194,8 @@
     "settingsSavedErrorDesc": "Failed to save your changes.",
     "networkErrorTitle": "Network error",
     "networkErrorDesc": "Please try again.",
+    "dashboardDataErrorTitle": "Oops, we ran into an issue..",
+    "dashboardDataErrorDesc": "We couldn't load your classes and homework right now. Please try again in a moment.",
     "logoutConfirmation": "⚠️ Are you sure you want to log out?",
     "logoutFailedTitle": "Logout failed.",
     "logoutFailedDesc": "Please try again.",

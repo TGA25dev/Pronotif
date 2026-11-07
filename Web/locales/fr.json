@@ -127,7 +127,8 @@
     "roomWord": "Salle",
     "startAtWord": "Début à",
     "noHomeworkSubject": "Sans matière",
-    "noHomeworkDescription": "Pas de description"
+    "noHomeworkDescription": "Pas de description",
+    "retry": "Réessayer"
   },
   "homework": {
     "title": "Devoirs",
@@ -193,6 +194,8 @@
     "settingsSavedErrorDesc": "Impossible de sauvegarder vos modifications.",
     "networkErrorTitle": "Erreur réseau",
     "networkErrorDesc": "Veuillez réessayer.",
+    "dashboardDataErrorTitle": "Flûte, une erreur est survenue..",
+    "dashboardDataErrorDesc": "Impossible de charger vos cours et vos devoirs pour le moment. Réessayez dans un instant.",
     "logoutConfirmation": "⚠️ Êtes-vous sûr(e) de vouloir vous déconecter ?",
     "logoutFailedTitle": "Échec de la déconnexion.",
     "logoutFailedDesc": "Veuillez réessayer.",

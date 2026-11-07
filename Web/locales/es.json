@@ -127,7 +127,8 @@
     "roomWord": "Sala",
     "startAtWord": "Empieza a las",
     "noHomeworkSubject": "Ninguna materia",
-    "noHomeworkDescription": "Sin descripción"
+    "noHomeworkDescription": "Sin descripción",
+    "retry": "Reintentar"
   },
   "homework": {
     "title": "Deberes",
@@ -193,6 +194,8 @@
     "settingsSavedErrorDesc": "Ha sido imposible guardar tus cambios.",
     "networkErrorTitle": "Error de red",
     "networkErrorDesc": "Inténtalo otra vez",
+    "dashboardDataErrorTitle": "Vaya, ha habido un error...",
+    "dashboardDataErrorDesc": "No hemos podido cargar tus clases y tareas ahora mismo. Inténtalo de nuevo dentro de un momento.",
     "logoutConfirmation": "⚠️ ¿Estás segur@ de que quieres desconectarte?",
     "logoutFailedTitle": "Error al desconectarse",
     "logoutFailedDesc": "Inténtalo otra vez",
