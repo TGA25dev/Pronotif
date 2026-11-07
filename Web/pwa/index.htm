@@ -44,6 +44,40 @@
         <link rel="manifest" href="https://pronotif.tech/manifest.json">
         <link rel="icon" href="../assets/logo_pronotif_rounded_64.webp" type="image/webp">
 
+        <script nonce="{{ csp_nonce() }}">
+            window.__pronotifBrowserErrors = [];
+
+            function getSafeResourceUrl(url) { //stripes out the query strings from the url before sending them
+                if (!url) return null;
+
+                try {
+                    const parsedUrl = new URL(url, window.location.href);
+                    return `${parsedUrl.origin}${parsedUrl.pathname}`;
+                } catch (error) {
+                    return null;
+                }
+            }
+
+            window.addEventListener("error", (event) => {
+                const target = event.target;
+                const resourceUrl = target instanceof HTMLScriptElement
+                    ? target.src
+                    : target instanceof HTMLLinkElement
+                        ? target.href
+                        : event.filename;
+
+                if (!resourceUrl && !event.message) return;
+
+                window.__pronotifBrowserErrors.push({
+                    message: event.message || null,
+                    resource: getSafeResourceUrl(resourceUrl),
+                    line: event.lineno || null,
+                    column: event.colno || null,
+                    timestamp: Date.now()
+                });
+            }, true);
+        </script>
+
         <!-- FontAwesome -->
         <script nonce="{{ csp_nonce() }}" src="https://kit.fontawesome.com/c1bbd01730.js" crossorigin="anonymous"></script>
 
@@ -105,6 +139,20 @@
                     if (event.request) event.request = scrubObject(event.request);
                     if (event.user) event.user = {};
                     if (event.student) event.student = {};
+
+                    const exceptionMessage = event.exception?.values?.[0]?.value;
+                    const browserError = window.__pronotifBrowserErrors?.find(error =>
+                        error.message === exceptionMessage
+                    ) || window.__pronotifBrowserErrors?.find(error =>
+                        Date.now() - error.timestamp < 5000
+                    );
+                    if (browserError) {
+                        const { timestamp, ...browserErrorDetails } = browserError;
+                        event.contexts = {
+                            ...event.contexts,
+                            browser_error: browserErrorDetails
+                        };
+                    }
                     
                     //Scrub breadcrumbs
                     if (event.breadcrumbs) {
