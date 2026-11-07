@@ -1505,7 +1505,15 @@ const loginHandler = {
         video.playsInline = true;
         video.setAttribute('playsinline', 'true'); //for iOS Safari
 
-        video.play();
+        video.play().catch((error) => {
+            if (error?.name !== 'AbortError' && scanning) {
+                console.error('[QR LOGIN] Camera playback failed:', error);
+                toast.error(
+                    getI18nValue('toast.generalErrorTitle'),
+                    getI18nValue('toast.cameraPlaybackErrorDesc')
+                );
+            }
+        });
 
         closeBtn.onclick = stopScanner;
 

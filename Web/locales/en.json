@@ -226,6 +226,7 @@
     "regionMissingDesc": "We could not find your region try again please.",
     "generalErrorTitle": "An error has occured",
     "generalErrorDesc": "Please try again later.",
+    "cameraPlaybackErrorDesc": "Unable to start the camera. Please try again.",
     "comingSoonTitle": "Be Patient !",
     "comingSoonDesc": "This section is coming soon...",
     "reportSystemUnavailableDesc": "The reporting system is not available.",
