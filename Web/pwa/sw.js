@@ -2,7 +2,8 @@
 importScripts('https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.9.0/firebase-messaging-compat.js');
 
-const CACHE_NAME = 'pronotif-pwa-v30';
+const CACHE_NAME = 'pronotif-pwa-v31';
+const API_ORIGIN = 'https://api.pronotif.tech';
 
 // Global variable to store Firebase Messaging instance
 let messaging = null;
@@ -214,6 +215,12 @@ function getCacheKey(request) {
 }
 
 self.addEventListener('fetch', (event) => {
+    //never caches or replace API responses with fallbacks
+    if (new URL(event.request.url).origin === API_ORIGIN) {
+        event.respondWith(fetch(event.request));
+        return;
+    }
+
     // Get the online status first (don't log it yet)
     const onlineStatusPromise = isOnline();
     
@@ -235,11 +242,11 @@ self.addEventListener('fetch', (event) => {
                     
                     console.log('[PWA] Font not found in cache with normalized path, trying exact match');
                     return caches.match(event.request)
-                        .then(exactMatch => {
+                        .then(async exactMatch => {
                             if (exactMatch) return exactMatch;
                             
                             // If font not in cache and we're online, try to fetch it
-                            if (isOnline()) {
+                            if (await isOnline()) {
                                 return fetch(event.request)
                                     .then(response => {
                                         if (!response.ok) return response;
@@ -307,13 +314,13 @@ self.addEventListener('fetch', (event) => {
     // For non-navigation requests, try cache first
     event.respondWith(
         caches.match(event.request)
-            .then(cachedResponse => {
+            .then(async cachedResponse => {
                 if (cachedResponse) {
                     return cachedResponse;
                 }
                 
                 // If not in cache and offline, return   fallback
-                if (!isOnline()) {
+                if (!(await isOnline())) {
                     console.log('[PWA] Offline and resource not in cache:', event.request.url);
                     if (event.request.destination === 'image') {
                         return new Response('', { status: 404 });
