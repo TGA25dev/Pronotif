@@ -2,7 +2,7 @@
 importScripts('https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.9.0/firebase-messaging-compat.js');
 
-const CACHE_NAME = 'pronotif-pwa-v31';
+const CACHE_NAME = 'pronotif-pwa-v32';
 const API_ORIGIN = 'https://api.pronotif.tech';
 
 // Global variable to store Firebase Messaging instance
@@ -105,6 +105,8 @@ const ASSETS_TO_CACHE = [
     './scripts/pwa.js',
     './sw.js',
     '../manifest.json',
+    '../fonts/satoshivariable.woff2',
+    '../fonts/cabinetvariable.woff2',
 ];
 
 // Install event - Cache all static assets

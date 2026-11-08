@@ -8,6 +8,14 @@
     --shadow: rgba(45, 168, 168, 0.1);
 }
 
+@font-face {
+    font-family: "Satoshi";
+    src: url("../../fonts/satoshivariable.woff2") format("woff2");
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+}
+
 @media (prefers-color-scheme: dark) {
     :root {
         --primary: #45a8a872;
@@ -30,7 +38,7 @@ html {
 body {
     margin: 0;
     padding: 0;
-    font-family: "FixelVariable", sans-serif;
+    font-family: "Satoshi", sans-serif;
     background: var(--background);
     color: var(--text);
     height: 100%;
@@ -111,7 +119,7 @@ body {
     padding: 0.8rem 2rem;
     border-radius: 12px;
     font-size: 1rem;
-    font-family: "FixelVariable", sans-serif;
+    font-family: "Satoshi", sans-serif;
     cursor: pointer;
     transition: all 0.3s ease;
     min-height: 44px;
