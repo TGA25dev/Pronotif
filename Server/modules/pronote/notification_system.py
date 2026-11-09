@@ -14,12 +14,14 @@ import json
 import random
 import redis
 import hashlib
+from typing import Any
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from modules.secrets.secrets_manager import get_secret
 from modules.security.encryption import encrypt
 
 from modules.pronote.users import PronotifUser
+from modules.pronote.id_creator import generate_id
 from modules.messaging.firebase import send_notification_to_device
 
 from modules.sentry.sentry_config import get_logger_enabled_sentry
@@ -49,6 +51,7 @@ DB_CONFIG = {
     "database": get_secret('DB_NAME')
 }
 table_name = get_secret('DB_STUDENT_TABLE_NAME')
+lesson_state_table_name = get_secret('DB_LESSON_STATE_TABLE_NAME')
 
 # Connection pool configuration
 DB_POOL_CONFIG = {
@@ -150,6 +153,7 @@ def get_db_connection():
 # Store previous user list
 _previous_user_hashes = set()
 _existing_users = {}  # Cache of user objects by ID
+_lesson_state_cleanup_done = False
 
 # Lock for shared resources
 user_update_lock = asyncio.Lock()
@@ -160,6 +164,170 @@ redis_client = redis.Redis(
     db=int(get_secret('REDIS_DB', '0')),
     password=get_secret('REDIS_PASSWORD', None),
 )
+
+def _cleanup_lesson_state() -> None:
+    """
+    Remove stale rows from the manually provisioned lesson state table
+    """
+
+    global _lesson_state_cleanup_done
+    if _lesson_state_cleanup_done:
+        return
+
+    with get_db_connection() as connection:
+        cursor = connection.cursor()
+        cursor.execute(f"""
+            DELETE FROM {lesson_state_table_name}
+            WHERE lesson_start < NOW() - INTERVAL 30 DAY
+        """)
+        connection.commit()
+    _lesson_state_cleanup_done = True
+
+
+def _lesson_state_id(lesson: Any) -> str:
+    """
+    Return the project's deterministic ID for a lesson occurrence
+    """
+
+    subject_name = getattr(getattr(lesson, 'subject', None), 'name', '')
+    start_time = getattr(lesson, 'start', '')
+
+    return generate_id(f"{subject_name}|{start_time}") #generates a hash for a lesson
+
+
+def _claim_lesson_cancellation(user: PronotifUser, lesson: Any, allow_initial_cancellation: bool = False) -> bool:
+    """
+    Claim one cancellation notification and record the latest lesson state.
+
+    State values are 0 (not notified), 1 (notification sent), and 2 (delivery
+    in progress)
+    """
+    _cleanup_lesson_state()
+
+    lesson_id = _lesson_state_id(lesson)
+    lesson_start = getattr(lesson, 'start', None)
+    canceled = bool(getattr(lesson, 'canceled', False))
+    should_send = False
+
+    if canceled:
+        logger.debug(
+            f"Cancellation observed for user {user.user_hash[:4]}****, "
+            f"lesson {lesson_id}, start {lesson_start.strftime('%H:%M')}, "
+            f"allow_initial={allow_initial_cancellation}"
+        )
+
+    with get_db_connection() as connection:
+        connection.start_transaction()
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute(f"""
+                  SELECT last_canceled, cancellation_notified, last_seen_at
+            FROM {lesson_state_table_name}
+            WHERE user_hash = %s AND lesson_id = %s
+            FOR UPDATE
+        """, (user.user_hash, lesson_id))
+        state = cursor.fetchone()
+
+        if state is None:
+            cursor.execute(f"""
+                INSERT INTO {lesson_state_table_name}
+                    (user_hash, lesson_id, lesson_start, last_canceled,
+                     cancellation_notified, last_seen_at)
+                VALUES (%s, %s, %s, %s, %s, NOW())
+            """, (
+                user.user_hash,
+                lesson_id,
+                lesson_start,
+                canceled,
+                2 if canceled and allow_initial_cancellation else 0,
+            ))
+            should_send = canceled and allow_initial_cancellation
+            logger.info(
+                f"Recorded first lesson state for user {user.user_hash[:4]}****, "
+                f"lesson {lesson_id}, canceled={canceled}, notify={should_send}"
+            )
+        elif not canceled:
+            if state['last_canceled'] or state['cancellation_notified']:
+                logger.info(
+                    f"Cancellation cleared for user {user.user_hash[:4]}****, "
+                    f"lesson {lesson_id}"
+                )
+            cursor.execute(f"""
+                UPDATE {lesson_state_table_name}
+                SET lesson_start = %s,
+                    last_canceled = 0,
+                    cancellation_notified = 0,
+                    last_seen_at = NOW()
+                WHERE user_hash = %s AND lesson_id = %s
+            """, (lesson_start, user.user_hash, lesson_id))
+
+        else:
+            was_active = not bool(state['last_canceled'])
+            claim_expired = (
+                state['cancellation_notified'] == 2
+                and state['last_seen_at'] <= datetime.now() - timedelta(minutes=2)
+            )
+
+            can_notify = (was_active or allow_initial_cancellation) and (
+                state['cancellation_notified'] != 1 or claim_expired
+            )
+
+            if can_notify:
+                cursor.execute(f"""
+                    UPDATE {lesson_state_table_name}
+                    SET lesson_start = %s,
+                        last_canceled = 1,
+                        cancellation_notified = 2,
+                        last_seen_at = NOW()
+                    WHERE user_hash = %s AND lesson_id = %s
+                """, (lesson_start, user.user_hash, lesson_id))
+                should_send = True
+                logger.info(
+                    f"Cancellation transition claimed for user {user.user_hash[:4]}****, "
+                    f"lesson {lesson_id}"
+                )
+            else:
+                cursor.execute(f"""
+                    UPDATE {lesson_state_table_name}
+                    SET lesson_start = %s,
+                        last_seen_at = IF(cancellation_notified = 2,
+                                          last_seen_at, NOW())
+                    WHERE user_hash = %s AND lesson_id = %s
+                """, (lesson_start, user.user_hash, lesson_id))
+
+        connection.commit()
+
+    return should_send
+
+
+def _complete_lesson_cancellation(user: PronotifUser, lesson: Any, sent: bool) -> None:
+    """
+    Finalize or release a cancellation claim after attempting FCM delivery
+    """
+
+    _cleanup_lesson_state()
+    lesson_id = _lesson_state_id(lesson)
+
+    with get_db_connection() as connection:
+        cursor = connection.cursor()
+        cursor.execute(f"""
+            UPDATE {lesson_state_table_name}
+            SET cancellation_notified = %s, last_canceled = %s,
+                last_seen_at = NOW()
+            WHERE user_hash = %s AND lesson_id = %s
+              AND last_canceled = 1 AND cancellation_notified = 2
+        """, (1 if sent else 0, 1 if sent else 0, user.user_hash, lesson_id))
+        connection.commit()
+
+    if sent:
+        logger.info(
+            f"Cancellation notification recorded as sent for user {user.user_hash[:4]}****, "
+            f"lesson {lesson_id}"
+        )
+    else:
+        logger.warning(
+            f"Cancellation notification failed; lesson will be retried for user "
+            f"{user.user_hash[:4]}****, lesson {lesson_id}"
+        )
 
 #Initialize i18n files at module level
 fr_file = None
@@ -648,7 +816,61 @@ def inform_user_initial_login_failed(user):
 
     logger.info(f"Informed user {user.user_hash[:4]}**** about initial login failure")
 
-async def lesson_check(user):
+def _send_cancellation_notification(user: PronotifUser, lesson: Any) -> bool:
+    """
+    Send the localized cancellation message and report whether FCM accepted it or not
+    """
+
+    subject = lesson.subject.name
+    clean_subject_name, determiner = get_clean_subject_name(subject)
+    extra_space = " " if determiner == "de" or determiner == ":" else ""
+    lang = user.lang
+    class_start_time = lesson.start.strftime("%H:%M")
+
+    title = get_i18n_value(lang, 'notification.cancelledClassTitle')
+    body = get_i18n_value(
+        lang,
+        'notification.cancelledClassBody',
+        det=determiner,
+        extra_space=extra_space,
+        name=clean_subject_name,
+        class_start_time=class_start_time,
+    )
+
+    if not user.fcm_token:
+        logger.warning(f"Cannot send cancellation notification to user {user.user_hash[:4]}****: FCM token is empty")
+        return False
+
+    result = send_notification_to_device(user.fcm_token, title=title, body=body)
+    sent = result.get("status") == "success" if isinstance(result, dict) else False
+
+    if sent:
+        logger.success(f"Sent cancellation notification to user {user.user_hash[:4]}****")
+    else:
+        logger.warning(f"Failed to send cancellation notification to user {user.user_hash[:4]}****")
+
+    return sent
+
+
+def _deliver_claimed_cancellation(user: PronotifUser, lesson: Any) -> None:
+    """
+    Deliver a claimed cancellation and always finalize its database state
+    """
+    
+    try:
+        sent = _send_cancellation_notification(user, lesson)
+    except Exception as delivery_error:
+        logger.error(
+            f"Cancellation notification raised an error for user "
+            f"{user.user_hash[:4]}****: {delivery_error}"
+        )
+        sentry_sdk.capture_exception(delivery_error)
+        sent = False
+
+    _complete_lesson_cancellation(user, lesson, sent)
+
+
+async def lesson_check(user: PronotifUser) -> None:
     """Check for upcoming lessons and send notifications"""
     today = datetime.now(user.timezone_obj).date()
     #other_day = today + timedelta(days=0)  # DEBUG
@@ -671,6 +893,17 @@ async def lesson_check(user):
                 logger.debug(f"No lessons found for user {user.user_hash[:4]}**** today")
                 user.class_message_printed_today = True
             return
+
+        #track cancellation transitions independently of the pre class reminder
+        for lesson in lessons:
+            try:
+                if _claim_lesson_cancellation(user, lesson):
+                    _deliver_claimed_cancellation(user, lesson)
+            except Exception as cancellation_error:
+                logger.error(
+                    f"Error tracking cancellation for user {user.user_hash[:4]}****: {cancellation_error}"
+                )
+                sentry_sdk.capture_exception(cancellation_error)
         
         current_time = datetime.now(user.timezone_obj).strftime("%H:%M")
         #logger.debug("Real Time: " + current_time) #DEBUG
@@ -705,34 +938,17 @@ async def lesson_check(user):
                 class_start_time = lesson_checks.start.strftime("%H:%M")
                 canceled = lesson_checks.canceled
 
-                #Get clean subject name and emoji
-                clean_subject_name, determiner = get_clean_subject_name(subject)
-                chosen_emoji = get_subject_emoji(clean_subject_name)
-
-                if determiner == "de" or determiner == ":":
-                    extra_space = " "
-                else:
-                    extra_space = ""
-
-                lang = user.lang
-                
                 if canceled:
-                    # Send notification for canceled lesson
-                    title = get_i18n_value(lang, 'notification.cancelledClassTitle')
-                    body = get_i18n_value(lang, 'notification.cancelledClassBody',
-                        det=determiner,
-                        extra_space=extra_space,
-                        name=clean_subject_name,
-                        class_start_time=class_start_time
-                    )
-                    send_notification_to_device(
-                        user.fcm_token,
-                        title=title,
-                        body=body,
-                    )
-                    logger.success(f"Sent cancellation notification to user {user.user_hash[:4]}****")
+                    #allow the pre-class check to notify if cancellation was the first observation
+                    if _claim_lesson_cancellation(user, lesson_checks, allow_initial_cancellation=True):
+                        _deliver_claimed_cancellation(user, lesson_checks)
 
                 elif not canceled:
+                    clean_subject_name, determiner = get_clean_subject_name(subject)
+                    chosen_emoji = get_subject_emoji(clean_subject_name)
+                    extra_space = " " if determiner == "de" or determiner == ":" else ""
+                    lang = user.lang
+
                     # S grammar for minutes
                     s = "" if int(user.notification_delay) == 1 else "s"
                     delay = user.notification_delay
