@@ -226,10 +226,21 @@ def ratelimit_error(error):
 
 #MAIN Root
 @app.route('/', methods=['GET'])
+@app.route('/<language>', methods=['GET'])
 @limiter.limit("50 per minute")
-def website_index():
+def website_index(language=None):
+    if language not in (None, 'en', 'es'):
+        abort(404)
+
+    language = language or 'fr'
     cache_buster = datetime.now().strftime("%Y%m%d%H%M%S")
-    return render_template('website/index.html', cache_buster=cache_buster)
+    canonical_url = f"https://pronotif.tech/{language}" if language != 'fr' else "https://pronotif.tech/"
+    return render_template(
+        'website/index.html',
+        cache_buster=cache_buster,
+        language=language,
+        canonical_url=canonical_url
+    )
 
 @app.route('/fonts_manager.css', methods=['GET'])
 def website_serve_fonts_manager():

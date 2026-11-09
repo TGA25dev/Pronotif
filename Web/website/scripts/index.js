@@ -1,84 +1,3 @@
-//Language Configuration
-let translations = {};
-let currentLang = localStorage.getItem('language') || getDefaultLang();
-
-//Get browser language, fallback to fr
-function getDefaultLang() {
-    const navLang = navigator.language || navigator.userLanguage || 'fr';
-    console.log("Browser language detected:", navLang);
-    const shortLang = navLang.split('-')[0].toLowerCase();
-    // Supported languages
-    const supported = ['fr', 'en', 'es'];
-    return supported.includes(shortLang) ? shortLang : 'fr';
-}
-async function loadTranslations(lang) {
-    try {
-        const response = await fetch(`langs/${lang}.json`);
-        if (!response.ok) throw new Error(`Failed to load ${lang} translations`);
-        translations[lang] = await response.json();
-        return translations[lang];
-    } catch (error) {
-        console.error('Error loading translations:', error);
-        return null;
-    }
-}
-
-async function applyTranslations(lang) {
-    if (!translations[lang]) {
-        await loadTranslations(lang);
-    }
-    
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        if (translations[lang] && translations[lang][key]) {
-            el.textContent = translations[lang][key];
-        }
-    });
-}
-
-function updateLanguageUI(lang) {
-    document.querySelector('.lang-code').textContent = lang.toUpperCase();
-    
-    document.querySelectorAll('.lang-option').forEach(option => {
-        option.classList.toggle('active', option.dataset.lang === lang);
-    });
-}
-
-function initLanguageSwitcher() {
-    const langToggle = document.getElementById('langToggle');
-    const langDropdown = document.getElementById('langDropdown');
-    const langOptions = document.querySelectorAll('.lang-option');
-
-    if (!langToggle || !langDropdown) return;
-
-    //Toggle dropdown
-    langToggle.addEventListener('click', (e) => {
-        e.stopPropagation();
-        langDropdown.classList.toggle('show');
-    });
-
-    langOptions.forEach(option => {
-        option.addEventListener('click', async () => {
-            const lang = option.dataset.lang;
-            currentLang = lang;
-            localStorage.setItem('language', lang);
-            
-            document.documentElement.lang = lang;
-            updateLanguageUI(lang);
-            await applyTranslations(lang);
-            
-            langDropdown.classList.remove('show');
-        });
-    });
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.language-switcher')) {
-            langDropdown.classList.remove('show');
-        }
-    });
-}
-
 let deferredPrompt = null;
 
 window.addEventListener('beforeinstallprompt', (e) => {
@@ -105,7 +24,7 @@ window.addEventListener('appinstalled', () => {
                 <p data-i18n="success-message2" style="font-size: 1.2rem; color: var(--text-dark);">Merci d'avoir installé l'application ! 🎉</p>
             </div>
         `;
-        applyTranslations(currentLang);
+        applyTranslations(window.currentLang);
     }
 });
 
@@ -146,18 +65,18 @@ function renderInstallSection() {
             <div class="install-steps">
                 <div class="step">
                     <span class="step-number">1</span>
-                    <p>Appuyez sur le bouton de votre <b><u>navigateur</u></b> (•••, ⋮ ou ≡)</p>
+                    <p data-i18n="android-browser-step">Appuyez sur le bouton de votre <b><u>navigateur</u></b> (•••, ⋮ ou ≡)</p>
                 </div>
                 <div class="step">
                     <span class="step-number">2</span>
-                    <p>Sélectionnez "Ajouter à l'écran d'accueil"</p>
+                    <p data-i18n="android-home-step">Sélectionnez "Ajouter à l'écran d'accueil"</p>
                 </div>
                 <div class="step">
                     <span class="step-number">3</span>
-                    <p>Confirmez</p>
+                    <p data-i18n="android-confirm-step">Confirmez</p>
                 </div>
             </div>
-            <p class="android-note" style="text-align: center; margin-top: 1rem; color: var(--text-gray);">Ensuite, ouvrez l'application depuis votre écran d'accueil.</p>
+            <p class="android-note" data-i18n="android-final" style="text-align: center; margin-top: 1rem; color: var(--text-gray);">Ensuite, ouvrez l'application depuis votre écran d'accueil.</p>
         `;
     } else if (isIos()) {
         html = `
@@ -165,17 +84,17 @@ function renderInstallSection() {
                 <div class="step">
                     <span class="step-number">1</span>
                     <p>
-                        Appuyez sur <strong>•••</strong> puis Partager
+                        <span data-i18n-html="ios-share-step">Appuyez sur <strong>•••</strong> puis Partager</span>
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-left: 4px; color: var(--primary-teal);"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
                     </p>
                 </div>
                 <div class="step">
                     <span class="step-number">2</span>
-                    <p>Sélectionnez "Sur l'écran d'accueil"</p>
+                    <p data-i18n="ios-home-step">Sélectionnez "Sur l'écran d'accueil"</p>
                 </div>
                 <div class="step">
                     <span class="step-number">3</span>
-                    <p>Activez "Ouvrir comme app web" puis cliquez sur "Ajouter"</p>
+                    <p data-i18n="ios-add-step">Activez "Ouvrir comme app web" puis cliquez sur "Ajouter"</p>
                 </div>
             </div>
             <p class="ios-note" data-i18n="ios_final" style="text-align: center; margin-top: 1rem; color: var(--text-gray);">Ouvrez ensuite l'appli 'Pronot'if'.</p>
@@ -187,8 +106,8 @@ function renderInstallSection() {
                 <div class="qr-container">
                     <img src="./assets/qr-code.svg" alt="QRCode" class="qr-code">
                 </div>
-                <p class="qr-caption">Scannez pour installer l'app</p>
-                <p class="qr-subcaption">Ouvrez l'appareil photo de votre téléphone</p>
+                <p class="qr-caption" data-i18n="qr-caption">Scannez pour installer l'app</p>
+                <p class="qr-subcaption" data-i18n="qr-subcaption">Ouvrez l'appareil photo de votre téléphone</p>
             </div>
         `;
     }
@@ -196,7 +115,7 @@ function renderInstallSection() {
     container.innerHTML = html;
     
     //Reapply translations for the new content
-    applyTranslations(currentLang);
+    applyTranslations(window.currentLang);
 
     const installBtn = document.getElementById('pwa-install-btn');
     if (installBtn && deferredPrompt) {
@@ -212,10 +131,13 @@ function renderInstallSection() {
 
 //Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
-    document.documentElement.lang = currentLang;
-    updateLanguageUI(currentLang);
-    await applyTranslations(currentLang);
-    initLanguageSwitcher();
+    await new Promise(resolve => {
+        if (window.currentLang) {
+            resolve();
+        } else {
+            window.addEventListener('i18n-ready', resolve, { once: true });
+        }
+    });
     renderInstallSection();
 
     //Burger Menu Logic
