@@ -1,13 +1,15 @@
 <!DOCTYPE html>
-<html lang="fr" data-theme="light">
+<html lang="{{ language }}" data-theme="light">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Pronot'if - On est en quelle salle ?</title>
-        <meta name="description" content="On est en quelle salle ?">
+        <title data-i18n="page-title">Pronot'if - On est en quelle salle ?</title>
+        <meta name="description" content="On est en quelle salle ?" data-i18n-content="page-description">
 
-        <link rel="canonical" href="https://pronotif.tech/">
+        <link rel="canonical" href="{{ canonical_url }}">
         <link rel="alternate" hreflang="fr" href="https://pronotif.tech/">
+        <link rel="alternate" hreflang="en" href="https://pronotif.tech/en">
+        <link rel="alternate" hreflang="es" href="https://pronotif.tech/es">
         <link rel="alternate" hreflang="x-default" href="https://pronotif.tech/">
 
         <meta property="og:type" content="website">
@@ -75,8 +77,8 @@
             </div>
 
             <div class="hero-content">
-                <h1 class="hero-title">On est en<br>quelle salle ? 📚</h1>
-                <p class="hero-subtitle">Votre emploi du temps, vos salles, vos devoirs.<br>Soyez informés de tout.</p>
+                <h1 class="hero-title" data-i18n-html="hero-title">On est en<br>quelle salle ? 📚</h1>
+                <p class="hero-subtitle" data-i18n-html="hero-subtitle">Votre emploi du temps, vos salles, vos devoirs.<br>Soyez informés de tout.</p>
                 
                 <div class="hero-buttons">
                     <button class="btn btn-primary" data-i18n="btn-install">
@@ -99,7 +101,7 @@
 
         <section class="reminders-section">
             <div class="reminders-container">
-                <h2 data-i18n="reminders-title">Des rappels faits pour <span class="highlight">vous</span></h2>
+                <h2 data-i18n-html="reminders-title">Des rappels faits pour <span class="highlight">vous</span></h2>
                 <p data-i18n="reminders-subtitle">Pronot'if vous notifie à propos des nombreux évènements de votre journée scolaire.</p>
                 
                 <div class="bento-grid">
@@ -112,8 +114,8 @@
                             <span class="emoji" style="top: 55%; right: 25%; font-size: 2.5rem;">⏰</span>
                         </div>
                         <div class="card-content-bottom">
-                            <h3>"On est en quelle salle ?"</h3>
-                            <p>Quelques minutes avant chaque cours recevez une notification avec des informations sur la salle où vous devez vous rendre.</p>
+                            <h3 data-i18n="room-title">"On est en quelle salle ?"</h3>
+                            <p data-i18n="room-description">Quelques minutes avant chaque cours recevez une notification avec des informations sur la salle où vous devez vous rendre.</p>
                         </div>
                     </div>
         
@@ -127,8 +129,8 @@
                                 <span class="emoji thinking-emoji" style="top: 70%; left: 15%; font-size: 2.2rem;">🤔</span>
                             </div>
                             <div class="card-content-right">
-                                <h3>"Y'avait des devoirs pour aujourd'hui ?"</h3>
-                                <p>Chaque soir soyez prévenus si vous avez des devoirs marqués comme non faits à rendre pour le lendemain.</p>
+                                <h3 data-i18n="homework-title">"Y'avait des devoirs pour aujourd'hui ?"</h3>
+                                <p data-i18n="homework-description">Chaque soir soyez prévenus si vous avez des devoirs marqués comme non faits à rendre pour le lendemain.</p>
                             </div>
                         </div>
         
@@ -141,8 +143,8 @@
                                 <span class="emoji" style="top: 70%; right: 20%; font-size: 2rem;">🍩</span>
                             </div>
                             <div class="card-content-right">
-                                <h3>"On mange quoi ce midi ?"</h3>
-                                <p>Découvrez le menu de la cantine avant même d'être installé à table.¹</p>
+                                <h3 data-i18n="lunch-title">"On mange quoi ce midi ?"</h3>
+                                <p data-i18n="lunch-description">Découvrez le menu de la cantine avant même d'être installé à table.¹</p>
                             </div>
                         </div>
                     </div>
@@ -156,64 +158,64 @@
                             <span class="emoji" style="top: 60%; right: 15%; font-size: 2.5rem;">📅</span>
                         </div>
                         <div class="card-content-bottom">
-                            <h3>"Le cours est annulé ?"</h3>
-                            <p>Soyez la premiere personne avertie si un cours est annulé.</p>
+                            <h3 data-i18n="cancelled-title">"Le cours est annulé ?"</h3>
+                            <p data-i18n="cancelled-description">Soyez la premiere personne avertie si un cours est annulé.</p>
                         </div>
                     </div>
                 </div>
 
-                <p class="footnote">¹Certaines fonctionnalités sont uniquement disponibles pour les établissements compatibles. Plus d'informations sur <a href="https://go.pronotif.tech/compatibility">go.pronotif.tech/compatibility</a>.</p>
+                <p class="footnote" data-i18n-html="footnote">¹Certaines fonctionnalités sont uniquement disponibles pour les établissements compatibles. Plus d'informations sur <a href="https://go.pronotif.tech/compatibility">go.pronotif.tech/compatibility</a>.</p>
             </div>
         </section>
 
         <!--Features section-->
         <section class="features-scroll-section" id="features">
             <div class="features-container">
-                <h2 class="features-title">Fonctionnalités</h2>
+                <h2 class="features-title" data-i18n="features-title">Fonctionnalités</h2>
                 
                 <div class="features-scroll-wrapper">
                     <div class="feature-card">
-                        <h3>Ne ratez plus jamais un cours</h3>
-                        <p>Un rappel avant chaque cours pour <small>(presque)</small> toujours arriver à l'heure.</p>
+                        <h3 data-i18n="feature-1-title">Ne ratez plus jamais un cours</h3>
+                        <p data-i18n="feature-1-description">Un rappel avant chaque cours pour (presque) toujours arriver à l'heure.</p>
                         <div class="feature-visual-placeholder">
                             <img src="assets/feature-screenshots/feature-lockscreen.svg" alt="Image Notifications" class="feature-mockup">
                         </div>
                     </div>
                     <div class="feature-card">
-                        <h3>Connexion rapide</h3>
-                        <p>Connectez vous rapidement à votre compte en seulement quelques étapes.</p>
+                        <h3 data-i18n="feature-2-title">Connexion rapide</h3>
+                        <p data-i18n="feature-2-description">Connectez vous rapidement à votre compte en seulement quelques étapes.</p>
                         <div class="feature-visual-placeholder">
                             <img src="assets/feature-screenshots/screen-login.svg" alt="Image Connexion rapide" class="feature-mockup">
                         </div>
                     </div>
 
                     <div class="feature-card">
-                        <h3>Votre journée en un coup d'oeil</h3>
-                        <p>Tout ce que vous devez savoir à propos de votre journée sur une seule et même page.</p>
+                        <h3 data-i18n="feature-3-title">Votre journée en un coup d'oeil</h3>
+                        <p data-i18n="feature-3-description">Tout ce que vous devez savoir à propos de votre journée sur une seule et même page.</p>
                         <div class="feature-visual-placeholder">
                             <img src="assets/feature-screenshots/screen-dashboard.svg" alt="Image Journée en un clin d'oeil" class="feature-mockup">
                         </div>
                     </div>
 
                     <div class="feature-card">
-                        <h3>Compatible iOS et Android</h3>
-                        <p>Que vous ayez un iPhone ou tout autre chose l'expérience est la même.</p>
+                        <h3 data-i18n="feature-4-title">Compatible iOS et Android</h3>
+                        <p data-i18n="feature-4-description">Que vous ayez un iPhone ou tout autre chose l'expérience est la même.</p>
                         <div class="feature-visual-placeholder">
                             <img src="assets/feature-screenshots/ios-android.svg" alt="Image iOS Android" class="feature-mockup">
                         </div>
                     </div>
 
                     <div class="feature-card">
-                        <h3>Notifications sur mesure</h3>
-                        <p>Choisissez quels types d'alertes recevoir quand vous le souhaitez</p>
+                        <h3 data-i18n="feature-5-title">Notifications sur mesure</h3>
+                        <p data-i18n="feature-5-description">Choisissez quels types d'alertes recevoir quand vous le souhaitez</p>
                         <div class="feature-visual-placeholder">
                             <img src="assets/feature-screenshots/screen-notifications.svg" alt="Image Paramètres" class="feature-mockup">
                         </div>
                     </div>
 
                     <div class="feature-card">
-                        <h3>Installation simple et rapide</h3>
-                        <p>Ajoutez l'application à votre écran d'accueil en quelques clics.</p>
+                        <h3 data-i18n="feature-6-title">Installation simple et rapide</h3>
+                        <p data-i18n="feature-6-description">Ajoutez l'application à votre écran d'accueil en quelques clics.</p>
                         <div class="feature-visual-placeholder">
                             <img src="assets/feature-screenshots/screen-home.svg" alt="Image Installation" class="feature-mockup">
                         </div>
@@ -226,8 +228,8 @@
         <section class="install-section" id="install">
             <div class="install-wrapper">
                 <div class="install-info">
-                    <h2 class="install-heading">Installer Pronot'if</h2>
-                    <p class="install-subheading">Installez l'application sur votre appareil pour commencer à recevoir les notifications.</p>
+                    <h2 class="install-heading" data-i18n="install-title">Installer Pronot'if</h2>
+                    <p class="install-subheading" data-i18n="install-description">Installez l'application sur votre appareil pour commencer à recevoir les notifications.</p>
                 </div>
                 
                 <div class="install-card-wrapper">
@@ -246,27 +248,27 @@
                 <div class="footer-top">
                     <div class="footer-brand">
                         <div class="logo footer-logo">Pronot'if</div>
-                        <p>Des notifications faites pour vous.</p>
+                        <p data-i18n="footer-tagline">Des notifications faites pour vous.</p>
                     </div>
                     <div class="footer-nav">
                         <div class="footer-col">
-                            <h4>Légal</h4>
+                            <h4 data-i18n="footer-legal">Légal</h4>
                             <a href="https://safety.pronotif.tech/docs/terms-of-service" target="_blank">CGU</a>
-                            <a href="https://safety.pronotif.tech/docs/politique-de-confidentialite" target="_blank">Politique de confidentialité</a>
-                            <a href="https://safety.pronotif.tech/usage/data" target="_blank">Traitement des données</a>
+                            <a href="https://safety.pronotif.tech/docs/politique-de-confidentialite" target="_blank" data-i18n="footer-privacy">Politique de confidentialité</a>
+                            <a href="https://safety.pronotif.tech/usage/data" target="_blank" data-i18n="footer-data">Traitement des données</a>
                             
                         </div>
                         <div class="footer-col">
-                            <h4>Liens</h4>
+                            <h4 data-i18n="footer-links">Liens</h4>
                             <a href="https://github.com/TGA25dev/Pronotif" target="_blank">GitHub</a>
-                            <a href="https://ko-fi.com/pronotif" target="_blank">Soutenir le projet</a>
-                            <a href="https://docs.pronotif.tech/contrib/avant-de-commencer" target="_blank">Contribuer</a>
+                            <a href="https://ko-fi.com/pronotif" target="_blank" data-i18n="footer-support">Soutenir le projet</a>
+                            <a href="https://docs.pronotif.tech/contrib/avant-de-commencer" target="_blank" data-i18n="footer-contribute">Contribuer</a>
                             <a href="https://status.pronotif.tech/" target="_blank" rel="noopener noreferrer" data-i18n="nav-status">État des services</a>
                         </div>
                     </div>
                 </div>
                 <div class="footer-bottom">
-                    <p>&copy; 2026 Pronot'if. Tous droits réservés.</p>
+                    <p data-i18n="footer-copyright">&copy; 2026 Pronot'if. Tous droits réservés.</p>
                 </div>
             </div>
         </footer>
@@ -293,6 +295,7 @@
             <button class="status-close" id="closeStatus">&times;</button>
         </div>
         <script nonce="{{ csp_nonce() }}" src="scripts/status_checker.js"></script>
+        <script nonce="{{ csp_nonce() }}" src="scripts/i18n.js"></script>
         <script nonce="{{ csp_nonce() }}" src="scripts/index.js"></script>
     </body>
 </html>
