@@ -209,13 +209,6 @@ def _claim_lesson_cancellation(user: PronotifUser, lesson: Any, allow_initial_ca
     canceled = bool(getattr(lesson, 'canceled', False))
     should_send = False
 
-    if canceled:
-        logger.debug(
-            f"Cancellation observed for user {user.user_hash[:4]}****, "
-            f"lesson {lesson_id}, start {lesson_start.strftime('%H:%M')}, "
-            f"allow_initial={allow_initial_cancellation}"
-        )
-
     with get_db_connection() as connection:
         connection.start_transaction()
         cursor = connection.cursor(dictionary=True)
@@ -299,9 +292,17 @@ def _claim_lesson_cancellation(user: PronotifUser, lesson: Any, allow_initial_ca
     return should_send
 
 
-def _complete_lesson_cancellation(user: PronotifUser, lesson: Any, sent: bool) -> None:
+def _complete_lesson_cancellation(
+    user: PronotifUser,
+    lesson: Any,
+    sent: bool,
+    suppressed: bool = False,
+) -> None:
     """
-    Finalize or release a cancellation claim after attempting FCM delivery
+    Finalize or release a cancellation claim after attempting FCM delivery.
+
+    A suppressed notification has no usable FCM destination, so it is marked as
+    permanently handled to avoid retrying the same cancellation every minute.
     """
 
     _cleanup_lesson_state()
@@ -315,13 +316,23 @@ def _complete_lesson_cancellation(user: PronotifUser, lesson: Any, sent: bool) -
                 last_seen_at = NOW()
             WHERE user_hash = %s AND lesson_id = %s
               AND last_canceled = 1 AND cancellation_notified = 2
-        """, (1 if sent else 0, 1 if sent else 0, user.user_hash, lesson_id))
+        """, (
+            1 if sent or suppressed else 0,
+            1 if sent or suppressed else 0,
+            user.user_hash,
+            lesson_id,
+        ))
         connection.commit()
 
     if sent:
         logger.info(
             f"Cancellation notification recorded as sent for user {user.user_hash[:4]}****, "
             f"lesson {lesson_id}"
+        )
+    elif suppressed:
+        logger.warning(
+            f"Cancellation notification suppressed permanently for user "
+            f"{user.user_hash[:4]}****, lesson {lesson_id}: FCM token is empty"
         )
     else:
         logger.warning(
@@ -857,6 +868,10 @@ def _deliver_claimed_cancellation(user: PronotifUser, lesson: Any) -> None:
     Deliver a claimed cancellation and always finalize its database state
     """
     
+    if not user.fcm_token:
+        _complete_lesson_cancellation(user, lesson, sent=False, suppressed=True)
+        return
+
     try:
         sent = _send_cancellation_notification(user, lesson)
     except Exception as delivery_error:
